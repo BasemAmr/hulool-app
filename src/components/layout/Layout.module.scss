@@ -1,0 +1,410 @@
+@import "../../assets/scss/variables-design-system";
+
+// Main layout adjustments for RTL
+.appLayout {
+  display: flex;
+  min-height: 100vh;
+  background-color: var(--color-gray-50);
+  direction: rtl;
+}
+
+// Modern compact sidebar
+.sidebar {
+  width: 160px; // Reduced from 200px for more compact design
+  position: fixed;
+  top: 0;
+  right: 0;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background: var(--color-gray-200);
+  border-left: 1px solid rgba(212, 175, 55, 0.1);
+  z-index: var(--z-sticky);
+  transition: all var(--transition-normal);
+  overflow: hidden;
+  
+  // Add subtle backdrop blur effect
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+
+.mainContent {
+  flex: 1;
+  margin-right: 160px; // RTL adjustment - reduced to match sidebar width
+  padding: var(--space-lg);
+  min-height: 100vh;
+  background: #EEEEEE;
+  transition: margin-right var(--transition-normal);
+}
+
+// Header section with logo and brand
+.sidebarHeader {
+  padding: var(--space-md) var(--space-sm); // Reduced padding
+  border-bottom: 1px solid rgba(212, 175, 55, 0.15);
+  background: var(--color-gray-400);
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm); // Reduced gap
+  min-height: 60px; // Reduced from 80px
+}
+
+.logoContainer {
+  flex-shrink: 0;
+  padding: 4px;
+  border-radius: 8px;
+  
+  // Style the logo if needed
+  img, svg {
+    width: 32px; // Reduced from 40px
+    height: 32px; // Reduced from 40px
+    filter: brightness(1.2);
+  }
+}
+
+.brandText {
+  display: flex;
+  flex-direction: column;
+  text-align: right;
+}
+
+.brandName {
+  font-size: var(--font-size-lg); // Reduced from --font-size-xl
+  font-weight: var(--font-weight-semibold);
+  color: $color-gold-light;
+  line-height: 1.2;
+}
+
+
+// Navigation section
+.sidebarNav {
+  flex: 1;
+  padding: var(--space-sm) 0; // Reduced padding
+  overflow-y: auto;
+  
+  // Custom scrollbar
+  &::-webkit-scrollbar {
+    width: 4px;
+  }
+  
+  &::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  
+  &::-webkit-scrollbar-thumb {
+    background: rgba(212, 175, 55, 0.3);
+    border-radius: 2px;
+    
+    &:hover {
+      background: rgba(212, 175, 55, 0.5);
+    }
+  }
+}
+
+.navSection {
+  margin-bottom: var(--space-md); // Reduced spacing
+}
+
+.sectionTitle {
+  font-size: var(--font-size-xs); // Already small, keeping it
+  color: var(--color-gray-600);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  padding: 0 var(--space-sm); // Reduced padding
+  margin-bottom: var(--space-xs); // Reduced margin
+  text-align: right;
+}
+
+// Navigation links with modern design
+.navLink {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm); // Reduced gap
+  padding: var(--space-xs) var(--space-sm); // Reduced padding
+  margin: 2px var(--space-xs); // Reduced margin
+  color: #555555;
+  font-size: var(--font-size-xs); // Reduced from --font-size-sm
+  font-weight: var(--font-weight-normal);
+  text-decoration: none;
+  border-radius: var(--border-radius-lg);
+  transition: all var(--transition-fast);
+  position: relative;
+  overflow: hidden;
+  
+  // Hover effects
+  &:hover {
+    background: rgba(212, 175, 55, 0.1);
+    color: $color-gold-dark;
+    transform: translateX(-4px);
+    font-weight: 700;
+    .navIcon {
+      transform: scale(1.1);
+      color: $color-gold-dark;
+    }
+    
+    .navIndicator {
+      opacity: 0.5;
+    }
+  }
+  
+  // Active state
+  &.active {
+    background: #55555562;
+    font-weight: 700;
+    box-shadow: var(--shadow-md);
+    
+    &::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      right: 0;
+      width: 4px;
+      height: 100%;
+      background: $color-gold-light;
+      border-radius: 0 2px 2px 0;
+    }
+    
+    .navIcon {
+      color: $color-gold-light;
+      transform: scale(1.1);
+    }
+    
+    .navIndicator {
+      opacity: 1;
+    }
+  }
+}
+
+// Action buttons styling - similar to navLink but for buttons
+.actionButton {
+  &:hover {
+    background: #55555562 !important;
+    transform: translateX(-4px);
+    
+    .navIcon {
+      transform: scale(1.1);
+      color: $color-gold-light;
+    }
+  }
+  
+  &:focus {
+    outline: none;
+    background: #55555562 !important;
+  }
+}
+
+.navIcon {
+  width: 16px; // Reduced from 20px
+  height: 16px; // Reduced from 20px
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: var(--font-size-sm); // Reduced from --font-size-base
+  transition: all var(--transition-fast);
+  flex-shrink: 0;
+  
+  i {
+    width: 100%;
+    text-align: center;
+  }
+}
+
+.navText {
+  flex: 1;
+  text-align: right;
+  white-space: nowrap;
+}
+
+.navIndicator {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: $color-gold-light;
+  opacity: 0;
+  transition: opacity var(--transition-fast);
+  flex-shrink: 0;
+}
+
+// Premium Search Section
+.sidebarSearch {
+  margin: var(--space-sm); // Reduced margin
+  position: relative;
+  
+  .searchInput {
+    width: 100%;
+    padding: var(--space-xs) var(--space-lg) var(--space-xs) var(--space-xs); // Reduced padding
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(212, 175, 55, 0.2);
+    border-radius: var(--border-radius-lg);
+    font-size: var(--font-size-xs); // Reduced from --font-size-sm
+    font-weight: var(--font-weight-normal);
+    outline: none;
+    transition: all var(--transition-fast);
+    cursor: pointer;
+    
+    &::placeholder {
+      text-align: right;
+    }
+    
+    &:hover {
+      background: rgba(255, 255, 255, 0.12);
+      border-color: rgba(212, 175, 55, 0.4);
+      
+      ~ .searchIcon {
+        color: $color-gold-light;
+        transform: translateY(-50%) scale(1.1);
+      }
+    }
+    
+    &:focus {
+      background: rgba(255, 255, 255, 0.15);
+      border-color: $color-gold-light;
+      box-shadow: 0 0 0 0.2rem rgba(212, 175, 55, 0.25);
+      
+      ~ .searchIcon {
+        color: $color-gold-light;
+        transform: translateY(-50%) scale(1.1);
+      }
+    }
+  }
+  
+  .searchIcon {
+    position: absolute;
+    right: var(--space-xs); // Reduced positioning
+    top: 50%;
+    transform: translateY(-50%);
+    color: rgba(255, 255, 255, 0.5);
+    z-index: 1;
+    transition: all var(--transition-fast);
+    pointer-events: none;
+  }
+}
+
+// Footer with user info
+.sidebarFooter {
+  padding: var(--space-sm); // Reduced padding
+  border-top: 1px solid rgba(212, 175, 55, 0.15);
+  background: rgba(212, 175, 55, 0.05);
+}
+
+.userCard {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm); // Reduced gap
+  padding: var(--space-xs); // Reduced padding
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: var(--border-radius-lg);
+  transition: all var(--transition-fast);
+  
+  &:hover {
+    background: rgba(255, 255, 255, 0.08);
+  }
+}
+
+.userAvatar {
+  width: 36px; // Reduced from 44px
+  height: 36px; // Reduced from 44px
+  border-radius: 50%;
+  background: linear-gradient(135deg, $color-gold 0%, $color-gold-dark 100%);
+  color: var(--color-primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: var(--font-weight-semibold);
+  font-size: var(--font-size-base); // Reduced from --font-size-lg
+  flex-shrink: 0;
+  box-shadow: var(--shadow-sm);
+  border: 2px solid rgba(255, 255, 255, 0.1);
+}
+
+.userDetails {
+  flex: 1;
+  text-align: right;
+  overflow: hidden;
+}
+
+.userName {
+  color: var(--color-white);
+  font-size: var(--font-size-sm); // Reduced from --font-size-base
+  font-weight: var(--font-weight-medium);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  margin-bottom: 2px;
+}
+
+.userRole {
+  color: rgba(255, 255, 255, 0.6);
+  font-size: var(--font-size-xs); // Reduced from --font-size-sm
+  font-weight: var(--font-weight-normal);
+}
+
+.logoutButton {
+  background: none;
+  border: none;
+  color: rgba(255, 255, 255, 0.6);
+  font-size: var(--font-size-base); // Reduced from --font-size-lg
+  cursor: pointer;
+  padding: var(--space-xs); // Reduced padding
+  border-radius: var(--border-radius);
+  transition: all var(--transition-fast);
+  flex-shrink: 0;
+  
+  i {
+      color: rgba(255, 255, 255, 0.6);
+
+  }
+
+  &:hover {
+    color: var(--color-danger);
+    background: rgba(220, 53, 69, 0.15);
+    transform: scale(1.05);
+  }
+  
+  &:active {
+    transform: scale(0.95);
+  }
+}
+
+// Responsive design
+// @media (max-width: $breakpoint-tablet) {
+//   .sidebar {
+//     width: 100%;
+//     transform: translateX(100%);
+    
+//     &.open {
+//       transform: translateX(0);
+//     }
+//   }
+  
+//   .mainContent {
+//     margin-right: 0;
+//     padding: var(--space-md);
+//   }
+// }
+
+// @media (max-width: $breakpoint-mobile) {
+//   .sidebarHeader {
+//     padding: var(--space-md);
+//     min-height: 70px;
+//   }
+  
+//   .brandName {
+//     font-size: var(--font-size-lg);
+//   }
+  
+//   .navLink {
+//     padding: var(--space-sm) var(--space-md);
+//     margin: 1px var(--space-xs);
+//   }
+  
+//   .userCard {
+//     padding: var(--space-xs);
+//   }
+  
+//   .userAvatar {
+//     width: 36px;
+//     height: 36px;
+//     font-size: var(--font-size-base);
+//   }
+// }
