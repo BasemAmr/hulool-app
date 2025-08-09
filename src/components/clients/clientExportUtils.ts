@@ -69,14 +69,7 @@ pdfMake.vfs = pdfFonts.vfs;
 //   }
 // };
 
-const formatCurrency = (amount: number | undefined): string => {
-  if (amount === undefined || amount === null) return '0.00 ريال';
-  return new Intl.NumberFormat('en-US', {
-    style: 'currency',
-    currency: 'SAR',
-    minimumFractionDigits: 2
-  }).format(amount);
-};
+// Removed unused formatCurrency helper (was triggering TS6133 warning)
 
 export const exportClientsToExcel = (clients: Client[]) => {
   // إنشاء مصنف جديد

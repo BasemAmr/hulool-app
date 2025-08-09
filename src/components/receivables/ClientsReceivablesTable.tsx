@@ -1,4 +1,3 @@
-import { useTranslation } from 'react-i18next';
 import { MessageSquare, CreditCard } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import Button from '../ui/Button';
@@ -20,7 +19,6 @@ interface ClientsReceivablesTableProps {
 }
 
 const ClientsReceivablesTable = ({ clients, isLoading }: ClientsReceivablesTableProps) => {
-  const { t } = useTranslation();
   const navigate = useNavigate();
   const openModal = useModalStore((state) => state.openModal);
 

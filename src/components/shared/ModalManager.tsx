@@ -18,6 +18,7 @@ import TaskSelectionModal from '../modals/TaskSelectionModal';
 import Button from '../ui/Button';
 import { useTranslation } from 'react-i18next';
 import ClientSearchModal from './ClientSearchModal';
+import { useGetClientReceivables } from '../../queries/receivableQueries';
 
 const ModalManager = () => {
   // Fix 1: Use individual selectors instead of selecting an object
@@ -55,8 +56,28 @@ const ModalManager = () => {
         // Add the manual receivable modal case
         return <ManualReceivableModal />;
 
-      case 'clientReceivables': // ADD THIS CASE
-        return <ClientReceivablesModal />;
+      case 'clientReceivables': {
+        // Create a wrapper component that fetches data and passes props
+        const ClientReceivablesWrapper = () => {
+          const { data: receivablesData, isLoading } = useGetClientReceivables(props.client?.id || 0);
+          
+          return (
+            <BaseModal
+              isOpen={isOpen}
+              onClose={closeModal}
+              title={`${t('receivables.title')} - ${props.client?.name || ''}`}
+            >
+              <ClientReceivablesModal
+                receivables={receivablesData?.receivables || []}
+                isLoading={isLoading}
+                clientName={props.client?.name || ''}
+              />
+            </BaseModal>
+          );
+        };
+        
+        return <ClientReceivablesWrapper />;
+      }
 
       case 'paymentForm':
         return <ReceivablePaymentModal />;

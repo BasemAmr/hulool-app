@@ -8,7 +8,7 @@ import type { Client } from '../api/types';
 import ClientsTable from '../components/clients/ClientsTable';
 import ClientSearch from '../components/clients/ClientSearch';
 import Button from '../components/ui/Button';
-import { PlusCircle, FileSpreadsheet, FileText, Printer } from 'lucide-react'; // Example icon
+import { PlusCircle, FileSpreadsheet, Printer } from 'lucide-react'; // Example icon
 import { exportClientsToExcel, printClientsReport } from '../components/clients/clientExportUtils';
 
 const AllClientsPage = () => {

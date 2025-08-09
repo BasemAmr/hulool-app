@@ -3,7 +3,6 @@ import { CreditCard } from 'lucide-react';
 import Button from '../ui/Button';
 import { useGetClientReceivables } from '../../queries/receivableQueries';
 import { useTranslation } from 'react-i18next';
-import type { Receivable } from '../../api/types';
 import { formatDate } from '../../utils/dateUtils';
 
 interface PaymentHistoryModalProps {
@@ -20,21 +19,21 @@ const PaymentHistoryModal = ({ isOpen, onClose, clientName, clientId }: PaymentH
   // Fetch real receivables data for this client
   const { data: receivablesData, isLoading, error } = useGetClientReceivables(clientId);
 
-  const receivables: Receivable[] = receivablesData?.receivables || [];
+  const receivables = receivablesData?.receivables || [];
 
-  // Calculate real stats from fetched data
+  // Calculate real stats from fetched data - StatementItems have debit/credit instead of amount/total_paid
   const stats = {
-    totalDue: receivables.reduce((sum, r) => sum + r.amount, 0),
-    totalPaid: receivables.reduce((sum, r) => sum + r.total_paid, 0),
-    totalRemaining: receivables.reduce((sum, r) => sum + r.remaining_amount, 0),
+    totalDue: receivables.reduce((sum, r) => sum + r.debit, 0),
+    totalPaid: receivables.reduce((sum, r) => sum + r.credit, 0),
+    totalRemaining: receivables.reduce((sum, r) => sum + (r.remaining_amount || 0), 0),
     totalCount: receivables.length
   };
 
-  // Extract all payments from receivables
-  const allPayments = receivables.flatMap(receivable => 
-    receivable.payments?.map(payment => ({
+  // Extract all payments from receivables - StatementItems have payments array
+  const allPayments = receivables.flatMap(statementItem => 
+    statementItem.payments?.map(payment => ({
       ...payment,
-      receivableDescription: receivable.description
+      receivableDescription: statementItem.description
     })) || []
   );
 
@@ -148,16 +147,16 @@ const PaymentHistoryModal = ({ isOpen, onClose, clientName, clientId }: PaymentH
                       </tr>
                     </thead>
                     <tbody>
-                      {receivables.map((receivable: Receivable) => (
-                        <tr key={receivable.id}>
-                          <td className="fw-semibold">{receivable.description}</td>
-                          <td className="text-warning fw-bold">{receivable.amount.toLocaleString()}</td>
-                          <td className="text-success fw-bold">{receivable.total_paid.toLocaleString()}</td>
-                          <td className="text-danger fw-bold">{receivable.remaining_amount.toLocaleString()}</td>
-                          <td>{formatDate(receivable.due_date)}</td>
+                      {receivables.map((statementItem) => (
+                        <tr key={statementItem.id}>
+                          <td className="fw-semibold">{statementItem.description}</td>
+                          <td className="text-warning fw-bold">{statementItem.debit.toLocaleString()}</td>
+                          <td className="text-success fw-bold">{statementItem.credit.toLocaleString()}</td>
+                          <td className="text-danger fw-bold">{(statementItem.remaining_amount || 0).toLocaleString()}</td>
+                          <td>{formatDate(statementItem.date)}</td>
                           <td>
                             <span className="badge bg-info">
-                              {receivable.remaining_amount === 0 ? 'مدفوع كاملاً' : 'جزئي'}
+                              {(statementItem.remaining_amount || 0) === 0 ? 'مدفوع كاملاً' : 'جزئي'}
                             </span>
                           </td>
                         </tr>
