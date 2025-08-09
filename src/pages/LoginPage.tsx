@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useAuthStore } from '../stores/authStore';
@@ -13,6 +13,14 @@ const LoginPage = () => {
   const navigate = useNavigate();
   const { t } = useTranslation();
   const loginAction = useAuthStore((state) => state.login);
+  const status = useAuthStore((state) => state.status);
+
+  // Redirect if already authenticated
+  useEffect(() => {
+    if (status === 'authenticated') {
+      navigate('/dashboard', { replace: true });
+    }
+  }, [status, navigate]);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();

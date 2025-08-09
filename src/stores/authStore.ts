@@ -31,7 +31,7 @@ export const useAuthStore = create<AuthState & AuthActions>()(
         set({ status: 'authenticated', user, token, nonce });
       },
       logout: () => {
-        set(initialState);
+        set({ ...initialState, status: 'unauthenticated' });
       },
       setNonce: (nonce) => {
         set({ nonce });
@@ -39,7 +39,17 @@ export const useAuthStore = create<AuthState & AuthActions>()(
     }),
     {
       name: 'hulool-auth-storage', // Key in localStorage
-      partialize: (state) => ({ token: state.token, user: state.user }), // Only persist token and user
+      partialize: (state) => ({ token: state.token, user: state.user, nonce: state.nonce }), // Persist token, user, and nonce
+      onRehydrateStorage: () => (state) => {
+        // After rehydration, set the correct status based on whether we have a token
+        if (state) {
+          if (state.token && state.user) {
+            state.status = 'authenticated';
+          } else {
+            state.status = 'unauthenticated';
+          }
+        }
+      },
     }
   )
 );
