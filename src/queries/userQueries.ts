@@ -56,7 +56,17 @@ export const useUpdateUserCapabilities = () => {
 export const useCurrentUserCapabilities = () => {
   return useQuery({
     queryKey: ['current-user-capabilities'],
-    queryFn: async (): Promise<{ tm_manage_users: boolean; tm_delete_any_task: boolean; tm_delete_any_receivable: boolean; tm_delete_any_payment: boolean }> => {
+    queryFn: async (): Promise<{ 
+      manage_options: boolean;
+      tm_manage_users: boolean; 
+      tm_delete_any_task: boolean; 
+      tm_delete_any_receivable: boolean; 
+      tm_delete_any_payment: boolean;
+      tm_view_receivables_amounts: boolean;
+      tm_view_paid_receivables: boolean;
+      tm_view_overdue_receivables: boolean;
+      tm_view_all_receivables: boolean;
+    }> => {
       const response = await apiClient.get('/users/current/capabilities');
       return response.data.data;
     },

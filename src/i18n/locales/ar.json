@@ -16,15 +16,25 @@
     "searchPlaceholder": "ابحث بالاسم أو رقم الهاتف...",
     "tableHeaderName": "اسم العميل",
     "tableHeaderPhone": "رقم الهاتف",
+    "tableHeaderType": "نوع العميل",
     "tableHeaderActions": "الإجراءات",
     "formNameLabel": "اسم العميل",
     "formPhoneLabel": "رقم الهاتف",
+    "formTypeLabel": "نوع العميل",
     "formDriveLabel": "رابط Google Drive",
     "formNotesLabel": "ملاحظات",
     "tableHeaderNotes": "الملاحظات",
     "deleteConfirmTitle": "تأكيد الحذف",
     "deleteConfirmMessage": "هل أنت متأكد من حذف العميل ؟ سيتم حذف جميع بياناته المرتبطة بشكل نهائي.",
-    "noOutstanding": "لا توجد مستحقات مالية غير مدفوعة."
+    "noOutstanding": "لا توجد مستحقات مالية غير مدفوعة.",
+    "filterByType": "تصفية بالنوع",
+    "allTypes": "جميع الأنواع",
+    "types": {
+      "government": "حكومي",
+      "realEstate": "عقاري", 
+      "accounting": "محاسبي",
+      "other": "أخرى"
+    }
   },
   "tasks": {
     "title": "إدارة المهام",
@@ -244,7 +254,11 @@
       "manageUsers": "إدارة المستخدمين",
       "deleteAnyTask": "حذف أي مهمة",
       "deleteAnyReceivable": "حذف أي مستحقات",
-      "deleteAnyPayment": "حذف أي دفعة"
+      "deleteAnyPayment": "حذف أي دفعة",
+      "viewReceivablesAmounts": " عرض مبالغ المستحقات في الصفحة الرئيسية",
+      "viewPaidReceivables": "عرض المستحقات المدفوعة",
+      "viewOverdueReceivables": "عرض المستحقات المتأخرة",
+      "viewAllReceivables": "عرض جميع المستحقات"
     },
     "capabilityUpdateSuccess": "تم تحديث الصلاحيات بنجاح",
     "capabilityUpdateError": "خطأ في تحديث الصلاحيات",

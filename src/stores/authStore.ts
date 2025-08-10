@@ -8,6 +8,7 @@ interface AuthState {
   user: User | null;
   token: string | null; // Base64 encoded 'username:password'
   nonce: string | null;
+  lastNonceRefresh: number | null; // Timestamp of last nonce refresh
 }
 
 interface AuthActions {
@@ -21,6 +22,7 @@ const initialState: AuthState = {
   user: null,
   token: null,
   nonce: null,
+  lastNonceRefresh: null,
 };
 
 export const useAuthStore = create<AuthState & AuthActions>()(
@@ -28,18 +30,23 @@ export const useAuthStore = create<AuthState & AuthActions>()(
     (set) => ({
       ...initialState,
       login: (token, user, nonce) => {
-        set({ status: 'authenticated', user, token, nonce });
+        set({ status: 'authenticated', user, token, nonce, lastNonceRefresh: Date.now() });
       },
       logout: () => {
         set({ ...initialState, status: 'unauthenticated' });
       },
       setNonce: (nonce) => {
-        set({ nonce });
+        set({ nonce, lastNonceRefresh: Date.now() });
       },
     }),
     {
       name: 'hulool-auth-storage', // Key in localStorage
-      partialize: (state) => ({ token: state.token, user: state.user, nonce: state.nonce }), // Persist token, user, and nonce
+      partialize: (state) => ({ 
+        token: state.token, 
+        user: state.user, 
+        nonce: state.nonce, 
+        lastNonceRefresh: state.lastNonceRefresh 
+      }), // Persist token, user, nonce, and lastNonceRefresh
       onRehydrateStorage: () => (state) => {
         // After rehydration, set the correct status based on whether we have a token
         if (state) {

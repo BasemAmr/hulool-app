@@ -16,6 +16,7 @@ import AllTasksTable from '../components/tasks/AllTasksTable';
 import ClientReceivablesTable from '../components/receivables/ClientReceivablesTable';
 import { exportToExcel, exportToPDF } from '../components/receivables/exportUtils';
 import type {  Task, Receivable, StatementItem } from '../api/types';
+import { useReceivablesPermissions } from '../hooks/useReceivablesPermissions';
 
 const ClientProfilePage = () => {
     const { t } = useTranslation();
@@ -26,6 +27,8 @@ const ClientProfilePage = () => {
 
     const mode = (searchParams.get('mode') || 'general') as 'general' | 'tasks' | 'receivables';
     const filter = (searchParams.get('filter') || 'all') as 'all' | 'unpaid' | 'paid';
+    
+    const { hasViewAllReceivablesPermission, hasViewAmountsPermission } = useReceivablesPermissions();
 
     // Apply client profile page background
     useEffect(() => {
@@ -36,14 +39,14 @@ const ClientProfilePage = () => {
     const { data: client, isLoading: isLoadingClient } = useGetClient(clientId);
     const { data: tasksData, isLoading: isLoadingTasks } = useGetTasks({ client_id: clientId });
     
-    // Fetch the new statement data for display
-    const { data: statementData, isLoading: isLoadingReceivables } = useGetClientReceivables(clientId);
+    // Fetch the new statement data for display - only if user has permission
+    const { data: statementData, isLoading: isLoadingReceivables } = useGetClientReceivables(clientId, hasViewAllReceivablesPermission);
 
-    // Fetch the raw receivables data specifically for export functions
-    const { data: rawReceivablesData } = useGetAllClientReceivables(clientId); 
+    // Fetch the raw receivables data specifically for export functions - only if user has permission
+    const { data: rawReceivablesData } = useGetAllClientReceivables(clientId, hasViewAllReceivablesPermission); 
     const clientRawReceivables = rawReceivablesData?.receivables || [];
 
-    const isLoading = isLoadingClient || isLoadingTasks || isLoadingReceivables;
+    const isLoading = isLoadingClient || isLoadingTasks || (hasViewAllReceivablesPermission && isLoadingReceivables);
 
     // Mutation hooks
     const deleteTaskMutation = useDeleteTask();
@@ -156,13 +159,21 @@ const ClientProfilePage = () => {
             )}
 
             {(mode === 'general' || mode === 'receivables') && (
-                <ClientReceivablesTable
-                    receivables={statementData?.receivables as StatementItem[] || []}
-                    isLoading={isLoadingReceivables}
-                    clientName={client.name}
-                    onSettlePayment={handleSettlePayment}
-                    filter={filter}
-                />
+                hasViewAllReceivablesPermission ? (
+                    <ClientReceivablesTable
+                        receivables={statementData?.receivables as StatementItem[] || []}
+                        isLoading={isLoadingReceivables}
+                        clientName={client.name}
+                        onSettlePayment={handleSettlePayment}
+                        filter={filter}
+                        hideAmounts={!hasViewAmountsPermission}
+                    />
+                ) : (
+                    <div className="alert alert-warning text-center">
+                        <h5>Access Denied</h5>
+                        <p>You don't have permission to view receivables for this client.</p>
+                    </div>
+                )
             )}
         </div>
     );

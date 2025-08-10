@@ -12,12 +12,14 @@ interface ClientReceivablesTableProps {
   clientName: string;
   onSettlePayment?: (receivable: Receivable) => void;
   filter?: 'all' | 'unpaid' | 'paid';
+  hideAmounts?: boolean;
 }
 
 const ClientReceivablesTable: React.FC<ClientReceivablesTableProps> = ({
   receivables: statementItems,
   isLoading,
   onSettlePayment,
+  hideAmounts = false,
 }) => {
   const { t } = useTranslation();
   const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set());
@@ -112,17 +114,17 @@ const ClientReceivablesTable: React.FC<ClientReceivablesTableProps> = ({
                       <td className="fw-medium">{item.description}</td>
                       <td className="text-center">
                         <span className="text-danger fw-semibold">
-                          {item.debit > 0 ? formatCurrency(item.debit) : '—'}
+                          {hideAmounts ? '***' : (item.debit > 0 ? formatCurrency(item.debit) : '—')}
                         </span>
                       </td>
                       <td className="text-center">
                         <span className="text-success fw-semibold">
-                          {item.credit > 0 ? formatCurrency(item.credit) : '—'}
+                          {hideAmounts ? '***' : (item.credit > 0 ? formatCurrency(item.credit) : '—')}
                         </span>
                       </td>
                       <td className="text-center">
                         <span className="fw-bold" style={{ color: 'var(--color-primary)' }}>
-                          {formatCurrency(item.balance)}
+                          {hideAmounts ? '***' : formatCurrency(item.balance)}
                         </span>
                       </td>
                       <td className="text-center small">{formatDate(item.date)}</td>

@@ -54,6 +54,10 @@ export interface UpdateUserCapabilitiesRequest {
     tm_delete_any_task?: boolean;
     tm_delete_any_receivable?: boolean;
     tm_delete_any_payment?: boolean;
+    tm_view_receivables_amounts?: boolean;
+    tm_view_paid_receivables?: boolean;
+    tm_view_overdue_receivables?: boolean;
+    tm_view_all_receivables?: boolean;
   };
 }
 
@@ -75,8 +79,8 @@ export interface Client {
   id: number;
   name: string;
   phone: string;
+  type: ClientType;
   google_drive_link: string;
-  notes?: string;
   created_at: string;
   updated_at: string;
   tasks_count?: Record<string, { count: number; amount: number }>; // For task counts by status
@@ -84,6 +88,9 @@ export interface Client {
   total_paid?: number;
   total_outstanding?: number;
 }
+
+// Client type enum
+export type ClientType = 'Government' | 'RealEstate' | 'Accounting' | 'Other';
 
 // --- NEW TYPES FOR PHASE 5 (Tasks & Requirements) ---
 export type TaskStatus = 'New' | 'Deferred' | 'Completed';
@@ -141,14 +148,22 @@ export interface Task {
 export interface ClientPayload {
   name: string;
   phone: string;
+  type: ClientType;
   google_drive_link: string;
-  notes?: string;
 }
 
 export interface ClientUnpaidAmounts {
   total_receivables: number;
   total_paid: number;
   total_unpaid: number;
+}
+
+// Client counts by type
+export interface ClientCountsByType {
+  Government: number;
+  RealEstate: number;
+  Accounting: number;
+  Other: number;
 }
 
 export interface TaskPayload {

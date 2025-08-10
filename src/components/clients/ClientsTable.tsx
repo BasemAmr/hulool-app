@@ -37,7 +37,7 @@ const ClientsTable = ({ clients, isLoading, onEdit, onAddTask, onViewReceivables
           <tr>
             <th>{t('clients.tableHeaderName')}</th>
             <th>{t('clients.tableHeaderPhone')}</th>
-            <th>{t('clients.tableHeaderNotes')}</th>
+            <th>{t('clients.tableHeaderType')}</th>
             <th className="text-end">{t('clients.tableHeaderActions')}</th>
           </tr>
         </thead>
@@ -68,6 +68,26 @@ const ClientRow = ({ client, onEdit, onAddTask, onViewReceivables }: ClientRowPr
   const { t } = useTranslation();
   // Remove the individual query to improve performance
   // const { data: unpaidAmounts } = useGetClientUnpaidAmounts(client.id);
+
+  const getTypeLabel = (type: string) => {
+    const typeLabels = {
+      Government: t('clients.types.government'),
+      RealEstate: t('clients.types.realEstate'),
+      Accounting: t('clients.types.accounting'),
+      Other: t('clients.types.other')
+    };
+    return typeLabels[type as keyof typeof typeLabels] || type;
+  };
+
+  const getTypeBadgeClass = (type: string) => {
+    const badgeClasses = {
+      Government: 'bg-primary',
+      RealEstate: 'bg-success',
+      Accounting: 'bg-warning',
+      Other: 'bg-secondary'
+    };
+    return badgeClasses[type as keyof typeof badgeClasses] || 'bg-secondary';
+  };
 
   const formatPhoneForWhatsApp = (phone: string) => {
     // Remove any non-digit characters and ensure it starts with +966
@@ -116,8 +136,8 @@ const ClientRow = ({ client, onEdit, onAddTask, onViewReceivables }: ClientRowPr
         </div>
       </td>
       <td>
-        <span className="text-muted small">
-          {client.notes ? (client.notes.length > 50 ? `${client.notes.substring(0, 50)}...` : client.notes) : '-'}
+        <span className={`badge ${getTypeBadgeClass(client.type)} text-white`}>
+          {getTypeLabel(client.type)}
         </span>
       </td>
       <td className="text-end">

@@ -1,10 +1,10 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import apiClient from '../api/apiClient';
-import type { ApiResponse, Client, ClientPayload, ClientPaginatedData, ClientUnpaidAmounts } from '../api/types';
+import type { ApiResponse, Client, ClientPayload, ClientPaginatedData, ClientUnpaidAmounts, ClientCountsByType, ClientType } from '../api/types';
 
 // --- Query Functions ---
 // Fetch paginated clients (normal list)
-const fetchClients = async (search: string): Promise<ClientPaginatedData> => {
+const fetchClients = async (search: string, typeFilter?: ClientType): Promise<ClientPaginatedData> => {
     // If search is present, use the dedicated search endpoint
     if (search && search.trim().length > 0) {
         const { data } = await apiClient.get<ApiResponse<ClientPaginatedData>>('/clients/search', {
@@ -13,8 +13,12 @@ const fetchClients = async (search: string): Promise<ClientPaginatedData> => {
         return data.data;
     }
     // Otherwise, fetch all clients with stats for unpaid amounts
+    const params: any = { page: 1, per_page: 1000, include_stats: true };
+    if (typeFilter) {
+        params.type = typeFilter;
+    }
     const { data } = await apiClient.get<ApiResponse<ClientPaginatedData>>('/clients', {
-        params: { page: 1, per_page: 1000, include_stats: true },
+        params,
     });
     return data.data;
 };
@@ -51,11 +55,27 @@ const fetchClientUnpaidAmounts = async (clientId: number): Promise<ClientUnpaidA
     return data.data;
 };
 
+const fetchClientCountsByType = async (): Promise<ClientCountsByType> => {
+    const { data } = await apiClient.get<ApiResponse<ClientCountsByType>>('/clients/counts/types');
+    return data.data;
+};
+
+const exportClients = async (type?: ClientType): Promise<{ clients: Client[]; type?: ClientType; count: number }> => {
+    const params: any = {};
+    if (type) {
+        params.type = type;
+    }
+    const { data } = await apiClient.get<ApiResponse<{ clients: Client[]; type?: ClientType; count: number }>>('/clients/export', {
+        params,
+    });
+    return data.data;
+};
+
 // --- React Query Hooks ---
-export const useGetClients = (search: string) => {
+export const useGetClients = (search: string, typeFilter?: ClientType) => {
   return useQuery({
-    queryKey: ['clients', search],
-    queryFn: () => fetchClients(search),
+    queryKey: ['clients', search, typeFilter],
+    queryFn: () => fetchClients(search, typeFilter),
     placeholderData: (previousData) => previousData,
   });
 };
@@ -112,5 +132,22 @@ export const useGetClientUnpaidAmounts = (clientId: number) => {
         queryKey: ['clientUnpaidAmounts', clientId],
         queryFn: () => fetchClientUnpaidAmounts(clientId),
         enabled: !!clientId,
+    });
+};
+
+export const useGetClientCountsByType = () => {
+    return useQuery({
+        queryKey: ['clientCountsByType'],
+        queryFn: fetchClientCountsByType,
+    });
+};
+
+export const useExportClients = () => {
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: exportClients,
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['clients'] });
+        },
     });
 };

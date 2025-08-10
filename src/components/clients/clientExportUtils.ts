@@ -72,6 +72,17 @@ pdfMake.vfs = pdfFonts.vfs;
 // Removed unused formatCurrency helper (was triggering TS6133 warning)
 
 export const exportClientsToExcel = (clients: Client[]) => {
+  // Helper function to get type label in Arabic
+  const getTypeLabel = (type: string) => {
+    const typeLabels = {
+      Government: 'حكومي',
+      RealEstate: 'عقاري',
+      Accounting: 'محاسبي',
+      Other: 'أخرى'
+    };
+    return typeLabels[type as keyof typeof typeLabels] || type;
+  };
+
   // إنشاء مصنف جديد
   const wb = XLSX.utils.book_new();
   
@@ -83,13 +94,13 @@ export const exportClientsToExcel = (clients: Client[]) => {
     [""], // صف فارغ
     
     // رؤوس الجدول
-    ["اسم العميل", "رقم الهاتف", "الملاحظات", "المبلغ المستحق (ريال)"],
+    ["اسم العميل", "رقم الهاتف", "نوع العميل", "المبلغ المستحق (ريال)"],
     
     // صفوف البيانات
     ...clients.map(client => [
       client.name,
       client.phone,
-      client.notes || '-',
+      getTypeLabel(client.type),
       client.total_outstanding || 0
     ]),
     
@@ -107,7 +118,7 @@ export const exportClientsToExcel = (clients: Client[]) => {
   ws['!cols'] = [
     { width: 25 }, // اسم العميل
     { width: 18 }, // رقم الهاتف
-    { width: 35 }, // الملاحظات
+    { width: 15 }, // نوع العميل
     { width: 20 }  // المبلغ المستحق
   ];
 
@@ -234,6 +245,17 @@ export const exportClientsToExcel = (clients: Client[]) => {
 // };
 
 export const printClientsReport = (clients: Client[]) => {
+  // Helper function to get type label in Arabic
+  const getTypeLabel = (type: string) => {
+    const typeLabels = {
+      Government: 'حكومي',
+      RealEstate: 'عقاري',
+      Accounting: 'محاسبي',
+      Other: 'أخرى'
+    };
+    return typeLabels[type as keyof typeof typeLabels] || type;
+  };
+
   const printWindow = window.open('', '_blank');
   if (!printWindow) return;
 
@@ -333,7 +355,7 @@ export const printClientsReport = (clients: Client[]) => {
                 <tr>
                     <th>اسم العميل</th>
                     <th>رقم الهاتف</th>
-                    <th>الملاحظات</th>
+                    <th>نوع العميل</th>
                     <th>المبلغ المستحق (ريال)</th>
                 </tr>
             </thead>
@@ -342,7 +364,7 @@ export const printClientsReport = (clients: Client[]) => {
                     <tr>
                         <td>${client.name}</td>
                         <td>${client.phone}</td>
-                        <td>${client.notes || '-'}</td>
+                        <td>${getTypeLabel(client.type)}</td>
                         <td class="amount">${new Intl.NumberFormat('en-US', {
                           style: 'currency',
                           currency: 'SAR'

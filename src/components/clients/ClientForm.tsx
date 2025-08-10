@@ -4,6 +4,7 @@ import { useCreateClient, useUpdateClient } from '../../queries/clientQueries';
 import type { Client, ClientPayload } from '../../api/types';
 import Button from '../ui/Button';
 import Input from '../ui/Input';
+import Select from '../ui/Select';
 
 interface ClientFormProps {
   clientToEdit?: Client;
@@ -22,14 +23,21 @@ const ClientForm = ({ clientToEdit, onSuccess }: ClientFormProps) => {
     defaultValues: {
       name: clientToEdit?.name || '',
       phone: clientToEdit?.phone || '',
+      type: clientToEdit?.type || 'Other',
       google_drive_link: clientToEdit?.google_drive_link || '',
-      notes: clientToEdit?.notes || '',
     },
   });
 
   const createMutation = useCreateClient();
   const updateMutation = useUpdateClient();
   const mutation = isEditMode ? updateMutation : createMutation;
+
+  const clientTypeOptions = [
+    { value: 'Government', label: t('clients.types.government') },
+    { value: 'RealEstate', label: t('clients.types.realEstate') },
+    { value: 'Accounting', label: t('clients.types.accounting') },
+    { value: 'Other', label: t('clients.types.other') },
+  ];
 
   const onSubmit = (data: ClientPayload) => {
     if (isEditMode) {
@@ -54,8 +62,15 @@ const ClientForm = ({ clientToEdit, onSuccess }: ClientFormProps) => {
         label={t('clients.formPhoneLabel')}
         {...register('phone', { required: true })}
         error={errors.phone ? 'This field is required' : undefined}
-            />
-            <Input
+      />
+      <Select
+        label={t('clients.formTypeLabel')}
+        options={clientTypeOptions}
+        placeholder={t('common.select')}
+        {...register('type', { required: true })}
+        error={errors.type ? t('common.required') : undefined}
+      />
+      <Input
         label={t('clients.formDriveLabel')}
         {...register('google_drive_link', {
           required: t('common.required') as string,
@@ -65,12 +80,6 @@ const ClientForm = ({ clientToEdit, onSuccess }: ClientFormProps) => {
           }
         })}
         error={errors.google_drive_link ? (errors.google_drive_link.message as string) : undefined}
-            />
-      <Input
-        label={t('clients.formNotesLabel')}
-        type="textarea"
-        {...register('notes')}
-        error={errors.notes ? 'This field is required' : undefined}
       />
       <footer className="modal-footer">
         <Button

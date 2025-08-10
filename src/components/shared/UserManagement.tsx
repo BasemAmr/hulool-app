@@ -202,7 +202,11 @@ const UserManagement: React.FC = () => {
                   { key: 'tm_manage_users', label: t('users.capability.manageUsers') || 'إدارة المستخدمين' },
                   { key: 'tm_delete_any_task', label: t('users.capability.deleteAnyTask') || 'حذف أي مهمة' },
                   { key: 'tm_delete_any_receivable', label: t('users.capability.deleteAnyReceivable') || 'حذف أي مستحقات' },
-                  { key: 'tm_delete_any_payment', label: t('users.capability.deleteAnyPayment') || 'حذف أي دفعة' }
+                  { key: 'tm_delete_any_payment', label: t('users.capability.deleteAnyPayment') || 'حذف أي دفعة' },
+                  { key: 'tm_view_receivables_amounts', label: t('users.capability.viewReceivablesAmounts') || 'عرض مبالغ المستحقات' },
+                  { key: 'tm_view_paid_receivables', label: t('users.capability.viewPaidReceivables') || 'عرض المستحقات المسددة' },
+                  { key: 'tm_view_overdue_receivables', label: t('users.capability.viewOverdueReceivables') || 'عرض المستحقات المتأخرة' },
+                  { key: 'tm_view_all_receivables', label: t('users.capability.viewAllReceivables') || 'عرض جميع المستحقات' }
                 ].map(capability => (
                   <label key={capability.key} className={styles.capabilityItem}>
                     <input

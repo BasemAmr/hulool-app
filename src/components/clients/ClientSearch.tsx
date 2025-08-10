@@ -17,7 +17,14 @@ const ClientSearch = ({ value, onChange, className = '' }: ClientSearchProps) =>
         placeholder={t('clients.searchPlaceholder')}
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        className="form-control-sm"
+        className="form-control m-0"
+        style={{
+          borderRadius: '6px',
+          border: '1px solid #ddd',
+          fontSize: '14px',
+          padding: '8px 12px',
+          minWidth: '200px'
+        }}
       />
     </div>
   );

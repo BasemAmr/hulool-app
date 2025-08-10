@@ -70,54 +70,41 @@ const DashboardTaskCard = ({ task, index = 0 }: DashboardTaskCardProps) => {
         >
             {/* Header - Client Info */}
             <div className="task-header p-2 border-bottom" style={{ borderColor: '#e5e7eb' }}>
+                {/* Single row - Name, Phone, and Action buttons */}
                 <div className="d-flex justify-content-between align-items-center">
-                    <div className="client-info flex-1">
-                        <h6 className="client-name mb-1 fw-semibold" style={{
+                    <div className="d-flex align-items-center gap-3">
+                        <h6 className="client-name mb-0 fw-semibold" style={{
                             fontSize: '14px',
                             color: '#374151'
                         }}>
                             {task.client.name}
                         </h6>
-                        <div className="d-flex align-items-center gap-2">
-                            <span style={{
-                                fontSize: '12px',
-                                color: '#6b7280'
-                            }}>
-                                {task.client.phone}
-                            </span>
-                            <a
-                                href={getWhatsAppLink(task.client.phone)}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="btn btn-sm p-1"
-                                style={{
-                                    backgroundColor: '#f0fdf7',
-                                    color: '#22c55e',
-                                    border: '1px solid #d1fae5',
-                                    borderRadius: '6px',
-                                    fontSize: '10px'
-                                }}
-                                title="WhatsApp"
-                            >
-                                <MessageCircle size={12} />
-                            </a>
-                        </div>
+                        <span style={{
+                            fontSize: '12px',
+                            color: '#6b7280'
+                        }}>
+                            {task.client.phone}
+                        </span>
                     </div>
-                    <div className="client-actions d-flex gap-1">
-                        <Link
-                            to={`/clients/${task.client.id}`}
+                    
+                    {/* Action buttons */}
+                    <div className="d-flex gap-1">
+                        <a
+                            href={getWhatsAppLink(task.client.phone)}
+                            target="_blank"
+                            rel="noopener noreferrer"
                             className="btn btn-sm p-1"
                             style={{
-                                fontSize: '10px',
-                                backgroundColor: '#f0f9ff',
-                                color: '#3b82f6',
-                                border: '1px solid #e0f2fe',
-                                borderRadius: '6px'
+                                backgroundColor: '#f0fdf7',
+                                color: '#22c55e',
+                                border: '1px solid #d1fae5',
+                                borderRadius: '6px',
+                                fontSize: '10px'
                             }}
-                            title="ملف العميل"
+                            title="WhatsApp"
                         >
-                            <User size={12} />
-                        </Link>
+                            <MessageCircle size={12} />
+                        </a>
                         <Link
                             to={`/clients/${task.client.id}?mode=receivables`}
                             className="btn btn-sm p-1"
@@ -132,6 +119,38 @@ const DashboardTaskCard = ({ task, index = 0 }: DashboardTaskCardProps) => {
                         >
                             <DollarSign size={12} />
                         </Link>
+                        <Link
+                            to={`/clients/${task.client.id}`}
+                            className="btn btn-sm p-1"
+                            style={{
+                                fontSize: '10px',
+                                backgroundColor: '#f0f9ff',
+                                color: '#3b82f6',
+                                border: '1px solid #e0f2fe',
+                                borderRadius: '6px'
+                            }}
+                            title="ملف العميل"
+                        >
+                            <User size={12} />
+                        </Link>
+                        <a
+                            href={task.client.google_drive_link}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="btn btn-sm p-1"
+                            style={{
+                                fontSize: '10px',
+                                backgroundColor: '#fefce8',
+                                color: '#eab308',
+                                border: '1px solid #fef3c7',
+                                borderRadius: '6px'
+                            }}
+                            title="Google Drive"
+                        >
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor">
+                                <path d="M6.5 2l6 10h-12l6-10zm11.5 8l-4-7 4-1 4 8h-4zm-4 3h12l-6 10-6-10z"/>
+                            </svg>
+                        </a>
                     </div>
                 </div>
             </div>

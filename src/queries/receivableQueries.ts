@@ -81,27 +81,28 @@ export const useCreateManualReceivable = () => {
 };
 
 // This hook now correctly returns data of type `ClientStatementPaginatedData | undefined`
-export const useGetClientReceivables = (clientId: number) => {
+export const useGetClientReceivables = (clientId: number, enabled: boolean = true) => {
   return useQuery({
     queryKey: ['receivables', 'client', clientId],
     queryFn: () => fetchClientReceivables(clientId),
-    enabled: !!clientId,
+    enabled: !!clientId && enabled,
   });
 };
 
 // NEW: Hook to get all raw receivables for a client
-export const useGetAllClientReceivables = (clientId: number) => {
+export const useGetAllClientReceivables = (clientId: number, enabled: boolean = true) => {
     return useQuery({
         queryKey: ['receivables', 'client', clientId, 'all'],
         queryFn: () => fetchAllClientReceivables(clientId),
-        enabled: !!clientId,
+        enabled: !!clientId && enabled,
     });
 };
 
-export const useGetClientsReceivablesSummary = () => {
+export const useGetClientsReceivablesSummary = (enabled: boolean = true) => {
   return useQuery({
     queryKey: ['receivables', 'clients-summary'],
     queryFn: fetchClientsReceivablesSummary,
+    enabled,
   });
 };
 
@@ -113,9 +114,10 @@ export const useGetPayableReceivables = (clientId?: number | null) => {
   });
 }
 
-export const useGetFilteredReceivables = (filter: 'paid' | 'overdue') => {
+export const useGetFilteredReceivables = (filter: 'paid' | 'overdue', enabled: boolean = true) => {
   return useQuery({
     queryKey: ['receivables', 'filtered', filter],
     queryFn: () => fetchFilteredReceivables(filter),
+    enabled,
   });
 }

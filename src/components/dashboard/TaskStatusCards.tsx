@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom';
 import { Clock, PauseCircle, CheckCircle, AlertTriangle } from 'lucide-react';
 import SaudiRiyalIcon from '../ui/SaudiRiyalIcon';
+import { useReceivablesPermissions } from '../../hooks/useReceivablesPermissions';
 
 interface TaskStatusCardsProps {
   stats: {
@@ -16,6 +17,7 @@ interface TaskStatusCardsProps {
 }
 
 const TaskStatusCards = ({ stats, totalPaidAmount = 0, isLoading }: TaskStatusCardsProps) => {
+    const { hasViewAmountsPermission, hasViewPaidReceivablesPermission, hasViewOverdueReceivablesPermission } = useReceivablesPermissions();
     const cardData = [
         { 
             to: '/tasks?status=New', 
@@ -62,24 +64,24 @@ const TaskStatusCards = ({ stats, totalPaidAmount = 0, isLoading }: TaskStatusCa
             to: '/receivables/paid', 
             icon: SaudiRiyalIcon, 
             label: 'مستحقات مسددة', 
-            value: totalPaidAmount, 
+            value: hasViewAmountsPermission ? totalPaidAmount : '***', 
                         bgColor: '#19AA41', // Orange/yellow like in the image
 
             borderColor: '#f0a500',
             iconColor: '#ffffff',
             textColor: '#ffffff',
-            isClickable: true
+            isClickable: hasViewPaidReceivablesPermission
         },
         { 
             to: '/receivables/overdue', 
             icon: SaudiRiyalIcon, 
             label: 'مستحقات متأخرة', 
-            value: stats.total_unpaid_amount || 0, 
+            value: hasViewAmountsPermission ? (stats.total_unpaid_amount || 0) : '***', 
             bgColor: '#F80000', // Light cream/beige like in the image
             borderColor: '#ffe4b5',
             iconColor: '#ffffff',
             textColor: '#ffffff',
-            isClickable: true
+            isClickable: hasViewOverdueReceivablesPermission
         }
     ];
     
@@ -167,8 +169,8 @@ const TaskStatusCards = ({ stats, totalPaidAmount = 0, isLoading }: TaskStatusCa
                                     lineHeight: '1.2'
                                 }}
                             >
-                                {(card.label === 'المبالغ المدفوعة' || card.label === 'مستحقات متأخرة') 
-                                    ? card.value.toLocaleString('ar-SA') 
+                                {(card.label === 'مستحقات مسددة' || card.label === 'مستحقات متأخرة') 
+                                    ? (typeof card.value === 'number' ? card.value.toLocaleString('ar-SA') : card.value)
                                     : card.value}
                             </h4>
                             <p 
