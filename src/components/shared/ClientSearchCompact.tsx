@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useDebounce } from 'use-debounce';
 import { useSearchClients, useCreateClient } from '../../queries/clientQueries';
-import type { Client } from '../../api/types';
+import type { Client, ClientType } from '../../api/types';
 import Input from '../ui/Input';
 import Button from '../ui/Button';
 import { User, Plus, Loader2 } from 'lucide-react';
@@ -20,6 +20,7 @@ const ClientSearchCompact = ({ onSelect, onCreate, label, disabled }: ClientSear
   const [showCreate, setShowCreate] = useState(false);
   const [newClientName, setNewClientName] = useState('');
   const [newClientPhone, setNewClientPhone] = useState('');
+  const [newClientType, setNewClientType] = useState<ClientType>('Other');
   const [newClientDriveLink, setNewClientDriveLink] = useState('');
   const createClientMutation = useCreateClient();
 
@@ -35,12 +36,13 @@ const ClientSearchCompact = ({ onSelect, onCreate, label, disabled }: ClientSear
   const handleCreate = () => {
     if (!newClientName || !newClientPhone || !newClientDriveLink) return;
     createClientMutation.mutate(
-      { name: newClientName, phone: newClientPhone, google_drive_link: newClientDriveLink },
+      { name: newClientName, phone: newClientPhone, type: newClientType, google_drive_link: newClientDriveLink },
       {
         onSuccess: (client) => {
           setShowCreate(false);
           setNewClientName('');
           setNewClientPhone('');
+          setNewClientType('Other');
           setNewClientDriveLink('');
           onCreate?.(client);
           onSelect(client);
@@ -114,6 +116,19 @@ const ClientSearchCompact = ({ onSelect, onCreate, label, disabled }: ClientSear
             onChange={e => setNewClientPhone(e.target.value)}
             className="mb-2"
           />
+          <div className="mb-2">
+            <label className="form-label">نوع العميل</label>
+            <select 
+              className="form-select"
+              value={newClientType}
+              onChange={e => setNewClientType(e.target.value as ClientType)}
+            >
+              <option value="Government">حكومي</option>
+              <option value="RealEstate">عقاري</option>
+              <option value="Accounting">محاسبي</option>
+              <option value="Other">أخرى</option>
+            </select>
+          </div>
           <Input
             label="رابط جوجل درايف"
             value={newClientDriveLink}

@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
-import { useGetClients, useExportClients } from '../queries/clientQueries';
+import { useGetClients, /*useExportClients*/ } from '../queries/clientQueries';
 import { useModalStore } from '../stores/modalStore';
 import { applyPageBackground } from '../utils/backgroundUtils';
 import type { Client, ClientType } from '../api/types';
@@ -26,7 +26,7 @@ const AllClientsPage = () => {
   }, []);
 
   const { data, isLoading } = useGetClients(search, typeFilter);
-  const exportMutation = useExportClients();
+  // const exportMutation = useExportClients();
 
   const typeOptions = [
     { value: '', label: t('clients.allTypes') },
