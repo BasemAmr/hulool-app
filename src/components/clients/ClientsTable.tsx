@@ -10,9 +10,10 @@ interface ClientsTableProps {
   onEdit: (client: Client) => void;
   onAddTask: (client: Client) => void;
   onViewReceivables: (client: Client) => void;
+  canViewReceivables?: boolean;
 }
 
-const ClientsTable = ({ clients, isLoading, onEdit, onAddTask, onViewReceivables }: ClientsTableProps) => {
+const ClientsTable = ({ clients, isLoading, onEdit, onAddTask, onViewReceivables, canViewReceivables = true }: ClientsTableProps) => {
   const { t } = useTranslation();
 
   if (isLoading) {
@@ -49,6 +50,7 @@ const ClientsTable = ({ clients, isLoading, onEdit, onAddTask, onViewReceivables
               onEdit={onEdit}
               onAddTask={onAddTask}
               onViewReceivables={onViewReceivables}
+              canViewReceivables={canViewReceivables}
             />
           ))}
         </tbody>
@@ -62,9 +64,10 @@ interface ClientRowProps {
   onEdit: (client: Client) => void;
   onAddTask: (client: Client) => void;
   onViewReceivables: (client: Client) => void;
+  canViewReceivables: boolean;
 }
 
-const ClientRow = ({ client, onEdit, onAddTask, onViewReceivables }: ClientRowProps) => {
+const ClientRow = ({ client, onEdit, onAddTask, onViewReceivables, canViewReceivables }: ClientRowProps) => {
   const { t } = useTranslation();
   // Remove the individual query to improve performance
   // const { data: unpaidAmounts } = useGetClientUnpaidAmounts(client.id);
@@ -168,24 +171,26 @@ const ClientRow = ({ client, onEdit, onAddTask, onViewReceivables }: ClientRowPr
             <ExternalLink size={16} />
           </Button>
           </div>
-          {client.total_outstanding && client.total_outstanding > 0 ? (
-            <Button 
-              variant="secondary" 
-              size="sm" 
-              onClick={handleUnpaidAmountsClick}
-              title={`إجمالي المستحقات: ${Number(client.total_outstanding).toFixed(2)}`}
-            >
-              إجمالي المستحقات: {Number(client.total_outstanding).toFixed(2)}
-            </Button>
-          ) : (
-            <Button 
-              variant="secondary" 
-              size="sm" 
-              disabled
-              title={t('clients.noOutstanding')}
-            >
-              {t('clients.noOutstanding')}
-            </Button>
+          {canViewReceivables && (
+            client.total_outstanding && client.total_outstanding > 0 ? (
+              <Button 
+                variant="secondary" 
+                size="sm" 
+                onClick={handleUnpaidAmountsClick}
+                title={`إجمالي المستحقات: ${Number(client.total_outstanding).toFixed(2)}`}
+              >
+                إجمالي المستحقات: {Number(client.total_outstanding).toFixed(2)}
+              </Button>
+            ) : (
+              <Button 
+                variant="secondary" 
+                size="sm" 
+                disabled
+                title={t('clients.noOutstanding')}
+              >
+                {t('clients.noOutstanding')}
+              </Button>
+            )
           )}
         </div>
       </td>

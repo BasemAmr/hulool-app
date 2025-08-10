@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import { useGetClients, /*useExportClients*/ } from '../queries/clientQueries';
 import { useModalStore } from '../stores/modalStore';
+import { useReceivablesPermissions } from '../hooks/useReceivablesPermissions';
 import { applyPageBackground } from '../utils/backgroundUtils';
 import type { Client, ClientType } from '../api/types';
 import ClientsTable from '../components/clients/ClientsTable';
@@ -16,6 +17,7 @@ const AllClientsPage = () => {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const openModal = useModalStore((state) => state.openModal);
+  const { hasAnyReceivablesPermission } = useReceivablesPermissions();
 
   const [search, setSearch] = useState('');
   const [typeFilter, setTypeFilter] = useState<ClientType | undefined>(undefined);
@@ -160,6 +162,7 @@ const AllClientsPage = () => {
             onEdit={handleEditClient}
             onAddTask={handleAddTaskToClient}
             onViewReceivables={handleViewReceivables}
+            canViewReceivables={hasAnyReceivablesPermission}
           />
           {/* Pagination component will go here later */}
         </div>
