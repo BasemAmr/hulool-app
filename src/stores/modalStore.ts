@@ -3,7 +3,7 @@ import type { Client, Task, Receivable, Tag } from '../api/types';
 
 // Define all possible modals in the app.
 // We will add more types like 'task' in later phases.
-export type ModalType = 'clientForm' | 'confirmDelete' | 'taskForm' | 'requirements' | 'manualReceivable' | 'clientReceivables' | 'paymentForm' | 'paymentHistory' | 'clientSearch' | 'tagForm' | 'tagManagement' | 'selectReceivableForPayment' | 'taskCompletion' | 'amountDetails' | 'taskSelection';
+export type ModalType = 'clientForm' | 'confirmDelete' | 'taskForm' | 'requirements' | 'manualReceivable' | 'clientReceivables' | 'paymentForm' | 'paymentHistory' | 'clientSearch' | 'tagForm' | 'tagManagement' | 'selectReceivableForPayment' | 'taskCompletion' | 'amountDetails' | 'taskSelection' | 'taskDetails';
 
 // Define the props each modal type can receive.
 interface ModalProps {
@@ -34,6 +34,7 @@ interface ModalProps {
   taskCompletion: { task: Task };
   amountDetails: { task: Task };
   taskSelection: { tagId: number };
+  taskDetails: { task: Task };
 }
 
 interface ModalState {

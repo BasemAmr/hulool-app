@@ -75,10 +75,12 @@ const ClientReceivablesTable: React.FC<ClientReceivablesTableProps> = ({
     style: 'currency', currency: 'SAR', minimumFractionDigits: 2
   }).format(amount);
 
+  const totalCredit = statementItems.reduce((sum, item) => sum + item.credit, 0);
+  const totalDebit = statementItems.reduce((sum, item) => sum + item.debit, 0);
   const totals = {
-    totalDebit: statementItems.reduce((sum, item) => sum + item.debit, 0),
-    totalCredit: statementItems.reduce((sum, item) => sum + item.credit, 0),
-    totalNet: statementItems.length > 0 ? statementItems[statementItems.length - 1].balance : 0,
+    totalDebit,
+    totalCredit,
+    totalNet: totalCredit - totalDebit,
   };
 
   return (

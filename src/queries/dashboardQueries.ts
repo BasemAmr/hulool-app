@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import apiClient from '../api/apiClient';
-import type { ApiResponse, Task } from '../api/types';
+import type { ApiResponse, Task,Client } from '../api/types';
 
 // --- Types for dashboard-specific data ---
 interface DashboardStats {
@@ -16,7 +16,23 @@ interface DashboardStats {
   total_amount: number; // Total amount across all clients
 }
 
+export interface ClientWithTasksAndStats {
+  client: Client;
+  tasks: Task[];
+  stats: {
+    new_tasks_count: number;
+    deferred_tasks_count: number;
+    completed_tasks_count: number;
+    total_outstanding: number;
+  };
+}
 
+export interface GroupedClientsResponse {
+  Government: ClientWithTasksAndStats[];
+  Accounting: ClientWithTasksAndStats[];
+  'Real Estate': ClientWithTasksAndStats[];
+  Other: ClientWithTasksAndStats[];
+}
 
 // --- API Functions ---
 const fetchDashboardStats = async (): Promise<DashboardStats> => {
@@ -38,6 +54,14 @@ const fetchTotalPaidAmount = async (): Promise<number> => {
     const { data } = await apiClient.get<ApiResponse<{ total_paid: number }>>('/payments/total-paid');
     if (!data.success) throw new Error(data.message || 'Failed to fetch total paid amount.');
     return data.data.total_paid;
+}
+
+
+const fetchClientsWithActiveTasks = async (): Promise<GroupedClientsResponse> => {
+    // Note: The endpoint is under /clients, not /tasks
+    const { data } = await apiClient.get<ApiResponse<GroupedClientsResponse>>('/dashboard/clients-with-active-tasks');
+    if (!data.success) throw new Error(data.message || 'Failed to fetch dashboard client tasks.');
+    return data.data;
 }
 
 // --- React Query Hooks ---
@@ -66,5 +90,14 @@ export const useGetTotalPaidAmount = () => {
         queryFn: fetchTotalPaidAmount,
         staleTime: 30 * 1000, // Keep fresh for 30 seconds
         // refetchOnWindowFocus: false (inherited)
+    });
+};
+
+// Add this new hook
+export const useGetClientsWithActiveTasks = () => {
+    return useQuery<GroupedClientsResponse, Error>({
+        queryKey: ['dashboard', 'clientsWithActiveTasks'],
+        queryFn: fetchClientsWithActiveTasks,
+        staleTime: 30 * 1000, // Keep fresh for 30 seconds
     });
 };
