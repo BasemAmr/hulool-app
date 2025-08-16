@@ -1,0 +1,94 @@
+@import "../../assets/scss/variables-design-system";
+
+.searchModal {
+  .clientItem {
+    transition: all var(--transition-fast);
+    border-radius: var(--border-radius);
+    
+    &:hover {
+      background: var(--color-gray-50) !important;
+      transform: translateY(-1px);
+      box-shadow: var(--shadow-sm);
+      
+      .clientAvatar {
+        transform: scale(1.05);
+        box-shadow: 0 4px 12px rgba(212, 175, 55, 0.3);
+      }
+      
+      .actionButton {
+        transform: scale(1.05);
+      }
+    }
+  }
+  
+  .clientAvatar {
+    transition: all var(--transition-fast);
+    background: var(--gradient-gold);
+    border: 2px solid rgba(255, 255, 255, 0.9);
+    box-shadow: var(--shadow-sm);
+  }
+  
+  .actionButton {
+    transition: all var(--transition-fast);
+    
+    &:hover {
+      transform: scale(1.1);
+      box-shadow: var(--shadow-sm);
+    }
+  }
+  
+  .loadingSpinner {
+    animation: spin 1s linear infinite;
+  }
+  
+  .emptyState {
+    animation: fadeIn 0.3s ease-in-out;
+  }
+  
+  .searchInput {
+    box-shadow: var(--shadow-sm);
+    
+    &:focus {
+      box-shadow: 0 0 0 0.2rem rgba(212, 175, 55, 0.25), var(--shadow-md);
+    }
+  }
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+@keyframes fadeIn {
+  from { 
+    opacity: 0; 
+    transform: translateY(10px); 
+  }
+  to { 
+    opacity: 1; 
+    transform: translateY(0); 
+  }
+}
+
+// Custom scrollbar for results
+.searchModal .modal-body {
+  overflow-y: auto;
+  
+  &::-webkit-scrollbar {
+    width: 6px;
+  }
+  
+  &::-webkit-scrollbar-track {
+    background: var(--color-gray-50);
+    border-radius: 3px;
+  }
+  
+  &::-webkit-scrollbar-thumb {
+    background: $color-gold;
+    border-radius: 3px;
+    
+    &:hover {
+      background: $color-gold-dark;
+    }
+  }
+}
