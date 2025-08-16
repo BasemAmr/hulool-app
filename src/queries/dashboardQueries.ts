@@ -52,7 +52,7 @@ const fetchTotalPaidAmount = async (): Promise<number> => {
 
 const fetchClientsWithActiveTasks = async (): Promise<ClientWithTasksAndStats[]> => {
     // Note: The endpoint is under /clients, not /tasks
-    const { data } = await apiClient.get<ApiResponse<ClientWithTasksAndStats[]>>('/clients/dashboard/clients-with-active-tasks');
+    const { data } = await apiClient.get<ApiResponse<ClientWithTasksAndStats[]>>('/dashboard/clients-with-active-tasks');
     if (!data.success) throw new Error(data.message || 'Failed to fetch dashboard client tasks.');
     return data.data;
 }
