@@ -1822,3 +1822,92 @@ button:focus,
   from { width: 100%; }
   to { width: 0%; }
 }
+
+// ===================================================================
+// DASHBOARD CLIENT CARD ENHANCEMENTS
+// ===================================================================
+
+// Ensure dropdowns don't affect table height and float over content
+.card-body .table-responsive {
+  position: relative;
+  
+  .dropdown-menu {
+    position: absolute !important;
+    z-index: 1050 !important;
+    will-change: transform;
+    min-width: 140px;
+    font-size: 0.8em;
+    box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+  }
+  
+  // Ensure dropdown toggle doesn't expand row height
+  .dropdown-toggle {
+    height: 24px;
+    width: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  
+  // Make table rows more compact
+  tbody tr {
+    height: 32px;
+    
+    td {
+      vertical-align: middle;
+      padding: 4px !important;
+    }
+  }
+  
+  // Sticky header for scrollable tables
+  thead th {
+    position: sticky;
+    top: 0;
+    background: white !important;
+    z-index: 10;
+    border-bottom: 1px solid #dee2e6;
+  }
+}
+
+// Professional card styling
+.dashboard-client-card {
+  .card-header {
+    background-color: #f8f9fa !important;
+    border-bottom: 1px solid #dee2e6;
+    
+    .btn-sm {
+      height: 24px;
+      width: 24px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0;
+    }
+  }
+  
+  .card-footer {
+    background-color: #f8f9fa !important;
+    border-top: 1px solid #dee2e6;
+    
+    .border-end:last-child {
+      border-right: none !important;
+    }
+  }
+}
+
+// Column layout improvements
+.recent-tasks-section {
+  .card {
+    border: 1px solid #dee2e6;
+    border-radius: 4px;
+    
+    .card-header {
+      border-bottom: 1px solid #dee2e6;
+    }
+    
+    .card-footer {
+      border-top: 1px solid #dee2e6;
+      background-color: #f8f9fa;
+    }
+  }
+}

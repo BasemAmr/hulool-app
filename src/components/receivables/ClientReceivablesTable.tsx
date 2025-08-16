@@ -80,7 +80,7 @@ const ClientReceivablesTable: React.FC<ClientReceivablesTableProps> = ({
   const totals = {
     totalDebit,
     totalCredit,
-    totalNet: totalCredit - totalDebit,
+    totalNet: Math.abs(totalCredit - totalDebit),
   };
 
   return (
