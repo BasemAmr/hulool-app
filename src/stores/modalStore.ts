@@ -3,15 +3,15 @@ import type { Client, Task, Receivable, Tag } from '../api/types';
 
 // Define all possible modals in the app.
 // We will add more types like 'task' in later phases.
-export type ModalType = 'clientForm' | 'confirmDelete' | 'taskForm' | 'requirements' | 'manualReceivable' | 'clientReceivables' | 'paymentForm' | 'paymentHistory' | 'clientSearch' | 'tagForm' | 'tagManagement' | 'selectReceivableForPayment' | 'taskCompletion' | 'amountDetails' | 'taskSelection';
+export type ModalType = 'clientForm' | 'confirmDelete' | 'taskForm' | 'requirements' | 'manualReceivable' | 'clientReceivables' | 'paymentForm' | 'paymentHistory' | 'clientSearch' | 'tagForm' | 'tagManagement' | 'selectReceivableForPayment' | 'taskCompletion' | 'amountDetails' | 'taskSelection' | 'taskDetails'; // Add 'taskDetails'
 
 // Define the props each modal type can receive.
 interface ModalProps {
   clientForm: { clientToEdit?: Client };
-   taskForm: { 
+  taskForm: {
     taskToEdit?: Task;
     // Pre-populate client if adding a task from the client page
-    client?: Client; 
+    client?: Client;
   };
   requirements: { task: Task };
   confirmDelete: {
@@ -24,16 +24,18 @@ interface ModalProps {
   payment: { receivable: Receivable };
   paymentForm: { receivable: Receivable; isRequired?: boolean };
   paymentHistory: { receivable: Receivable };
-  clientSearch: { };
+  clientSearch: {};
   tagForm: { tagToEdit?: Tag };
-  tagManagement: { };
-  selectReceivableForPayment: { 
-    clientId: number; 
+  tagManagement: {};
+  selectReceivableForPayment: {
+    clientId: number;
     receivables: Receivable[];
   };
   taskCompletion: { task: Task };
   amountDetails: { task: Task };
   taskSelection: { tagId: number };
+  taskDetails: { task: Task };
+
 }
 
 interface ModalState {

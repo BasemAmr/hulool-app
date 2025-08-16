@@ -14,6 +14,7 @@ import PaymentHistoryModal from '../payments/PaymentHistoryModal';
 import TaskCompletionModal from '../modals/TaskCompletionModal';
 import AmountDetailsModal from '../modals/AmountDetailsModal';
 import TaskSelectionModal from '../modals/TaskSelectionModal';
+import TaskDetailsModal from '../modals/TaskDetailsModal';
 
 import Button from '../ui/Button';
 import { useTranslation } from 'react-i18next';
@@ -55,6 +56,8 @@ const ModalManager = () => {
       case 'manualReceivable':
         // Add the manual receivable modal case
         return <ManualReceivableModal />;
+       case 'taskDetails':
+        return <TaskDetailsModal />;
 
       case 'clientReceivables': {
         // Create a wrapper component that fetches data and passes props
