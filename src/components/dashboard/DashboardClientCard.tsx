@@ -20,7 +20,6 @@ import {
   ListChecks, 
   MoreVertical, 
   AlertTriangle,
-  Phone,
   Eye,
   Calendar,
   Clock
@@ -62,17 +61,19 @@ const DashboardClientCard = ({ data, index = 0 }: DashboardClientCardProps) => {
   const handleAddReceivable = () => openModal('manualReceivable', { client_id: client.id });
 
   const isClientUrgent = tasks.some(task => task.tags?.some(tag => tag.name === 'قصوى'));
-  const cardBackground = '#ffffff';
+  const cardBackground = index % 2 === 0 ? '#f8f9fa' : '#e3f2fd'; // Light grey / Light blue alternating
   const borderColor = isClientUrgent ? 'var(--color-danger)' : '#dee2e6';
+
+  const openGoogleDrive = () => {
+    if (client.google_drive_link) {
+      window.open(client.google_drive_link, '_blank');
+    }
+  };
 
   const openWhatsApp = () => {
     const phoneNumber = client.phone.replace(/[^0-9]/g, '');
     const whatsappUrl = `https://wa.me/+966${phoneNumber}`;
     window.open(whatsappUrl, '_blank');
-  };
-
-  const callPhone = () => {
-    window.open(`tel:${client.phone}`, '_self');
   };
 
   return (
@@ -100,14 +101,17 @@ const DashboardClientCard = ({ data, index = 0 }: DashboardClientCardProps) => {
               <MessageSquare size={10} />
             </button>
             
-            {/* Phone Button */}
+            {/* Google Drive Button */}
             <button 
-              onClick={callPhone}
-              className="btn btn-sm btn-outline-secondary p-1"
-              title="اتصال"
+              onClick={openGoogleDrive}
+              className="btn btn-sm btn-outline-primary p-1"
+              title="Google Drive"
               style={{ fontSize: '11px', lineHeight: 1 }}
+              disabled={!client.google_drive_link}
             >
-              <Phone size={10} />
+              <svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M8.5 12.1l1.2-2.1h4.6l1.2 2.1H8.5zM7.2 12.1L4 6.8L1.5 11l2.3 4h3.4zM18.5 11L16 6.8l-3.2 5.3h5.7zM12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm4.64 7.8l-1.68 2.88 1.68 2.92H8.36l1.68-2.92L8.36 9.8h8.28z"/>
+              </svg>
             </button>
             
             {/* Client Name */}
@@ -226,7 +230,7 @@ const DashboardClientCard = ({ data, index = 0 }: DashboardClientCardProps) => {
                         </Dropdown.Toggle>
                         <Dropdown.Menu 
                           style={{ 
-                            position: 'absolute',
+                            position: 'fixed',
                             zIndex: 1050,
                             minWidth: '120px',
                             fontSize: '0.78em'
@@ -263,58 +267,48 @@ const DashboardClientCard = ({ data, index = 0 }: DashboardClientCardProps) => {
       </div>
 
       {/* Footer - Stats */}
-      <div className="card-footer bg-light border-top py-2 px-3">
-        <div className="row text-center g-0">
-          <div className="col-3 border-end">
+      <div className="card-footer bg-light border-top py-1 px-2">
+        <div className="row text-center g-1">
+          <div className="col-3">
             <Link 
               to={`/tasks?client_id=${client.id}&status=New`}
-              className="text-decoration-none text-primary d-block py-1"
+              className="btn btn-outline-primary btn-sm w-100 py-1"
+              style={{ fontSize: '0.7em', borderRadius: '3px' }}
             >
-              <div style={{ fontSize: '0.8em' }} className="fw-bold">
-                {stats.new_tasks_count}
-              </div>
-              <div style={{ fontSize: '0.65em' }} className="text-muted">
-                جديدة
-              </div>
-            </Link>
-          </div>
-          <div className="col-3 border-end">
-            <Link 
-              to={`/tasks?client_id=${client.id}&status=Completed`}
-              className="text-decoration-none text-success d-block py-1"
-            >
-              <div style={{ fontSize: '0.8em' }} className="fw-bold">
-                {stats.completed_tasks_count}
-              </div>
-              <div style={{ fontSize: '0.65em' }} className="text-muted">
-                مكتملة
-              </div>
-            </Link>
-          </div>
-          <div className="col-3 border-end">
-            <Link 
-              to={`/tasks?client_id=${client.id}&status=Deferred`}
-              className="text-decoration-none text-warning d-block py-1"
-            >
-              <div style={{ fontSize: '0.8em' }} className="fw-bold">
-                {stats.deferred_tasks_count}
-              </div>
-              <div style={{ fontSize: '0.65em' }} className="text-muted">
-                مؤجلة
-              </div>
+              <div className="fw-bold">{stats.new_tasks_count}</div>
+              <div style={{ fontSize: '0.85em' }}>جديدة</div>
             </Link>
           </div>
           <div className="col-3">
             <Link 
-              to={`/receivables?client_id=${client.id}`}
-              className="text-decoration-none text-danger d-block py-1"
+              to={`/tasks?client_id=${client.id}&status=Completed`}
+              className="btn btn-outline-success btn-sm w-100 py-1"
+              style={{ fontSize: '0.7em', borderRadius: '3px' }}
             >
-              <div style={{ fontSize: '0.7em' }} className="fw-bold">
+              <div className="fw-bold">{stats.completed_tasks_count}</div>
+              <div style={{ fontSize: '0.85em' }}>مكتملة</div>
+            </Link>
+          </div>
+          <div className="col-3">
+            <Link 
+              to={`/tasks?client_id=${client.id}&status=Deferred`}
+              className="btn btn-outline-warning btn-sm w-100 py-1"
+              style={{ fontSize: '0.7em', borderRadius: '3px' }}
+            >
+              <div className="fw-bold">{stats.deferred_tasks_count}</div>
+              <div style={{ fontSize: '0.85em' }}>مؤجلة</div>
+            </Link>
+          </div>
+          <div className="col-3">
+            <Link 
+              to={`/clients/${client.id}?tab=receivables`}
+              className="btn btn-outline-danger btn-sm w-100 py-1"
+              style={{ fontSize: '0.7em', borderRadius: '3px' }}
+            >
+              <div className="fw-bold" style={{ fontSize: '0.9em' }}>
                 {Number(stats.total_outstanding ?? 0).toLocaleString()}
               </div>
-              <div style={{ fontSize: '0.65em' }} className="text-muted">
-                مستحق
-              </div>
+              <div style={{ fontSize: '0.85em' }}>مستحق</div>
             </Link>
           </div>
         </div>

@@ -19,7 +19,7 @@ interface ModalProps {
     message: string;
     onConfirm: () => void;
   };
-  manualReceivable: {}; // No initial props needed
+  manualReceivable: { client_id?: number; client?: Client }; // Allow predefined client
   clientReceivables: { client: Client };
   payment: { receivable: Receivable };
   paymentForm: { receivable: Receivable; isRequired?: boolean };
