@@ -27,6 +27,13 @@ export interface ClientWithTasksAndStats {
   };
 }
 
+export interface GroupedClientsResponse {
+  Government: ClientWithTasksAndStats[];
+  Accounting: ClientWithTasksAndStats[];
+  'Real Estate': ClientWithTasksAndStats[];
+  Other: ClientWithTasksAndStats[];
+}
+
 // --- API Functions ---
 const fetchDashboardStats = async (): Promise<DashboardStats> => {
   // This endpoint aggregates stats from clients and tasks
@@ -50,9 +57,9 @@ const fetchTotalPaidAmount = async (): Promise<number> => {
 }
 
 
-const fetchClientsWithActiveTasks = async (): Promise<ClientWithTasksAndStats[]> => {
+const fetchClientsWithActiveTasks = async (): Promise<GroupedClientsResponse> => {
     // Note: The endpoint is under /clients, not /tasks
-    const { data } = await apiClient.get<ApiResponse<ClientWithTasksAndStats[]>>('/dashboard/clients-with-active-tasks');
+    const { data } = await apiClient.get<ApiResponse<GroupedClientsResponse>>('/dashboard/clients-with-active-tasks');
     if (!data.success) throw new Error(data.message || 'Failed to fetch dashboard client tasks.');
     return data.data;
 }
@@ -88,7 +95,7 @@ export const useGetTotalPaidAmount = () => {
 
 // Add this new hook
 export const useGetClientsWithActiveTasks = () => {
-    return useQuery({
+    return useQuery<GroupedClientsResponse, Error>({
         queryKey: ['dashboard', 'clientsWithActiveTasks'],
         queryFn: fetchClientsWithActiveTasks,
         staleTime: 30 * 1000, // Keep fresh for 30 seconds
