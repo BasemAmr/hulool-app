@@ -67,7 +67,7 @@ const DashboardClientCard = ({ data, index = 0 }: DashboardClientCardProps) => {
 
   const openWhatsApp = () => {
     const phoneNumber = client.phone.replace(/[^0-9]/g, '');
-    const whatsappUrl = `https://wa.me/${phoneNumber}`;
+    const whatsappUrl = `https://wa.me/+966${phoneNumber}`;
     window.open(whatsappUrl, '_blank');
   };
 
@@ -80,13 +80,14 @@ const DashboardClientCard = ({ data, index = 0 }: DashboardClientCardProps) => {
       className="card h-100 shadow-sm dashboard-client-card"
       style={{ 
         backgroundColor: cardBackground,
-        borderLeft: `${2 + (index % 3)}px solid ${borderColor}`,
+        borderLeft: `${1 + (index % 2)}px solid ${borderColor}`,
         border: `1px solid ${borderColor}`,
-        borderRadius: '4px'
+        borderRadius: '4px',
+        overflow: 'hidden'
       }}
     >
       {/* Header */}
-      <div className="card-header bg-light border-bottom py-2 px-3">
+  <div className="card-header bg-light border-bottom py-1 px-2">
         <div className="d-flex justify-content-between align-items-center">
           <div className="d-flex align-items-center gap-2">
             {/* WhatsApp Button */}
@@ -94,9 +95,9 @@ const DashboardClientCard = ({ data, index = 0 }: DashboardClientCardProps) => {
               onClick={openWhatsApp}
               className="btn btn-sm btn-outline-success p-1"
               title="واتساب"
-              style={{ fontSize: '12px' }}
+              style={{ fontSize: '11px', lineHeight: 1 }}
             >
-              <MessageSquare size={12} />
+              <MessageSquare size={10} />
             </button>
             
             {/* Phone Button */}
@@ -104,21 +105,21 @@ const DashboardClientCard = ({ data, index = 0 }: DashboardClientCardProps) => {
               onClick={callPhone}
               className="btn btn-sm btn-outline-secondary p-1"
               title="اتصال"
-              style={{ fontSize: '12px' }}
+              style={{ fontSize: '11px', lineHeight: 1 }}
             >
-              <Phone size={12} />
+              <Phone size={10} />
             </button>
             
             {/* Client Name */}
             <Link 
               to={`/clients/${client.id}`}
               className="text-decoration-none fw-bold text-primary"
-              style={{ fontSize: '0.9em' }}
+              style={{ fontSize: '0.85em' }}
             >
               {client.name}
             </Link>
             {isClientUrgent && (
-              <AlertTriangle size={14} className="text-danger" />
+              <AlertTriangle size={12} className="text-danger" />
             )}
           </div>
           
@@ -128,8 +129,9 @@ const DashboardClientCard = ({ data, index = 0 }: DashboardClientCardProps) => {
               variant="outline-secondary" 
               size="sm"
               className="p-1 border-0"
+              style={{ fontSize: '11px' }}
             >
-              <MoreVertical size={12} />
+              <MoreVertical size={10} />
             </Dropdown.Toggle>
             <Dropdown.Menu>
               <Dropdown.Item onClick={handleAddTask}>
@@ -146,42 +148,44 @@ const DashboardClientCard = ({ data, index = 0 }: DashboardClientCardProps) => {
       </div>
 
       {/* Body - Tasks Table */}
-      <div className="card-body p-2">
-        <div className="table-responsive" style={{ maxHeight: '300px', overflowY: 'auto' }}>
+      <div className="card-body p-1">
+        <div className="table-responsive" style={{ maxHeight: '200px', overflowY: 'auto' }}>
           <table className="table table-sm table-borderless mb-0">
             <thead style={{ position: 'sticky', top: 0, backgroundColor: '#fff', zIndex: 1 }}>
               <tr className="border-bottom">
-                <th style={{ fontSize: '0.75em', padding: '6px 4px' }}>المهمة</th>
-                <th style={{ fontSize: '0.75em', padding: '6px 4px' }}>تاريخ البدء</th>
-                <th style={{ fontSize: '0.75em', padding: '6px 4px' }}>المدة</th>
-                <th style={{ fontSize: '0.75em', padding: '6px 4px' }}>المبلغ</th>
-                <th style={{ fontSize: '0.75em', padding: '6px 4px', width: '60px' }}>إجراءات</th>
+                <th style={{ fontSize: '0.7em', padding: '4px 3px' }}>المهمة</th>
+                <th style={{ fontSize: '0.7em', padding: '4px 3px' }}>تاريخ</th>
+                <th style={{ fontSize: '0.7em', padding: '4px 3px' }}>المدة</th>
+                <th style={{ fontSize: '0.7em', padding: '4px 3px' }}>المبلغ</th>
+                <th style={{ fontSize: '0.7em', padding: '4px 3px', width: '54px' }}>إجراءات</th>
               </tr>
             </thead>
             <tbody>
               {tasks.map((task) => (
                 <tr key={task.id}>
-                  <td style={{ fontSize: '0.8em', padding: '4px' }}>
+                  <td style={{ fontSize: '0.75em', padding: '3px' }}>
                     <div className="d-flex align-items-center gap-1">
-                      {task.task_name || t(`type.${task.type}`)}
+                      <span className="text-truncate" style={{ maxWidth: 160, display: 'inline-block' }}>
+                        {task.task_name || t(`type.${task.type}`)}
+                      </span>
                       {task.tags?.some(tag => tag.name === 'قصوى') && (
-                        <AlertTriangle size={10} className="text-danger" />
+                        <AlertTriangle size={9} className="text-danger" />
                       )}
                     </div>
                   </td>
-                  <td style={{ fontSize: '0.75em', padding: '4px' }} className="text-muted">
-                    <Calendar size={10} className="me-1" />
+                  <td style={{ fontSize: '0.7em', padding: '3px' }} className="text-muted">
+                    <Calendar size={9} className="me-1" />
                     {formatDate(task.start_date)}
                   </td>
-                  <td style={{ fontSize: '0.75em', padding: '4px' }} className="text-muted">
-                    <Clock size={10} className="me-1" />
+                  <td style={{ fontSize: '0.7em', padding: '3px' }} className="text-muted">
+                    <Clock size={9} className="me-1" />
                     {formatTimeElapsed(task.start_date)}
                   </td>
-                  <td style={{ fontSize: '0.75em', padding: '4px' }} className="text-success fw-bold">
+                  <td style={{ fontSize: '0.7em', padding: '3px' }} className="text-success fw-bold">
                     <div className="d-flex align-items-center">
                       <svg
-                        width={11}
-                        height={11}
+                        width={10}
+                        height={10}
                         viewBox="0 0 1124.14 1256.39"
                         style={{
                           marginLeft: '2px',
@@ -200,15 +204,15 @@ const DashboardClientCard = ({ data, index = 0 }: DashboardClientCardProps) => {
                       {task.amount?.toLocaleString()}
                     </div>
                   </td>
-                  <td style={{ padding: '4px', position: 'relative' }}>
+                  <td style={{ padding: '3px', position: 'relative' }}>
                     <div className="d-flex gap-1">
                       <button
                         onClick={() => handleShowDetails(task)}
                         className="btn btn-outline-info btn-sm p-1"
                         title="تفاصيل"
-                        style={{ fontSize: '10px' }}
+                        style={{ fontSize: '9px', lineHeight: 1 }}
                       >
-                        <Eye size={10} />
+                        <Eye size={9} />
                       </button>
                       
                       <Dropdown>
@@ -216,35 +220,35 @@ const DashboardClientCard = ({ data, index = 0 }: DashboardClientCardProps) => {
                           variant="outline-secondary" 
                           size="sm"
                           className="p-1"
-                          style={{ fontSize: '10px' }}
+                          style={{ fontSize: '9px' }}
                         >
-                          <MoreVertical size={10} />
+                          <MoreVertical size={9} />
                         </Dropdown.Toggle>
                         <Dropdown.Menu 
                           style={{ 
                             position: 'absolute',
                             zIndex: 1050,
-                            minWidth: '140px',
-                            fontSize: '0.8em'
+                            minWidth: '120px',
+                            fontSize: '0.78em'
                           }}
                         >
                           <Dropdown.Item onClick={() => handleComplete(task)}>
-                            <Check size={12} className="me-2" />
+                            <Check size={11} className="me-2" />
                             إكمال
                           </Dropdown.Item>
                           {task.status === 'New' ? (
                             <Dropdown.Item onClick={() => handleDefer(task)}>
-                              <Pause size={12} className="me-2" />
+                              <Pause size={11} className="me-2" />
                               تأجيل
                             </Dropdown.Item>
                           ) : (
                             <Dropdown.Item onClick={() => handleResume(task)}>
-                              <Play size={12} className="me-2" />
+                              <Play size={11} className="me-2" />
                               استئناف
                             </Dropdown.Item>
                           )}
                           <Dropdown.Item onClick={() => handleShowRequirements(task)}>
-                            <ListChecks size={12} className="me-2" />
+                            <ListChecks size={11} className="me-2" />
                             المتطلبات
                           </Dropdown.Item>
                         </Dropdown.Menu>
