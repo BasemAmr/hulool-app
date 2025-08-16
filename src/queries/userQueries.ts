@@ -12,29 +12,24 @@ export const useUsers = () => {
       const response = await apiClient.get('/users');
       return response.data.data;
     },
+    staleTime: 5 * 60 * 1000, // Keep fresh for 5 minutes
+    // refetchOnWindowFocus: false (inherited)
   });
 };
 
-/**
- * Create a new user
- */
 export const useCreateUser = () => {
   const queryClient = useQueryClient();
-
   return useMutation({
     mutationFn: async (userData: CreateUserRequest): Promise<User> => {
       const response = await apiClient.post('/users', userData);
       return response.data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['users'] });
+      queryClient.invalidateQueries({ queryKey: ['users'] }); // Invalidate all users lists
     },
   });
 };
 
-/**
- * Update user capabilities
- */
 export const useUpdateUserCapabilities = () => {
   const queryClient = useQueryClient();
 
@@ -45,22 +40,21 @@ export const useUpdateUserCapabilities = () => {
       return response.data.data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['users'] });
+      queryClient.invalidateQueries({ queryKey: ['users'] }); // Invalidate all users lists
+      // If the current user's capabilities changed, invalidate their own capabilities too
+      queryClient.invalidateQueries({ queryKey: ['current-user-capabilities'] });
     },
   });
 };
 
-/**
- * Get current user capabilities
- */
 export const useCurrentUserCapabilities = () => {
   return useQuery({
     queryKey: ['current-user-capabilities'],
-    queryFn: async (): Promise<{ 
+    queryFn: async (): Promise<{
       manage_options: boolean;
-      tm_manage_users: boolean; 
-      tm_delete_any_task: boolean; 
-      tm_delete_any_receivable: boolean; 
+      tm_manage_users: boolean;
+      tm_delete_any_task: boolean;
+      tm_delete_any_receivable: boolean;
       tm_delete_any_payment: boolean;
       tm_view_receivables_amounts: boolean;
       tm_view_paid_receivables: boolean;
@@ -70,6 +64,8 @@ export const useCurrentUserCapabilities = () => {
       const response = await apiClient.get('/users/current/capabilities');
       return response.data.data;
     },
-    staleTime: 5 * 60 * 1000, // 5 minutes
+    staleTime: Infinity, // Capabilities are session-bound, no need to refetch unless logout/login or manual invalidate
+    refetchOnWindowFocus: false, // Don't refetch on focus
+    refetchOnMount: false, // Don't refetch on mount either
   });
 };

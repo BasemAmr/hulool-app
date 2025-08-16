@@ -53,7 +53,7 @@ export const useGetTasksByTags = () => {
     return useQuery({
         queryKey: ['tasks-by-tags'],
         queryFn: fetchTasksByTags,
-        staleTime: 2 * 60 * 1000, // 2 minutes
-        refetchOnWindowFocus: false,
+        staleTime: 60 * 1000, // Keep fresh for 1 minute
+        refetchOnWindowFocus: false, // Explicitly false as this can be a heavy query
     });
 };

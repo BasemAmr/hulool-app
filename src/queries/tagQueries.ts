@@ -35,7 +35,8 @@ const deleteTag = async (id: number): Promise<void> => {
 export const useGetTags = () => useQuery({
     queryKey: ['tags'],
     queryFn: fetchTags,
-    staleTime: 5 * 60 * 1000, // 5 minutes
+    staleTime: 5 * 60 * 1000, // Keep fresh for 5 minutes
+    // refetchOnWindowFocus: false (inherited)
 });
 
 export const useCreateTag = () => {
@@ -43,7 +44,8 @@ export const useCreateTag = () => {
     return useMutation({
         mutationFn: createTag,
         onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: ['tags'] });
+            queryClient.invalidateQueries({ queryKey: ['tags'] }); // Invalidate all tags
+            queryClient.invalidateQueries({ queryKey: ['tasks-by-tags'] }); // Invalidate tag columns view
         },
     });
 };
@@ -53,7 +55,8 @@ export const useUpdateTag = () => {
     return useMutation({
         mutationFn: updateTag,
         onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: ['tags'] });
+            queryClient.invalidateQueries({ queryKey: ['tags'] }); // Invalidate all tags
+            queryClient.invalidateQueries({ queryKey: ['tasks-by-tags'] }); // Invalidate tag columns view
         },
     });
 };
@@ -63,7 +66,8 @@ export const useDeleteTag = () => {
     return useMutation({
         mutationFn: deleteTag,
         onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: ['tags'] });
+            queryClient.invalidateQueries({ queryKey: ['tags'] }); // Invalidate all tags
+            queryClient.invalidateQueries({ queryKey: ['tasks-by-tags'] }); // Invalidate tag columns view
         },
     });
 };

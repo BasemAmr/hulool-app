@@ -62,10 +62,13 @@ const fetchFilteredReceivables = async (filter: 'paid' | 'overdue'): Promise<Rec
 
 
 // --- React Query Hooks ---
+
 export const useGetReceivables = () => {
   return useQuery({
-    queryKey: ['receivables'],
-    queryFn: fetchReceivables,
+    queryKey: ['receivables'], // This key refers to the *summary* list of clients with receivables
+    queryFn: fetchReceivables, // This fetches client summaries by default in your ClientRepository
+    staleTime: 30 * 1000, // Keep fresh for 30 seconds
+    // refetchOnWindowFocus: false (inherited)
   });
 };
 
@@ -73,28 +76,35 @@ export const useCreateManualReceivable = () => {
     const queryClient = useQueryClient();
     return useMutation({
         mutationFn: createManualReceivable,
-        onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: ['receivables'] });
-            queryClient.invalidateQueries({ queryKey: ['clients'] }); // Invalidate clients too for summary data
+        onSuccess: (newReceivable) => {
+            queryClient.invalidateQueries({ queryKey: ['receivables'] }); // Invalidate all receivables summaries
+            queryClient.invalidateQueries({ queryKey: ['clients'] }); // Invalidate clients to update overall totals
+            queryClient.invalidateQueries({ queryKey: ['dashboard'] }); // Invalidate dashboard stats
+            queryClient.invalidateQueries({ queryKey: ['receivables', 'client', newReceivable.client_id] }); // Invalidate specific client statement
+            queryClient.invalidateQueries({ queryKey: ['receivables', 'payable', newReceivable.client_id] }); // Invalidate payable list for that client
+            queryClient.invalidateQueries({ queryKey: ['receivables', 'filtered', 'paid'] }); // Might affect paid list
+            queryClient.invalidateQueries({ queryKey: ['receivables', 'filtered', 'overdue'] }); // Might affect overdue list
         },
     });
 };
 
-// This hook now correctly returns data of type `ClientStatementPaginatedData | undefined`
 export const useGetClientReceivables = (clientId: number, enabled: boolean = true) => {
   return useQuery({
-    queryKey: ['receivables', 'client', clientId],
+    queryKey: ['receivables', 'client', clientId], // Key for a specific client's statement
     queryFn: () => fetchClientReceivables(clientId),
     enabled: !!clientId && enabled,
+    staleTime: 10 * 1000, // Keep fresh for 10 seconds (important for statement accuracy)
+    // refetchOnWindowFocus: false (inherited)
   });
 };
 
-// NEW: Hook to get all raw receivables for a client
 export const useGetAllClientReceivables = (clientId: number, enabled: boolean = true) => {
     return useQuery({
-        queryKey: ['receivables', 'client', clientId, 'all'],
+        queryKey: ['receivables', 'client', clientId, 'all'], // Specific key for export data
         queryFn: () => fetchAllClientReceivables(clientId),
         enabled: !!clientId && enabled,
+        staleTime: 5 * 60 * 1000, // Data for export doesn't need to be minute-by-minute fresh
+        // refetchOnWindowFocus: false (inherited)
     });
 };
 
@@ -103,6 +113,8 @@ export const useGetClientsReceivablesSummary = (enabled: boolean = true) => {
     queryKey: ['receivables', 'clients-summary'],
     queryFn: fetchClientsReceivablesSummary,
     enabled,
+    staleTime: 30 * 1000, // Keep fresh for 30 seconds
+    // refetchOnWindowFocus: false (inherited)
   });
 };
 
@@ -111,6 +123,8 @@ export const useGetPayableReceivables = (clientId?: number | null) => {
     queryKey: ['receivables', 'payable', clientId],
     queryFn: () => fetchPayableReceivables(clientId),
     enabled: clientId !== undefined,
+    staleTime: 0, // Always get freshest data when user is selecting a receivable to pay
+    // refetchOnWindowFocus: false (inherited)
   });
 }
 
@@ -119,5 +133,7 @@ export const useGetFilteredReceivables = (filter: 'paid' | 'overdue', enabled: b
     queryKey: ['receivables', 'filtered', filter],
     queryFn: () => fetchFilteredReceivables(filter),
     enabled,
+    staleTime: 30 * 1000, // Keep fresh for 30 seconds
+    // refetchOnWindowFocus: false (inherited)
   });
 }

@@ -237,6 +237,7 @@ export interface Payment {
     name_en: string;
     name_ar: string;
   };
+  client_id?: number; // ADD THIS LINE (optional because it's derived)
 }
 
 export interface StatementItem {

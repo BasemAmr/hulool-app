@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import apiClient from '../api/apiClient';
-import type { ApiResponse, Task, TaskPayload, TaskPaginatedData, UpdateTaskPayload, UpdateRequirementsPayload,CompleteTaskPayload  } from '../api/types';
+import type { ApiResponse, Task, TaskPayload, TaskPaginatedData, UpdateTaskPayload, UpdateRequirementsPayload, CompleteTaskPayload, CompleteTaskResponse } from '../api/types'; // Import CompleteTaskResponse
 
 export interface TaskFilters {
   page?: number;
@@ -65,12 +65,38 @@ const createRequirements = async (payload: UpdateRequirementsPayload): Promise<T
     return data.data;
 };
 
+// --- Update Task Completed Workflow API Functions ---
+// Moved these declarations up so they are defined before being used in useMutation hooks
+
+// API function to complete a task
+const completeTask = async ({ id, payload }: { id: number; payload: CompleteTaskPayload }): Promise<CompleteTaskResponse> => {
+    const { data } = await apiClient.post<ApiResponse<CompleteTaskResponse>>(`/tasks/${id}/complete`, payload);
+    if (!data.success) throw new Error(data.message || 'Failed to complete task');
+    return data.data;
+};
+
+// API function to defer a task
+const deferTask = async ({ id }: { id: number }): Promise<Task> => {
+  const { data } = await apiClient.put<ApiResponse<Task>>(`/tasks/${id}/status`, { status: 'Deferred' });
+  if (!data.success) throw new Error(data.message || 'Failed to defer task');
+  return data.data;
+};
+
+// API function to resume a task
+const resumeTask = async ({ id }: { id: number }): Promise<Task> => {
+  const { data } = await apiClient.put<ApiResponse<Task>>(`/tasks/${id}/status`, { status: 'New' });
+  if (!data.success) throw new Error(data.message || 'Failed to resume task');
+  return data.data;
+};
+
+
 // --- React Query Hooks ---
 export const useGetTasks = (filters: TaskFilters) => {
   return useQuery({
     queryKey: ['tasks', filters],
     queryFn: () => fetchTasks(filters),
     placeholderData: (previousData) => previousData, // Keep previous data while fetching new
+    staleTime: 30 * 1000, // Keep data fresh for 30 seconds
   });
 };
 
@@ -79,6 +105,7 @@ export const useGetTask = (taskId: number) => {
         queryKey: ['task', taskId],
         queryFn: () => fetchTaskById(taskId),
         enabled: !!taskId, // Only fetch if taskId is provided
+        staleTime: 30 * 1000, // Keep data fresh for 30 seconds
     });
 };
 
@@ -86,9 +113,14 @@ export const useCreateTask = () => {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: createTask,
-    onSuccess: () => {
+    onSuccess: (createdTask: Task) => { // Type 'createdTask'
       queryClient.invalidateQueries({ queryKey: ['tasks'] }); // Invalidate all tasks
       queryClient.invalidateQueries({ queryKey: ['clients'] }); // Invalidate clients to update task counts
+      queryClient.invalidateQueries({ queryKey: ['dashboard'] }); // Invalidate dashboard stats
+      queryClient.invalidateQueries({ queryKey: ['tasks-by-tags'] }); // Invalidate tags columns view
+      // Specific client tasks in case task was added from client profile
+      queryClient.invalidateQueries({ queryKey: ['client', createdTask.client.id] }); // Correct client_id access
+      queryClient.invalidateQueries({ queryKey: ['receivables', 'client', createdTask.client.id] }); // Invalidate receivables of the client
     },
   });
 };
@@ -97,9 +129,14 @@ export const useUpdateTask = () => {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: updateTask,
-    onSuccess: (updatedTask) => {
+    onSuccess: (updatedTask: Task) => { // Type 'updatedTask'
       queryClient.invalidateQueries({ queryKey: ['tasks'] }); // Invalidate all tasks
       queryClient.invalidateQueries({ queryKey: ['task', updatedTask.id] }); // Invalidate specific task
+      queryClient.invalidateQueries({ queryKey: ['clients'] }); // Invalidate clients to update task counts
+      queryClient.invalidateQueries({ queryKey: ['dashboard'] }); // Invalidate dashboard stats
+      queryClient.invalidateQueries({ queryKey: ['tasks-by-tags'] }); // Invalidate tags columns view
+      // Invalidate receivables for the client if task is updated
+      queryClient.invalidateQueries({ queryKey: ['receivables', 'client', updatedTask.client.id] });
     },
   });
 };
@@ -108,9 +145,12 @@ export const useDeleteTask = () => {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: deleteTask,
-    onSuccess: () => {
+    onSuccess: () => { // No 'deletedTask' data, so just invalidate
       queryClient.invalidateQueries({ queryKey: ['tasks'] });
       queryClient.invalidateQueries({ queryKey: ['clients'] }); // Invalidate clients to update task counts
+      queryClient.invalidateQueries({ queryKey: ['dashboard'] }); // Invalidate dashboard stats
+      queryClient.invalidateQueries({ queryKey: ['tasks-by-tags'] }); // Invalidate tags columns view
+      queryClient.invalidateQueries({ queryKey: ['receivables'] }); // Affects receivables if task had associated receivable
     },
   });
 };
@@ -119,9 +159,10 @@ export const useUpdateRequirements = () => {
     const queryClient = useQueryClient();
     return useMutation({
         mutationFn: updateRequirements,
-        onSuccess: (updatedTask) => {
+        onSuccess: (updatedTask: Task) => { // Type 'updatedTask'
             queryClient.invalidateQueries({ queryKey: ['task', updatedTask.id] }); // Invalidate specific task
             queryClient.invalidateQueries({ queryKey: ['tasks'] }); // Invalidate all tasks to reflect changes
+            queryClient.invalidateQueries({ queryKey: ['dashboard'] }); // Could affect dashboard if requirements are used there
         },
     });
 };
@@ -130,75 +171,64 @@ export const useCreateRequirements = () => {
     const queryClient = useQueryClient();
     return useMutation({
         mutationFn: createRequirements,
-        onSuccess: (updatedTask) => {
+        onSuccess: (updatedTask: Task) => { // Type 'updatedTask'
             queryClient.invalidateQueries({ queryKey: ['task', updatedTask.id] }); // Invalidate specific task
             queryClient.invalidateQueries({ queryKey: ['tasks'] }); // Invalidate all tasks to reflect changes
+            queryClient.invalidateQueries({ queryKey: ['dashboard'] }); // Could affect dashboard
         },
     });
-};
-
-
-
-// Update Task Completed Workflow
-
-// --- API Function ---
-import type { CompleteTaskResponse } from '../api/types';
-const completeTask = async ({ id, payload }: { id: number; payload: CompleteTaskPayload }): Promise<CompleteTaskResponse> => {
-    const { data } = await apiClient.post<ApiResponse<CompleteTaskResponse>>(`/tasks/${id}/complete`, payload);
-    if (!data.success) throw new Error(data.message || 'Failed to complete task');
-    return data.data;
-};
-
-// --- Defer Task by updating overalll task data , updating status along, not a specifc api endpoint ---
-const deferTask = async ({ id }: { id: number }): Promise<Task> => {
-  const { data } = await apiClient.put<ApiResponse<Task>>(`/tasks/${id}/status`, { status: 'Deferred' });
-  if (!data.success) throw new Error(data.message || 'Failed to defer task');
-  return data.data;
 };
 
 export const useDeferTask = () => {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: deferTask,
-    onSuccess: (updatedTask) => {
+    onSuccess: (updatedTask: Task) => { // Type 'updatedTask'
       queryClient.invalidateQueries({ queryKey: ['tasks'] });
       queryClient.invalidateQueries({ queryKey: ['task', updatedTask.id] });
-      queryClient.invalidateQueries({ queryKey: ['clients'] });
+      queryClient.invalidateQueries({ queryKey: ['clients'] }); // Client task counts
+      queryClient.invalidateQueries({ queryKey: ['dashboard'] }); // Dashboard stats and recent tasks
+      queryClient.invalidateQueries({ queryKey: ['tasks-by-tags'] }); // Invalidate tags columns view
     },
   });
-};
-
-// --- Resume Task by updating status to New ---
-const resumeTask = async ({ id }: { id: number }): Promise<Task> => {
-  const { data } = await apiClient.put<ApiResponse<Task>>(`/tasks/${id}/status`, { status: 'New' });
-  if (!data.success) throw new Error(data.message || 'Failed to resume task');
-  return data.data;
 };
 
 export const useResumeTask = () => {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: resumeTask,
-    onSuccess: (updatedTask) => {
+    onSuccess: (updatedTask: Task) => { // Type 'updatedTask'
       queryClient.invalidateQueries({ queryKey: ['tasks'] });
       queryClient.invalidateQueries({ queryKey: ['task', updatedTask.id] });
       queryClient.invalidateQueries({ queryKey: ['clients'] });
+      queryClient.invalidateQueries({ queryKey: ['dashboard'] });
+      queryClient.invalidateQueries({ queryKey: ['tasks-by-tags'] });
     },
   });
 };
 
-
-// --- React Query Hook ---
 export const useCompleteTask = () => {
     const queryClient = useQueryClient();
     return useMutation({
         mutationFn: completeTask,
-        onSuccess: (result) => {
+        onSuccess: (result: CompleteTaskResponse) => { // Type 'result'
             // Invalidate everything that could be affected by task completion
             queryClient.invalidateQueries({ queryKey: ['tasks'] });
             queryClient.invalidateQueries({ queryKey: ['task', result.id] });
             queryClient.invalidateQueries({ queryKey: ['clients'] });
-            queryClient.invalidateQueries({ queryKey: ['receivables'] });
+            queryClient.invalidateQueries({ queryKey: ['receivables'] }); // General receivables summaries/lists
+            queryClient.invalidateQueries({ queryKey: ['dashboard'] }); // Dashboard stats
+            queryClient.invalidateQueries({ queryKey: ['tasks-by-tags'] }); // Invalidate tags columns view
+
+            // Invalidate specific client statement and payable lists if relevant
+            // This now correctly checks if result.task exists before accessing client_id
+            if (result.task?.client_id) {
+                 queryClient.invalidateQueries({ queryKey: ['receivables', 'client', result.task.client_id] });
+                 queryClient.invalidateQueries({ queryKey: ['receivables', 'payable', result.task.client_id] });
+            }
+            // Invalidate filtered receivables if task completion affects them (e.g., if a new receivable is created that is overdue/paid)
+            queryClient.invalidateQueries({ queryKey: ['receivables', 'filtered', 'paid'] });
+            queryClient.invalidateQueries({ queryKey: ['receivables', 'filtered', 'overdue'] });
         },
     });
 };

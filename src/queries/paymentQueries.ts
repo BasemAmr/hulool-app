@@ -31,7 +31,9 @@ export const useGetPaymentMethods = () => {
   return useQuery({
     queryKey: ['paymentMethods'],
     queryFn: fetchPaymentMethods,
-    staleTime: Infinity,
+    staleTime: Infinity, // Payment methods are static, no need to refetch
+    refetchOnWindowFocus: false, // Definitely don't refetch on focus for static data
+    refetchOnMount: false, // Don't refetch on mount either
   });
 };
 
@@ -40,28 +42,26 @@ export const useCreatePayment = () => {
   return useMutation({
     mutationFn: createPayment,
     onSuccess: (newPayment) => {
-      queryClient.invalidateQueries({ queryKey: ['receivables'] });
-      queryClient.invalidateQueries({ queryKey: ['clients'] });
-      queryClient.invalidateQueries({ queryKey: ['tasks'] });
-      // Specifically invalidate the payments for the receivable that was just paid
+      // Invalidate broader data sets that might include payment summaries or lists
+      queryClient.invalidateQueries({ queryKey: ['receivables'] }); // Affects receivables lists and summaries
+      queryClient.invalidateQueries({ queryKey: ['clients'] }); // Affects client totals (total_outstanding)
+      queryClient.invalidateQueries({ queryKey: ['tasks'] }); // If payment relates to a task, task status might implicitly rely on it
+      queryClient.invalidateQueries({ queryKey: ['dashboard'] }); // Dashboard stats (total paid amount)
+
+      // Invalidate the specific receivable's payments for its history modal
       queryClient.invalidateQueries({ queryKey: ['payments', newPayment.receivable_id] });
+      queryClient.invalidateQueries({ queryKey: ['receivables', 'client', newPayment.client_id] }); // Invalidate client statement
     },
   });
 };
 
-// --- CORRECTED HOOK ---
-// This hook now correctly returns data of type `Payment[] | undefined`
 export const useGetReceivablePayments = (receivableId: number, initialData?: Payment[]) => {
     return useQuery({
         queryKey: ['payments', receivableId],
         queryFn: () => fetchReceivablePayments(receivableId),
         enabled: !!receivableId,
-        // THIS IS THE OPTIMIZATION:
-        // If we provide initialData, Tanstack Query will use it immediately
-        // and the query status will be 'success' right away.
-        // It will still refetch in the background on window focus by default
-        // to ensure the data becomes fresh.
-        initialData: initialData,
+        staleTime: 0, // Always refetch when this hook is active (e.g., modal opens)
+        // refetchOnWindowFocus: false (inherited, but staleTime 0 makes it refetch on mount anyway)
+        initialData: initialData, // Use initialData for immediate display
     });
 };
-// --- END CORRECTION --

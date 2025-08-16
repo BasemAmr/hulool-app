@@ -77,6 +77,8 @@ export const useGetClients = (search: string, typeFilter?: ClientType) => {
     queryKey: ['clients', search, typeFilter],
     queryFn: () => fetchClients(search, typeFilter),
     placeholderData: (previousData) => previousData,
+    staleTime: 60 * 1000, // Keep fresh for 1 minute
+    // refetchOnWindowFocus: false (inherited from global default)
   });
 };
 
@@ -84,9 +86,12 @@ export const useCreateClient = () => {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: createClient,
-    onSuccess: () => {
-      // Invalidate and refetch all 'clients' queries after a creation
-      queryClient.invalidateQueries({ queryKey: ['clients'] });
+    onSuccess: (newClient) => {
+      queryClient.invalidateQueries({ queryKey: ['clients'] }); // Invalidate all clients lists
+      queryClient.invalidateQueries({ queryKey: ['dashboard'] }); // Dashboard stats for total clients
+      queryClient.invalidateQueries({ queryKey: ['clientCountsByType'] }); // Client counts by type
+      // If creating from a specific client profile context, consider invalidating that client:
+      queryClient.invalidateQueries({ queryKey: ['client', newClient.id] });
     },
   });
 };
@@ -95,8 +100,11 @@ export const useUpdateClient = () => {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: updateClient,
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['clients'] });
+    onSuccess: (updatedClient) => {
+      queryClient.invalidateQueries({ queryKey: ['clients'] }); // Invalidate all clients lists
+      queryClient.invalidateQueries({ queryKey: ['client', updatedClient.id] }); // Invalidate specific client profile
+      // If client type changed, counts might need updating:
+      queryClient.invalidateQueries({ queryKey: ['clientCountsByType'] });
     },
   });
 };
@@ -106,7 +114,9 @@ export const useDeleteClient = () => {
   return useMutation({
     mutationFn: deleteClient,
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['clients'] });
+      queryClient.invalidateQueries({ queryKey: ['clients'] }); // Invalidate all clients lists
+      queryClient.invalidateQueries({ queryKey: ['dashboard'] }); // Dashboard stats for total clients
+      queryClient.invalidateQueries({ queryKey: ['clientCountsByType'] }); // Client counts by type
     },
   });
 };
@@ -116,6 +126,8 @@ export const useGetClient = (clientId: number) => {
         queryKey: ['client', clientId],
         queryFn: () => fetchClientById(clientId),
         enabled: !!clientId,
+        staleTime: 30 * 1000, // Keep fresh for 30 seconds
+        // refetchOnWindowFocus: false (inherited)
     });
 };
 
@@ -124,6 +136,8 @@ export const useSearchClients = (term: string) => {
         queryKey: ['clientSearch', term],
         queryFn: () => searchClients(term),
         enabled: term.length >= 2,
+        staleTime: 0, // Always refetch on new search term
+        // refetchOnWindowFocus: false (inherited, makes sense for search)
     });
 };
 
@@ -132,6 +146,8 @@ export const useGetClientUnpaidAmounts = (clientId: number) => {
         queryKey: ['clientUnpaidAmounts', clientId],
         queryFn: () => fetchClientUnpaidAmounts(clientId),
         enabled: !!clientId,
+        staleTime: 30 * 1000, // Keep fresh for 30 seconds
+        // refetchOnWindowFocus: false (inherited)
     });
 };
 
@@ -139,15 +155,16 @@ export const useGetClientCountsByType = () => {
     return useQuery({
         queryKey: ['clientCountsByType'],
         queryFn: fetchClientCountsByType,
+        staleTime: 5 * 60 * 1000, // Keep fresh for 5 minutes
+        // refetchOnWindowFocus: false (inherited)
     });
 };
 
 export const useExportClients = () => {
-    const queryClient = useQueryClient();
+    // const queryClient = useQueryClient();
     return useMutation({
         mutationFn: exportClients,
-        onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: ['clients'] });
-        },
+        // No specific invalidation needed here as it's an export, not a data change.
+        // If the export relies on "fresh" data, ensure the underlying query is invalidated beforehand.
     });
 };

@@ -41,10 +41,13 @@ const fetchTotalPaidAmount = async (): Promise<number> => {
 }
 
 // --- React Query Hooks ---
+
 export const useGetDashboardStats = () => {
   return useQuery({
     queryKey: ['dashboard', 'stats'],
     queryFn: fetchDashboardStats,
+    staleTime: 30 * 1000, // Keep fresh for 30 seconds
+    // refetchOnWindowFocus: false (inherited)
   });
 };
 
@@ -52,6 +55,8 @@ export const useGetRecentTasks = () => {
     return useQuery({
         queryKey: ['dashboard', 'recentTasks'],
         queryFn: fetchRecentTasks,
+        staleTime: 30 * 1000, // Keep fresh for 30 seconds
+        // refetchOnWindowFocus: false (inherited)
     });
 };
 
@@ -59,5 +64,7 @@ export const useGetTotalPaidAmount = () => {
     return useQuery({
         queryKey: ['dashboard', 'totalPaidAmount'],
         queryFn: fetchTotalPaidAmount,
+        staleTime: 30 * 1000, // Keep fresh for 30 seconds
+        // refetchOnWindowFocus: false (inherited)
     });
 };
