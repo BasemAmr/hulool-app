@@ -44,9 +44,9 @@ const ClientTypeColumn = ({ type, clients }: ClientTypeColumnProps) => {
       
       <div className="clients-list">
         {clients.length > 0 ? (
-          clients.map(clientData => (
+          clients.map((clientData, index) => (
             <div key={clientData.client.id} className="mb-3">
-              <DashboardClientCard data={clientData} />
+              <DashboardClientCard data={clientData} index={index} />
             </div>
           ))
         ) : (
