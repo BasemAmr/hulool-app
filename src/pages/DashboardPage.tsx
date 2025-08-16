@@ -48,14 +48,14 @@ const DashboardPage = () => {
                 </div>
             )}
 
-            {!isLoading && groupedClients && totalClients > 0 && (
+            {!isLoading && (
                 <div className="recent-tasks-section">
                     <div className="row g-4">
                         {/* Government Column */}
                         <div className="col-lg-3 col-md-6">
                             <ClientTypeColumn 
                                 type="Government" 
-                                clients={groupedClients.Government || []} 
+                                clients={groupedClients?.Government || []} 
                             />
                         </div>
                         
@@ -63,7 +63,7 @@ const DashboardPage = () => {
                         <div className="col-lg-3 col-md-6">
                             <ClientTypeColumn 
                                 type="Accounting" 
-                                clients={groupedClients.Accounting || []} 
+                                clients={groupedClients?.Accounting || []} 
                             />
                         </div>
                         
@@ -71,7 +71,7 @@ const DashboardPage = () => {
                         <div className="col-lg-3 col-md-6">
                             <ClientTypeColumn 
                                 type="Real Estate" 
-                                clients={groupedClients['Real Estate'] || []} 
+                                clients={groupedClients?.['Real Estate'] || []} 
                             />
                         </div>
                         
@@ -79,7 +79,7 @@ const DashboardPage = () => {
                         <div className="col-lg-3 col-md-6">
                             <ClientTypeColumn 
                                 type="Other" 
-                                clients={groupedClients.Other || []} 
+                                clients={groupedClients?.Other || []} 
                             />
                         </div>
                     </div>

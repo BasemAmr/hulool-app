@@ -10,10 +10,10 @@ interface ClientTypeColumnProps {
 const ClientTypeColumn = ({ type, clients }: ClientTypeColumnProps) => {
   const getTypeTitle = (type: string) => {
     const typeMap = {
-      'Government': 'Government',
-      'Accounting': 'Accounting', 
-      'Real Estate': 'Real Estate',
-      'Other': 'Other'
+      'Government': 'حكومي',
+      'Accounting': 'محاسبي', 
+      'Real Estate': 'عقاري',
+      'Other': 'أخرى'
     };
     return typeMap[type as keyof typeof typeMap] || type;
   };
@@ -27,10 +27,6 @@ const ClientTypeColumn = ({ type, clients }: ClientTypeColumnProps) => {
     };
     return colorMap[type as keyof typeof colorMap] || 'var(--color-gray-500)';
   };
-
-  if (clients.length === 0) {
-    return null;
-  }
 
   return (
     <div className="client-type-column">
@@ -47,11 +43,17 @@ const ClientTypeColumn = ({ type, clients }: ClientTypeColumnProps) => {
       </div>
       
       <div className="clients-list">
-        {clients.map(clientData => (
-          <div key={clientData.client.id} className="mb-3">
-            <DashboardClientCard data={clientData} />
+        {clients.length > 0 ? (
+          clients.map(clientData => (
+            <div key={clientData.client.id} className="mb-3">
+              <DashboardClientCard data={clientData} />
+            </div>
+          ))
+        ) : (
+          <div className="text-center py-4 text-muted">
+            <small>لا توجد مهام نشطة</small>
           </div>
-        ))}
+        )}
       </div>
     </div>
   );
