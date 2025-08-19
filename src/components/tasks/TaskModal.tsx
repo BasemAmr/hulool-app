@@ -117,6 +117,22 @@ const TaskModal = () => {
   const createRequirementsMutation = useCreateRequirements();
   const isLoading = createTaskMutation.isPending || updateTaskMutation.isPending || createRequirementsMutation.isPending;
 
+  // Helper to safely parse amount_details
+  const parseAmountDetails = (details: any): any[] => {
+    if (Array.isArray(details)) {
+      return details;
+    }
+    if (typeof details === 'string') {
+      try {
+        const parsed = JSON.parse(details);
+        return Array.isArray(parsed) ? parsed : [];
+      } catch (e) {
+        return [];
+      }
+    }
+    return [];
+  };
+
   // Helper function to handle prepaid payment flow
   const handlePrepaidPayment = (createdTask: any) => {
     if (createdTask.prepaid_receivable_id && createdTask.receivable) {
@@ -153,6 +169,7 @@ const TaskModal = () => {
         end_date: data.end_date || undefined,
         prepaid_amount: data.prepaid_amount ? Number(data.prepaid_amount) : undefined,
         tags: data.tags || [],
+        amount_details: parseAmountDetails(data.amount_details),
         requirements: localRequirements
           .filter(req => req.requirement_text && String(req.requirement_text).trim() !== '')
           .map(req => ({
@@ -182,6 +199,7 @@ const TaskModal = () => {
         prepaid_amount: data.prepaid_amount ? Number(data.prepaid_amount) : undefined,
         notes: data.notes,
         tags: data.tags || [],
+        amount_details: parseAmountDetails(data.amount_details),
       };
       
       console.log('Create payload (with tags):', createPayload);

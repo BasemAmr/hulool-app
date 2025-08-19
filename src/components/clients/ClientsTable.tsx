@@ -2,7 +2,8 @@ import type { Client } from '../../api/types';
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
 import Button from '../ui/Button';
-import { Edit, Plus, ExternalLink, MessageCircle } from 'lucide-react'; // Example icons
+import { Edit, Plus, ExternalLink } from 'lucide-react'; // Example icons
+import WhatsAppIcon from '../../assets/images/whats.svg';
 
 interface ClientsTableProps {
   clients: Client[];
@@ -24,12 +25,7 @@ const ClientsTable = ({ clients, isLoading, onEdit, onAddTask, onViewReceivables
     return <div className="p-4 text-center text-muted">{t('common.noResults')}</div>;
   }
 
-  // Sort clients by newest first (created_at descending)
-  const sortedClients = [...clients].sort((a, b) => {
-    const dateA = new Date(a.created_at || '').getTime();
-    const dateB = new Date(b.created_at || '').getTime();
-    return dateB - dateA; // Newest first
-  });
+
 
   return (
     <div className="table-responsive">
@@ -39,11 +35,12 @@ const ClientsTable = ({ clients, isLoading, onEdit, onAddTask, onViewReceivables
             <th>{t('clients.tableHeaderName')}</th>
             <th>{t('clients.tableHeaderPhone')}</th>
             <th>{t('clients.tableHeaderType')}</th>
+            <th className="text-center">{t('clients.tableHeaderDueAmount')}</th>
             <th className="text-end">{t('clients.tableHeaderActions')}</th>
           </tr>
         </thead>
         <tbody>
-          {sortedClients.map((client) => (
+          {clients.map((client) => (
             <ClientRow 
               key={client.id} 
               client={client} 
@@ -121,21 +118,31 @@ const ClientRow = ({ client, onEdit, onAddTask, onViewReceivables, canViewReceiv
 
   return (
     <tr>
-      <td>
-        <Link to={`/clients/${client.id}`} className="text-decoration-none">
+      <td className="ps-2" style={{paddingRight: '16px'}}>
+        <Link to={`/clients/${client.id}`} className="text-decoration-none text-dark fw-bold link-hover">
           {client.name}
         </Link>
       </td>
       <td>
         <div className="d-flex align-items-center gap-2">
           <span>{client.phone}</span>
-          <button
+          <Button
+            variant="secondary"
+
+            size="sm"
             onClick={handleWhatsAppClick}
-            className="btn btn-link p-0 text-success"
-            title="Open WhatsApp"
+            title={t('clients.sendMessage')}
+            className="p-1 border-0"
+
           >
-            <MessageCircle size={16} />
-          </button>
+            <img
+              src={WhatsAppIcon}
+              alt="WhatsApp"
+              width="16"
+              height="16"
+              // style={{ filter: 'brightness(0) invert(0)' }}
+            />
+          </Button>
         </div>
       </td>
       <td>
@@ -143,9 +150,13 @@ const ClientRow = ({ client, onEdit, onAddTask, onViewReceivables, canViewReceiv
           {getTypeLabel(client.type)}
         </span>
       </td>
+      <td className="text-center">
+        <span className={`fw-semibold ${client.total_outstanding && client.total_outstanding > 0 ? 'text-danger' : 'text-muted'}`}>
+          {Number(client.total_outstanding || 0).toFixed(2)}
+        </span>
+      </td>
       <td className="text-end">
-        <div className="d-flex align-items-center justify-content-between gap-1">
-          <div className="d-flex align-items-center justify-content-center">
+        <div className="d-flex align-items-center justify-content-start gap-1">
           <Button 
             variant="outline-primary" 
             size="sm" 
@@ -170,27 +181,16 @@ const ClientRow = ({ client, onEdit, onAddTask, onViewReceivables, canViewReceiv
           >
             <ExternalLink size={16} />
           </Button>
-          </div>
           {canViewReceivables && (
-            client.total_outstanding && client.total_outstanding > 0 ? (
-              <Button 
-                variant="secondary" 
-                size="sm" 
-                onClick={handleUnpaidAmountsClick}
-                title={`إجمالي المستحقات: ${Number(client.total_outstanding).toFixed(2)}`}
-              >
-                إجمالي المستحقات: {Number(client.total_outstanding).toFixed(2)}
-              </Button>
-            ) : (
-              <Button 
-                variant="secondary" 
-                size="sm" 
-                disabled
-                title={t('clients.noOutstanding')}
-              >
-                {t('clients.noOutstanding')}
-              </Button>
-            )
+            <Button 
+              variant="secondary" 
+              size="sm" 
+              onClick={handleUnpaidAmountsClick}
+              title={t('clients.viewReceivables')}
+              disabled={!client.total_outstanding || client.total_outstanding <= 0}
+            >
+              {t('clients.viewReceivables')}
+            </Button>
           )}
         </div>
       </td>

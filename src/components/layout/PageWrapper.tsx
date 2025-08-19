@@ -3,10 +3,12 @@ import { Outlet, useLocation } from 'react-router-dom';
 import { useMemo } from 'react';
 import Sidebar from './Sidebar';
 import ModalManager from '../shared/ModalManager';
+import { useSidebarStore } from '../../stores/sidebarStore';
 import styles from './Layout.module.scss';
 
 const PageWrapper = () => {
   const location = useLocation();
+  const { isCollapsed } = useSidebarStore();
   
   // Determine page type from current route
   const pageType = useMemo(() => {
@@ -22,7 +24,13 @@ const PageWrapper = () => {
 
   return (
     <div className={styles.appLayout} data-page={pageType}>
-      <main className={styles.mainContent}>
+      <main 
+        className={styles.mainContent} 
+        style={{ 
+          marginRight: isCollapsed ? '0px' : '160px',
+          transition: 'margin-right 0.3s ease'
+        }}
+      >
         <Outlet /> {/* Child routes will be rendered here */}
       </main>
       <Sidebar />

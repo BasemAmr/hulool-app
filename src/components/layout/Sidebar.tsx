@@ -1,5 +1,6 @@
 import { NavLink, useNavigate, useLocation } from 'react-router-dom';
 import { useAuthStore } from '../../stores/authStore';
+import { useSidebarStore } from '../../stores/sidebarStore';
 import { useTranslation } from 'react-i18next';
 import Logo from '../ui/Logo';
 import styles from './Layout.module.scss';
@@ -7,11 +8,13 @@ import { Banknote, LayoutDashboard, LogOut, NotebookText, Users, Settings, Build
 import { useModalStore } from '../../stores/modalStore';
 import { Search } from 'lucide-react';
 import { useState } from 'react';
+import { createPortal } from 'react-dom';
 
 
 const Sidebar = () => {
   const user = useAuthStore((state) => state.user);
   const logout = useAuthStore((state) => state.logout);
+  const { isCollapsed, toggleCollapsed } = useSidebarStore();
   const { t } = useTranslation();
   const navigate = useNavigate();
   const location = useLocation();
@@ -99,11 +102,23 @@ const Sidebar = () => {
   };
 
   return (
-    <aside className={styles.sidebar}>
-      {/* Header with Logo */}
-      <div className={styles.sidebarHeader}>
-          <Logo />
-      </div>
+    <>
+      <aside className={`${styles.sidebar} ${isCollapsed ? styles.collapsed : ''}`}>
+        {/* Collapse Toggle Button - only show when not collapsed */}
+        {!isCollapsed && (
+          <button 
+            className={styles.collapseToggle}
+            onClick={toggleCollapsed}
+            title={isCollapsed ? 'توسيع الشريط الجانبي' : 'تصغير الشريط الجانبي'}
+          >
+            <ChevronRight className={isCollapsed ? styles.rotated : ''} size={16} />
+          </button>
+        )}
+
+        {/* Header with Logo */}
+        <div className={styles.sidebarHeader}>
+            <Logo />
+        </div>
 
       {/* Navigation */}
       <nav className={styles.sidebarNav}>
@@ -212,6 +227,46 @@ const Sidebar = () => {
         </div>
       </div>
     </aside>
+    
+    {/* Collapsed toggle button as portal - always visible when collapsed */}
+    {isCollapsed && createPortal(
+      <button 
+        className={styles.collapsedTogglePortal}
+        onClick={toggleCollapsed}
+        title="توسيع الشريط الجانبي"
+        style={{
+          position: 'fixed',
+          top: '50%',
+          right: '-20px',
+          transform: 'translateY(-50%)',
+          width: '40px',
+          height: '40px',
+          background: 'rgba(212, 175, 55, 0.95)',
+          border: '2px solid rgba(212, 175, 55, 1)',
+          borderRadius: '50% 0 0 50%',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          cursor: 'pointer',
+          zIndex: 9999,
+          boxShadow: '-2px 2px 12px rgba(0,0,0,0.4)',
+          color: 'white',
+          transition: 'all 0.3s ease'
+        }}
+        onMouseEnter={(e) => {
+          e.currentTarget.style.right = '-10px';
+          e.currentTarget.style.background = 'rgba(212, 175, 55, 1)';
+        }}
+        onMouseLeave={(e) => {
+          e.currentTarget.style.right = '-20px';
+          e.currentTarget.style.background = 'rgba(212, 175, 55, 0.95)';
+        }}
+      >
+        <ChevronRight className={styles.rotated} size={18} />
+      </button>,
+      document.body
+    )}
+    </>
   );
 };
 

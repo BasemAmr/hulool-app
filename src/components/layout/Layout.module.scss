@@ -26,6 +26,54 @@
   // Add subtle backdrop blur effect
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
+
+  // Collapsed state
+  &.collapsed {
+    width: 0;
+    border-left: none;
+    
+    .sidebarHeader {
+      display: none;
+    }
+    
+    .sidebarNav {
+      display: none;
+    }
+    
+    .sidebarFooter {
+      display: none;
+    }
+  }
+}
+
+// Collapse toggle button
+.collapseToggle {
+  position: absolute;
+  top: 50%;
+  left: -12px;
+  transform: translateY(-50%);
+  width: 24px;
+  height: 24px;
+  background: var(--color-gray-400);
+  border: 1px solid rgba(212, 175, 55, 0.3);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  z-index: 10;
+  transition: all var(--transition-fast);
+  color: #555555;
+  
+  &:hover {
+    background: rgba(212, 175, 55, 0.1);
+    color: $color-gold-dark;
+    transform: translateY(-50%) scale(1.1);
+  }
+  
+  .rotated {
+    transform: rotate(180deg);
+  }
 }
 
 .mainContent {

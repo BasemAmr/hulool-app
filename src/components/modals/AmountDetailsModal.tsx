@@ -50,7 +50,20 @@ const AmountDetailsModal = () => {
     }
   };
 
-  if (!task.amount_details || task.amount_details.length === 0) {
+  // task.amount_details may be a JSON string ("[]") or an array. Normalize to array.
+  let amountDetailsArr: any[] = [];
+  if (Array.isArray(task.amount_details)) {
+    amountDetailsArr = task.amount_details;
+  } else if (typeof task.amount_details === 'string') {
+    try {
+      const parsed = JSON.parse(task.amount_details);
+      amountDetailsArr = Array.isArray(parsed) ? parsed : [];
+    } catch (err) {
+      amountDetailsArr = [];
+    }
+  }
+
+  if (!amountDetailsArr || amountDetailsArr.length === 0) {
     return (
       <BaseModal isOpen={true} onClose={closeModal} title="تفاصيل المبلغ">
         <div className="text-center py-4">
@@ -64,7 +77,7 @@ const AmountDetailsModal = () => {
     );
   }
 
-  const total = task.amount_details.reduce((sum, detail) => sum + detail.amount, 0);
+  const total = amountDetailsArr.reduce((sum, detail) => sum + (Number(detail?.amount) || 0), 0);
 
   return (
     <BaseModal isOpen={true} onClose={closeModal} title="تفاصيل المبلغ" className="amount-details-modal">
@@ -112,7 +125,7 @@ const AmountDetailsModal = () => {
           </div>
 
           <div className="list-group list-group-flush">
-            {task.amount_details.map((detail, index) => (
+            {amountDetailsArr.map((detail, index) => (
               <div 
                 key={index} 
                 className="list-group-item d-flex justify-content-between align-items-center py-3"

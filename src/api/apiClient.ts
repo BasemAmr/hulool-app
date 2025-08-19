@@ -16,6 +16,12 @@ apiClient.interceptors.request.use(
     if (nonce) {
       config.headers['X-WP-Nonce'] = nonce;
     }
+    // Remove or comment out the X-Frontend-Source header to avoid CORS issues
+    // if (config.headers['X-Frontend-Source']) {
+    //   // The header is already set by the calling function
+    // } else {
+    //   config.headers['X-Frontend-Source'] = 'Unknown';
+    // }
     return config;
   },
   (error) => {

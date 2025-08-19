@@ -34,7 +34,11 @@
       "realEstate": "عقاري", 
       "accounting": "محاسبي",
       "other": "أخرى"
-    }
+    },
+    "tableHeaderDueAmount": "المستحقات",
+    "viewReceivables": "عرض المستحقات"
+
+
   },
   "tasks": {
     "title": "إدارة المهام",

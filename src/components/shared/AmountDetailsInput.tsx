@@ -14,9 +14,15 @@ const AmountDetailsInput = ({ control, register, totalAmount }: AmountDetailsInp
     name: "amount_details",
   });
 
-  // Watch the amount_details to calculate sum
-  const amountDetails = useWatch({ control, name: "amount_details" }) || [];
-  const currentDetailsSum = amountDetails.reduce((sum: number, item: any) => sum + (Number(item.amount) || 0), 0);
+  // Watch the amount_details to calculate sum. API may return a JSON string ("[]").
+  const watched = useWatch({ control, name: "amount_details" });
+  const amountDetails = Array.isArray(watched)
+    ? watched
+    : (typeof watched === 'string'
+      ? (() => { try { const p = JSON.parse(watched); return Array.isArray(p) ? p : []; } catch { return []; } })()
+      : []);
+
+  const currentDetailsSum = amountDetails.reduce((sum: number, item: any) => sum + (Number(item?.amount) || 0), 0);
   const remainingAmount = totalAmount - currentDetailsSum;
 
   return (

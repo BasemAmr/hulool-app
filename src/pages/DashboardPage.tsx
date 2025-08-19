@@ -18,27 +18,31 @@ const DashboardPage = () => {
         applyPageBackground('dashboard');
     }, []);
 
-    // Map task types to display names and colors
+    // Map task types to display names and colors with alternating backgrounds
     const taskTypeConfig = {
         Government: {
             icon: <FileText size={20} />,
             color: '#007bff',
-            displayName: 'حكومية'
+            displayName: 'حكومية',
+            alternatingColors: ['#e3f2fd', '#bbdefb'] // Light blue shades
         },
         Accounting: {
             icon: <BookOpen size={20} />,
             color: '#ffc107',
-            displayName: 'محاسبية'
+            displayName: 'محاسبية',
+            alternatingColors: ['#fff8e1', '#ffecb3'] // Light yellow/orange shades
         },
         'Real Estate': {
             icon: <Home size={20} />,
             color: '#28a745',
-            displayName: 'عقارية'
+            displayName: 'عقارية',
+            alternatingColors: ['#e8f5e8', '#c8e6c9'] // Light green shades
         },
         Other: {
             icon: <Briefcase size={20} />,
             color: '#6c757d',
-            displayName: 'أخرى'
+            displayName: 'أخرى',
+            alternatingColors: ['#f8f9fa', '#e9ecef'] // Light grey shades
         }
     };
 
@@ -85,35 +89,35 @@ const DashboardPage = () => {
                                         }}
                                     >
                                         <div
-                                            className="card-header text-white d-flex justify-content-between align-items-center py-2 border-bottom"
+                                            className="card-header  text-white d-flex justify-content-center align-items-center py-2 border-bottom"
                                             style={{
                                                 background: config.color,
                                                 color: type === 'Accounting' ? '#333' : '#fff',
                                                 borderBottom: '1px solid #dee2e6'
                                             }}
                                         >
-                                            <div className="d-flex align-items-center">
+                                            <div className="d-flex justify-content-center align-items-center font-weight-bold">
                                                 <span
                                                     style={{
-                                                        color: type === 'Accounting' ? '#333' : '#fff',
+                                                        color: '#000',
                                                     }}
                                                 >
                                                     {config.icon}
                                                 </span>
                                                 <Link
                                                     to={`/tasks?type=${type}`}
-                                                    className="text-decoration-none ms-2"
+                                                    className="text-decoration-none ms-2 text-center"
                                                     style={{
-                                                        color: type === 'Accounting' ? '#333' : '#fff',
+                                                        color: '#000',
                                                     }}
                                                 >
-                                                    <h6 className="mb-0 fw-medium">
-                                                        عملاء {config.displayName}
+                                                    <h6 className="mb-0 fw-medium text-center">
+                                                        خدمات  {config.displayName}
                                                     </h6>
                                                 </Link>
                                             </div>
                                             <span
-                                                className="badge bg-white text-primary rounded-pill px-2 py-1"
+                                                className="badge bg-white text-primary rounded-pill px-2 py-1 text-black"
                                             >
                                                 {clients.length}
                                             </span>
@@ -122,7 +126,11 @@ const DashboardPage = () => {
                                             {clients.length > 0 ? (
                                                 clients.map((clientData, index) => (
                                                     <div key={clientData.client.id}>
-                                                        <DashboardClientCard data={clientData} index={index} />
+                                                        <DashboardClientCard 
+                                                            data={clientData} 
+                                                            index={index}
+                                                            alternatingColors={config.alternatingColors}
+                                                        />
                                                         {index < clients.length - 1 && (
                                                             <hr className="m-0" style={{ borderColor: '#dee2e6' }} />
                                                         )}

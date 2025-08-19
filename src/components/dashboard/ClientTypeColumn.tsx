@@ -28,6 +28,9 @@ const ClientTypeColumn = ({ type, clients }: ClientTypeColumnProps) => {
     return colorMap[type as keyof typeof colorMap] || 'var(--color-gray-500)';
   };
 
+  // Define alternating colors for cards
+  const alternatingColors = ['#f8f9fa', '#e9ecef'];
+
   return (
     <div className="client-type-column">
       <div 
@@ -46,7 +49,7 @@ const ClientTypeColumn = ({ type, clients }: ClientTypeColumnProps) => {
         {clients.length > 0 ? (
           clients.map((clientData, index) => (
             <div key={clientData.client.id} className="mb-3">
-              <DashboardClientCard data={clientData} index={index} />
+              <DashboardClientCard data={clientData} index={index} alternatingColors={alternatingColors} />
             </div>
           ))
         ) : (
