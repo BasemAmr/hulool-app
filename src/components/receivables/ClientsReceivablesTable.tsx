@@ -59,9 +59,9 @@ const ClientsReceivablesTable = ({ clients, isLoading }: ClientsReceivablesTable
     );
   }
 
-  // Filter out clients with zero paid and total amounts
+  // Filter out clients with zero outstanding amounts
   const filteredClients = clients.filter(client => 
-    (Number(client.paid_amount) || 0) > 0 || (Number(client.total_amount) || 0) > 0
+    (Number(client.remaining_amount) || 0) > 0
   );
 
   if (!clients || clients.length === 0 || filteredClients.length === 0) {

@@ -150,9 +150,9 @@ const FilteredReceivablesTable: React.FC<FilteredReceivablesTableProps> = ({
                   </td>
                   <td className="text-start">
                     <div className="d-flex align-items-center justify-content-between" style={{ direction: 'rtl' }}>
-                      <div 
-                        className="fw-bold text-primary cursor-pointer" 
-                        onClick={() => handleClientClick(receivable.client_id)}
+                      <div
+                        className="fw-bold text-primary cursor-pointer"
+                        onClick={() => handleClientClick(Number(receivable.client_id))}
                         style={{ cursor: 'pointer' }}
                       >
                         {receivable.client?.name}

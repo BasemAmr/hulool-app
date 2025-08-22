@@ -19,7 +19,7 @@ const PaymentHistoryModal = ({ isOpen, onClose, clientName, clientId }: PaymentH
   // Fetch real receivables data for this client
   const { data: receivablesData, isLoading, error } = useGetClientReceivables(clientId);
 
-  const receivables = receivablesData?.receivables || [];
+  const receivables = receivablesData?.statementItems || [];
 
   // Calculate real stats from fetched data - StatementItems have debit/credit instead of amount/total_paid
   const stats = {

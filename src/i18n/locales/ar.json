@@ -31,14 +31,31 @@
     "allTypes": "جميع الأنواع",
     "types": {
       "government": "حكومي",
-      "realEstate": "عقاري", 
+      "realEstate": "عقاري",
       "accounting": "محاسبي",
       "other": "أخرى"
     },
     "tableHeaderDueAmount": "المستحقات",
-    "viewReceivables": "عرض المستحقات"
-
-
+    "viewReceivables": "عرض المستحقات",
+    "creditsHistory": "سجل الاعتمادات",
+    "noCreditsFound": "لا توجد اعتمادات مالية لهذا العميل.",
+    "allocatedAmount": "المبلغ المخصص",
+    "remainingAmount": "المبلغ المتبقي",
+    "deleteCredit": "حذف الاعتماد",
+    "deleteCreditConfirm": "هل أنت متأكد من حذف الاعتماد '{description}' بمبلغ {amount}؟",
+    "warning": "تحذير",
+    "creditHasAllocations": "يحتوي هذا الاعتماد على تخصيصات مرتبطة. سيتم عرض خيارات لحل التعارض.",
+    "resolution": "الحل",
+    "paymentMethod": "طريقة الدفع",
+    "convertToPayment": "تحويل إلى دفعة",
+    "selectPaymentMethod": "اختر طريقة الدفع",
+    "processing": "جاري المعالجة...",
+    "resolve": "حل التعارض",
+    "creditConflict": "تعارض في تعديل الاعتماد",
+    "creditConflictMessage": "المبلغ الجديد ({newAmount}) أقل من المبلغ المخصص ({allocated}). يرجى تعديل التخصيصات لتغطية العجز البالغ {deficit}.",
+    "allocationAdjustments": "تعديلات التخصيص",
+    "newAmount": "المبلغ الجديد",
+    "totalReduction": "إجمالي التخفيض"
   },
   "tasks": {
     "title": "إدارة المهام",
@@ -62,7 +79,7 @@
     "resumeSuccessMessage": "تم استئناف المهمة  بنجاح",
     "resumeError": "حدث خطأ أثناء استئناف المهمة",
     "tableHeaderClient": "العميل",
-    "tableHeaderService": "الخدمة المقدمة", 
+    "tableHeaderService": "الخدمة المقدمة",
     "tableHeaderClientPhone": "رقم الجوال",
     "tableHeaderType": "النوع",
     "tableHeaderNotes": "الملاحظات",
@@ -128,7 +145,30 @@
     "select": "اختر",
     "required": "هذا الحقل مطلوب",
     "back": "رجوع",
-    "error": "خطأ"
+    "error": "خطأ",
+    "noDescription": "لا يوجد وصف",
+    "loading": "جاري التحميل...",
+    "processing": "جاري المعالجة...",
+    "deleting": "جاري الحذف...",
+    "keep": "احتفاظ",
+    "reduce": "تقليل",
+    "selectPaymentMethod": "اختر طريقة الدفع",
+    "amount": "المبلغ",
+    "description": "الوصف",
+    "date": "التاريخ"
+  },
+  "validation": {
+    "required": "هذا الحقل مطلوب",
+    "email": "بريد إلكتروني غير صالح",
+    "min": "يجب أن يكون على الأقل {{min}}",
+    "max": "يجب أن يكون على الأكثر {{max}}",
+    "minLength": "يجب أن يكون على الأقل {{min}} حرف",
+    "maxLength": "يجب أن يكون على الأكثر {{max}} حرف",
+    "numeric": "يجب أن يكون رقمًا",
+    "positive": "يجب أن يكون رقمًا موجبًا",
+    "date": "تاريخ غير صالح",
+    "minAmount": "يجب أن يكون المبلغ على الأقل 0.01",
+    "positiveAmount": "يجب أن يكون المبلغ أكبر من صفر"
   },
   "receivables": {
     "title": "المستحقات المالية",
@@ -164,7 +204,7 @@
       "Accounting": "محاسبة",
       "Other": "أخرى"
     },
-     "dueDate": "تاريخ الأمر",
+    "dueDate": "تاريخ الأمر",
     "dueDateRequired": "يرجى اختيار تاريخ الأمر."
   },
   "payments": {
@@ -221,7 +261,6 @@
     "RealEstate": "عقارية",
     "Accounting": "محاسبية",
     "Other": "أخرى"
-
   },
   "settings": {
     "title": "الإعدادات",
@@ -269,5 +308,71 @@
     "noPermission": "لا تملك صلاحية إدارة المستخدمين",
     "contactAdmin": "اتصل بالمدير للحصول على الصلاحيات المطلوبة",
     "loading": "جاري تحميل المستخدمين..."
+  },
+  "credits": {
+    "title": "الاعتمادات المالية",
+    "addNew": "إضافة اعتماد جديد",
+    "creditHistory": "سجل الاعتمادات",
+    "amount": "المبلغ",
+    "allocatedAmount": "المبلغ المخصص",
+    "remainingAmount": "المبلغ المتبقي",
+    "description": "الوصف",
+    "date": "التاريخ",
+    "actions": "الإجراءات",
+    "noCredits": "لا توجد اعتمادات مالية",
+    "addCredit": "إضافة اعتماد",
+    "editCredit": "تعديل الاعتماد",
+    "deleteCredit": "حذف الاعتماد",
+    "deleteCreditConfirmation": "هل أنت متأكد من حذف هذا الاعتماد؟",
+    "creditDetails": "تفاصيل الاعتماد",
+    "totalCredits": "إجمالي الاعتمادات",
+    "creditReductionConflict": "تعارض في تقليل الاعتماد",
+    "creditDeletionConflict": "تعارض في حذف الاعتماد",
+    "cannotReduceBelowAllocated": "لا يمكن تقليل الاعتماد إلى أقل من المبلغ المخصص",
+    "cannotDeleteWithAllocations": "لا يمكن حذف الاعتماد المخصص بالكامل",
+    "resolveConflict": "حل التعارض",
+    "allocatedTo": "مخصص لـ",
+    "allocationAmount": "مبلغ التخصيص",
+    "currentAmount": "المبلغ الحالي",
+    "newAmount": "المبلغ الجديد",
+    "deficit": "العجز",
+    "totalReduction": "إجمالي التقليل",
+    "keepAllocation": "الاحتفاظ بالتخصيص",
+    "reduceAllocation": "تقليل التخصيص",
+    "removeAllocation": "إزالة التخصيص",
+    "allocationAdjustments": "تعديلات التخصيص",
+    "deletionConflictMessage": "يوجد تعارض في الحذف",
+    "reductionConflictMessage": "يوجد تعارض في التقليل",
+    "selectPaymentMethodForConversion": "اختر طريقة الدفع للتحويل",
+    "cannotIncreaseAmount": "لا يمكن زيادة مبلغ الاعتماد من خلال هذه الواجهة.",
+    "insufficientReduction": "يجب أن يكون إجمالي التخفيضات أكبر من أو يساوي العجز.",
+    "deleteAllocation": "حذف التخصيص",
+    "convertToPayment": "تحويل إلى دفعة",
+    "allocationResolutions": "حلول التخصيص"
+  },
+  "allocations": {
+    "title": "تخصيصات الاعتماد",
+    "amount": "المبلغ",
+    "description": "الوصف",
+    "currentAllocation": "التخصيص الحالي",
+    "availableCredit": "الاعتماد المتاح",
+    "enterDescription": "أدخل الوصف",
+    "editAllocation": "تعديل التخصيص",
+    "deleteAllocation": "حذف التخصيص",
+    "deleteAllocationConfirmation": "هل أنت متأكد من حذف هذا التخصيص؟",
+    "allocationDetails": "تفاصيل التخصيص",
+    "noAllocations": "لا توجد تخصيصات",
+    "allocatedToTask": "مخصص للمهمة",
+    "insufficientCredit": "الاعتماد المتاح غير كافي",
+    "deleteWarning": "أنت على وشك حذف تخصيص اعتماد. هذه العملية لا رجعة فيها.",
+    "confirmDeleteMessage": "يرجى تأكيد أنك تفهم وتوافق على حذف هذا التخصيص.",
+    "noDescription":"لا يوجد وصف",
+    "date": "التاريخ"
+  },
+  "paymentMethods": {
+    "cash": "نقداً",
+    "bankTransfer": "تحويل بنكي",
+    "check": "شيك",
+    "creditCard": "بطاقة ائتمان"
   }
 }

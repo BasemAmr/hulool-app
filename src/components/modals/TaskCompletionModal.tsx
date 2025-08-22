@@ -86,7 +86,7 @@ const TaskCompletionModal = () => {
 
     completeTaskMutation.mutate(
       { 
-        id: task.id, 
+        id: Number(task.id), 
         payload 
       }, 
       {

@@ -7,12 +7,13 @@ import ClientsReceivablesTable from '../components/receivables/ClientsReceivable
 import Button from '../components/ui/Button';
 import { PlusCircle } from 'lucide-react';
 import { useReceivablesPermissions } from '../hooks/useReceivablesPermissions';
+import SaudiRiyalIcon from '../components/ui/SaudiRiyalIcon';
 
 const ReceivablesPage = () => {
   const { t } = useTranslation();
   const openModal = useModalStore((state) => state.openModal);
   const { hasViewAllReceivablesPermission, isLoading: isPermissionsLoading } = useReceivablesPermissions();
-  
+
   // Only fetch data if user has permission
   const { data, isLoading } = useGetClientsReceivablesSummary(hasViewAllReceivablesPermission);
 
@@ -20,6 +21,10 @@ const ReceivablesPage = () => {
   useEffect(() => {
     applyPageBackground('receivables');
   }, []);
+
+  // Handle adding a credit
+  const handleAddCredit = () => openModal('recordCreditModal', {});
+
 
   // Show permission denied message if user doesn't have access
   if (isPermissionsLoading) {
@@ -38,13 +43,17 @@ const ReceivablesPage = () => {
   return (
     <div>
       <header className="d-flex justify-content-between align-items-center mb-3">
-        <h1 style={{ 
+        <h1 style={{
           background: 'linear-gradient(135deg, #d4af37 0%, #b8941f 100%)',
           WebkitBackgroundClip: 'text',
           WebkitTextFillColor: 'transparent',
           backgroundClip: 'text',
           fontWeight: 'bold'
         }}>{t('receivables.title')}</h1>
+        <Button onClick={handleAddCredit} variant="outline-primary">
+          <SaudiRiyalIcon size={18} className="me-2" />
+          إضافة دفعة للرصيد
+        </Button>
         <Button onClick={() => openModal('manualReceivable', {})}>
           <PlusCircle size={18} className="me-2" />
           {t('receivables.addNewManual')}

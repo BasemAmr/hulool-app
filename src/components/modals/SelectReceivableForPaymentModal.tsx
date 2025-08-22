@@ -79,7 +79,7 @@ const SelectReceivableForPaymentModal = ({ isOpen, onClose, clientId }: SelectRe
                         selectedReceivableId === receivable.id ? 'active' : ''
                       }`}
                       style={{ cursor: 'pointer' }}
-                      onClick={() => handleReceivableSelect(receivable.id)}
+                      onClick={() => handleReceivableSelect(Number(receivable.id))}
                     >
                       <div className="d-flex justify-content-between align-items-center">
                         <div>

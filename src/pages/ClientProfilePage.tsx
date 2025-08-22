@@ -8,6 +8,7 @@ import { applyPageBackground } from '../utils/backgroundUtils';
 import { useGetClient } from '../queries/clientQueries';
 import { useDeleteTask, useGetTasks } from '../queries/taskQueries';
 import { useGetClientReceivables, useGetAllClientReceivables } from '../queries/receivableQueries';
+import { useGetClientCredits } from '../queries/clientCreditQueries';
 
 // Import components
 import ClientProfileHeader from '../components/clients/ClientProfileHeader';
@@ -15,8 +16,10 @@ import ClientTaskSummaryCards from '../components/clients/ClientTaskSummaryCards
 import AllTasksTable from '../components/tasks/AllTasksTable';
 import ClientReceivablesTable from '../components/receivables/ClientReceivablesTable';
 import { exportToExcel, exportToPDF } from '../components/receivables/exportUtils';
-import type {  Task, Receivable, StatementItem } from '../api/types';
+import type {  Task, StatementItem } from '../api/types';
 import { useReceivablesPermissions } from '../hooks/useReceivablesPermissions';
+import ClientCreditBalance from '../components/clients/ClientCreditBalance';
+import ClientCreditsHistoryTable from '../components/clients/ClientCreditsHistoryTable';
 
 const ClientProfilePage = () => {
     const { t } = useTranslation();
@@ -38,6 +41,7 @@ const ClientProfilePage = () => {
     // Fetch all data in parallel
     const { data: client, isLoading: isLoadingClient } = useGetClient(clientId);
     const { data: tasksData, isLoading: isLoadingTasks } = useGetTasks({ client_id: clientId });
+    const { data: creditsData, isLoading: isLoadingCredits } = useGetClientCredits(clientId);
     
     // Fetch the new statement data for display - only if user has permission
     const { data: statementData, isLoading: isLoadingReceivables } = useGetClientReceivables(clientId, hasViewAllReceivablesPermission);
@@ -46,7 +50,7 @@ const ClientProfilePage = () => {
     const { data: rawReceivablesData } = useGetAllClientReceivables(clientId, hasViewAllReceivablesPermission); 
     const clientRawReceivables = rawReceivablesData?.receivables || [];
 
-    const isLoading = isLoadingClient || isLoadingTasks || (hasViewAllReceivablesPermission && isLoadingReceivables);
+    const isLoading = isLoadingClient || isLoadingTasks || isLoadingCredits || (hasViewAllReceivablesPermission && isLoadingReceivables);
 
     // Mutation hooks
     const deleteTaskMutation = useDeleteTask();
@@ -66,19 +70,19 @@ const ClientProfilePage = () => {
             title: t('common.confirm'),
             message: t('clients.deleteConfirmMessage', { clientName: task.client.name }) + ` - Task: ${task.task_name || t(`type.${task.type}`)}`, // Customize message
             onConfirm: () => {
-                deleteTaskMutation.mutate(task.id);
+                deleteTaskMutation.mutate(Number(task.id));
             },
         });
     };
     const handleShowRequirements = (task: Task) => openModal('requirements', { task });
 
-    const handleSettlePayment = (receivable: Receivable) => {
-        // Find the full receivable object from raw data to pass to the modal
-        const fullReceivable = clientRawReceivables.find(r => r.id === receivable.id);
-        if (fullReceivable) {
-            openModal('paymentForm', { receivable: fullReceivable });
-        }
-    };
+    // const handleSettlePayment = (receivable: Receivable) => {
+    //     // Find the full receivable object from raw data to pass to the modal
+    //     const fullReceivable = clientRawReceivables.find(r => r.id === receivable.id);
+    //     if (fullReceivable) {
+    //         openModal('paymentForm', { receivable: fullReceivable });
+    //     }
+    // };
 
     const handleCompleteTask = (task: Task) => {
         openModal('taskCompletion', { task });
@@ -86,8 +90,8 @@ const ClientProfilePage = () => {
 
     // Export handlers for receivables
     const handleExportExcel = () => {
-        if (statementData?.receivables && client) {
-            const statementItems = statementData.receivables as StatementItem[];
+        if (statementData?.statementItems && client) {
+            const statementItems = statementData.statementItems as StatementItem[];
             const totals = {
                 totalDebit: statementItems.reduce((s, it) => s + it.debit, 0),
                 totalCredit: statementItems.reduce((s, it) => s + it.credit, 0),
@@ -98,8 +102,8 @@ const ClientProfilePage = () => {
     };
 
     const handleExportPDF = () => {
-        if (statementData?.receivables && client) {
-            const statementItems = statementData.receivables as StatementItem[];
+        if (statementData?.statementItems && client) {
+            const statementItems = statementData.statementItems as StatementItem[];
             const totals = {
                 totalDebit: statementItems.reduce((s, it) => s + it.debit, 0),
                 totalCredit: statementItems.reduce((s, it) => s + it.credit, 0),
@@ -131,6 +135,21 @@ const ClientProfilePage = () => {
                 onPrint={handlePrint}
             />
 
+            <ClientCreditBalance clientId={clientId} />
+
+            <div className="card mb-3">
+                <div className="card-header">
+                    <h5 className="mb-0">{t('clients.creditsHistory')}</h5>
+                </div>
+                <div className="card-body p-0">
+                    <ClientCreditsHistoryTable
+                        credits={creditsData?.credits || []}
+                        isLoading={isLoadingCredits}
+                        clientId={clientId}
+                    />
+                </div>
+            </div>
+
             {/* Task Summary Cards - Only in general mode */}
             {mode === 'general' && (
                 <ClientTaskSummaryCards
@@ -161,10 +180,9 @@ const ClientProfilePage = () => {
             {(mode === 'general' || mode === 'receivables') && (
                 hasViewAllReceivablesPermission ? (
                     <ClientReceivablesTable
-                        receivables={statementData?.receivables as StatementItem[] || []}
+                        receivables={statementData?.statementItems as StatementItem[] || []}
                         isLoading={isLoadingReceivables}
-                        clientName={client.name}
-                        onSettlePayment={handleSettlePayment}
+                        client={client}
                         filter={filter}
                         hideAmounts={!hasViewAmountsPermission}
                     />

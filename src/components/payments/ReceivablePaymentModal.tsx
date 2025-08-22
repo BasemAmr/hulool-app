@@ -2,6 +2,10 @@ import { useForm, Controller } from 'react-hook-form';
 import { useTranslation } from 'react-i18next';
 import { useModalStore } from '../../stores/modalStore';
 import { useGetPaymentMethods, useCreatePayment } from '../../queries/paymentQueries';
+
+import { useGetClientCredits } from '../../queries/clientCreditQueries';
+
+
 import type { Receivable, PaymentPayload } from '../../api/types';
 import BaseModal from '../ui/BaseModal';
 import Button from '../ui/Button';
@@ -15,15 +19,28 @@ interface ReceivablePaymentModalProps {
 const ReceivablePaymentModal = () => {
   const { t } = useTranslation();
   const closeModal = useModalStore((state) => state.closeModal);
+  const openModal = useModalStore(state => state.openModal); // Get openModal function
+
+
+
   const props = useModalStore((state) => state.props as ReceivablePaymentModalProps);
   const { receivable, isRequired = false } = props;
 
   const { data: paymentMethods, isLoading: isLoadingMethods } = useGetPaymentMethods();
   const createPaymentMutation = useCreatePayment();
 
+  // NEW: Fetch client credits
+  console.log('Fetching client credits for receivable:', receivable);
+  const { data: creditData } = useGetClientCredits(Number(receivable.client_id));
+  // const applyCreditMutation = useApplyCreditToReceivable();
+  const availableCredit = creditData?.balance || 0;
+  console.log('Available credit data:', creditData);
+  console.log('Available credit for client:', availableCredit);
+
   const { register, handleSubmit, control, formState: { errors } } = useForm<PaymentPayload>({
     defaultValues: {
-      receivable_id: receivable.id,
+      receivable_id: Number(receivable.id),
+
       amount: isRequired ? receivable.amount : receivable.remaining_amount, // Use full amount for prepaid
       paid_at: new Date().toISOString().split('T')[0],
       note: isRequired ? `دفع مقدم للمهمة: ${receivable.description}` : '', // Pre-fill note for prepaid
@@ -43,6 +60,13 @@ const ReceivablePaymentModal = () => {
     }
   };
 
+  const handleApplyCredit = () => {
+    // We close the current payment modal and open the apply credit modal
+    closeModal();
+    openModal('applyCreditModal', { receivable, availableCredit });
+  };
+
+
   return (
     <BaseModal
       isOpen={true}
@@ -59,16 +83,33 @@ const ReceivablePaymentModal = () => {
         </div>
       )}
       <form onSubmit={handleSubmit(onSubmit)}>
+
+        {availableCredit > 0 && !isRequired && (
+          <div className="alert alert-success d-flex justify-content-between align-items-center">
+            <span>
+              لدى العميل رصيد متاح: <strong>{availableCredit.toLocaleString()} ريال</strong>
+            </span>
+            <Button
+              type="button"
+              variant="secondary"
+              size="sm"
+              onClick={handleApplyCredit} // Use the new handler
+            >
+              تطبيق من الرصيد
+            </Button>
+          </div>
+        )}
+
         <Input
           label={`${t('payments.amountLabel')}${isRequired ? ' (مبلغ ثابت)' : ''}`}
           type="number"
           step="0.01"
           max={isRequired ? receivable.amount : receivable.remaining_amount}
           readOnly={isRequired} // Make readonly when required (prepaid)
-          {...register('amount', { 
-            required: true, 
-            valueAsNumber: true, 
-            max: isRequired ? receivable.amount : receivable.remaining_amount 
+          {...register('amount', {
+            required: true,
+            valueAsNumber: true,
+            max: isRequired ? receivable.amount : receivable.remaining_amount
           })}
           error={errors.amount ? "Amount is required and cannot exceed remaining balance." : undefined}
         />
@@ -90,12 +131,12 @@ const ReceivablePaymentModal = () => {
           />
           {errors.payment_method_id && <div className="invalid-feedback d-block">Required</div>}
         </div>
-        
+
         <Input label={t('payments.dateLabel')} type="date" {...register('paid_at', { required: true })} error={errors.paid_at && "Required"} />
-        <Input 
+        <Input
           label={`${t('payments.notesLabel')}`}
-          {...register('note')} 
-          
+          {...register('note')}
+
         />
 
         <footer className="modal-footer">
@@ -109,7 +150,7 @@ const ReceivablePaymentModal = () => {
           </Button>
         </footer>
       </form>
-      
+
       {/* Add styling for readonly fields when required */}
       {isRequired && (
         <style>{`

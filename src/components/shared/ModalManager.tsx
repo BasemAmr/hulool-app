@@ -16,10 +16,18 @@ import AmountDetailsModal from '../modals/AmountDetailsModal';
 import TaskSelectionModal from '../modals/TaskSelectionModal';
 import TaskDetailsModal from '../modals/TaskDetailsModal';
 
+import RecordCreditModal from '../modals/RecordCreditModal';
+import CreditEditModal from '../modals/CreditEditModal';
+import CreditDeleteModal from '../modals/CreditDeleteModal';
+import AllocationEditModal from '../modals/AllocationEditModal';
+import AllocationDeleteModal from '../modals/AllocationDeleteModal';
+
+
 import Button from '../ui/Button';
 import { useTranslation } from 'react-i18next';
 import ClientSearchModal from './ClientSearchModal';
 import { useGetClientReceivables } from '../../queries/receivableQueries';
+import ApplyCreditModal from '../modals/ApplyCreditModal';
 
 const ModalManager = () => {
   // Fix 1: Use individual selectors instead of selecting an object
@@ -71,7 +79,7 @@ const ModalManager = () => {
               title={`${t('receivables.title')} - ${props.client?.name || ''}`}
             >
               <ClientReceivablesModal
-                receivables={receivablesData?.receivables || []}
+                receivables={receivablesData?.statementItems || []}
                 isLoading={isLoading}
                 clientName={props.client?.name || ''}
               />
@@ -113,6 +121,24 @@ const ModalManager = () => {
 
       case 'taskSelection':
         return <TaskSelectionModal />;
+
+      case 'recordCreditModal':
+        return <RecordCreditModal />;
+
+      case 'applyCreditModal':
+        return <ApplyCreditModal />;
+
+      case 'creditEdit':
+        return <CreditEditModal />;
+
+      case 'creditDelete':
+        return <CreditDeleteModal />;
+
+      case 'allocationEdit':
+        return <AllocationEditModal />;
+
+      case 'allocationDelete':
+        return <AllocationDeleteModal />;
 
       case 'confirmDelete':
         return (

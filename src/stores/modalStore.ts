@@ -1,9 +1,9 @@
 import { create } from 'zustand';
-import type { Client, Task, Receivable, Tag } from '../api/types';
+import type { Client, Task, Receivable, Tag, ClientCredit } from '../api/types';
 
 // Define all possible modals in the app.
 // We will add more types like 'task' in later phases.
-export type ModalType = 'clientForm' | 'confirmDelete' | 'taskForm' | 'requirements' | 'manualReceivable' | 'clientReceivables' | 'paymentForm' | 'paymentHistory' | 'clientSearch' | 'tagForm' | 'tagManagement' | 'selectReceivableForPayment' | 'taskCompletion' | 'amountDetails' | 'taskSelection' | 'taskDetails';
+export type ModalType = 'clientForm' | 'confirmDelete' | 'taskForm' | 'requirements' | 'manualReceivable' | 'clientReceivables' | 'paymentForm' | 'paymentHistory' | 'clientSearch' | 'tagForm' | 'tagManagement' | 'selectReceivableForPayment' | 'taskCompletion' | 'amountDetails' | 'taskSelection' | 'taskDetails' | 'recordCreditModal' | 'applyCreditModal' | 'clientCreditHistory' | 'creditEdit' | 'creditDelete' | 'allocationEdit' | 'allocationDelete';
 
 // Define the props each modal type can receive.
 interface ModalProps {
@@ -35,6 +35,16 @@ interface ModalProps {
   amountDetails: { task: Task };
   taskSelection: { tagId: number };
   taskDetails: { task: Task };
+
+  recordCreditModal: {}; // No props needed, it will contain the client search
+
+  applyCreditModal: { receivable: Receivable; availableCredit: number };
+  clientCreditHistory: { clientId: number; clientName: string };
+  creditEdit: { credit: ClientCredit; clientId: number };
+  creditDelete: { credit: ClientCredit; clientId: number };
+  allocationEdit: { allocation: any; clientId: number };
+  allocationDelete: { allocation: any; clientId: number };
+
 }
 
 interface ModalState {

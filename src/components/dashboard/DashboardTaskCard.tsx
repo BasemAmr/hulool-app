@@ -29,7 +29,7 @@ const DashboardTaskCard = ({ task, index = 0 }: DashboardTaskCardProps) => {
     };
 
     const handleDefer = () => {
-        deferTaskMutation.mutate({ id: task.id }, {
+        deferTaskMutation.mutate({ id: Number(task.id) }, {
             onSuccess: () => {
                 success(t('tasks.deferSuccess'), t('tasks.deferSuccessMessage', {
                     taskName: task.task_name || t(`type.${task.type}`)
