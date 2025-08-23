@@ -89,7 +89,7 @@ const TaskModal = () => {
       setValue('end_date', taskToEdit.end_date || undefined);
       setValue('prepaid_amount', taskToEdit.prepaid_amount || 0);
       setValue('notes', taskToEdit.notes || '');
-      setValue('tags', taskToEdit.tags ? taskToEdit.tags.map(tag => typeof tag === 'object' ? tag.id : tag) : []);
+      setValue('tags', taskToEdit.tags ? taskToEdit.tags.map(tag => typeof tag === 'object' ? String(tag.id || tag) : String(tag)) : []);
       setValue('amount_details', taskToEdit.amount_details || []);
       setStep(2);
       setSearchedClient(taskToEdit.client);

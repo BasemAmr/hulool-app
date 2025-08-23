@@ -67,10 +67,10 @@ const TagColumn = ({ tagCollection, isLoading = false }: TagColumnProps) => {
                                 fontSize: '11px',
                                 padding: '4px 8px'
                             }}
-                            title="اختيار مهام لربطها بهذه العلامة"
+                            title="اختيار مهام لربطها أو فك ربطها بهذه العلامة"
                         >
                             <Plus size={12} className="me-1" />
-                            اختيار مهام
+                            إدارة المهام
                         </button>
                     </div>
                 </div>

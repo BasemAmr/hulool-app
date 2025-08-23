@@ -3,7 +3,7 @@ import type { Client, Task, Receivable, Tag, ClientCredit } from '../api/types';
 
 // Define all possible modals in the app.
 // We will add more types like 'task' in later phases.
-export type ModalType = 'clientForm' | 'confirmDelete' | 'taskForm' | 'requirements' | 'manualReceivable' | 'clientReceivables' | 'paymentForm' | 'paymentHistory' | 'clientSearch' | 'tagForm' | 'tagManagement' | 'selectReceivableForPayment' | 'taskCompletion' | 'amountDetails' | 'taskSelection' | 'taskDetails' | 'recordCreditModal' | 'applyCreditModal' | 'clientCreditHistory' | 'creditEdit' | 'creditDelete' | 'allocationEdit' | 'allocationDelete' | 'paymentEdit' | 'paymentDelete';
+export type ModalType = 'clientForm' | 'confirmDelete' | 'taskForm' | 'requirements' | 'manualReceivable' | 'clientReceivables' | 'paymentForm' | 'paymentHistory' | 'clientSearch' | 'tagForm' | 'tagManagement' | 'selectReceivableForPayment' | 'taskCompletion' | 'amountDetails' | 'taskSelection' | 'taskDetails' | 'recordCreditModal' | 'applyCreditModal' | 'clientCreditHistory' | 'creditEdit' | 'creditDelete' | 'allocationEdit' | 'allocationDelete' | 'paymentEdit' | 'paymentDelete' | 'editReceivable' | 'deleteReceivable' | 'clientReceivablesEdit' | 'urgentAlert';
 
 // Define the props each modal type can receive.
 interface ModalProps {
@@ -36,7 +36,8 @@ interface ModalProps {
   taskSelection: { tagId: number };
   taskDetails: { task: Task };
 
-  recordCreditModal: {}; // No props needed, it will contain the client search
+  recordCreditModal: { client?: Client }; // Optional client to pre-select
+  urgentAlert: { taskId?: number }; // Optional taskId to pre-select
 
   applyCreditModal: { receivable: Receivable; availableCredit: number; paymentToReplace?: any };
   clientCreditHistory: { clientId: number; clientName: string };
@@ -46,6 +47,9 @@ interface ModalProps {
   allocationDelete: { allocation: any; clientId: number };
   paymentEdit: { payment: any; receivable: any };
   paymentDelete: { payment: any };
+  editReceivable: { receivable: Receivable };
+  deleteReceivable: { receivable: Receivable };
+  clientReceivablesEdit: { clientId: number };
 
 }
 

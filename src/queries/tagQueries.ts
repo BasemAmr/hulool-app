@@ -5,6 +5,7 @@ import type { ApiResponse, Tag } from '../api/types';
 interface TagPayload {
     name: string;
     color: string;
+    is_system?: boolean;
 }
 
 // API Functions

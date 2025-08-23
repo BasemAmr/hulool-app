@@ -5,19 +5,19 @@ import { Link } from 'react-router-dom';
 import { useQueryClient } from '@tanstack/react-query';
 import { useModalStore } from '../../stores/modalStore';
 import { useToast } from '../../hooks/useToast';
-import { useDeferTask, useResumeTask } from '../../queries/taskQueries';
+import { useDeferTask, useResumeTask, useUpdateTask } from '../../queries/taskQueries';
 import type { Task } from '../../api/types';
 import { formatDate } from '../../utils/dateUtils';
 // import { formatTimeElapsed } from '../../utils/timeUtils'; // Original import
 import { Dropdown } from 'react-bootstrap';
-import { 
-  Plus, 
-  Receipt, 
-  Check, 
-  Pause, 
-  Play, 
-  ListChecks, 
-  MoreVertical, 
+import {
+  Plus,
+  Receipt,
+  Check,
+  Pause,
+  Play,
+  ListChecks,
+  MoreVertical,
   AlertTriangle,
   Eye,
 } from 'lucide-react';
@@ -53,17 +53,16 @@ const formatDaysElapsed = (dateString: string): string => {
 };
 
 
-const DashboardClientCard = ({ data, index = 0,  alternatingColors }: DashboardClientCardProps) => {
+const DashboardClientCard = ({ data, index = 0, alternatingColors }: DashboardClientCardProps) => {
   const { client, tasks } = data;
-  console.log('Client Data:', data);
-  console.log('Client Tasks:', tasks);
   const { t } = useTranslation();
   const openModal = useModalStore(state => state.openModal);
   const { success, error } = useToast();
   const queryClient = useQueryClient();
   const deferTaskMutation = useDeferTask();
   const resumeTaskMutation = useResumeTask();
-  
+  const updateTaskMutation = useUpdateTask();
+
   const handleAction = (mutation: any, task: Task, successKey: string, successMessageKey: string, errorKey: string) => {
     mutation.mutate({ id: task.id }, {
       onSuccess: () => {
@@ -83,35 +82,87 @@ const DashboardClientCard = ({ data, index = 0,  alternatingColors }: DashboardC
   // const handleShowDetails = (task: Task) => openModal('taskDetails', { task });
   const handleAddTask = () => openModal('taskForm', { client });
   const handleAddReceivable = () => openModal('manualReceivable', { client_id: client.id });
+  const handleRecordCredit = () => openModal('recordCreditModal', { client });
+  const handleAddUrgentAlert = (task: Task) => openModal('urgentAlert', { taskId: task.id });
+
+  const handleToggleUrgentTag = (task: Task) => {
+    const isUrgent = task.tags?.some(tag => tag.name === 'قصوى');
+    const urgentTagId = 1; // Assuming 1 is the ID for 'قصوى' tag
+
+    // Get current tag IDs as strings
+    const currentTags = Array.isArray(task.tags)
+      ? task.tags.map((tag: any) => typeof tag === 'object' ? tag.id.toString() : tag.toString())
+      : [];
+
+    let updatedTags: string[];
+
+    if (isUrgent) {
+      // Remove the urgent tag
+      updatedTags = currentTags.filter(id => id !== urgentTagId.toString());
+    } else {
+      // Add the urgent tag
+      updatedTags = [...currentTags, urgentTagId.toString()];
+    }
+
+    updateTaskMutation.mutate({
+      id: task.id,
+      taskData: {
+        task_name: task.task_name || '',
+        type: task.type,
+        amount: task.amount,
+        start_date: task.start_date,
+        end_date: task.end_date || undefined,
+        prepaid_amount: task.prepaid_amount,
+        notes: task.notes || '',
+        tags: updatedTags,
+        requirements: task.requirements?.map((req: any) => ({
+          id: req.id,
+          requirement_text: req.requirement_text,
+          is_provided: req.is_provided
+        })) || []
+      }
+    }, {
+      onSuccess: () => {
+        success(
+          isUrgent ? 'تم إزالة العلامة' : 'تمت الإضافة',
+          isUrgent ? 'تم إزالة علامة العاجل من المهمة' : 'تم إضافة علامة العاجل للمهمة'
+        );
+        queryClient.invalidateQueries({ queryKey: ['dashboard', 'clientsWithActiveTasks'] });
+      },
+      onError: (err: any) => {
+        error('خطأ', err.message || 'حدث خطأ أثناء تحديث علامة العاجل');
+      }
+    });
+  };
 
   const isClientUrgent = tasks.some(task => task.tags?.some(tag => tag.name === 'قصوى'));
-  
+
   // Use alternating colors based on type and index, or red if urgent
   const cardBackground = isClientUrgent ? '#ffebeb' : alternatingColors[index % 2];
   const headerBackground = isClientUrgent ? '#ffcccc' : (index % 2 === 0 ? '#f8f9fa' : '#e9ecef');
   const tableHeaderBackground = isClientUrgent ? '#ffb3b3' : (index % 2 === 0 ? '#f1f3f4' : '#dee2e6');
-  
+
   const borderColor = isClientUrgent ? '#dc3545' : '#6c757d';
   const cardBorderColor = isClientUrgent ? '#dc3545' : '#495057';
-
+  const taskType = tasks[0]?.type;
   // Create a style tag for important overrides
   const styleOverrides = `
-    .dashboard-client-card-${index} {
+    .dashboard-client-card-${index}-${taskType} {
       background-color: ${cardBackground} !important;
     }
-    .dashboard-client-card-${index} .card-header {
+    .dashboard-client-card-${index}-${taskType} .card-header {
       background-color: ${headerBackground} !important;
     }
-    .dashboard-client-card-${index} .card-body {
+    .dashboard-client-card-${index}-${taskType} .card-body {
       background-color: ${cardBackground} !important;
     }
-    .dashboard-client-card-${index} table {
+    .dashboard-client-card-${index}-${taskType} table {
       background-color: ${cardBackground} !important;
     }
-    .dashboard-client-card-${index} thead {
+    .dashboard-client-card-${index}-${taskType} thead {
       background-color: ${tableHeaderBackground} !important;
     }
-    .dashboard-client-card-${index} th {
+    .dashboard-client-card-${index}-${taskType} th {
       background-color: ${tableHeaderBackground} !important;
     }
   `;
@@ -133,9 +184,9 @@ const DashboardClientCard = ({ data, index = 0,  alternatingColors }: DashboardC
   return (
     <>
       <style dangerouslySetInnerHTML={{ __html: styleOverrides }} />
-      <div 
+      <div
         className={`card h-100 shadow-sm dashboard-client-card dashboard-client-card-${index}`}
-        style={{ 
+        style={{
           backgroundColor: cardBackground,
           borderLeft: `3px solid ${cardBorderColor}`,
           border: `1px solid ${borderColor}`,
@@ -143,275 +194,289 @@ const DashboardClientCard = ({ data, index = 0,  alternatingColors }: DashboardC
           overflow: 'hidden'
         }}
       >
-      {/* Header */}
-      <div 
-        className="card-header border-bottom py-2"
-        style={{ 
-          backgroundColor: headerBackground,
-          borderBottom: `1px solid ${borderColor}`
-        }}
-      >
-        <div className="d-flex justify-content-between align-items-center">
-          {/* Left: WhatsApp with phone number */}
-          <div className="d-flex align-items-center gap-2">
-            <button 
-              onClick={openWhatsApp}
-              className="btn btn-sm btn-outline-success p-1 border-0"
-              title="واتساب"
-            >
-              <img src={WhatsAppIcon} alt="WhatsApp" width="16" height="16" />
-            </button>
-            <span  style={{ fontSize: '0.85em' }}>
-              {client.phone || ''}
-            </span>
-          </div>
-          
-          {/* Center: Client name with Google Drive */}
-          <div className="d-flex align-items-center justify-content-center gap-2">
-            <Link 
-              to={`/clients/${client.id}`}
-              className="text-decoration-none fw-bold"
-              style={{ fontSize: '0.95em', color: 'black' }}
-            >
-              {client.name}
-            </Link>
-            {isClientUrgent && (
-              <AlertTriangle size={12} className="text-danger" />
-            )}
-            <button 
-              onClick={openGoogleDrive}
-              className="btn btn-sm btn-outline-primary p-1 border-0"
-              title="Google Drive"
-              disabled={!client.google_drive_link}
-            >
-              <img src={GoogleDriveIcon} alt="Google Drive" width="16" height="16" />
-            </button>
-          </div>
-          
-          {/* Right: Actions Dropdown */}
-          <div>
-            <Dropdown>
-              <Dropdown.Toggle 
-                variant="outline-secondary" 
-                size="sm"
-                className="p-1 border-0"
+        {/* Header */}
+        <div
+          className="card-header border-bottom py-2"
+          style={{
+            backgroundColor: headerBackground,
+            borderBottom: `1px solid ${borderColor}`
+          }}
+        >
+          <div className="d-flex justify-content-between align-items-center">
+            {/* Left: WhatsApp with phone number */}
+            <div className="d-flex align-items-center gap-2">
+              <button
+                onClick={openWhatsApp}
+                className="btn btn-sm btn-outline-success p-1 border-0"
+                title="واتساب"
               >
-                <MoreVertical size={14} />
-              </Dropdown.Toggle>
-              <Dropdown.Menu>
-                <Dropdown.Item onClick={handleAddTask}>
-                  <Plus size={14} className="me-2" />
-                  إضافة مهمة
-                </Dropdown.Item>
-                <Dropdown.Item onClick={handleAddReceivable}>
-                  <Receipt size={14} className="me-2" />
-                  إضافة مستحق
-                </Dropdown.Item>
-              </Dropdown.Menu>
-            </Dropdown>
+                <img src={WhatsAppIcon} alt="WhatsApp" width="16" height="16" />
+              </button>
+              <span style={{ fontSize: '0.85em' }}>
+                {client.phone || ''}
+              </span>
+            </div>
+
+            {/* Center: Client name with Google Drive */}
+            <div className="d-flex align-items-center justify-content-center gap-2">
+              <Link
+                to={`/clients/${client.id}`}
+                className="text-decoration-none fw-bold"
+                style={{ fontSize: '0.95em', color: 'black' }}
+              >
+                {client.name}
+              </Link>
+              {isClientUrgent && (
+                <AlertTriangle size={12} className="text-danger" />
+              )}
+              <button
+                onClick={openGoogleDrive}
+                className="btn btn-sm btn-outline-primary p-1 border-0"
+                title="Google Drive"
+                disabled={!client.google_drive_link}
+              >
+                <img src={GoogleDriveIcon} alt="Google Drive" width="16" height="16" />
+              </button>
+            </div>
+
+            {/* Right: Actions Dropdown */}
+            <div>
+              <Dropdown>
+                <Dropdown.Toggle
+                  variant="outline-secondary"
+                  size="sm"
+                  className="p-1 border-0"
+                >
+                  <MoreVertical size={14} />
+                </Dropdown.Toggle>
+
+                {/* خليها dropdown-menu-start */}
+                <Dropdown.Menu dir='rtl' align={"start"} className="dropdown-menu-start text-start">
+                  <Dropdown.Menu align={"end"} className="text-end">
+                    <Dropdown.Item onClick={handleAddTask} className="text-end">
+                      <Receipt size={14} className="ms-2" />
+                      إضافة مهمة
+                    </Dropdown.Item>
+                    <Dropdown.Item onClick={handleAddReceivable} className="text-end">
+                      <Receipt size={14} className="ms-2" />
+                      إضافة مستحق
+                    </Dropdown.Item>
+                    <Dropdown.Item onClick={handleRecordCredit} className="text-end">
+                      <Receipt size={14} className="ms-2" />
+                      إضافة دفعة
+                    </Dropdown.Item>
+                  </Dropdown.Menu>
+                </Dropdown.Menu>
+              </Dropdown>
+            </div>
+          </div>
+        </div>
+
+        {/* Body - Tasks Table */}
+        <div
+          className="card-body p-1"
+          style={{
+            position: 'relative',
+            backgroundColor: cardBackground,
+            border: `1px solid ${borderColor}`
+          }}
+        >
+          {/* keep table-responsive overflow visible so dropdowns can escape */}
+          <div className="table-responsive" style={{ overflow: 'visible' }}>
+            {/* inner scrolling area — this will scroll the table but won't clip dropdowns */}
+            <div style={{ maxHeight: '200px', overflowY: 'auto', overflowX: 'visible' }}>
+              <table
+                className="table table-sm table-borderless mb-0"
+                style={{ backgroundColor: cardBackground }}
+              >
+                <thead
+                  style={{
+                    position: 'sticky',
+                    top: 0,
+                    backgroundColor: tableHeaderBackground,
+                    zIndex: 1
+                  }}
+                >
+                  <tr className="border-bottom">
+                    <th style={{
+                      fontSize: '0.8em',
+                      padding: '4px 3px',
+                      color: 'black',
+                      backgroundColor: tableHeaderBackground
+                    }}>المهمة</th>
+                    <th style={{
+                      fontSize: '0.8em',
+                      padding: '4px 3px',
+                      color: 'black',
+                      backgroundColor: tableHeaderBackground
+                    }}>تاريخ</th>
+                    <th style={{
+                      fontSize: '0.8em',
+                      padding: '4px 3px',
+                      color: 'black',
+                      backgroundColor: tableHeaderBackground
+                    }}>اليوم</th>
+                    <th style={{
+                      fontSize: '0.8em',
+                      padding: '4px 3px',
+                      color: 'black',
+                      backgroundColor: tableHeaderBackground
+                    }}>المبلغ</th>
+                    <th style={{
+                      fontSize: '0.8em',
+                      padding: '4px 3px',
+                      width: '54px',
+                      color: 'black',
+                      backgroundColor: tableHeaderBackground
+                    }}>إجراءات</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {tasks.map((task) => {
+                    const isTaskUrgent = task.tags?.some(tag => tag.name === 'قصوى');
+                    const rowBackground = isTaskUrgent ? '#ff9999' : cardBackground;
+
+                    return (
+                      <tr
+                        key={task.id}
+                        style={{ backgroundColor: rowBackground }}
+                      >
+                        <td style={{
+                          fontSize: '0.82em',
+                          padding: '3px',
+                          color: 'black',
+                          backgroundColor: rowBackground
+                        }}>
+                          <div className="d-flex align-items-center gap-1">
+                            <span className="text-truncate" style={{ maxWidth: 220, display: 'inline-block' }}>
+                              {task.task_name || t(`type.${task.type}`)}
+                            </span>
+                            {task.tags?.some(tag => tag.name === 'قصوى') && (
+                              <AlertTriangle size={10} className="text-danger" />
+                            )}
+                          </div>
+                        </td>
+                        <td style={{
+                          fontSize: '0.77em',
+                          padding: '3px',
+                          color: 'black',
+                          backgroundColor: rowBackground
+                        }}>
+                          {formatDate(task.start_date).replace(/\/20/, '/')}
+                        </td>
+                        <td style={{
+                          fontSize: '0.77em',
+                          padding: '3px',
+                          color: 'black',
+                          backgroundColor: rowBackground
+                        }}>
+                          {formatDaysElapsed(task.start_date)}
+                        </td>
+                        <td style={{
+                          fontSize: '0.77em',
+                          padding: '3px',
+                          color: 'black',
+                          backgroundColor: rowBackground
+                        }} className="text-success fw-bold">
+                          <div className="d-flex align-items-center text-danger">
+                            <svg
+                              width={10}
+                              height={10}
+                              viewBox="0 0 1124.14 1256.39"
+                              style={{
+                                marginLeft: '2px',
+                                verticalAlign: 'middle'
+                              }}
+                            >
+                              <path
+                                d="M699.62,1113.02h0c-20.06,44.48-33.32,92.75-38.4,143.37l424.51-90.24c20.06-44.47,33.31-92.75,38.4-143.37l-424.51,90.24Z"
+                                fill="#f00"
+                              />
+                              <path
+                                d="M1085.73,895.8c20.06-44.47,33.32-92.75,38.4-143.37l-330.68,70.33v-135.2l292.27-62.11c20.06-44.47,33.32-92.75,38.4-143.37l-330.68,70.27V66.13c-50.67,28.45-95.67,66.32-132.25,110.99v403.35l-132.25,28.11V0c-50.67,28.44-95.67,66.32-132.25,110.99v525.69l-295.91,62.88c-20.06,44.47-33.33,92.75-38.42,143.37l334.33-71.05v170.26l-358.3,76.14c-20.06,44.47-33.32,92.75-38.4,143.37l375.04-79.7c30.53-6.35,56.77-24.4,73.83-49.24l68.78-101.97v-.02c7.14-10.55,11.3-23.27,11.3-36.97v-149.98l132.25-28.11v270.4l424.53-90.28Z"
+                                fill="#f00"
+                              />
+                            </svg>
+                            {task.amount?.toLocaleString()}
+                          </div>
+                        </td>
+                        <td style={{
+                          padding: '3px',
+                          position: 'relative',
+                          color: 'black',
+                          backgroundColor: rowBackground
+                        }}>
+                          <div className="d-flex gap-1">
+                            <button
+                              onClick={() => handleEditTask(task)}
+                              className="btn btn-outline-info btn-sm p-1"
+                              title="تفاصيل"
+                              style={{ fontSize: '10px', lineHeight: 1 }}
+                            >
+                              <Eye size={10} />
+                            </button>
+
+                            <Dropdown>
+                              <Dropdown.Toggle
+                                variant="outline-secondary"
+                                size="sm"
+                                className="p-1"
+                                style={{ fontSize: '10px' }}
+                              >
+                                <MoreVertical size={10} />
+                              </Dropdown.Toggle>
+                              {createPortal(
+                                <Dropdown.Menu
+                                  align={"end"}
+                                  className="text-end"
+                                  style={{
+                                    position: 'absolute',
+                                    zIndex: 1050,
+                                    minWidth: '120px',
+                                    fontSize: '0.85em',
+                                    top: 'auto',
+                                    left: 'auto',
+                                    transform: 'none'
+                                  }}
+                                >
+                                  <Dropdown.Item onClick={() => handleComplete(task)} className="text-end">
+                                    <Check size={11} className="ms-2" />
+                                    إكمال
+                                  </Dropdown.Item>
+                                  {task.status === 'New' ? (
+                                    <Dropdown.Item onClick={() => handleDefer(task)} className="text-end">
+                                      <Pause size={11} className="ms-2" />
+                                      تأجيل
+                                    </Dropdown.Item>
+                                  ) : (
+                                    <Dropdown.Item onClick={() => handleResume(task)} className="text-end">
+                                      <Play size={11} className="ms-2" />
+                                      استئناف
+                                    </Dropdown.Item>
+                                  )}
+                                  <Dropdown.Item onClick={() => handleShowRequirements(task)} className="text-end">
+                                    <ListChecks size={11} className="ms-2" />
+                                    المتطلبات
+                                  </Dropdown.Item>
+                                  <Dropdown.Item onClick={() => handleToggleUrgentTag(task)} className="text-end">
+                                    <AlertTriangle size={11} className="ms-2" />
+                                    {task.tags?.some(tag => tag.name === 'قصوى') ? 'إلغاء العاجل' : 'تعليم عاجل'}
+                                  </Dropdown.Item>
+                                </Dropdown.Menu>,
+                                document.body
+                              )}
+                            </Dropdown>
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
           </div>
         </div>
       </div>
-
-      {/* Body - Tasks Table */}
-      <div 
-        className="card-body p-1" 
-        style={{ 
-          position: 'relative', 
-          backgroundColor: cardBackground,
-          border: `1px solid ${borderColor}`
-        }}
-      >
-        {/* keep table-responsive overflow visible so dropdowns can escape */}
-        <div className="table-responsive" style={{ overflow: 'visible' }}>
-          {/* inner scrolling area — this will scroll the table but won't clip dropdowns */}
-          <div style={{ maxHeight: '200px', overflowY: 'auto', overflowX: 'visible' }}>
-            <table 
-              className="table table-sm table-borderless mb-0"
-              style={{ backgroundColor: cardBackground }}
-            >
-             <thead 
-               style={{ 
-                 position: 'sticky', 
-                 top: 0, 
-                 backgroundColor: tableHeaderBackground, 
-                 zIndex: 1
-               }}
-             >
-               <tr className="border-bottom">
-                 <th style={{ 
-                   fontSize: '0.8em', 
-                   padding: '4px 3px', 
-                   color: 'black',
-                   backgroundColor: tableHeaderBackground
-                 }}>المهمة</th>
-                 <th style={{ 
-                   fontSize: '0.8em', 
-                   padding: '4px 3px', 
-                   color: 'black',
-                   backgroundColor: tableHeaderBackground
-                 }}>تاريخ</th>
-                 <th style={{ 
-                   fontSize: '0.8em', 
-                   padding: '4px 3px', 
-                   color: 'black',
-                   backgroundColor: tableHeaderBackground
-                 }}>اليوم</th>
-                 <th style={{ 
-                   fontSize: '0.8em', 
-                   padding: '4px 3px', 
-                   color: 'black',
-                   backgroundColor: tableHeaderBackground
-                 }}>المبلغ</th>
-                 <th style={{ 
-                   fontSize: '0.8em', 
-                   padding: '4px 3px', 
-                   width: '54px', 
-                   color: 'black',
-                   backgroundColor: tableHeaderBackground
-                 }}>إجراءات</th>
-               </tr>
-             </thead>
-             <tbody>
-               {tasks.map((task) => {
-                 const isTaskUrgent = task.tags?.some(tag => tag.name === 'قصوى');
-                 const rowBackground = isTaskUrgent ? '#ff9999' : cardBackground;
-                 
-                 return (
-                   <tr 
-                     key={task.id}
-                     style={{ backgroundColor: rowBackground }}
-                   >
-                     <td style={{ 
-                       fontSize: '0.82em', 
-                       padding: '3px', 
-                       color: 'black',
-                       backgroundColor: rowBackground
-                     }}>
-                       <div className="d-flex align-items-center gap-1">
-                         <span className="text-truncate" style={{ maxWidth: 220, display: 'inline-block' }}>
-                           {task.task_name || t(`type.${task.type}`)}
-                         </span>
-                         {task.tags?.some(tag => tag.name === 'قصوى') && (
-                           <AlertTriangle size={10} className="text-danger" />
-                         )}
-                       </div>
-                     </td>
-                     <td style={{ 
-                       fontSize: '0.77em', 
-                       padding: '3px', 
-                       color: 'black',
-                       backgroundColor: rowBackground
-                     }}>
-                       {formatDate(task.start_date).replace(/\/20/, '/')}
-                     </td>
-                     <td style={{ 
-                       fontSize: '0.77em', 
-                       padding: '3px', 
-                       color: 'black',
-                       backgroundColor: rowBackground
-                     }}>
-                       {formatDaysElapsed(task.start_date)}
-                     </td>
-                     <td style={{ 
-                       fontSize: '0.77em', 
-                       padding: '3px', 
-                       color: 'black',
-                       backgroundColor: rowBackground
-                     }} className="text-success fw-bold">
-                       <div className="d-flex align-items-center text-danger">
-                         <svg
-                           width={10}
-                           height={10}
-                           viewBox="0 0 1124.14 1256.39"
-                           style={{
-                             marginLeft: '2px',
-                             verticalAlign: 'middle'
-                           }}
-                         >
-                           <path
-                             d="M699.62,1113.02h0c-20.06,44.48-33.32,92.75-38.4,143.37l424.51-90.24c20.06-44.47,33.31-92.75,38.4-143.37l-424.51,90.24Z"
-                             fill="#f00"
-                           />
-                           <path
-                             d="M1085.73,895.8c20.06-44.47,33.32-92.75,38.4-143.37l-330.68,70.33v-135.2l292.27-62.11c20.06-44.47,33.32-92.75,38.4-143.37l-330.68,70.27V66.13c-50.67,28.45-95.67,66.32-132.25,110.99v403.35l-132.25,28.11V0c-50.67,28.44-95.67,66.32-132.25,110.99v525.69l-295.91,62.88c-20.06,44.47-33.33,92.75-38.42,143.37l334.33-71.05v170.26l-358.3,76.14c-20.06,44.47-33.32,92.75-38.4,143.37l375.04-79.7c30.53-6.35,56.77-24.4,73.83-49.24l68.78-101.97v-.02c7.14-10.55,11.3-23.27,11.3-36.97v-149.98l132.25-28.11v270.4l424.53-90.28Z"
-                             fill="#f00"
-                           />
-                         </svg>
-                         {task.amount?.toLocaleString()}
-                       </div>
-                     </td>
-                     <td style={{ 
-                       padding: '3px', 
-                       position: 'relative', 
-                       color: 'black',
-                       backgroundColor: rowBackground
-                     }}>
-                       <div className="d-flex gap-1">
-                         <button
-                           onClick={() => handleEditTask(task)}
-                           className="btn btn-outline-info btn-sm p-1"
-                           title="تفاصيل"
-                           style={{ fontSize: '10px', lineHeight: 1 }}
-                         >
-                           <Eye size={10} />
-                         </button>
-                         
-                         <Dropdown>
-                           <Dropdown.Toggle 
-                             variant="outline-secondary" 
-                             size="sm"
-                             className="p-1"
-                             style={{ fontSize: '10px' }}
-                           >
-                             <MoreVertical size={10} />
-                           </Dropdown.Toggle>
-                           {createPortal(
-                             <Dropdown.Menu 
-                               style={{ 
-                                 position: 'absolute',
-                                 zIndex: 1050,
-                                 minWidth: '120px',
-                                 fontSize: '0.85em',
-                                 top: 'auto',
-                                 left: 'auto',
-                                 transform: 'none'
-                               }}
-                             >
-                               <Dropdown.Item onClick={() => handleComplete(task)}>
-                                 <Check size={11} className="me-2" />
-                                 إكمال
-                               </Dropdown.Item>
-                               {task.status === 'New' ? (
-                                 <Dropdown.Item onClick={() => handleDefer(task)}>
-                                   <Pause size={11} className="me-2" />
-                                   تأجيل
-                                 </Dropdown.Item>
-                               ) : (
-                                 <Dropdown.Item onClick={() => handleResume(task)}>
-                                   <Play size={11} className="me-2" />
-                                   استئناف
-                                 </Dropdown.Item>
-                               )}
-                               <Dropdown.Item onClick={() => handleShowRequirements(task)}>
-                                 <ListChecks size={11} className="me-2" />
-                                 المتطلبات
-                               </Dropdown.Item>
-                             </Dropdown.Menu>,
-                             document.body
-                           )}
-                         </Dropdown>
-                       </div>
-                     </td>
-                   </tr>
-                 );
-               })}
-             </tbody>
-           </table>
-         </div>
-       </div>
-      </div>
-    </div>
     </>
   );
 };

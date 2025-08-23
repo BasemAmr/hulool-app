@@ -26,7 +26,6 @@ export interface TaskPaginatedData {
   tasks: Task[]; // Key as returned by API for tasks endpoint
   pagination: Pagination;
 }
-// Add other paginated data types (e.g., ReceivablePaginatedData) as needed in future phases
 
 // Authentication Data Structures
 export interface User {
@@ -90,15 +89,32 @@ export interface Client {
   credit_balance?: number;
 }
 
+export interface ClientPayload {
+  name: string;
+  phone: string;
+  type: ClientType;
+  google_drive_link?: string;
+}
+
+export interface ClientUnpaidAmounts {
+  client_id: number;
+  client_name: string;
+  total_unpaid: number;
+  total_overdue: number;
+  total_pending: number;
+}
+
+export interface ClientCountsByType {
+  Government: number;
+  RealEstate: number;
+  Accounting: number;
+  Other: number;
+}
+
 // Client type enum
 export type ClientType = 'Government' | 'RealEstate' | 'Accounting' | 'Other';
 
-// --- NEW TYPES FOR PHASE 5 (Tasks & Requirements) ---
-export type TaskStatus = 'New' | 'Deferred' | 'Completed' | 'Cancelled';
-export type TaskType = 'Government' | 'RealEstate' | 'Accounting' | 'Other';
-
-// --- Tag Types ---
-
+// Tag Types
 export interface Tag {
   id: number;
   name: string;
@@ -118,10 +134,8 @@ export interface Requirement {
   task_id?: number; // Optional for new requirements
   requirement_text: string;
   is_provided: boolean;
-  // temp_id is used for client-side unique key before saving to backend
   temp_id?: string;
 }
-
 
 export interface Task {
   id: number;
@@ -130,7 +144,7 @@ export interface Task {
   type: TaskType;
   status: TaskStatus;
   amount: number;
-  amount_details: AmountDetail[] | null; // ADDED
+  amount_details: AmountDetail[] | null;
   start_date: string;
   end_date: string | null;
   prepaid_amount: number;
@@ -145,82 +159,50 @@ export interface Task {
   tags: Tag[];
 }
 
-// --- Payload Types ---
-export interface ClientPayload {
-  name: string;
-  phone: string;
-  type: ClientType;
-  google_drive_link: string;
-}
-
-export interface ClientUnpaidAmounts {
-  total_receivables: number;
-  total_paid: number;
-  total_unpaid: number;
-}
-
-// Client counts by type
-export interface ClientCountsByType {
-  Government: number;
-  RealEstate: number;
-  Accounting: number;
-  Other: number;
-}
-
 export interface TaskPayload {
   client_id: number;
-  task_name?: string;
+  task_name: string;
   type: TaskType;
   amount: number;
+  amount_details?: AmountDetail[];
   start_date: string;
   end_date?: string;
   prepaid_amount?: number;
   notes?: string;
-  requirements?: { requirement_text: string; is_provided: boolean }[];
-  amount_details?: AmountDetail[];
-  tags?: number[]; // Array of tag IDs
+  requirements?: Requirement[];
+  tag_ids?: number[];
+  tags?: string[];
 }
 
-// Payload for updating a task, including existing requirements
 export interface UpdateTaskPayload {
-  client_id?: number;
   task_name?: string;
   type?: TaskType;
-  status?: TaskStatus;
   amount?: number;
+  amount_details?: AmountDetail[];
   start_date?: string;
   end_date?: string;
   prepaid_amount?: number;
   notes?: string;
-  requirements?: { id?: number; requirement_text: string; is_provided: boolean }[];
-  amount_details?: AmountDetail[];
-  tags?: number[]; // Array of tag IDs
+  requirements?: Requirement[];
+  tag_ids?: number[];
+  tags?: string[];
 }
 
-// Payload for updating requirements specifically
 export interface UpdateRequirementsPayload {
   task_id: number;
-  requirements: {
-    id?: number; // Optional for new requirements
-    requirement_text: string;
-    is_provided: boolean;
-  }[];
+  requirements: Requirement[];
 }
 
-// Payload for updating task status
-export interface UpdateTaskStatusPayload {
-  task_id: number;
-  status: TaskStatus;
-}
+export type TaskStatus = 'New' | 'Deferred' | 'Completed' | 'Cancelled';
+export type TaskType = 'Government' | 'RealEstate' | 'Accounting' | 'Other';
 
-
-// --- NEW TYPES FOR PHASE 6 (Receivables & Payments) ---
+// Receivables & Payments Types
 export type ReceivableStatus = 'Due' | 'Pending' | 'Paid';
 
 export interface PaymentMethod {
   id: number;
   code: string;
-  name: string; // The backend provides the correct language name (e.g., name_ar)
+  name: string;
 }
 
 export interface Payment {
@@ -228,18 +210,17 @@ export interface Payment {
   receivable_id: number;
   created_by: number;
   amount: number;
-  paid_at: string; // YYYY-MM-DD
+  paid_at: string;
   note: string | null;
   payment_method_id: number | null;
   created_at: string;
   updated_at: string;
-  // Enriched data from API
   payment_method?: {
     id: number;
     name_en: string;
     name_ar: string;
   };
-  client_id?: number; // ADD THIS LINE (optional because it's derived)
+  client_id?: number;
   receivable?: {
     id: string;
     description: string;
@@ -248,20 +229,18 @@ export interface Payment {
   };
 }
 
-// This is the primary type for the new client statement view
 export interface StatementItem {
-  id: string; // "task_1", "manual_3", etc.
+  id: string;
   date: string;
   description: string;
   debit: number;
   credit: number;
   balance: number;
-  // These fields are crucial for enabling actions from the statement
   type: TaskType;
   task_id: number | null;
   receivable_id?: number;
   remaining_amount?: number;
-  payments?: Payment[]; // Optional detailed payments
+  payments?: Payment[];
   created_at?: string;
   details?: {
     receivables?: any[];
@@ -270,14 +249,12 @@ export interface StatementItem {
   };
 }
 
-
-// NEW type for the statement response
 export interface ClientStatementPaginatedData {
   statementItems: StatementItem[];
   totals: {
-      totalDebit: number;
-      totalCredit: number;
-      balance: number;
+    totalDebit: number;
+    totalCredit: number;
+    balance: number;
   };
 }
 
@@ -287,7 +264,6 @@ export interface Receivable {
   task_id: number | string | null;
   reference_receivable_id: number | string | null;
   prepaid_receivable_id?: number | string | null;
-
   created_by: number | string;
   type: TaskType | string;
   description: string;
@@ -311,22 +287,20 @@ export interface Receivable {
   client: Partial<Client>;
   task?: Partial<Task>;
 }
-// --- Payload Types ---
+
+// Payload Types
 export interface CompleteTaskPayload {
   is_paid: boolean;
-  // The following are only needed if is_paid is true
   is_full_payment?: boolean;
   payment_amount?: number;
   payment_method_id?: number;
   payment_note?: string;
-  paid_at?: string; // YYYY-MM-DD
-  // This is needed if is_paid is false
-  due_date?: string; // YYYY-MM-DD
+  paid_at?: string;
+  due_date?: string;
 }
 
-// Response type for completing a task (includes receivable id and optional payment)
 export interface CompleteTaskResponse {
-  id: number; // task id
+  id: number;
   status: TaskStatus;
   receivable_id?: number;
   task?: Task;
@@ -335,30 +309,74 @@ export interface CompleteTaskResponse {
 
 export interface ManualReceivablePayload {
   client_id: number;
-  type: TaskType; // ADDED
+  type: TaskType;
   description: string;
   amount: number;
-  amount_details?: AmountDetail[]; // ADDED
+  amount_details?: AmountDetail[];
   notes?: string;
   due_date: string;
+}
+
+export interface UpdateReceivablePayload {
+  type?: TaskType;
+  description?: string;
+  amount?: number;
+  amount_details?: AmountDetail[];
+  notes?: string;
+  due_date?: string;
 }
 
 export interface PaymentPayload {
   receivable_id: number;
   amount: number;
   payment_method_id: number;
-  paid_at: string; // YYYY-MM-DD
+  paid_at: string;
   note?: string;
 }
 
-// --- Paginated Data ---
+// Receivable Deletion Conflict Types
+export interface ReceivableDeletionConflictData {
+  has_payments: boolean;
+  has_allocations: boolean;
+  total_payments: number;
+  total_allocations: number;
+  payments: Payment[];
+  allocations: CreditAllocation[];
+}
+
+export interface PaymentDecision {
+  payment_id: number;
+  action: 'keep' | 'delete' | 'convert_to_credit' | 'reduce_to_X';
+  new_amount?: number;
+  refund_amount?: number;
+  credit_description?: string;
+}
+
+export interface AllocationDecision {
+  allocation_id: number;
+  action: 'keep' | 'remove' | 'transfer_to_credit';
+  transfer_description?: string;
+}
+
+export interface OverpaymentData {
+  receivable_id: number;
+  overpayment_amount: number;
+  remaining_amount: number;
+  decisions: {
+    convert_to_credit?: boolean;
+    credit_description?: string;
+    refund_amount?: number;
+  };
+}
+
+// Paginated Data
 export interface ReceivablePaginatedData {
   receivables: Receivable[];
   pagination: Pagination;
 }
 
 export interface PaymentPaginatedData {
-  payments: Payment[]; // Key as returned by API
+  payments: Payment[];
   pagination: Pagination;
 }
 
@@ -368,12 +386,11 @@ export interface DashboardStats {
   new_tasks: number;
   deferred_tasks: number;
   completed_tasks: number;
-  late_tasks: number; // Corrected
-  late_receivables: number; // Corrected
+  late_tasks: number;
+  late_receivables: number;
 }
 
-
-// Add these interfaces
+// Client Credit Types
 export interface ClientCredit {
   id: number;
   client_id: number;
@@ -381,7 +398,7 @@ export interface ClientCredit {
   description: string;
   received_at: string;
   allocated_amount: number;
-  remaining_amount: number; // Calculated
+  remaining_amount: number;
 }
 
 export interface RecordCreditPayload {
@@ -394,9 +411,9 @@ export interface RecordCreditPayload {
 
 export interface ApplyCreditPayload {
   receivableId: number;
-  amount?: number; // Optional: apply a specific amount, otherwise apply max possible
+  amount?: number;
   note?: string;
-  paid_at?: string; // ISO date string
+  paid_at?: string;
 }
 
 export interface CreditAllocation {
@@ -406,7 +423,7 @@ export interface CreditAllocation {
   amount: number;
   allocated_at: string;
   allocated_by: number;
-  description?: string; // Enriched
+  description?: string;
 }
 
 export interface CreditReductionConflictData {
@@ -424,26 +441,31 @@ export interface CreditDeletionConflictData {
 export interface AllocationAdjustment {
   allocation_id: number;
   action: 'keep' | 'reduce_allocation' | 'remove_allocation';
-  new_amount?: number; // Required if action is 'reduce_allocation'
+  new_amount?: number;
 }
 
 export interface AllocationResolution {
   allocation_id: number;
   action: 'convert_to_payment' | 'delete_allocation';
-  payment_method_id?: number; // Required if action is 'convert_to_payment'
+  payment_method_id?: number;
 }
 
-
-
 export interface ClientSummary {
-    client_id: number;
-    client_name: string;
-    client_phone: string;
-    total_amount: number;
-    paid_amount: number;
-    remaining_amount: number;
-    receivables_count: number;
-    total_receivables?: number;
-    total_paid?: number;
-    total_outstanding?: number;
+  client_id: number;
+  client_name: string;
+  client_phone: string;
+  total_amount: number;
+  paid_amount: number;
+  remaining_amount: number;
+  receivables_count: number;
+  total_receivables?: number;
+  total_paid?: number;
+  total_outstanding?: number;
+}
+
+// Receivable Deletion Resolution Payload
+export interface ReceivableDeletionResolution {
+  payment_decisions?: PaymentDecision[];
+  allocation_decisions?: AllocationDecision[];
+  overpayment_resolution?: OverpaymentData;
 }

@@ -47,38 +47,47 @@ const TaskSelectionModal = () => {
     }
 
     try {
-      // Update each selected task to include the tag
+      let actionCount = 0;
+      
       for (const taskId of selectedTasks) {
         const task = tasks.find((t: Task) => t.id === taskId);
         if (task) {
           const currentTags = Array.isArray(task.tags) 
-            ? task.tags.map((tag: any) => typeof tag === 'object' ? tag.id : tag)
+            ? task.tags.map((tag: any) => typeof tag === 'object' ? tag.id.toString() : tag.toString())
             : [];
           
-          // Only add the tag if it's not already attached
-          if (!currentTags.includes(props.tagId)) {
-            const updatedTags = [...currentTags, props.tagId];
-            
-            await updateTaskMutation.mutateAsync({
-              id: taskId,
-              taskData: {
-                client_id: task.client_id,
-                task_name: task.task_name || '',
-                type: task.type,
-                amount: task.amount,
-                start_date: task.start_date,
-                end_date: task.end_date || undefined,
-                prepaid_amount: task.prepaid_amount,
-                notes: task.notes || '',
-                tags: updatedTags,
-                requirements: task.requirements?.map((req: any) => ({
-                  id: req.id,
-                  requirement_text: req.requirement_text,
-                  is_provided: req.is_provided
-                })) || []
-              }
-            });
+          const tagIdStr = props.tagId.toString();
+          const isAlreadyTagged = currentTags.includes(tagIdStr);
+          let updatedTags: string[];
+          
+          if (isAlreadyTagged) {
+            // Remove the tag
+            updatedTags = currentTags.filter(id => id !== tagIdStr);
+          } else {
+            // Add the tag
+            updatedTags = [...currentTags, tagIdStr];
           }
+          
+          await updateTaskMutation.mutateAsync({
+            id: taskId,
+            taskData: {
+              task_name: task.task_name || '',
+              type: task.type,
+              amount: task.amount,
+              start_date: task.start_date,
+              end_date: task.end_date || undefined,
+              prepaid_amount: task.prepaid_amount,
+              notes: task.notes || '',
+              tags: updatedTags,
+              requirements: task.requirements?.map((req: any) => ({
+                id: req.id,
+                requirement_text: req.requirement_text,
+                is_provided: req.is_provided
+              })) || []
+            }
+          });
+          
+          actionCount++;
         }
       }
 
@@ -87,27 +96,28 @@ const TaskSelectionModal = () => {
       queryClient.invalidateQueries({ queryKey: ['tags'] });
       queryClient.invalidateQueries({ queryKey: ['tag-collections'] });
       
-      toast.success('نجح', `تم ربط ${selectedTasks.length} مهمة بالعلامة بنجاح`);
+
+      toast.success('نجح', `تم تحديث ${actionCount} مهمة بنجاح`);
       closeModal();
     } catch (error: any) {
-      console.error('Error attaching tag to tasks:', error);
-      toast.error('خطأ', error?.response?.data?.message || 'حدث خطأ أثناء ربط العلامة بالمهام');
+      console.error('Error updating tags for tasks:', error);
+      toast.error('خطأ', error?.response?.data?.message || 'حدث خطأ أثناء تحديث العلامة');
     }
   };
 
   const isTaskAlreadyTagged = (task: Task) => {
     if (!task.tags) return false;
     const taskTags = Array.isArray(task.tags) 
-      ? task.tags.map((tag: any) => typeof tag === 'object' ? tag.id : tag)
+      ? task.tags.map((tag: any) => typeof tag === 'object' ? tag.id.toString() : tag.toString())
       : [];
-    return taskTags.includes(props.tagId);
+    return taskTags.includes(props.tagId.toString());
   };
 
   return (
     <BaseModal
       isOpen={true}
       onClose={closeModal}
-      title="اختيار المهام لربطها بالعلامة"
+      title="اختيار المهام لإدارة العلامة"
     >
       <div className="task-selection-modal">
         {/* Search Input */}
@@ -148,10 +158,10 @@ const TaskSelectionModal = () => {
                   key={task.id}
                   className={`task-item p-3 mb-2 border rounded cursor-pointer ${
                     isSelected ? 'border-primary bg-light' : 'border-secondary'
-                  } ${isTagged ? 'opacity-50' : ''}`}
-                  onClick={() => !isTagged && handleTaskToggle(task.id)}
+                  }`}
+                  onClick={() => handleTaskToggle(task.id)}
                   style={{ 
-                    cursor: isTagged ? 'not-allowed' : 'pointer',
+                    cursor: 'pointer',
                     transition: 'all 0.2s'
                   }}
                 >
@@ -161,8 +171,7 @@ const TaskSelectionModal = () => {
                         <input
                           type="checkbox"
                           checked={isSelected}
-                          disabled={isTagged}
-                          onChange={() => !isTagged && handleTaskToggle(task.id)}
+                          onChange={() => handleTaskToggle(task.id)}
                           className="form-check-input me-3"
                           onClick={(e) => e.stopPropagation()}
                         />
@@ -172,14 +181,12 @@ const TaskSelectionModal = () => {
                             العميل: {task.client?.name || 'غير محدد'} | 
                             المبلغ: {task.amount} ريال
                           </small>
-                          {isTagged && (
-                            <div className="mt-1">
-                              <span className="badge bg-success">
-                                <Check size={12} className="me-1" />
-                                مربوط بالعلامة بالفعل
-                              </span>
-                            </div>
-                          )}
+                          <div className="mt-1">
+                            <span className={`badge ${isTagged ? 'bg-success' : 'bg-secondary'}`}>
+                              <Check size={12} className="me-1" />
+                              {isTagged ? 'مرتبط' : 'غير مرتبط'}
+                            </span>
+                          </div>
                         </div>
                       </div>
                     </div>
@@ -203,8 +210,9 @@ const TaskSelectionModal = () => {
               variant="primary" 
               onClick={handleAttachTag}
               disabled={selectedTasks.length === 0 || updateTaskMutation.isPending}
+              isLoading={updateTaskMutation.isPending}
             >
-              {updateTaskMutation.isPending ? 'جاري الربط...' : 'ربط العلامة'}
+              تحديث العلامة للمهام المختارة
             </Button>
           </div>
         </div>

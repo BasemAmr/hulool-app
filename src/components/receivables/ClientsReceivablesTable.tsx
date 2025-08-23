@@ -1,4 +1,4 @@
-import { MessageSquare, CreditCard } from 'lucide-react';
+import { MessageSquare, CreditCard, Edit3 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import Button from '../ui/Button';
 import { useModalStore } from '../../stores/modalStore';
@@ -150,15 +150,25 @@ console.log('Total amounts:', totals);
                 {formatCurrency(Math.max(0, Number(client.remaining_amount) || 0))}
               </td>
               <td className="text-center">
-                <Button
-                  variant="primary"
-                  size="sm"
-                  onClick={() => handlePayment(client.client_id)}
-                  disabled={Number(client.remaining_amount) <= 0}
-                >
-                  <CreditCard size={14} className="me-1" />
-                  سداد
-                </Button>
+                <div className="d-flex gap-2 justify-content-center">
+                  <Button
+                    variant="outline-primary"
+                    size="sm"
+                    onClick={() => openModal('clientReceivablesEdit', { clientId: client.client_id })}
+                    title="تعديل المستحقات"
+                  >
+                    <Edit3 size={14} />
+                  </Button>
+                  <Button
+                    variant="primary"
+                    size="sm"
+                    onClick={() => handlePayment(client.client_id)}
+                    disabled={Number(client.remaining_amount) <= 0}
+                  >
+                    <CreditCard size={14} className="me-1" />
+                    سداد
+                  </Button>
+                </div>
               </td>
             </tr>
           ))}

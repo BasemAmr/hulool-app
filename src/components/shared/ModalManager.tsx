@@ -23,6 +23,7 @@ import CreditEditModal from '../modals/CreditEditModal';
 import CreditDeleteModal from '../modals/CreditDeleteModal';
 import AllocationEditModal from '../modals/AllocationEditModal';
 import AllocationDeleteModal from '../modals/AllocationDeleteModal';
+import UrgentAlertModal from '../modals/UrgentAlertModal';
 
 
 import Button from '../ui/Button';
@@ -30,6 +31,9 @@ import { useTranslation } from 'react-i18next';
 import ClientSearchModal from './ClientSearchModal';
 import { useGetClientReceivables } from '../../queries/receivableQueries';
 import ApplyCreditModal from '../modals/ApplyCreditModal';
+import EditManualReceivableModal from '../receivables/EditManualReceivableModal';
+import DeleteReceivableModal from '../receivables/DeleteReceivableModal';
+import ClientReceivablesEditModal from '../receivables/ClientReceivablesEditModal';
 
 const ModalManager = () => {
   // Fix 1: Use individual selectors instead of selecting an object
@@ -145,6 +149,18 @@ const ModalManager = () => {
 
       case 'allocationDelete':
         return <AllocationDeleteModal />;
+
+      case 'editReceivable':
+        return <EditManualReceivableModal />;
+
+      case 'deleteReceivable':
+        return <DeleteReceivableModal />;
+
+      case 'clientReceivablesEdit':
+        return <ClientReceivablesEditModal />;
+
+      case 'urgentAlert':
+        return <UrgentAlertModal />;
 
       case 'confirmDelete':
         return (

@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import apiClient from '../api/apiClient';
-import type { ApiResponse, Receivable, ManualReceivablePayload, ReceivablePaginatedData, ClientStatementPaginatedData, ClientSummary, TaskType } from '../api/types';
+import type { ApiResponse, Receivable, ManualReceivablePayload, UpdateReceivablePayload, ReceivablePaginatedData, ClientStatementPaginatedData, ClientSummary, TaskType, PaymentDecision, AllocationDecision } from '../api/types';
 
 // --- API Functions ---
 const fetchReceivables = async (): Promise<ReceivablePaginatedData> => {
@@ -11,6 +11,29 @@ const fetchReceivables = async (): Promise<ReceivablePaginatedData> => {
 const createManualReceivable = async (payload: ManualReceivablePayload): Promise<Receivable> => {
     const { data } = await apiClient.post<ApiResponse<Receivable>>('/receivables', payload);
     if (!data.success) throw new Error(data.message || 'Failed to create receivable');
+    return data.data;
+};
+
+const updateReceivable = async ({ id, payload }: { id: number; payload: UpdateReceivablePayload }): Promise<Receivable> => {
+    const { data } = await apiClient.put<ApiResponse<Receivable>>(`/receivables/${id}`, payload);
+    if (!data.success) throw new Error(data.message || 'Failed to update receivable');
+    return data.data;
+};
+
+const deleteReceivable = async (id: number): Promise<void> => {
+    const { data } = await apiClient.delete<ApiResponse<null>>(`/receivables/${id}`);
+    if (!data.success) throw new Error(data.message || 'Failed to delete receivable');
+};
+
+const resolveReceivableOverpayment = async ({ id, resolution }: { id: number; resolution: { new_amount: number; payment_decisions?: PaymentDecision[]; allocation_decisions?: AllocationDecision[] } }): Promise<Receivable> => {
+    const { data } = await apiClient.post<ApiResponse<Receivable>>(`/receivables/${id}/resolve-overpayment`, resolution);
+    if (!data.success) throw new Error(data.message || 'Failed to resolve overpayment');
+    return data.data;
+};
+
+const deleteReceivableWithResolution = async ({ id, resolution }: { id: number; resolution: { payment_decisions?: PaymentDecision[]; allocation_decisions?: AllocationDecision[] } }): Promise<{ summary: object }> => {
+    const { data } = await apiClient.post<ApiResponse<{ summary: object }>>(`/receivables/${id}/delete-with-resolution`, resolution);
+    if (!data.success) throw new Error(data.message || 'Failed to delete receivable with resolution');
     return data.data;
 };
 
@@ -207,5 +230,71 @@ export const useGetFilteredReceivables = (filter: 'paid' | 'overdue', enabled: b
     enabled,
     staleTime: 30 * 1000, // Keep fresh for 30 seconds
     // refetchOnWindowFocus: false (inherited)
+  });
+};
+
+// --- Mutation Hooks for CRUD Operations ---
+
+export const useUpdateReceivable = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: updateReceivable,
+    onSuccess: (updatedReceivable) => {
+      // Invalidate related queries to refresh data
+      queryClient.invalidateQueries({ queryKey: ['receivables'] });
+      queryClient.invalidateQueries({ queryKey: ['clients'] });
+      queryClient.invalidateQueries({ queryKey: ['dashboard'] });
+      queryClient.invalidateQueries({ queryKey: ['receivables', 'client', updatedReceivable.client_id] });
+      queryClient.invalidateQueries({ queryKey: ['receivables', 'payable', updatedReceivable.client_id] });
+      queryClient.invalidateQueries({ queryKey: ['receivables', 'filtered', 'paid'] });
+      queryClient.invalidateQueries({ queryKey: ['receivables', 'filtered', 'overdue'] });
+    },
+  });
+};
+
+export const useDeleteReceivable = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: deleteReceivable,
+    onSuccess: () => {
+      // Invalidate related queries to refresh data
+      queryClient.invalidateQueries({ queryKey: ['receivables'] });
+      queryClient.invalidateQueries({ queryKey: ['clients'] });
+      queryClient.invalidateQueries({ queryKey: ['dashboard'] });
+      // Note: We can't invalidate specific client queries without knowing the client_id
+      // This will be handled by the calling component
+    },
+  });
+};
+
+export const useResolveReceivableOverpayment = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: resolveReceivableOverpayment,
+    onSuccess: (updatedReceivable) => {
+      // Invalidate related queries to refresh data
+      queryClient.invalidateQueries({ queryKey: ['receivables'] });
+      queryClient.invalidateQueries({ queryKey: ['clients'] });
+      queryClient.invalidateQueries({ queryKey: ['dashboard'] });
+      queryClient.invalidateQueries({ queryKey: ['receivables', 'client', updatedReceivable.client_id] });
+      queryClient.invalidateQueries({ queryKey: ['receivables', 'payable', updatedReceivable.client_id] });
+      queryClient.invalidateQueries({ queryKey: ['receivables', 'filtered', 'paid'] });
+      queryClient.invalidateQueries({ queryKey: ['receivables', 'filtered', 'overdue'] });
+    },
+  });
+};
+
+export const useDeleteReceivableWithResolution = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: deleteReceivableWithResolution,
+    onSuccess: () => {
+      // Invalidate related queries to refresh data
+      queryClient.invalidateQueries({ queryKey: ['receivables'] });
+      queryClient.invalidateQueries({ queryKey: ['clients'] });
+      queryClient.invalidateQueries({ queryKey: ['dashboard'] });
+      // Note: We can't invalidate specific client queries without knowing the client_id
+      // This will be handled by the calling component
+    },
   });
 }

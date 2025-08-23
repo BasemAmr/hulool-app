@@ -1,9 +1,10 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 // import { useTranslation } from 'react-i18next';
 import { useModalStore } from '../../stores/modalStore';
 import { useRecordClientCredit } from '../../queries/clientCreditQueries';
 import { useGetPaymentMethods } from '../../queries/paymentQueries';
+import { useGetClient } from '../../queries/clientQueries';
 import BaseModal from '../ui/BaseModal';
 import Button from '../ui/Button';
 import Input from '../ui/Input';
@@ -13,10 +14,19 @@ import type { Client, RecordCreditPayload } from '../../api/types';
 const RecordCreditModal = () => {
 //   const { t } = useTranslation();
   const closeModal = useModalStore(state => state.closeModal);
-  const [selectedClient, setSelectedClient] = useState<Client | null>(null);
-  const { register, handleSubmit, setValue, formState: { errors } } = useForm<RecordCreditPayload>();
+  const props = useModalStore(state => state.props as { client?: Client });
+  const [selectedClient, setSelectedClient] = useState<Client | null>(props.client || null);
+  const { register, handleSubmit, formState: { errors }, setValue } = useForm<RecordCreditPayload>();
   const recordCreditMutation = useRecordClientCredit();
   const { data: paymentMethods } = useGetPaymentMethods();
+  const { data: preselectedClient } = useGetClient(selectedClient?.id || 0);
+
+  useEffect(() => {
+    if (preselectedClient) {
+      setSelectedClient(preselectedClient);
+      setValue('client_id', preselectedClient.id);
+    }
+  }, [preselectedClient]);
 
   const handleClientSelect = (client: Client) => {
     setSelectedClient(client);

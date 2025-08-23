@@ -157,73 +157,126 @@ const ClientReceivablesTable: React.FC<ClientReceivablesTableProps> = ({
                       <td className="text-center small">{formatDate(item.date)}</td>
                       <td className="text-center">{getTypeBadge(item.type)}</td>
                       <td className="text-center">
-                        {(item.remaining_amount ?? 0) > 0 && (
-                          <Button
-                            variant="primary" size="sm"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              if (!item.details) {
-                                return;
-                              }
-                              if (!item.details.receivables) {
-                                return;
-                              }
-                              if (item.details.receivables.length == 0) {
-                                return;
-                              }
-                              if (!item.receivable_id) {
-                                console.warn('Statement item missing receivable_id; cannot open payment modal directly', item);
-                                let _id = item?.details?.receivables[0]?.id == item?.details?.receivables[0]?.prepaid_receivable_id ? item?.details?.receivables[1]?.id : item?.details?.receivables[0]?.id;
-                                console.log(_id)
-                                if (!_id) {
+                        <div className="d-flex gap-1 justify-content-center">
+                          {/* Edit/Delete buttons for all receivables */}
+                          {(item.details?.receivables && item.details.receivables.length > 0 && !item.details.receivables[0].task_id) && (
+                            <>
+                              <Button
+                                variant="outline-primary"
+                                size="sm"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  const receivable = item.details?.receivables?.find(r => r.id === item.receivable_id) || {
+                                    id: item.details?.receivables && item.details?.receivables[0].id,
+                                    client_id: Number(client.id),
+                                    task_id: item.task_id ? Number(item.task_id) : null,
+                                    type: String(item.type) as any,
+                                    description: item.description,
+                                    amount: Number(item.debit || item.balance + item.credit),
+                                    due_date: item.date,
+                                    notes: '',
+                                    created_at: item.date,
+                                    updated_at: item.date
+                                  };
+                                  openModal('editReceivable', { receivable });
+                                }}
+                              >
+                                <Edit3 size={12} />
+                              </Button>
+                              <Button
+                                variant="danger"
+                                size="sm"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  const receivable = item.details?.receivables?.find(r => r.id === item.receivable_id) || {
+                                    id: item.details?.receivables && item.details?.receivables[0].id,
+                                    client_id: Number(client.id),
+                                    task_id: item.task_id ? Number(item.task_id) : null,
+                                    type: String(item.type) as any,
+                                    description: item.description,
+                                    amount: Number(item.debit || item.balance + item.credit),
+                                    due_date: item.date,
+                                    notes: '',
+                                    created_at: item.date,
+                                    updated_at: item.date
+                                  };
+                                  openModal('deleteReceivable', { receivable });
+                                }}
+                              >
+                                <Trash2 size={12} />
+                              </Button>
+                            </>
+                          )}
+                          
+                          {/* Payment button */}
+                          {(item.remaining_amount ?? 0) > 0 && (
+                            <Button
+                              variant="primary" size="sm"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                if (!item.details) {
                                   return;
                                 }
-                              }
-
-
-                              // Build minimal receivable object compatible with payment modal
-                              const pseudoReceivable: Receivable = {
-                                id: item?.details?.receivables[0]?.id == item?.details?.receivables[0]?.prepaid_receivable_id ? item?.details?.receivables[1]?.id : item?.details?.receivables[0]?.id,
-                                client_id: Number(client.id),
-                                task_id: item.task_id ? Number(item.task_id) : null,
-                                // receivable_id:item?.details?.receivables[0]?.id == item?.details?.receivables[0]?.prepaid_receivable_id ? item?.details?.receivables[1]?.id : item?.details?.receivables[0]?.id,
-                                reference_receivable_id: null,
-                                prepaid_receivable_id: item?.details?.receivables[0]?.prepaid_receivable_id,
-
-                                created_by: Number(client.id),
-                                type: String(item.type) as any,
-                                description: item.description,
-                                amount: Number(item.debit || item.balance + item.credit),
-                                original_amount: null,
-                                amount_details: [],
-                                adjustment_reason: null,
-                                notes: null,
-                                due_date: item.date,
-                                created_at: item.date,
-                                updated_at: item.date,
-                                client_name: client.name,
-                                client_phone: client.phone,
-                                task_name: item.description,
-                                task_type: String(item.type),
-                                total_paid: Number(item.credit),
-                                remaining_amount: Number(item.remaining_amount ?? (item.debit - item.credit)),
-                                payments: item.details?.payments || [],
-                                allocations: [] as CreditAllocation[],
-                                client: {
-                                  id: Number(client.id),
-                                  name: client.name,
-                                  phone: client.phone
+                                if (!item.details.receivables) {
+                                  return;
                                 }
-                              };
-                              openModal('paymentForm', { receivable: pseudoReceivable });
-                            }}
-                          >
-                            <CreditCard size={14} /> دفع
-                          </Button>
-                        )}
-                        {(item.remaining_amount ?? 0) <= 0 && item.debit > 0 && (
-                          <span className="badge bg-success text-white small">مسدد</span>
-                        )}
+                                if (item.details.receivables.length == 0) {
+                                  return;
+                                }
+                                if (!item.receivable_id) {
+                                  console.warn('Statement item missing receivable_id; cannot open payment modal directly', item);
+                                  let _id = item?.details?.receivables[0]?.id == item?.details?.receivables[0]?.prepaid_receivable_id ? item?.details?.receivables[1]?.id : item?.details?.receivables[0]?.id;
+                                  console.log(_id)
+                                  if (!_id) {
+                                    return;
+                                  }
+                                }
+
+
+                                // Build minimal receivable object compatible with payment modal
+                                const pseudoReceivable: Receivable = {
+                                  id: item?.details?.receivables[0]?.id == item?.details?.receivables[0]?.prepaid_receivable_id ? item?.details?.receivables[1]?.id : item?.details?.receivables[0]?.id,
+                                  client_id: Number(client.id),
+                                  task_id: item.task_id ? Number(item.task_id) : null,
+                                  // receivable_id:item?.details?.receivables[0]?.id == item?.details?.receivables[0]?.prepaid_receivable_id ? item?.details?.receivables[1]?.id : item?.details?.receivables[0]?.id,
+                                  reference_receivable_id: null,
+                                  prepaid_receivable_id: item?.details?.receivables[0]?.prepaid_receivable_id,
+
+                                  created_by: Number(client.id),
+                                  type: String(item.type) as any,
+                                  description: item.description,
+                                  amount: Number(item.debit || item.balance + item.credit),
+                                  original_amount: null,
+                                  amount_details: [],
+                                  adjustment_reason: null,
+                                  notes: null,
+                                  due_date: item.date,
+                                  created_at: item.date,
+                                  updated_at: item.date,
+                                  client_name: client.name,
+                                  client_phone: client.phone,
+                                  task_name: item.description,
+                                  task_type: String(item.type),
+                                  total_paid: Number(item.credit),
+                                  remaining_amount: Number(item.remaining_amount ?? (item.debit - item.credit)),
+                                  payments: item.details?.payments || [],
+                                  allocations: [] as CreditAllocation[],
+                                  client: {
+                                    id: Number(client.id),
+                                    name: client.name,
+                                    phone: client.phone
+                                  }
+                                };
+                                openModal('paymentForm', { receivable: pseudoReceivable });
+                              }}
+                            >
+                              <CreditCard size={14} /> دفع
+                            </Button>
+                          )}
+                          {(item.remaining_amount ?? 0) <= 0 && item.debit > 0 && (
+                            <span className="badge bg-success text-white small">مسدد</span>
+                          )}
+                        </div>
                       </td>
                     </tr>
                     {(expandedRows.has(item.id) && ((item.details?.payments && item.details?.payments.length > 0) || (item.details?.allocations && item.details?.allocations.length > 0))) && (

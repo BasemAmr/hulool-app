@@ -2,10 +2,11 @@ import type { Task } from '../../api/types';
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
 import Button from '../ui/Button';
-import { Edit, Pause, Play, CheckCircle, ExternalLink, MessageCircle, DollarSign, Trash2, FileText } from 'lucide-react';
+import { Edit, Pause, Play, CheckCircle, ExternalLink, MessageCircle, DollarSign, Trash2, FileText, AlertTriangle } from 'lucide-react';
 import { useDeferTask, useResumeTask } from '../../queries/taskQueries';
 import { useToast } from '../../hooks/useToast';
 import {useCurrentUserCapabilities } from '../../queries/userQueries';
+import { useModalStore } from '../../stores/modalStore';
 
 interface AllTasksTableProps {
   tasks: Task[];
@@ -23,6 +24,7 @@ const AllTasksTable = ({ tasks, isLoading, onEdit, onComplete, onViewAmountDetai
   const resumeTaskMutation = useResumeTask();
   const { data: currentCapabilities } = useCurrentUserCapabilities();
   const { success, error } = useToast();
+  const { openModal } = useModalStore();
   
   if (isLoading) {
     return <div className="p-4 text-center">Loading tasks...</div>;
@@ -295,6 +297,21 @@ const AllTasksTable = ({ tasks, isLoading, onEdit, onComplete, onViewAmountDetai
                       title="تعديل"
                     >
                       <Edit size={16} />
+                    </Button>
+
+                    {/* Urgent Alert Action */}
+                    <Button 
+                      variant="secondary" 
+                      size="sm" 
+                      onClick={() => openModal('urgentAlert', { taskId: task.id })} 
+                      title="تنبيه عاجل"
+                      style={{ 
+                        borderColor: '#ffc107', 
+                        color: '#856404',
+                        backgroundColor: '#fff3cd'
+                      }}
+                    >
+                      <AlertTriangle size={16} />
                     </Button>
 
                     {/* Requirements Action */}

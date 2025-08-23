@@ -4,7 +4,7 @@ import { useSidebarStore } from '../../stores/sidebarStore';
 import { useTranslation } from 'react-i18next';
 import Logo from '../ui/Logo';
 import styles from './Layout.module.scss';
-import { Banknote, LayoutDashboard, LogOut, NotebookText, Users, Settings, Building, Calculator, Home, Briefcase, Plus, Receipt, ChevronDown, ChevronRight, Tags } from 'lucide-react';
+import { Banknote, LayoutDashboard, LogOut, NotebookText, Users, Settings, Building, Calculator, Home, Briefcase, Plus, Receipt, ChevronDown, ChevronRight, Tags, CreditCard, AlertTriangle } from 'lucide-react';
 import { useModalStore } from '../../stores/modalStore';
 import { Search } from 'lucide-react';
 import { useState } from 'react';
@@ -171,6 +171,26 @@ const Sidebar = () => {
                   <Receipt size={16} />
                 </span>
                 <span className={styles.navText}>إضافة مستحق</span>
+              </button>
+              <button
+                onClick={() => openModal('recordCreditModal', {})}
+                className={`${styles.navLink} ${styles.actionButton}`}
+                style={{ width: '100%', border: 'none', background: 'none', textAlign: 'right' }}
+              >
+                <span className={styles.navIcon}>
+                  <CreditCard size={16} />
+                </span>
+                <span className={styles.navText}>إضافة دفعة مقدمة</span>
+              </button>
+              <button
+                onClick={() => openModal('urgentAlert', {})}
+                className={`${styles.navLink} ${styles.actionButton}`}
+                style={{ width: '100%', border: 'none', background: 'none', textAlign: 'right' }}
+              >
+                <span className={styles.navIcon}>
+                  <AlertTriangle size={16} />
+                </span>
+                <span className={styles.navText}>إضافة تنبيه عاجل</span>
               </button>
             </>
           )}
