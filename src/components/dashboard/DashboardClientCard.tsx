@@ -24,6 +24,7 @@ import WhatsAppIcon from '../../assets/images/whats.svg';
 import GoogleDriveIcon from '../../assets/images/googe_drive.svg';
 import type { ClientWithTasksAndStats } from '../../queries/dashboardQueries';
 import { createPortal } from 'react-dom';
+import { useEffect, useRef, useState } from 'react';
 
 interface DashboardClientCardProps {
   data: ClientWithTasksAndStats;
@@ -50,6 +51,7 @@ const formatDaysElapsed = (dateString: string): string => {
     return `${diffDays} يوم`;
   }
 };
+
 
 
 const DashboardClientCard = ({ data, index = 0, alternatingColors }: DashboardClientCardProps) => {
@@ -179,6 +181,122 @@ const DashboardClientCard = ({ data, index = 0, alternatingColors }: DashboardCl
 
   const handleEditTask = (task: Task) => openModal('taskForm', { taskToEdit: task, client });
 
+
+  // Add this custom hook for positioning
+  const useDropdownPosition = (isOpen: boolean) => {
+    const triggerRef = useRef<HTMLButtonElement>(null);
+    const [position, setPosition] = useState({ top: 0, left: 0 });
+
+    useEffect(() => {
+      if (isOpen && triggerRef.current) {
+        const rect = triggerRef.current.getBoundingClientRect();
+        setPosition({
+          top: rect.bottom + window.scrollY,
+          left: rect.left + window.scrollX - 100, // Offset to align properly
+        });
+      }
+    }, [isOpen]);
+
+    return { triggerRef, position };
+  };
+
+  // Replace the dropdown section in your header with this:
+  const HeaderDropdownSection = ({
+    handleAddTask,
+    handleAddReceivable,
+    handleRecordCredit
+  }: {
+    handleAddTask: () => void;
+    handleAddReceivable: () => void;
+    handleRecordCredit: () => void;
+  }) => {
+    const [isOpen, setIsOpen] = useState(false);
+    const { triggerRef, position } = useDropdownPosition(isOpen);
+
+    return (
+      <div>
+        <button
+          ref={triggerRef}
+          onClick={() => setIsOpen(!isOpen)}
+          className="btn btn-outline-secondary btn-sm p-1 border-0"
+        >
+          <MoreVertical size={14} />
+        </button>
+
+        {isOpen && createPortal(
+          <>
+            {/* Backdrop to close dropdown */}
+            <div
+              style={{
+                position: 'fixed',
+                top: 0,
+                left: 0,
+                right: 0,
+                bottom: 0,
+                zIndex: 1040,
+                backgroundColor: 'transparent'
+              }}
+              onClick={() => setIsOpen(false)}
+            />
+
+            {/* Dropdown menu */}
+            <div
+              className="dropdown-menu show"
+              style={{
+                position: 'absolute',
+                top: position.top,
+                left: position.left,
+                zIndex: 1050,
+                minWidth: '120px',
+                fontSize: '0.85em',
+                direction: 'rtl',
+                textAlign: 'right'
+              }}
+            >
+              <button
+                className="dropdown-item text-end"
+                onClick={() => {
+                  handleAddTask();
+                  setIsOpen(false);
+                }}
+              >
+                <Receipt size={14} className="ms-2" />
+                إضافة مهمة
+              </button>
+              <button
+                className="dropdown-item text-end"
+                onClick={() => {
+                  handleAddReceivable();
+                  setIsOpen(false);
+                }}
+              >
+                <Receipt size={14} className="ms-2" />
+                إضافة مستحق
+              </button>
+              <button
+                className="dropdown-item text-end"
+                onClick={() => {
+                  handleRecordCredit();
+                  setIsOpen(false);
+                }}
+              >
+                <Receipt size={14} className="ms-2" />
+                إضافة دفعة
+              </button>
+            </div>
+          </>,
+          document.body
+        )}
+      </div>
+    );
+  };
+
+
+
+
+
+
+
   return (
     <>
       <style dangerouslySetInnerHTML={{ __html: styleOverrides }} />
@@ -239,46 +357,11 @@ const DashboardClientCard = ({ data, index = 0, alternatingColors }: DashboardCl
 
             {/* Right: Actions Dropdown */}
             <div>
-              <Dropdown>
-                <Dropdown.Toggle
-                  variant="outline-secondary"
-                  size="sm"
-                  className="p-1 border-0"
-                >
-                  <MoreVertical size={14} />
-                </Dropdown.Toggle>
-
-                {/* خليها dropdown-menu-start */}
-                {
-                  createPortal(
-                    <Dropdown.Menu dir='rtl' align={"start"} className="dropdown-menu-start text-start"
-                      style={{
-                        position: 'absolute',
-                        zIndex: 1050,
-                        minWidth: '120px',
-                        fontSize: '0.85em',
-                        top: 'auto',
-                        left: 'auto',
-                        transform: 'none'
-                      }}
-                    >
-                      <Dropdown.Menu align={"end"} className="text-end">
-                        <Dropdown.Item onClick={handleAddTask} className="text-end">
-                          <Receipt size={14} className="ms-2" />
-                          إضافة مهمة
-                        </Dropdown.Item>
-                        <Dropdown.Item onClick={handleAddReceivable} className="text-end">
-                          <Receipt size={14} className="ms-2" />
-                          إضافة مستحق
-                        </Dropdown.Item>
-                        <Dropdown.Item onClick={handleRecordCredit} className="text-end">
-                          <Receipt size={14} className="ms-2" />
-                          إضافة دفعة
-                        </Dropdown.Item>
-                      </Dropdown.Menu>
-                    </Dropdown.Menu>, document.body
-                  )}
-              </Dropdown>
+              <HeaderDropdownSection
+                handleAddTask={handleAddTask}
+                handleAddReceivable={handleAddReceivable}
+                handleRecordCredit={handleRecordCredit}
+              />
             </div>
           </div>
         </div>
