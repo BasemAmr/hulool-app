@@ -45,6 +45,7 @@ const ApplyCreditModal = () => {
                 <div>الرصيد المتاح للعميل: <strong>{availableCredit.toLocaleString()} ريال</strong></div>
                 <div>المتبقي على المستحق: <strong>{receivable.remaining_amount.toLocaleString()} ريال</strong></div>
             </div>
+            
             <form onSubmit={handleSubmit(onSubmit)}>
                 <Input
                     label="المبلغ المراد تطبيقه"

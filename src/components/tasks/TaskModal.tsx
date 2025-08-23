@@ -115,6 +115,7 @@ const TaskModal = () => {
   const createTaskMutation = useCreateTask();
   const updateTaskMutation = useUpdateTask();
   const createRequirementsMutation = useCreateRequirements();
+
   const isLoading = createTaskMutation.isPending || updateTaskMutation.isPending || createRequirementsMutation.isPending;
 
   // Helper to safely parse amount_details
@@ -133,17 +134,15 @@ const TaskModal = () => {
     return [];
   };
 
-  // Helper function to handle prepaid payment flow
+  // Helper function to handle prepaid payment flow with credit support
   const handlePrepaidPayment = (createdTask: any) => {
     if (createdTask.prepaid_receivable_id && createdTask.receivable) {
-      // Close the current task modal first
+      // For now, skip credit check and proceed with regular payment flow
+      // This can be enhanced later to check client credits via API
       closeModal();
-      
-      // Open the payment modal for the prepaid receivable
-      // Make it required (can't close without paying)
       openModal('paymentForm', { 
         receivable: createdTask.receivable,
-        isRequired: true // This will make the payment modal non-closeable
+        isRequired: true
       });
     } else {
       // No prepaid amount, show success modal as usual

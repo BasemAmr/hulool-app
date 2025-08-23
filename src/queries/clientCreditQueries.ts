@@ -65,6 +65,11 @@ const applyCreditToReceivable = async (payload: ApplyCreditPayload) => {
     return data.data;
 };
 
+const replacePaymentWithCredit = async (paymentId: number): Promise<any> => {
+    const { data } = await apiClient.post<ApiResponse<any>>(`/payments/${paymentId}/replace-with-credit`);
+    return data.data;
+};
+
 export const useGetClientCredits = (clientId: number) => useQuery({
     queryKey: ['clientCredits', clientId],
     queryFn: () => fetchClientCredits(clientId),
@@ -137,6 +142,19 @@ export const useApplyCreditToReceivable = () => {
             queryClient.invalidateQueries({ queryKey: ['receivables'] });
             queryClient.invalidateQueries({ queryKey: ['clients'] });
             queryClient.invalidateQueries({ queryKey: ['clientCredits'] });
+        },
+    });
+};
+
+export const useReplacePaymentWithCredit = () => {
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: replacePaymentWithCredit,
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['receivables'] });
+            queryClient.invalidateQueries({ queryKey: ['clients'] });
+            queryClient.invalidateQueries({ queryKey: ['clientCredits'] });
+            queryClient.invalidateQueries({ queryKey: ['payments'] });
         },
     });
 };

@@ -11,6 +11,8 @@ import TagManagementModal from '../tags/TagManagementModal'; // Import TagManage
 
 import ReceivablePaymentModal from '../payments/ReceivablePaymentModal';
 import PaymentHistoryModal from '../payments/PaymentHistoryModal';
+import PaymentEditModal from '../payments/PaymentEditModal';
+import PaymentDeleteModal from '../payments/PaymentDeleteModal';
 import TaskCompletionModal from '../modals/TaskCompletionModal';
 import AmountDetailsModal from '../modals/AmountDetailsModal';
 import TaskSelectionModal from '../modals/TaskSelectionModal';
@@ -94,6 +96,10 @@ const ModalManager = () => {
         return <ReceivablePaymentModal />;
       case 'paymentHistory':
         return <PaymentHistoryModal />;
+      case 'paymentEdit':
+        return <PaymentEditModal />;
+      case 'paymentDelete':
+        return <PaymentDeleteModal />;
 
       case 'clientSearch':
         return <ClientSearchModal />;

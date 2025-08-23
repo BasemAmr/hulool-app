@@ -101,10 +101,11 @@ const ClientReceivablesTable: React.FC<ClientReceivablesTableProps> = ({
 
   const totalCredit = filteredItems.reduce((sum, item) => sum + item.credit, 0);
   const totalDebit = filteredItems.reduce((sum, item) => sum + item.debit, 0);
+  const totalNet = filteredItems.reduce((sum, item) => sum + item.balance, 0);
   const totals = {
     totalDebit,
     totalCredit,
-    totalNet: Math.abs(totalCredit - totalDebit),
+    totalNet: totalNet
   };
 
   return (
@@ -240,6 +241,7 @@ const ClientReceivablesTable: React.FC<ClientReceivablesTableProps> = ({
                                           <th className="text-center">المبلغ</th>
                                           <th className="text-center">التاريخ</th>
                                           <th className="text-center">طريقة الدفع</th>
+                                          <th className="text-center">الإجراءات</th>
                                         </tr>
                                       </thead>
                                       <tbody>
@@ -263,6 +265,29 @@ const ClientReceivablesTable: React.FC<ClientReceivablesTableProps> = ({
                                               <td className="text-center text-success fw-bold">{formatCurrency(p.amount)}</td>
                                               <td className="text-center">{formatDate(p.paid_at)}</td>
                                               <td className="text-center fw-medium">{methodName}</td>
+                                              <td className="text-center">
+                                                <Button
+                                                  variant="outline-primary"
+                                                  size="sm"
+                                                  className="me-1"
+                                                  onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    openModal('paymentEdit', { payment: p, receivable: { client_id: client.id } });
+                                                  }}
+                                                >
+                                                  <Edit3 size={12} />
+                                                </Button>
+                                                <Button
+                                                  variant="danger"
+                                                  size="sm"
+                                                  onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    openModal('paymentDelete', { payment: p });
+                                                  }}
+                                                >
+                                                  <Trash2 size={12} />
+                                                </Button>
+                                              </td>
                                             </tr>
                                           );
                                         })
@@ -311,7 +336,8 @@ const ClientReceivablesTable: React.FC<ClientReceivablesTableProps> = ({
                                                 size="sm"
                                                 onClick={(e) => {
                                                   e.stopPropagation();
-                                                  openModal('allocationDelete', { allocation, clientId: client.id });
+                                                  openModal('allocationDelete', { allocation, clientId : client.id });
+
                                                 }}
                                               >
                                                 <Trash2 size={12} />

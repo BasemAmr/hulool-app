@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import type { Receivable } from '../../api/types';
 import Button from '../ui/Button';
-import { ChevronRight, ChevronDown, FileText, CreditCard,  MessageSquare } from 'lucide-react';
+import { ChevronRight, ChevronDown, FileText, CreditCard, MessageSquare, Edit3, Trash2 } from 'lucide-react';
 import { useModalStore } from '../../stores/modalStore';
 import { formatDate } from '../../utils/dateUtils';
 
@@ -222,6 +222,7 @@ const FilteredReceivablesTable: React.FC<FilteredReceivablesTableProps> = ({
                                 <th className="text-center">طريقة الدفع</th>
                                 <th className="text-center">تاريخ الدفع</th>
                                 <th className="text-center">الملاحظات</th>
+                                <th className="text-center">الإجراءات</th>
                               </tr>
                             </thead>
                             <tbody>
@@ -238,6 +239,31 @@ const FilteredReceivablesTable: React.FC<FilteredReceivablesTableProps> = ({
                                   </td>
                                   <td className="text-center">
                                     {payment.note || '-'}
+                                  </td>
+                                  <td className="text-center">
+                                    <Button
+                                      variant="outline-primary"
+                                      size="sm"
+                                      className="me-1"
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        openModal('paymentEdit', { payment, receivable });
+                                      }}
+                                      title="تعديل"
+                                    >
+                                      <Edit3 size={14} />
+                                    </Button>
+                                    <Button
+                                      variant="danger"
+                                      size="sm"
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        openModal('paymentDelete', { payment });
+                                      }}
+                                      title="حذف"
+                                    >
+                                      <Trash2 size={14} />
+                                    </Button>
                                   </td>
                                 </tr>
                               ))}

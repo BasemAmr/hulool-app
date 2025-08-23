@@ -89,6 +89,20 @@ const resumeTask = async ({ id }: { id: number }): Promise<Task> => {
   return data.data;
 };
 
+// API function to resolve prepaid change conflicts
+const resolvePrepaidChange = async ({ id, new_prepaid_amount, decisions }: { 
+  id: number; 
+  new_prepaid_amount: number; 
+  decisions: any 
+}): Promise<Task> => {
+  const { data } = await apiClient.post<ApiResponse<Task>>(`/tasks/${id}/resolve-prepaid-change`, {
+    new_prepaid_amount,
+    decisions
+  });
+  if (!data.success) throw new Error(data.message || 'Failed to resolve prepaid change');
+  return data.data;
+};
+
 
 // --- React Query Hooks ---
 export const useGetTasks = (filters: TaskFilters) => {
@@ -179,10 +193,10 @@ export const useCreateRequirements = () => {
     });
 };
 
-export const useDeferTask = () => {
+export const useResumeTask = () => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: deferTask,
+    mutationFn: resumeTask,
     onSuccess: (updatedTask: Task) => { // Type 'updatedTask'
       queryClient.invalidateQueries({ queryKey: ['tasks'] });
       queryClient.invalidateQueries({ queryKey: ['task', updatedTask.id] });
@@ -193,19 +207,37 @@ export const useDeferTask = () => {
   });
 };
 
-export const useResumeTask = () => {
+export const useResolvePrepaidChange = () => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: resumeTask,
-    onSuccess: (updatedTask: Task) => { // Type 'updatedTask'
+    mutationFn: resolvePrepaidChange,
+    onSuccess: (updatedTask: Task) => {
       queryClient.invalidateQueries({ queryKey: ['tasks'] });
       queryClient.invalidateQueries({ queryKey: ['task', updatedTask.id] });
       queryClient.invalidateQueries({ queryKey: ['clients'] });
       queryClient.invalidateQueries({ queryKey: ['dashboard'] });
-      queryClient.invalidateQueries({ queryKey: ['tasks-by-tags'] });
+      queryClient.invalidateQueries({ queryKey: ['receivables'] });
+      queryClient.invalidateQueries({ queryKey: ['receivables', 'client', updatedTask.client.id] });
+      queryClient.invalidateQueries({ queryKey: ['client-credits'] });
     },
   });
 };
+
+export const useDeferTask = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: deferTask,
+    onSuccess: (updatedTask: Task) => {
+      queryClient.invalidateQueries({ queryKey: ['tasks'] });
+      queryClient.invalidateQueries({ queryKey: ['task', updatedTask.id] });
+      queryClient.invalidateQueries({ queryKey: ['clients'] });
+      queryClient.invalidateQueries({ queryKey: ['dashboard'] });
+      queryClient.invalidateQueries({ queryKey: ['receivables'] });
+      queryClient.invalidateQueries({ queryKey: ['receivables', 'client', updatedTask.client.id] });
+    },
+  });
+};
+
 
 export const useCompleteTask = () => {
     const queryClient = useQueryClient();

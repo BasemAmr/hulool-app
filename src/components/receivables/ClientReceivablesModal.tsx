@@ -2,7 +2,8 @@ import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { Receivable, Payment, StatementItem } from '../../api/types'; // Import StatementItem
 import Button from '../ui/Button';
-import { ChevronRight, ChevronDown, FileText, CreditCard } from 'lucide-react';
+import { ChevronRight, ChevronDown, FileText, CreditCard, Edit3, Trash2 } from 'lucide-react';
+import { useModalStore } from '../../stores/modalStore';
 import { formatDate } from '../../utils/dateUtils';
 
 interface ClientReceivablesTableProps {
@@ -19,6 +20,7 @@ const ClientReceivablesTable: React.FC<ClientReceivablesTableProps> = ({
   onSettlePayment,
 }) => {
   const { t } = useTranslation();
+  const openModal = useModalStore((state) => state.openModal);
   const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set());
 
   if (isLoading) {
@@ -154,6 +156,7 @@ const ClientReceivablesTable: React.FC<ClientReceivablesTableProps> = ({
                                   <th className="text-center">المبلغ</th>
                                   <th className="text-center">التاريخ</th>
                                   <th className="text-center">الطريقة</th>
+                                  <th className="text-center">الإجراءات</th>
                                 </tr>
                               </thead>
                               <tbody>
@@ -162,6 +165,31 @@ const ClientReceivablesTable: React.FC<ClientReceivablesTableProps> = ({
                                     <td className="text-center text-success">{formatCurrency(p.amount)}</td>
                                     <td className="text-center">{formatDate(p.paid_at)}</td>
                                     <td className="text-center">{p.payment_method?.name_ar || 'غير محدد'}</td>
+                                    <td className="text-center">
+                                      <Button
+                                        variant="secondary"
+                                        size="sm"
+                                        className="me-1"
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          openModal('paymentEdit', { payment: p, receivable: { id: item.receivable_id } });
+                                        }}
+                                        title="تعديل"
+                                      >
+                                        <Edit3 size={14} />
+                                      </Button>
+                                      <Button
+                                        variant="danger"
+                                        size="sm"
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          openModal('paymentDelete', { payment: p });
+                                        }}
+                                        title="حذف"
+                                      >
+                                        <Trash2 size={14} />
+                                      </Button>
+                                    </td>
                                   </tr>
                                 ))}
                               </tbody>

@@ -3,6 +3,11 @@ import apiClient from '../api/apiClient';
 import type { ApiResponse, Payment, PaymentPayload, PaymentMethod } from '../api/types';
 
 // --- API Functions ---
+const fetchPayment = async (id: number): Promise<Payment> => {
+  const { data } = await apiClient.get<ApiResponse<Payment>>(`/payments/${id}`);
+  if (!data.success) throw new Error(data.message || 'Failed to fetch payment.');
+  return data.data;
+};
 const fetchPaymentMethods = async (): Promise<PaymentMethod[]> => {
   const { data } = await apiClient.get<ApiResponse<PaymentMethod[]>>('/payments/methods', {
     params: { language: 'ar' },
@@ -17,6 +22,17 @@ const createPayment = async (payload: PaymentPayload): Promise<Payment> => {
   return data.data;
 };
 
+const updatePayment = async ({ id, ...payload }: { id: number } & Partial<PaymentPayload>): Promise<Payment> => {
+  const { data } = await apiClient.put<ApiResponse<Payment>>(`/payments/${id}`, payload);
+  if (!data.success) throw new Error(data.message || 'Failed to update payment.');
+  return data.data;
+};
+
+const deletePayment = async (id: number): Promise<void> => {
+  const { data } = await apiClient.delete<ApiResponse<null>>(`/payments/${id}`);
+  if (!data.success) throw new Error(data.message || 'Failed to delete payment.');
+};
+
 // --- CORRECTED FUNCTION ---
 // This function now correctly expects and returns a direct array of Payment objects.
 const fetchReceivablePayments = async (receivableId: number): Promise<Payment[]> => {
@@ -27,6 +43,13 @@ const fetchReceivablePayments = async (receivableId: number): Promise<Payment[]>
 // --- END CORRECTION ---
 
 // --- React Query Hooks ---
+export const useGetPayment = (id: number) => {
+  return useQuery({
+    queryKey: ['payment', id],
+    queryFn: () => fetchPayment(id),
+    enabled: !!id,
+  });
+};
 export const useGetPaymentMethods = () => {
   return useQuery({
     queryKey: ['paymentMethods'],
@@ -51,6 +74,43 @@ export const useCreatePayment = () => {
       // Invalidate the specific receivable's payments for its history modal
       queryClient.invalidateQueries({ queryKey: ['payments', newPayment.receivable_id] });
       queryClient.invalidateQueries({ queryKey: ['receivables', 'client', newPayment.client_id] }); // Invalidate client statement
+    },
+  });
+};
+
+export const useUpdatePayment = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: updatePayment,
+    onSuccess: (updatedPayment) => {
+      // Invalidate broader data sets that might include payment summaries or lists
+      queryClient.invalidateQueries({ queryKey: ['receivables'] });
+      queryClient.invalidateQueries({ queryKey: ['clients'] });
+      queryClient.invalidateQueries({ queryKey: ['tasks'] });
+      queryClient.invalidateQueries({ queryKey: ['dashboard'] });
+
+      // Invalidate the specific receivable's payments
+      queryClient.invalidateQueries({ queryKey: ['payments', updatedPayment.receivable_id] });
+      queryClient.invalidateQueries({ queryKey: ['receivables', 'client', updatedPayment.client_id] });
+    },
+  });
+};
+
+export const useDeletePayment = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: deletePayment,
+    onSuccess: (_) => {
+      // Invalidate broader data sets
+      queryClient.invalidateQueries({ queryKey: ['receivables'] });
+      queryClient.invalidateQueries({ queryKey: ['clients'] });
+      queryClient.invalidateQueries({ queryKey: ['tasks'] });
+      queryClient.invalidateQueries({ queryKey: ['dashboard'] });
+
+      // We need to get the receivable_id from somewhere - it won't be available here
+      // So we'll invalidate all payment-related queries
+      queryClient.invalidateQueries({ queryKey: ['payments'] });
+      queryClient.invalidateQueries({ queryKey: ['receivables', 'client'] });
     },
   });
 };

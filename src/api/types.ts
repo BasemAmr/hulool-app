@@ -87,6 +87,7 @@ export interface Client {
   total_receivables?: number;
   total_paid?: number;
   total_outstanding?: number;
+  credit_balance?: number;
 }
 
 // Client type enum
@@ -239,7 +240,12 @@ export interface Payment {
     name_ar: string;
   };
   client_id?: number; // ADD THIS LINE (optional because it's derived)
-
+  receivable?: {
+    id: string;
+    description: string;
+    amount: string;
+    due_date: string;
+  };
 }
 
 // This is the primary type for the new client statement view

@@ -1,9 +1,9 @@
 import { useForm, Controller } from 'react-hook-form';
 import { useTranslation } from 'react-i18next';
 import { useModalStore } from '../../stores/modalStore';
-import { useGetPaymentMethods, useCreatePayment } from '../../queries/paymentQueries';
+import { useGetPaymentMethods, useCreatePayment, useUpdatePayment, useGetReceivablePayments } from '../../queries/paymentQueries';
 
-import { useGetClientCredits } from '../../queries/clientCreditQueries';
+import { useGetClientCredits, useReplacePaymentWithCredit } from '../../queries/clientCreditQueries';
 
 
 import type { Receivable, PaymentPayload } from '../../api/types';
@@ -14,6 +14,8 @@ import Input from '../ui/Input';
 interface ReceivablePaymentModalProps {
   receivable: Receivable;
   isRequired?: boolean; // New prop to make the modal non-closeable
+  availableCredit?: number;
+  paymentToReplace?: any;
 }
 
 const ReceivablePaymentModal = () => {
@@ -27,15 +29,20 @@ const ReceivablePaymentModal = () => {
   const { receivable, isRequired = false } = props;
 
   const { data: paymentMethods, isLoading: isLoadingMethods } = useGetPaymentMethods();
+  const { data: existingPayments, isLoading: isLoadingPayments } = useGetReceivablePayments(Number(receivable.id));
   const createPaymentMutation = useCreatePayment();
+  const updatePaymentMutation = useUpdatePayment();
+  const replacePaymentWithCreditMutation = useReplacePaymentWithCredit();
 
   // NEW: Fetch client credits
   console.log('Fetching client credits for receivable:', receivable);
   const { data: creditData } = useGetClientCredits(Number(receivable.client_id));
-  // const applyCreditMutation = useApplyCreditToReceivable();
   const availableCredit = creditData?.balance || 0;
   console.log('Available credit data:', creditData);
   console.log('Available credit for client:', availableCredit);
+  
+  // Check if this is a prepaid receivable that might have automatic payment
+  const isPrepaidReceivable = isRequired;
 
   const { register, handleSubmit, control, formState: { errors } } = useForm<PaymentPayload>({
     defaultValues: {
@@ -48,9 +55,21 @@ const ReceivablePaymentModal = () => {
   });
 
   const onSubmit = (data: PaymentPayload) => {
-    createPaymentMutation.mutate({ ...data, amount: Number(data.amount) }, {
-      onSuccess: closeModal,
-    });
+    // For prepaid receivables with existing payment, use PUT to update
+    console.log(isPrepaidReceivable)
+    console.log(receivable.prepaid_receivable_id)
+    if (isPrepaidReceivable && existingPayments && existingPayments.length > 0) {
+      const existingPayment = existingPayments[0];
+      updatePaymentMutation.mutate(
+        { id: existingPayment.id, ...data, amount: Number(data.amount) },
+        { onSuccess: closeModal }
+      );
+    } else {
+      // For new payments, use POST
+      createPaymentMutation.mutate({ ...data, amount: Number(data.amount) }, {
+        onSuccess: closeModal,
+      });
+    }
   };
 
   // Conditional close handler - if required, don't allow closing
@@ -61,9 +80,22 @@ const ReceivablePaymentModal = () => {
   };
 
   const handleApplyCredit = () => {
-    // We close the current payment modal and open the apply credit modal
-    closeModal();
-    openModal('applyCreditModal', { receivable, availableCredit });
+    // If this is a prepaid receivable with a payment, we can replace it directly
+    if (isPrepaidReceivable && existingPayments && existingPayments.length > 0) {
+        const existingPayment = existingPayments[0];
+        replacePaymentWithCreditMutation.mutate(existingPayment.id, {
+            onSuccess: () => {
+                closeModal();
+            }
+        });
+    } else {
+        // Otherwise, open the apply credit modal
+        closeModal();
+        openModal('applyCreditModal', { 
+            receivable, 
+            availableCredit,
+        });
+    }
   };
 
 
@@ -84,19 +116,38 @@ const ReceivablePaymentModal = () => {
       )}
       <form onSubmit={handleSubmit(onSubmit)}>
 
-        {availableCredit > 0 && !isRequired && (
-          <div className="alert alert-success d-flex justify-content-between align-items-center">
+        {availableCredit > 0 && (
+          <div className={`alert d-flex justify-content-between align-items-center ${
+            isPrepaidReceivable && availableCredit >= receivable.amount 
+              ? 'alert-success' 
+              : isPrepaidReceivable && availableCredit < receivable.amount
+              ? 'alert-warning'
+              : 'alert-success'
+          }`}>
             <span>
               لدى العميل رصيد متاح: <strong>{availableCredit.toLocaleString()} ريال</strong>
+              {isPrepaidReceivable && (
+                <>
+                  <br />
+                  <small>
+                    {availableCredit >= receivable.amount 
+                      ? 'الرصيد كافي لتغطية الدفع المقدم' 
+                      : `الرصيد غير كافي - مطلوب ${receivable.amount.toLocaleString()} ريال`}
+                  </small>
+                </>
+              )}
             </span>
-            <Button
-              type="button"
-              variant="secondary"
-              size="sm"
-              onClick={handleApplyCredit} // Use the new handler
-            >
-              تطبيق من الرصيد
-            </Button>
+            {(!isRequired || (isPrepaidReceivable && availableCredit >= receivable.amount)) && (
+              <Button
+                type="button"
+                variant="secondary"
+                size="sm"
+                onClick={handleApplyCredit}
+                disabled={isPrepaidReceivable && availableCredit < receivable.amount}
+              >
+                تطبيق من الرصيد
+              </Button>
+            )}
           </div>
         )}
 
@@ -121,7 +172,7 @@ const ReceivablePaymentModal = () => {
             control={control}
             rules={{ required: true }}
             render={({ field }) => (
-              <select {...field} className={`form-select ${errors.payment_method_id ? 'is-invalid' : ''}`} disabled={isLoadingMethods}>
+              <select {...field} className={`form-select ${errors.payment_method_id ? 'is-invalid' : ''}`} disabled={isLoadingMethods || isLoadingPayments}>
                 <option value="">{t('payments.selectMethod')}</option>
                 {paymentMethods?.map(method => (
                   <option key={method.id} value={method.id}>{method.name}</option>
@@ -141,13 +192,13 @@ const ReceivablePaymentModal = () => {
 
         <footer className="modal-footer">
           {!isRequired && (
-            <Button type="button" variant="secondary" onClick={handleClose} disabled={createPaymentMutation.isPending}>
-              {t('common.cancel')}
+              <Button type="button" variant="secondary" onClick={handleClose} disabled={createPaymentMutation.isPending || updatePaymentMutation.isPending || isLoadingPayments}>
+                {t('common.cancel')}
+              </Button>
+            )}
+            <Button type="submit" isLoading={createPaymentMutation.isPending || updatePaymentMutation.isPending || isLoadingPayments}>
+              {isRequired ? t('payments.payNow') : t('common.save')}
             </Button>
-          )}
-          <Button type="submit" isLoading={createPaymentMutation.isPending}>
-            {isRequired ? t('payments.payNow') : t('common.save')}
-          </Button>
         </footer>
       </form>
 
