@@ -249,10 +249,12 @@ const DashboardClientCard = ({ data, index = 0, alternatingColors }: DashboardCl
                 </Dropdown.Toggle>
 
                 {/* خليها dropdown-menu-start */}
-                <Dropdown.Menu dir='rtl' align={"start"} className="dropdown-menu-start text-start">
-                  <Dropdown.Menu align={"end"} className="text-end">
-                    <Dropdown.Item onClick={handleAddTask} className="text-end">
-                      <Receipt size={14} className="ms-2" />
+                {
+                  createPortal(
+                    <Dropdown.Menu dir='rtl' align={"start"} className="dropdown-menu-start text-start">
+                      <Dropdown.Menu align={"end"} className="text-end">
+                        <Dropdown.Item onClick={handleAddTask} className="text-end">
+                          <Receipt size={14} className="ms-2" />
                       إضافة مهمة
                     </Dropdown.Item>
                     <Dropdown.Item onClick={handleAddReceivable} className="text-end">
@@ -264,7 +266,8 @@ const DashboardClientCard = ({ data, index = 0, alternatingColors }: DashboardCl
                       إضافة دفعة
                     </Dropdown.Item>
                   </Dropdown.Menu>
-                </Dropdown.Menu>
+                </Dropdown.Menu>, document.body
+                  ) }
               </Dropdown>
             </div>
           </div>
