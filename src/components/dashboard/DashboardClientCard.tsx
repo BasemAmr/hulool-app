@@ -11,7 +11,6 @@ import { formatDate } from '../../utils/dateUtils';
 // import { formatTimeElapsed } from '../../utils/timeUtils'; // Original import
 import { Dropdown } from 'react-bootstrap';
 import {
-  Plus,
   Receipt,
   Check,
   Pause,
@@ -83,7 +82,6 @@ const DashboardClientCard = ({ data, index = 0, alternatingColors }: DashboardCl
   const handleAddTask = () => openModal('taskForm', { client });
   const handleAddReceivable = () => openModal('manualReceivable', { client_id: client.id });
   const handleRecordCredit = () => openModal('recordCreditModal', { client });
-  const handleAddUrgentAlert = (task: Task) => openModal('urgentAlert', { taskId: task.id });
 
   const handleToggleUrgentTag = (task: Task) => {
     const isUrgent = task.tags?.some(tag => tag.name === 'قصوى');

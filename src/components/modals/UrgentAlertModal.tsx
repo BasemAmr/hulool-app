@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { AlertTriangle, Search, X } from 'lucide-react';
 import { useModalStore } from '../../stores/modalStore';
 import { useGetTasks, useUpdateTask } from '../../queries/taskQueries';
-import { useGetTags, useCreateTag } from '../../queries/tagQueries';
+import { useGetTags } from '../../queries/tagQueries';
 import { useToast } from '../../hooks/useToast';
 import BaseModal from '../ui/BaseModal';
 import Button from '../ui/Button';
