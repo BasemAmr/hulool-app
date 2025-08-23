@@ -251,23 +251,33 @@ const DashboardClientCard = ({ data, index = 0, alternatingColors }: DashboardCl
                 {/* خليها dropdown-menu-start */}
                 {
                   createPortal(
-                    <Dropdown.Menu dir='rtl' align={"start"} className="dropdown-menu-start text-start">
+                    <Dropdown.Menu dir='rtl' align={"start"} className="dropdown-menu-start text-start"
+                      style={{
+                        position: 'absolute',
+                        zIndex: 1050,
+                        minWidth: '120px',
+                        fontSize: '0.85em',
+                        top: 'auto',
+                        left: 'auto',
+                        transform: 'none'
+                      }}
+                    >
                       <Dropdown.Menu align={"end"} className="text-end">
                         <Dropdown.Item onClick={handleAddTask} className="text-end">
                           <Receipt size={14} className="ms-2" />
-                      إضافة مهمة
-                    </Dropdown.Item>
-                    <Dropdown.Item onClick={handleAddReceivable} className="text-end">
-                      <Receipt size={14} className="ms-2" />
-                      إضافة مستحق
-                    </Dropdown.Item>
-                    <Dropdown.Item onClick={handleRecordCredit} className="text-end">
-                      <Receipt size={14} className="ms-2" />
-                      إضافة دفعة
-                    </Dropdown.Item>
-                  </Dropdown.Menu>
-                </Dropdown.Menu>, document.body
-                  ) }
+                          إضافة مهمة
+                        </Dropdown.Item>
+                        <Dropdown.Item onClick={handleAddReceivable} className="text-end">
+                          <Receipt size={14} className="ms-2" />
+                          إضافة مستحق
+                        </Dropdown.Item>
+                        <Dropdown.Item onClick={handleRecordCredit} className="text-end">
+                          <Receipt size={14} className="ms-2" />
+                          إضافة دفعة
+                        </Dropdown.Item>
+                      </Dropdown.Menu>
+                    </Dropdown.Menu>, document.body
+                  )}
               </Dropdown>
             </div>
           </div>
