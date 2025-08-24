@@ -7,7 +7,7 @@ import type { Client, ManualReceivablePayload, TaskType } from '../../api/types'
 import BaseModal from '../ui/BaseModal';
 import Button from '../ui/Button';
 import Input from '../ui/Input';
-import { useState, useEffect, useRef } from 'react';
+import { useState } from 'react';
 import AmountDetailsInput from '../shared/AmountDetailsInput';
 
 const ManualReceivableModal = () => {
@@ -17,7 +17,7 @@ const ManualReceivableModal = () => {
   const preselectedClient = props.client;
   const [step, setStep] = useState(0);
   const [selectedClient, setSelectedClient] = useState<Client | null>(preselectedClient || null);
-  const hasInitialized = useRef(false);
+  // const hasInitialized = useRef(false);
   const { register, handleSubmit, formState: { errors }, setValue, watch, control } = useForm<ManualReceivablePayload>({
     defaultValues: {
       client_id: preselectedClient?.id,
