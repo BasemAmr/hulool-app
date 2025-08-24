@@ -226,7 +226,7 @@
 // Action buttons styling - similar to navLink but for buttons
 .actionButton {
   &:hover {
-    background: #55555562 !important;
+    background: #55555562 ;
     transform: translateX(-4px);
     
     .navIcon {
@@ -237,7 +237,7 @@
   
   &:focus {
     outline: none;
-    background: #55555562 !important;
+    background: #55555562 ;
   }
 }
 

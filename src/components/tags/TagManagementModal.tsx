@@ -7,7 +7,9 @@ import type { Tag } from '../../api/types';
 import { formatDate } from '../../utils/dateUtils';
 
 const TagManagementModal = () => {
-    const { isOpen, modalType, closeModal } = useModalStore();
+    const isOpen = useModalStore((state) => state.isOpen);
+    const modalType = useModalStore((state) => state.modalType);
+    const closeModal = useModalStore((state) => state.closeModal);
     const openModal = useModalStore((state) => state.openModal);
     const { success, error } = useToast();
 

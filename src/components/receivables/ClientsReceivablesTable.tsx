@@ -77,12 +77,7 @@ const ClientsReceivablesTable = ({ clients, isLoading }: ClientsReceivablesTable
   // Calculate totals based on filtered clients
   const totals = filteredClients.reduce(
     (acc, client) => {
-      console.log('Calculating totals for client:', client.client_name);
-      console.log('Client amounts:', {
-        totalAmount: Number(client.total_amount) || 0,
-        paidAmount: Number(client.paid_amount) || 0,
-        remainingAmount: Number(client.remaining_amount) || 0,
-      });
+      
       const debit = Math.abs(Number(client.total_amount) || 0)
       const credit = Math.abs(Number(client.paid_amount) || 0)
       const remaining = debit > credit ? Number(client.remaining_amount) || 0 : 0

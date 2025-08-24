@@ -116,7 +116,8 @@
     "New": "جديدة",
     "Deferred": "مؤجلة",
     "Completed": "مكتملة",
-    "Late": "متأخرة"
+    "Late": "متأخرة",
+    "Cancelled": "ملغاة"
   },
   "type": {
     "Government": "حكومية",
@@ -244,6 +245,7 @@
       "Accounting": "محاسبة",
       "Other": "أخرى"
     },
+    "chooseType": "اختر نوع المستحق",
     "dueDate": "تاريخ الأمر",
     "dueDateRequired": "يرجى اختيار تاريخ الأمر.",
     "client": "العميل",

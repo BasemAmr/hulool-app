@@ -8,7 +8,10 @@ import { useCreateTag, useUpdateTag } from '../../queries/tagQueries';
 
 const TagFormModal = () => {
     // const { t } = useTranslation();
-    const { isOpen, modalType, props, closeModal } = useModalStore();
+    const isOpen = useModalStore((state) => state.isOpen);
+    const modalType = useModalStore((state) => state.modalType);
+    const props = useModalStore((state) => state.props);
+    const closeModal = useModalStore((state) => state.closeModal);
     const { success, error } = useToast();
     
     const [formData, setFormData] = useState({

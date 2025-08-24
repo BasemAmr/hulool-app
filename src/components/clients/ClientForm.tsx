@@ -25,6 +25,7 @@ const ClientForm = ({ clientToEdit, onSuccess }: ClientFormProps) => {
       phone: clientToEdit?.phone || '',
       type: clientToEdit?.type || 'Other',
       google_drive_link: clientToEdit?.google_drive_link || '',
+      notes: clientToEdit?.notes || '',
     },
   });
 
@@ -81,6 +82,15 @@ const ClientForm = ({ clientToEdit, onSuccess }: ClientFormProps) => {
         })}
         error={errors.google_drive_link ? (errors.google_drive_link.message as string) : undefined}
       />
+      <div className="mb-3">
+        <label className="form-label">{t('clients.formNotesLabel')}</label>
+        <textarea
+          className="form-control"
+          rows={3}
+          {...register('notes')}
+          placeholder={t('clients.formNotesPlaceholder')}
+        />
+      </div>
       <footer className="modal-footer">
         <Button
           type="submit"

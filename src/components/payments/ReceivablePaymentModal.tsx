@@ -35,11 +35,8 @@ const ReceivablePaymentModal = () => {
   const replacePaymentWithCreditMutation = useReplacePaymentWithCredit();
 
   // NEW: Fetch client credits
-  console.log('Fetching client credits for receivable:', receivable);
   const { data: creditData } = useGetClientCredits(Number(receivable.client_id));
   const availableCredit = creditData?.balance || 0;
-  console.log('Available credit data:', creditData);
-  console.log('Available credit for client:', availableCredit);
   
   // Check if this is a prepaid receivable that might have automatic payment
   const isPrepaidReceivable = isRequired;
@@ -56,8 +53,8 @@ const ReceivablePaymentModal = () => {
 
   const onSubmit = (data: PaymentPayload) => {
     // For prepaid receivables with existing payment, use PUT to update
-    console.log(isPrepaidReceivable)
-    console.log(receivable.prepaid_receivable_id)
+    // console.log(isPrepaidReceivable)
+    // console.log(receivable.prepaid_receivable_id)
     if (isPrepaidReceivable && existingPayments && existingPayments.length > 0) {
       const existingPayment = existingPayments[0];
       updatePaymentMutation.mutate(

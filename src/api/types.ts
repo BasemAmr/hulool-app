@@ -80,6 +80,7 @@ export interface Client {
   phone: string;
   type: ClientType;
   google_drive_link: string;
+  notes?: string | null;
   created_at: string;
   updated_at: string;
   tasks_count?: Record<string, { count: number; amount: number }>; // For task counts by status
@@ -94,7 +95,9 @@ export interface ClientPayload {
   phone: string;
   type: ClientType;
   google_drive_link?: string;
+  notes?: string;
 }
+ 
 
 export interface ClientUnpaidAmounts {
   client_id: number;

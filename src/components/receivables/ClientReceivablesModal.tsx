@@ -233,7 +233,7 @@ const ClientReceivablesTable: React.FC<ClientReceivablesTableProps> = ({
       </div>
 
       <style>{`
-        .receivable-row:hover { background-color: #f8f9fa !important; }
+        .receivable-row:hover { background-color: #f8f9fa ; }
         .cursor-pointer { cursor: pointer; }
       `}</style>
     </div>

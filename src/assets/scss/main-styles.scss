@@ -1832,8 +1832,8 @@ button:focus,
   position: relative;
   
   .dropdown-menu {
-    position: absolute !important;
-    z-index: 1050 !important;
+    position: absolute ;
+    z-index: 1050 ;
     will-change: transform;
     min-width: 140px;
     font-size: 0.8em;
@@ -1863,7 +1863,7 @@ button:focus,
   thead th {
     position: sticky;
     top: 0;
-    background: white !important;
+    background: white ;
     z-index: 10;
     border-bottom: 1px solid #dee2e6;
   }
@@ -1872,7 +1872,7 @@ button:focus,
 // Professional card styling
 .dashboard-client-card {
   .card-header {
-    background-color: #f8f9fa !important;
+    background-color: #f8f9fa ;
     border-bottom: 1px solid #dee2e6;
     
     .btn-sm {
@@ -1886,28 +1886,13 @@ button:focus,
   }
   
   .card-footer {
-    background-color: #f8f9fa !important;
+    background-color: #f8f9fa ;
     border-top: 1px solid #dee2e6;
     
     .border-end:last-child {
-      border-right: none !important;
+      border-right: none ;
     }
   }
 }
 
 // Column layout improvements
-.recent-tasks-section {
-  .card {
-    border: 1px solid #dee2e6;
-    border-radius: 4px;
-    
-    .card-header {
-      border-bottom: 1px solid #dee2e6;
-    }
-    
-    .card-footer {
-      border-top: 1px solid #dee2e6;
-      background-color: #f8f9fa;
-    }
-  }
-}

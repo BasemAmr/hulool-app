@@ -81,8 +81,8 @@ const TaskCompletionModal = () => {
     }
 
     // Debug logging
-    console.log('Form data:', data);
-    console.log('Transformed payload:', payload);
+    // console.log('Form data:', data);
+    // console.log('Transformed payload:', payload);
 
     completeTaskMutation.mutate(
       { 

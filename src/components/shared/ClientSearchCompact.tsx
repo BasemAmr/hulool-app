@@ -22,6 +22,7 @@ const ClientSearchCompact = ({ onSelect, onCreate, label, disabled }: ClientSear
   const [newClientPhone, setNewClientPhone] = useState('');
   const [newClientType, setNewClientType] = useState<ClientType>('Other');
   const [newClientDriveLink, setNewClientDriveLink] = useState('');
+  const [newClientNotes, setNewClientNotes] = useState('');
   const createClientMutation = useCreateClient();
 
   useEffect(() => {
@@ -36,7 +37,7 @@ const ClientSearchCompact = ({ onSelect, onCreate, label, disabled }: ClientSear
   const handleCreate = () => {
     if (!newClientName || !newClientPhone || !newClientDriveLink) return;
     createClientMutation.mutate(
-      { name: newClientName, phone: newClientPhone, type: newClientType, google_drive_link: newClientDriveLink },
+      { name: newClientName, phone: newClientPhone, type: newClientType, google_drive_link: newClientDriveLink, notes: newClientNotes },
       {
         onSuccess: (client) => {
           setShowCreate(false);
@@ -44,6 +45,7 @@ const ClientSearchCompact = ({ onSelect, onCreate, label, disabled }: ClientSear
           setNewClientPhone('');
           setNewClientType('Other');
           setNewClientDriveLink('');
+          setNewClientNotes('');
           onCreate?.(client);
           onSelect(client);
         },
@@ -135,6 +137,16 @@ const ClientSearchCompact = ({ onSelect, onCreate, label, disabled }: ClientSear
             onChange={e => setNewClientDriveLink(e.target.value)}
             className="mb-2"
           />
+          <div className="mb-2">
+            <label className="form-label">ملاحظات</label>
+            <textarea 
+              className="form-control"
+              value={newClientNotes}
+              onChange={e => setNewClientNotes(e.target.value)}
+              rows={3}
+              placeholder="أدخل ملاحظات العميل..."
+            />
+          </div>
           <div className="d-flex gap-2">
             <Button
               type="button"

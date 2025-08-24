@@ -220,7 +220,7 @@ const TaskSelectionModal = () => {
 
       <style>{`
         .task-item:hover:not(.opacity-50) {
-          background-color: #f8f9fa !important;
+          background-color: #f8f9fa ;
         }
         
         .task-selection-modal .form-check-input:disabled {

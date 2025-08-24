@@ -158,8 +158,8 @@ const TaskModal = () => {
         is_provided: Boolean(req.is_provided || false)
       }));
 
-    console.log('Valid requirements being sent:', validRequirements);
-    console.log('Tags being sent:', data.tags);
+    // console.log('Valid requirements being sent:', validRequirements);
+    // console.log('Tags being sent:', data.tags);
     
     if (isEditMode && taskToEdit) {
       const updatePayload: UpdateTaskPayload = {
@@ -201,14 +201,14 @@ const TaskModal = () => {
         amount_details: parseAmountDetails(data.amount_details),
       };
       
-      console.log('Create payload (with tags):', createPayload);
+      // console.log('Create payload (with tags):', createPayload);
       
       createTaskMutation.mutate(createPayload, {
         onSuccess: (createdTask) => {
-          console.log('Task created successfully:', createdTask);
+          // console.log('Task created successfully:', createdTask);
           
           if (validRequirements.length > 0) {
-            console.log('Creating requirements for task:', createdTask.id);
+            // console.log('Creating requirements for task:', createdTask.id);
             
             createRequirementsMutation.mutate(
               {
@@ -217,7 +217,7 @@ const TaskModal = () => {
               },
               {
                 onSuccess: () => {
-                  console.log('Requirements created successfully');
+                  // console.log('Requirements created successfully');
                   queryClient.invalidateQueries({ queryKey: ['tasks'] });
                   queryClient.invalidateQueries({ queryKey: ['dashboard'] });
                   handlePrepaidPayment(createdTask);
@@ -337,7 +337,7 @@ const TaskModal = () => {
                         <select
                           {...field}
                           className={`form-select form-select-sm ${errors.type ? 'is-invalid' : ''}`}
-                          disabled={isEditMode || step === 2}
+                          disabled={step === 2 && !isEditMode}
                         >
                           <option value="">{t('tasks.formTypeLabel')}</option>
                           {taskTypes.map((type) => (

@@ -342,9 +342,9 @@ $navbar-brand-height: 2rem;
   transition: all 0.3s ease;
   
   &:hover, &:focus, &:active {
-    background: $gradient-gold-hover !important;
-    border: none !important;
-    box-shadow: 0 4px 8px rgba(212, 175, 55, 0.3) !important;
+    background: $gradient-gold-hover ;
+    border: none ;
+    box-shadow: 0 4px 8px rgba(212, 175, 55, 0.3) ;
   }
 }
 
@@ -353,9 +353,9 @@ $navbar-brand-height: 2rem;
   border-color: $color-gold;
   
   &:hover, &:focus, &:active {
-    background: $color-gold !important;
-    border-color: $color-gold !important;
-    color: $color-white !important;
+    background: $color-gold ;
+    border-color: $color-gold ;
+    color: $color-white ;
   }
 }
 
@@ -365,9 +365,9 @@ $navbar-brand-height: 2rem;
   border: 1px solid $color-gray-100;
   
   &:hover, &:focus, &:active {
-    background: $color-gray-50 !important;
-    border-color: $color-gray-400 !important;
-    color: $color-primary !important;
+    background: $color-gray-50 ;
+    border-color: $color-gray-400 ;
+    color: $color-primary ;
   }
 }
 
@@ -376,8 +376,8 @@ $navbar-brand-height: 2rem;
   border-color: $color-success;
   
   &:hover, &:focus, &:active {
-    background: #218838 !important;
-    border-color: #1e7e34 !important;
+    background: #218838 ;
+    border-color: #1e7e34 ;
   }
 }
 
@@ -387,9 +387,9 @@ $navbar-brand-height: 2rem;
   color: $color-primary;
   
   &:hover, &:focus, &:active {
-    background: #e0a800 !important;
-    border-color: #d39e00 !important;
-    color: $color-primary !important;
+    background: #e0a800 ;
+    border-color: #d39e00 ;
+    color: $color-primary ;
   }
 }
 
@@ -398,8 +398,8 @@ $navbar-brand-height: 2rem;
   border-color: $color-danger;
   
   &:hover, &:focus, &:active {
-    background: #c82333 !important;
-    border-color: #bd2130 !important;
+    background: #c82333 ;
+    border-color: #bd2130 ;
   }
 }
 
@@ -408,8 +408,8 @@ $navbar-brand-height: 2rem;
   border-color: $color-info;
   
   &:hover, &:focus, &:active {
-    background: #138496 !important;
-    border-color: #117a8b !important;
+    background: #138496 ;
+    border-color: #117a8b ;
   }
 }
 

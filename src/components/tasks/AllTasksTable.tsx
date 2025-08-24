@@ -142,7 +142,7 @@ const AllTasksTable = ({ tasks, isLoading, onEdit, onComplete, onViewAmountDetai
                 key={task.id} 
                 style={{
                   ...typeStyle,
-                  backgroundColor: `${typeStyle.backgroundColor} !important` // Force the background color
+                  backgroundColor: `${typeStyle.backgroundColor} ` // Force the background color
                 }} 
                 className={`task-row-${task.type.toLowerCase()} ${isUrgent ? 'border-danger border-2' : ''}`}
               >
@@ -354,36 +354,36 @@ const AllTasksTable = ({ tasks, isLoading, onEdit, onComplete, onViewAmountDetai
       {/* Custom styles to override Bootstrap table hover effects */}
       <style>{`
         .table tbody tr.task-row-government:hover {
-          background-color: rgba(0, 123, 255, 0.15) !important;
+          background-color: rgba(0, 123, 255, 0.15) ;
         }
         .table tbody tr.task-row-realestate:hover {
-          background-color: rgba(40, 167, 69, 0.15) !important;
+          background-color: rgba(40, 167, 69, 0.15) ;
         }
         .table tbody tr.task-row-accounting:hover {
-          background-color: rgba(255, 215, 0, 0.15) !important;
+          background-color: rgba(255, 215, 0, 0.15) ;
         }
         .table tbody tr.task-row-other:hover {
-          background-color: rgba(173, 181, 189, 0.15) !important;
+          background-color: rgba(173, 181, 189, 0.15) ;
         }
         
         /* Ensure the background colors are applied to all cells */
         .table tbody tr.task-row-government > td {
-          background-color: rgba(0, 123, 255, 0.1) !important;
+          background-color: rgba(0, 123, 255, 0.1) ;
         }
         .table tbody tr.task-row-realestate > td {
-          background-color: rgba(40, 167, 69, 0.1) !important;
+          background-color: rgba(40, 167, 69, 0.1) ;
         }
         .table tbody tr.task-row-accounting > td {
-          background-color: rgba(255, 215, 0, 0.1) !important;
+          background-color: rgba(255, 215, 0, 0.1) ;
         }
         .table tbody tr.task-row-other > td {
-          background-color: rgba(173, 181, 189, 0.1) !important;
+          background-color: rgba(173, 181, 189, 0.1) ;
         }
         
         /* Override Bootstrap's table hover variables */
         .table {
-          --bs-table-hover-bg: transparent !important;
-          --bs-table-accent-bg: transparent !important;
+          --bs-table-hover-bg: transparent ;
+          --bs-table-accent-bg: transparent ;
         }
       `}</style>
     </div>

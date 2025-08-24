@@ -95,9 +95,10 @@ export const useGetTotalPaidAmount = () => {
 
 // Add this new hook
 export const useGetClientsWithActiveTasks = () => {
-    return useQuery<GroupedClientsResponse, Error>({
-        queryKey: ['dashboard', 'clientsWithActiveTasks'],
-        queryFn: fetchClientsWithActiveTasks,
-        staleTime: 30 * 1000, // Keep fresh for 30 seconds
-    });
+  return useQuery<GroupedClientsResponse, Error>({
+    queryKey: ['dashboard', 'clientsWithActiveTasks'],
+    queryFn: fetchClientsWithActiveTasks,
+    staleTime: 30 * 1000, // Keep fresh for 30 seconds
+    refetchInterval: 15 * 1000, // Refetch every 15 seconds
+  });
 };

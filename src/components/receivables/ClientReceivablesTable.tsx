@@ -120,7 +120,7 @@ const ClientReceivablesTable: React.FC<ClientReceivablesTableProps> = ({
                   <th className="text-center py-3">الوصف</th>
                   <th className="text-center py-3">المدين</th>
                   <th className="text-center py-3">الدائن</th>
-                  <th className="text-center py-3">الرصيد</th>
+                  <th className="text-center py-3">المستحق</th>
                   <th className="text-center py-3">تاريخ الحركة</th>
                   <th className="text-center py-3">النوع</th>
                   <th className="text-center py-3">الإجراءات</th>
@@ -140,7 +140,7 @@ const ClientReceivablesTable: React.FC<ClientReceivablesTableProps> = ({
                       </td>
                       <td className="fw-medium">{item.description}</td>
                       <td className="text-center">
-                        <span className="text-danger fw-semibold">
+                        <span className=" fw-semibold">
                           {hideAmounts ? '***' : (item.debit > 0 ? formatCurrency(item.debit) : '—')}
                         </span>
                       </td>
@@ -150,7 +150,7 @@ const ClientReceivablesTable: React.FC<ClientReceivablesTableProps> = ({
                         </span>
                       </td>
                       <td className="text-center">
-                        <span className="fw-bold" style={{ color: 'var(--color-primary)' }}>
+                        <span className="fw-bold text-danger">
                           {hideAmounts ? '***' : formatCurrency(item.balance)}
                         </span>
                       </td>
@@ -443,7 +443,7 @@ const ClientReceivablesTable: React.FC<ClientReceivablesTableProps> = ({
       </div>
 
       <style>{`
-        .receivable-row:hover { background-color: #f8f9fa !important; }
+        .receivable-row:hover { background-color: #f8f9fa ; }
         .cursor-pointer { cursor: pointer; }
       `}</style>
     </div>

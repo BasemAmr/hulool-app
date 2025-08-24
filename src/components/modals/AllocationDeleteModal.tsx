@@ -20,8 +20,9 @@ interface AllocationDeleteModalProps {
 
 const AllocationDeleteModal: React.FC = () => {
   const { t } = useTranslation();
-  const { closeModal, props } = useModalStore();
-  const { allocation } = props as AllocationDeleteModalProps;
+ const closeModal = useModalStore((state) => state.closeModal);
+  const props = useModalStore((state) => state.props as AllocationDeleteModalProps);
+  const { allocation } = props;
   
   const deleteAllocation = useDeleteAllocation();
   const [isConfirmed, setIsConfirmed] = useState(false);

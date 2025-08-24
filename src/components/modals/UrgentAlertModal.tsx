@@ -12,7 +12,8 @@ import type { Tag } from '../../api/types';
 
 
 const UrgentAlertModal = () => {
-  const { closeModal, props } = useModalStore();
+  const closeModal = useModalStore((state) => state.closeModal);
+  const props = useModalStore((state) => state.props);
   const { success, error } = useToast();
   const updateTaskMutation = useUpdateTask();
 
@@ -27,13 +28,12 @@ const UrgentAlertModal = () => {
   const tags = tagsData || [];
 
   useEffect(() => {
-    console.log('Tags from API:', tags.map(t => t.name));
+    // console.log('Tags from API:', tags.map(t => t.name));
 
     const urgent = tags.find(tag =>
       tag.name?.trim().toLowerCase() === 'قصوى'.toLowerCase()
     );
 
-    console.log('Urgent tag found:', urgent);
     setUrgentTag(urgent || null);
   }, [tags]);
   useEffect(() => {
@@ -247,7 +247,7 @@ const UrgentAlertModal = () => {
 
       <style>{`
         .task-item:hover {
-          background-color: #f8f9fa !important;
+          background-color: #f8f9fa ;
         }
       `}</style>
     </BaseModal>

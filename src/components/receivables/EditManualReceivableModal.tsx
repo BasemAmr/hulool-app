@@ -19,7 +19,7 @@ const EditManualReceivableModal = () => {
   const closeModal = useModalStore((state) => state.closeModal);
   const { receivable } = useModalStore(state => state.props as EditManualReceivableModalProps);
   
-  const { register, handleSubmit, formState: { errors }, watch, control, reset } = useForm<UpdateReceivablePayload>({
+  const { register, handleSubmit, formState: { errors }, watch, control, reset, setValue } = useForm<UpdateReceivablePayload>({
     defaultValues: {
       description: receivable.description,
       amount: receivable.amount,
@@ -248,23 +248,25 @@ const EditManualReceivableModal = () => {
           </div>
 
           {/* Type Field */}
-          {!isTiedToTask && (
-            <div className="row mb-3">
-              <div className="col-12">
-                <label className="form-label fw-semibold">{t('receivables.type')}</label>
-                <select
-                  className="form-select"
-                  {...register('type', { required: !isTiedToTask })}
-                  disabled={isTiedToTask}
-                >
-                  {taskTypes.map(type => (
-                    <option key={type} value={type}>{t(`receivables.type.${type}`)}</option>
-                  ))}
-                </select>
-                {errors.type && <div className="text-danger small">{t('common.required')}</div>}
-              </div>
+          <div className="row mb-3">
+            <div className="col-12">
+              <label className="form-label fw-semibold">{t('receivables.chooseType')}</label>
+              <select
+                className="form-select"
+                {...register('type', { required: true })}
+                value={watch('type') || ''}
+                onChange={(e) => {
+                  setValue('type', e.target.value as TaskType);
+                }}
+              >
+                <option value="">{t('common.selectType')}</option>
+                {taskTypes.map(type => (
+                  <option key={type} value={type}>{t(`receivables.type.${type}`)}</option>
+                ))}
+              </select>
+              {errors.type && <div className="text-danger small">{t('common.required')}</div>}
             </div>
-          )}
+          </div>
 
           {/* Description Field */}
           <div className="row mb-3">
@@ -273,8 +275,6 @@ const EditManualReceivableModal = () => {
                 label={t('receivables.tableHeaderDescription')}
                 {...register('description', { required: true })}
                 error={errors.description && t('common.required')}
-                disabled={isTiedToTask}
-                placeholder={isTiedToTask ? t('receivables.descriptionFromTask') : ''}
               />
             </div>
           </div>
@@ -312,17 +312,15 @@ const EditManualReceivableModal = () => {
           </div>
 
           {/* Amount Details */}
-          {!isTiedToTask && (
-            <div className="row mb-3">
-              <div className="col-12">
-                <AmountDetailsInput
-                  control={control}
-                  register={register}
-                  totalAmount={totalAmount}
-                />
-              </div>
+          <div className="row mb-3">
+            <div className="col-12">
+              <AmountDetailsInput
+                control={control}
+                register={register}
+                totalAmount={totalAmount}
+              />
             </div>
-          )}
+          </div>
 
           {/* Notes Field */}
           <div className="row mb-4">

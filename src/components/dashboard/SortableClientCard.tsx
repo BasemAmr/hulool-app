@@ -1,0 +1,63 @@
+// src/components/dashboard/SortableClientCard.tsx
+import { useSortable } from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
+import DashboardClientCard from './DashboardClientCard';
+import type { ClientWithTasksAndStats } from '../../queries/dashboardQueries';
+
+interface SortableClientCardProps {
+    clientData: ClientWithTasksAndStats;
+    containerType: string;
+    alternatingColors: string[];
+}
+
+const SortableClientCard = ({ clientData, containerType, alternatingColors }: SortableClientCardProps) => {
+    const {
+        attributes,
+        listeners,
+        setNodeRef,
+        transform,
+        transition,
+        isDragging,
+    } = useSortable({
+        id: `${containerType}-${clientData.client.id}` // Composite ID: containerType-clientId
+    });
+
+    const style = {
+        transform: CSS.Transform.toString(transform),
+        transition,
+        opacity: isDragging ? 0.5 : 1,
+        zIndex: isDragging ? 1000 : 'auto',
+    };
+
+    return (
+        <div
+            ref={setNodeRef}
+            style={style}
+            {...attributes}
+            className="sortable-client-card"
+        >
+            {/* Add a drag handle area */}
+            <div
+                {...listeners}
+                style={{
+                    cursor: 'grab',
+                    padding: '2px 8px',
+                    backgroundColor: 'rgba(0,0,0,0.05)',
+                    borderBottom: '1px solid rgba(0,0,0,0.1)',
+                    fontSize: '10px',
+                    color: '#666',
+                    textAlign: 'center'
+                }}
+            >
+                ⋮⋮ اسحب لإعادة الترتيب
+            </div>
+
+            <DashboardClientCard
+                data={clientData}
+                alternatingColors={alternatingColors}
+            />
+        </div>
+    );
+};
+
+export default SortableClientCard;

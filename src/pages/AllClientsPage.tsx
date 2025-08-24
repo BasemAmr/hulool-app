@@ -1,9 +1,9 @@
 import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useNavigate } from 'react-router-dom';
+// import { useNavigate } from 'react-router-dom';
 import { useGetClients, /*useExportClients*/ } from '../queries/clientQueries';
 import { useModalStore } from '../stores/modalStore';
-import { useReceivablesPermissions } from '../hooks/useReceivablesPermissions';
+import { /*useReceivablesPermissions */} from '../hooks/useReceivablesPermissions';
 import { applyPageBackground } from '../utils/backgroundUtils';
 import type { Client, ClientType } from '../api/types';
 import ClientsTable from '../components/clients/ClientsTable';
@@ -15,9 +15,9 @@ import { exportClientsToExcel, printClientsReport } from '../components/clients/
 
 const AllClientsPage = () => {
   const { t } = useTranslation();
-  const navigate = useNavigate();
+  // const navigate = useNavigate();
   const openModal = useModalStore((state) => state.openModal);
-  const { hasAnyReceivablesPermission } = useReceivablesPermissions();
+  // const { hasAnyReceivablesPermission } = useReceivablesPermissions();
 
   const [search, setSearch] = useState('');
   const [typeFilter, setTypeFilter] = useState<ClientType | undefined>(undefined);
@@ -46,14 +46,18 @@ const AllClientsPage = () => {
     openModal('clientForm', { clientToEdit: client });
   };
 
+  const handleAddReceivable = (client: Client) => {
+    openModal('manualReceivable', { client });
+  };
+
   // ADD THIS HANDLER
   const handleAddTaskToClient = (client: Client) => {
     openModal('taskForm', { client: client });
   };
 
-  const handleViewReceivables = (client: Client) => {
-    navigate(`/clients/${client.id}?mode=receivables&filter=unpaid`);
-  };
+  // const handleViewReceivables = (client: Client) => {
+  //   navigate(`/clients/${client.id}?mode=receivables&filter=unpaid`);
+  // };
 
   // Export handlers
   const handleExportToExcel = () => {
@@ -161,8 +165,7 @@ const AllClientsPage = () => {
             isLoading={isLoading}
             onEdit={handleEditClient}
             onAddTask={handleAddTaskToClient}
-            onViewReceivables={handleViewReceivables}
-            canViewReceivables={hasAnyReceivablesPermission}
+            onAddReceivable={handleAddReceivable}
           />
           {/* Pagination component will go here later */}
         </div>

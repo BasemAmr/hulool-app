@@ -35,6 +35,19 @@ import EditManualReceivableModal from '../receivables/EditManualReceivableModal'
 import DeleteReceivableModal from '../receivables/DeleteReceivableModal';
 import ClientReceivablesEditModal from '../receivables/ClientReceivablesEditModal';
 
+// Separate component for client receivables to avoid re-renders
+const ClientReceivablesFetcher = ({ client }: { client?: any }) => {
+  const { data: receivablesData, isLoading } = useGetClientReceivables(client?.id || 0);
+  
+  return (
+    <ClientReceivablesModal
+      receivables={receivablesData?.statementItems || []}
+      isLoading={isLoading}
+      clientName={client?.name || ''}
+    />
+  );
+};
+
 const ModalManager = () => {
   // Fix 1: Use individual selectors instead of selecting an object
   const isOpen = useModalStore((state) => state.isOpen);
@@ -46,11 +59,13 @@ const ModalManager = () => {
 
   if (!isOpen) return null;
 
-  const renderModalContent = () => {
+  // Memoize the modal content to prevent re-renders
+  const getModalContent = () => {
     switch (modalType) {
       case 'clientForm':
         return (
           <BaseModal
+            key="clientForm"
             isOpen={isOpen}
             onClose={closeModal}
             title={props.clientToEdit ? t('clients.editClient') : t('clients.addNew')}
@@ -60,41 +75,27 @@ const ModalManager = () => {
         );
 
       case 'taskForm':
-        // Fix 2: Add the missing taskForm case
-        return <TaskModal />;
+        return <TaskModal key="taskForm" />;
 
       case 'requirements':
-        // Add the requirements modal case
-        return <RequirementsModal />;
+        return <RequirementsModal key="requirements" />;
 
       case 'manualReceivable':
-        // Add the manual receivable modal case
-        return <ManualReceivableModal />;
+        return <ManualReceivableModal key="manualReceivable" />;
        case 'taskDetails':
-        return <TaskDetailsModal />;
+        return <TaskDetailsModal key="taskDetails" />;
 
-      case 'clientReceivables': {
-        // Create a wrapper component that fetches data and passes props
-        const ClientReceivablesWrapper = () => {
-          const { data: receivablesData, isLoading } = useGetClientReceivables(props.client?.id || 0);
-          
-          return (
-            <BaseModal
-              isOpen={isOpen}
-              onClose={closeModal}
-              title={`${t('receivables.title')} - ${props.client?.name || ''}`}
-            >
-              <ClientReceivablesModal
-                receivables={receivablesData?.statementItems || []}
-                isLoading={isLoading}
-                clientName={props.client?.name || ''}
-              />
-            </BaseModal>
-          );
-        };
-        
-        return <ClientReceivablesWrapper />;
-      }
+      case 'clientReceivables':
+        return (
+          <BaseModal
+            key="clientReceivables"
+            isOpen={isOpen}
+            onClose={closeModal}
+            title={`${t('receivables.title')} - ${props.client?.name || ''}`}
+          >
+            <ClientReceivablesFetcher client={props.client} />
+          </BaseModal>
+        );
 
       case 'paymentForm':
         return <ReceivablePaymentModal />;
@@ -117,6 +118,7 @@ const ModalManager = () => {
       case 'selectReceivableForPayment':
         return (
           <SelectReceivableForPaymentModal
+            key="selectReceivableForPayment"
             isOpen={isOpen}
             onClose={closeModal}
             clientId={props.clientId}
@@ -124,47 +126,69 @@ const ModalManager = () => {
         );
 
       case 'taskCompletion':
-        return <TaskCompletionModal />;
+        return <TaskCompletionModal key="taskCompletion" />;
 
       case 'amountDetails':
-        return <AmountDetailsModal />;
+        return <AmountDetailsModal key="amountDetails" />;
 
       case 'taskSelection':
-        return <TaskSelectionModal />;
+        return <TaskSelectionModal key="taskSelection" />;
 
       case 'recordCreditModal':
-        return <RecordCreditModal />;
+        return <RecordCreditModal key="recordCreditModal" />;
 
       case 'applyCreditModal':
-        return <ApplyCreditModal />;
+        return <ApplyCreditModal key="applyCreditModal" />;
 
       case 'creditEdit':
-        return <CreditEditModal />;
+        return <CreditEditModal key="creditEdit" />;
 
       case 'creditDelete':
-        return <CreditDeleteModal />;
+        return <CreditDeleteModal key="creditDelete" />;
 
       case 'allocationEdit':
-        return <AllocationEditModal />;
+        return <AllocationEditModal key="allocationEdit" />;
 
       case 'allocationDelete':
-        return <AllocationDeleteModal />;
+        return <AllocationDeleteModal key="allocationDelete" />;
 
       case 'editReceivable':
-        return <EditManualReceivableModal />;
+        return <EditManualReceivableModal key="editReceivable" />;
 
       case 'deleteReceivable':
-        return <DeleteReceivableModal />;
+        return <DeleteReceivableModal key="deleteReceivable" />;
 
       case 'clientReceivablesEdit':
-        return <ClientReceivablesEditModal />;
+        return <ClientReceivablesEditModal key="clientReceivablesEdit" />;
 
       case 'urgentAlert':
-        return <UrgentAlertModal />;
+        return <UrgentAlertModal key="urgentAlert" />;
+
+      case 'paymentForm':
+        return <ReceivablePaymentModal key="paymentForm" />;
+
+      case 'paymentHistory':
+        return <PaymentHistoryModal key="paymentHistory" />;
+
+      case 'paymentEdit':
+        return <PaymentEditModal key="paymentEdit" />;
+
+      case 'paymentDelete':
+        return <PaymentDeleteModal key="paymentDelete" />;
+
+      case 'clientSearch':
+        return <ClientSearchModal key="clientSearch" />;
+
+      case 'tagForm':
+        return <TagFormModal key="tagForm" />;
+
+      case 'tagManagement':
+        return <TagManagementModal key="tagManagement" />;
 
       case 'confirmDelete':
         return (
           <BaseModal
+            key="confirmDelete"
             isOpen={isOpen}
             onClose={closeModal}
             title={props.title}
@@ -184,7 +208,7 @@ const ModalManager = () => {
     }
   };
 
-  return renderModalContent();
+  return getModalContent();
 };
 
 export default ModalManager;

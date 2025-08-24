@@ -10,11 +10,10 @@ interface ClientsTableProps {
   isLoading: boolean;
   onEdit: (client: Client) => void;
   onAddTask: (client: Client) => void;
-  onViewReceivables: (client: Client) => void;
-  canViewReceivables?: boolean;
+  onAddReceivable: (client: Client) => void;
 }
 
-const ClientsTable = ({ clients, isLoading, onEdit, onAddTask, onViewReceivables, canViewReceivables = true }: ClientsTableProps) => {
+const ClientsTable = ({ clients, isLoading, onEdit, onAddTask, onAddReceivable}: ClientsTableProps) => {
   const { t } = useTranslation();
 
   if (isLoading) {
@@ -35,6 +34,7 @@ const ClientsTable = ({ clients, isLoading, onEdit, onAddTask, onViewReceivables
             <th>{t('clients.tableHeaderName')}</th>
             <th>{t('clients.tableHeaderPhone')}</th>
             <th>{t('clients.tableHeaderType')}</th>
+            <th>{t('clients.tableHeaderNotes')}</th>
             <th className="text-center">{t('clients.tableHeaderDueAmount')}</th>
             <th className="text-end">{t('clients.tableHeaderActions')}</th>
           </tr>
@@ -46,8 +46,7 @@ const ClientsTable = ({ clients, isLoading, onEdit, onAddTask, onViewReceivables
               client={client} 
               onEdit={onEdit}
               onAddTask={onAddTask}
-              onViewReceivables={onViewReceivables}
-              canViewReceivables={canViewReceivables}
+              onAddReceivable={onAddReceivable}
             />
           ))}
         </tbody>
@@ -60,11 +59,10 @@ interface ClientRowProps {
   client: Client;
   onEdit: (client: Client) => void;
   onAddTask: (client: Client) => void;
-  onViewReceivables: (client: Client) => void;
-  canViewReceivables: boolean;
+  onAddReceivable: (client: Client) => void;
 }
 
-const ClientRow = ({ client, onEdit, onAddTask, onViewReceivables, canViewReceivables }: ClientRowProps) => {
+const ClientRow = ({ client, onEdit, onAddTask, onAddReceivable}: ClientRowProps) => {
   const { t } = useTranslation();
   // Remove the individual query to improve performance
   // const { data: unpaidAmounts } = useGetClientUnpaidAmounts(client.id);
@@ -112,9 +110,7 @@ const ClientRow = ({ client, onEdit, onAddTask, onViewReceivables, canViewReceiv
     window.open(client.google_drive_link, '_blank');
   };
 
-  const handleUnpaidAmountsClick = () => {
-    onViewReceivables(client);
-  };
+  
 
   return (
     <tr>
@@ -150,6 +146,11 @@ const ClientRow = ({ client, onEdit, onAddTask, onViewReceivables, canViewReceiv
           {getTypeLabel(client.type)}
         </span>
       </td>
+      <td>
+        <span className="text-muted small">
+          {client.notes ? client.notes.substring(0, 50) + (client.notes.length > 50 ? '...' : '') : '-'}
+        </span>
+      </td>
       <td className="text-center">
         <span className={`fw-semibold ${client.total_outstanding && client.total_outstanding > 0 ? 'text-danger' : 'text-muted'}`}>
           {Number(client.total_outstanding || 0).toFixed(2)}
@@ -157,6 +158,14 @@ const ClientRow = ({ client, onEdit, onAddTask, onViewReceivables, canViewReceiv
       </td>
       <td className="text-end">
         <div className="d-flex align-items-center justify-content-start gap-1">
+          <Button 
+            variant="outline-primary" 
+            size="sm" 
+            onClick={() => onAddReceivable(client)} 
+            title={t('receivables.addNew')}
+          >
+            <Plus size={16} />
+          </Button>
           <Button 
             variant="outline-primary" 
             size="sm" 
@@ -181,17 +190,7 @@ const ClientRow = ({ client, onEdit, onAddTask, onViewReceivables, canViewReceiv
           >
             <ExternalLink size={16} />
           </Button>
-          {canViewReceivables && (
-            <Button 
-              variant="secondary" 
-              size="sm" 
-              onClick={handleUnpaidAmountsClick}
-              title={t('clients.viewReceivables')}
-              disabled={!client.total_outstanding || client.total_outstanding <= 0}
-            >
-              {t('clients.viewReceivables')}
-            </Button>
-          )}
+
         </div>
       </td>
     </tr>

@@ -168,3 +168,23 @@ export const useExportClients = () => {
         // If the export relies on "fresh" data, ensure the underlying query is invalidated beforehand.
     });
 };
+
+
+const updateClientSortOrder = async ({ taskType, clientIds }: { taskType: string; clientIds: number[] }) => {
+    const { data } = await apiClient.post<ApiResponse<any>>('/clients/sort-order', {
+        task_type: taskType,
+        client_ids: clientIds,
+    });
+    return data;
+};
+
+export const useUpdateClientSortOrder = () => {
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: updateClientSortOrder,
+        onSuccess: () => {
+            // Invalidate to get the latest server-confirmed order
+            queryClient.invalidateQueries({ queryKey: ['dashboard', 'clientsWithActiveTasks'] });
+        },
+    });
+};

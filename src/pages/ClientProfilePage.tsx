@@ -12,13 +12,11 @@ import { useGetClientCredits } from '../queries/clientCreditQueries';
 
 // Import components
 import ClientProfileHeader from '../components/clients/ClientProfileHeader';
-import ClientTaskSummaryCards from '../components/clients/ClientTaskSummaryCards';
 import AllTasksTable from '../components/tasks/AllTasksTable';
 import ClientReceivablesTable from '../components/receivables/ClientReceivablesTable';
 import { exportToExcel, exportToPDF } from '../components/receivables/exportUtils';
 import type {  Task, StatementItem } from '../api/types';
 import { useReceivablesPermissions } from '../hooks/useReceivablesPermissions';
-import ClientCreditBalance from '../components/clients/ClientCreditBalance';
 import ClientCreditsHistoryTable from '../components/clients/ClientCreditsHistoryTable';
 
 const ClientProfilePage = () => {
@@ -61,32 +59,27 @@ const ClientProfilePage = () => {
     };
 
     const handleAddReceivable = () => {
-        if (client) openModal('manualReceivable', {});
+        if (client) openModal('manualReceivable', { client_id: clientId, client });
+    };
+
+    const handleAddCredit = () => {
+        if (client) openModal('recordCreditModal', { client });
     };
 
     const handleEditTask = (task: Task) => openModal('taskForm', { taskToEdit: task });
+    
     const handleDeleteTask = (task: Task) => {
         openModal('confirmDelete', {
             title: t('common.confirm'),
-            message: t('clients.deleteConfirmMessage', { clientName: task.client.name }) + ` - Task: ${task.task_name || t(`type.${task.type}`)}`, // Customize message
+            message: t('clients.deleteConfirmMessage', { clientName: task.client.name }) + ` - Task: ${task.task_name || t(`type.${task.type}`)}`,
             onConfirm: () => {
                 deleteTaskMutation.mutate(Number(task.id));
             },
         });
     };
+
     const handleShowRequirements = (task: Task) => openModal('requirements', { task });
-
-    // const handleSettlePayment = (receivable: Receivable) => {
-    //     // Find the full receivable object from raw data to pass to the modal
-    //     const fullReceivable = clientRawReceivables.find(r => r.id === receivable.id);
-    //     if (fullReceivable) {
-    //         openModal('paymentForm', { receivable: fullReceivable });
-    //     }
-    // };
-
-    const handleCompleteTask = (task: Task) => {
-        openModal('taskCompletion', { task });
-    };
+    const handleCompleteTask = (task: Task) => openModal('taskCompletion', { task });
 
     // Export handlers for receivables
     const handleExportExcel = () => {
@@ -115,7 +108,6 @@ const ClientProfilePage = () => {
 
     const handlePrint = () => {
         if (clientRawReceivables && client) {
-            // TODO: Implement print functionality
             console.log("Print functionality not yet implemented");
         }
     };
@@ -130,35 +122,15 @@ const ClientProfilePage = () => {
                 mode={mode}
                 onAddTask={handleAddTask}
                 onAddReceivable={handleAddReceivable}
+                onAddCredit={handleAddCredit}
                 onExportExcel={handleExportExcel}
                 onExportPDF={handleExportPDF}
                 onPrint={handlePrint}
             />
 
-            <ClientCreditBalance clientId={clientId} />
+            
 
-            <div className="card mb-3">
-                <div className="card-header">
-                    <h5 className="mb-0">{t('clients.creditsHistory')}</h5>
-                </div>
-                <div className="card-body p-0">
-                    <ClientCreditsHistoryTable
-                        credits={creditsData?.credits || []}
-                        isLoading={isLoadingCredits}
-                        clientId={clientId}
-                    />
-                </div>
-            </div>
-
-            {/* Task Summary Cards - Only in general mode */}
-            {mode === 'general' && (
-                <ClientTaskSummaryCards
-                    tasks={tasksData?.tasks || []}
-                    isLoading={isLoadingTasks}
-                    clientId={clientId}
-                />
-            )}
-
+            {/* Tasks Table - Show in general and tasks modes */}
             {(mode === 'general' || mode === 'tasks') && (
                 <div className="card mb-3">
                     <div className="card-header">
@@ -177,21 +149,45 @@ const ClientProfilePage = () => {
                 </div>
             )}
 
+            {/* Receivables Table - Show in general and receivables modes */}
             {(mode === 'general' || mode === 'receivables') && (
                 hasViewAllReceivablesPermission ? (
-                    <ClientReceivablesTable
-                        receivables={statementData?.statementItems as StatementItem[] || []}
-                        isLoading={isLoadingReceivables}
-                        client={client}
-                        filter={filter}
-                        hideAmounts={!hasViewAmountsPermission}
-                    />
+                    <div className="card mb-3">
+                        <div className="card-header">
+                            <h5 className="mb-0">كشف الحساب</h5>
+                        </div>
+                        <div className="card-body p-0">
+                            <ClientReceivablesTable
+                                receivables={statementData?.statementItems as StatementItem[] || []}
+                                isLoading={isLoadingReceivables}
+                                client={client}
+                                filter={filter}
+                                hideAmounts={!hasViewAmountsPermission}
+                            />
+                        </div>
+                    </div>
                 ) : (
                     <div className="alert alert-warning text-center">
                         <h5>Access Denied</h5>
                         <p>You don't have permission to view receivables for this client.</p>
                     </div>
                 )
+            )}
+
+            {/* Credits History Table - Show in general - receivables modes only */}
+            {(mode === 'general' || mode === 'receivables') && (
+                <div className="card mb-3">
+                    <div className="card-header">
+                        <h5 className="mb-0">{t('clients.creditsHistory')}</h5>
+                    </div>
+                    <div className="card-body p-0">
+                        <ClientCreditsHistoryTable
+                            credits={creditsData?.credits || []}
+                            isLoading={isLoadingCredits}
+                            clientId={clientId}
+                        />
+                    </div>
+                </div>
             )}
         </div>
     );

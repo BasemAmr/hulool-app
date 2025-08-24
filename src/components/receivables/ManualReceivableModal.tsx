@@ -7,16 +7,20 @@ import type { Client, ManualReceivablePayload, TaskType } from '../../api/types'
 import BaseModal from '../ui/BaseModal';
 import Button from '../ui/Button';
 import Input from '../ui/Input';
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import AmountDetailsInput from '../shared/AmountDetailsInput';
 
 const ManualReceivableModal = () => {
   const { t } = useTranslation();
+  const props = useModalStore((state) => state.props);
   const closeModal = useModalStore((state) => state.closeModal);
+  const preselectedClient = props.client;
   const [step, setStep] = useState(0);
-  const [selectedClient, setSelectedClient] = useState<Client | null>(null);
+  const [selectedClient, setSelectedClient] = useState<Client | null>(preselectedClient || null);
+  const hasInitialized = useRef(false);
   const { register, handleSubmit, formState: { errors }, setValue, watch, control } = useForm<ManualReceivablePayload>({
     defaultValues: {
+      client_id: preselectedClient?.id,
       amount_details: []
     }
   });
@@ -92,34 +96,49 @@ const ManualReceivableModal = () => {
                 <span className="fw-bold ms-2">{watch('type') ? t(`receivables.type.${watch('type')}`) : ''}</span>
               </div>
             </div>
-            <div className="text-center mb-4">
-              <h5 className="mb-2">{t('tasks.selectClient')}</h5>
-              <p className="text-muted small">{t('tasks.selectClientDescription')}</p>
-            </div>
-            {selectedClient ? (
-              <div className="preselected-client">
-                <div className="client-card selected">
+            {preselectedClient ? (
+              <div className="text-center">
+                <h5 className="mb-3">{t('receivables.selectedClient')}</h5>
+                <div className="client-card selected mx-auto" style={{ maxWidth: '300px' }}>
                   <div className="client-info">
-                    <div className="client-name">{selectedClient.name}</div>
-                    <div className="client-phone">{selectedClient.phone}</div>
+                    <div className="client-name">{preselectedClient.name}</div>
+                    <div className="client-phone">{preselectedClient.phone}</div>
                   </div>
                   <div className="selected-indicator">
                     <i className="fas fa-check-circle text-success"></i>
                   </div>
                 </div>
-              </div>
-            ) : (
-              <div className="client-search-container">
-                <ClientSearchCompact
-                  label=""
-                  onSelect={(client) => {
-                    setSelectedClient(client);
-                    setValue('client_id', client.id);
+                <Button 
+                  variant="primary" 
+                  size="sm" 
+                  className="mt-3"
+                  onClick={() => {
+                    setSelectedClient(preselectedClient);
+                    setValue('client_id', preselectedClient.id);
                     setStep(2);
                   }}
-                  disabled={false}
-                />
+                >
+                  {t('common.continue')}
+                </Button>
               </div>
+            ) : (
+              <>
+                <div className="text-center mb-4">
+                  <h5 className="mb-2">{t('tasks.selectClient')}</h5>
+                  <p className="text-muted small">{t('tasks.selectClientDescription')}</p>
+                </div>
+                <div className="client-search-container">
+                  <ClientSearchCompact
+                    label=""
+                    onSelect={(client) => {
+                      setSelectedClient(client);
+                      setValue('client_id', client.id);
+                      setStep(2);
+                    }}
+                    disabled={false}
+                  />
+                </div>
+              </>
             )}
             <Controller
               name="client_id"
