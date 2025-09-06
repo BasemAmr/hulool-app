@@ -7,45 +7,138 @@ const CLIENTS_PER_PAGE = 20; // Define a constant for page size
 
 // Fetch paginated clients (normal list)
 const fetchClients = async (search: string, typeFilter?: ClientType): Promise<ClientPaginatedData> => {
-    // If search is present, use the dedicated search endpoint
-    if (search && search.trim().length > 0) {
-        const { data } = await apiClient.get<ApiResponse<ClientPaginatedData>>('/clients/search', {
-            params: { term: search, limit: 1000 },
+    try {
+        // If search is present, use the dedicated search endpoint
+        if (search && search.trim().length > 0) {
+            const { data } = await apiClient.get<ApiResponse<ClientPaginatedData>>('/clients/search', {
+                params: { term: search, limit: 1000 },
+            });
+            
+            let clients = data.data?.clients || [];
+            
+            // Apply type filter client-side if specified
+            if (typeFilter) {
+                clients = clients.filter(client => client.type === typeFilter);
+            }
+            
+            return {
+                clients: clients,
+                pagination: {
+                    total: clients.length,
+                    per_page: 1000,
+                    current_page: 1,
+                    total_pages: 1,
+                    has_next: false,
+                    has_prev: false
+                }
+            };
+        }
+        
+        // Otherwise, fetch all clients with stats for unpaid amounts
+        const params: any = { page: 1, per_page: 1000, include_stats: true };
+        if (typeFilter) {
+            params.type = typeFilter;
+        }
+        const { data } = await apiClient.get<ApiResponse<ClientPaginatedData>>('/clients', {
+            params,
         });
         return data.data;
+    } catch (error) {
+        console.error('Error fetching clients:', error);
+        return {
+            clients: [],
+            pagination: {
+                total: 0,
+                per_page: 1000,
+                current_page: 1,
+                total_pages: 0,
+                has_next: false,
+                has_prev: false
+            }
+        };
     }
-    // Otherwise, fetch all clients with stats for unpaid amounts
-    const params: any = { page: 1, per_page: 1000, include_stats: true };
-    if (typeFilter) {
-        params.type = typeFilter;
-    }
-    const { data } = await apiClient.get<ApiResponse<ClientPaginatedData>>('/clients', {
-        params,
-    });
-    return data.data;
 };
 
 // New paginated fetch function for infinite queries
 export const fetchPaginatedClients = async ({ pageParam = 1, queryKey }: { pageParam?: number; queryKey: any }): Promise<ClientPaginatedData> => {
   const [_key, search, typeFilter] = queryKey;
   
-  // If search is present, use the dedicated search endpoint
-  if (search && search.trim().length > 0) {
-    const { data } = await apiClient.get<ApiResponse<ClientPaginatedData>>('/clients/search', {
-      params: { term: search, limit: CLIENTS_PER_PAGE, page: pageParam },
+  try {
+    // If both search and type filter are present, we need to handle them differently
+    // since the search endpoint doesn't support type filtering
+    if (search && search.trim().length > 0) {
+      // Use search endpoint first
+      const { data } = await apiClient.get<ApiResponse<ClientPaginatedData>>('/clients/search', {
+        params: { term: search, limit: 1000 }, // Get more results to filter client-side
+      });
+      
+      let clients = data.data?.clients || [];
+      
+      // Apply type filter client-side if specified
+      if (typeFilter) {
+        clients = clients.filter(client => client.type === typeFilter);
+      }
+      
+      // Calculate pagination for filtered results
+      const total = clients.length;
+      const startIndex = (pageParam - 1) * CLIENTS_PER_PAGE;
+      const endIndex = startIndex + CLIENTS_PER_PAGE;
+      const paginatedClients = clients.slice(startIndex, endIndex);
+      const totalPages = Math.ceil(total / CLIENTS_PER_PAGE);
+      
+      return {
+        clients: paginatedClients,
+        pagination: {
+          total: total,
+          per_page: CLIENTS_PER_PAGE,
+          current_page: pageParam,
+          total_pages: totalPages,
+          has_next: pageParam < totalPages,
+          has_prev: pageParam > 1
+        }
+      };
+    }
+    
+    // Otherwise, fetch clients with pagination and stats (no search, just type filter)
+    const params: any = { page: pageParam, per_page: CLIENTS_PER_PAGE, include_stats: true };
+    if (typeFilter) {
+      params.type = typeFilter;
+    }
+    const { data } = await apiClient.get<ApiResponse<ClientPaginatedData>>('/clients', {
+      params,
     });
+    
+    // Ensure the response has the expected structure
+    if (!data.data || !data.data.pagination) {
+      return {
+        clients: data.data?.clients || [],
+        pagination: {
+          total: data.data?.clients?.length || 0,
+          per_page: CLIENTS_PER_PAGE,
+          current_page: pageParam,
+          total_pages: 1,
+          has_next: false,
+          has_prev: pageParam > 1
+        }
+      };
+    }
+    
     return data.data;
+  } catch (error) {
+    // Return a safe fallback structure on error
+    console.error('Error fetching paginated clients:', error);
+    return {
+      clients: [],
+      pagination: {
+        total: 0,
+        per_page: CLIENTS_PER_PAGE,
+        current_page: pageParam,
+        total_pages: 0,
+        has_next: false,
+        has_prev: false
+      }
+    };
   }
-  
-  // Otherwise, fetch clients with pagination and stats
-  const params: any = { page: pageParam, per_page: CLIENTS_PER_PAGE, include_stats: true };
-  if (typeFilter) {
-    params.type = typeFilter;
-  }
-  const { data } = await apiClient.get<ApiResponse<ClientPaginatedData>>('/clients', {
-    params,
-  });
-  return data.data;
 };
 
 const createClient = async (clientData: ClientPayload): Promise<Client> => {
@@ -114,6 +207,11 @@ export const useGetClientsInfinite = (search: string, typeFilter?: ClientType) =
     queryFn: fetchPaginatedClients,
     initialPageParam: 1,
     getNextPageParam: (lastPage) => {
+      // Check if lastPage and pagination exist to prevent errors
+      if (!lastPage || !lastPage.pagination) {
+        return undefined;
+      }
+      
       // If the current page is less than the total pages, return the next page number
       if (lastPage.pagination.current_page < lastPage.pagination.total_pages) {
         return lastPage.pagination.current_page + 1;

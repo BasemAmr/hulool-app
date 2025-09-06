@@ -78,3 +78,4 @@ export const initializeSounds = () => {
   // Set default volume to 70%
   soundManager.setVolume(0.7);
 };
+
