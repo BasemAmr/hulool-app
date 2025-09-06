@@ -3,6 +3,7 @@ import { Outlet, useLocation } from 'react-router-dom';
 import { useMemo } from 'react';
 import Sidebar from './Sidebar';
 import ModalManager from '../shared/ModalManager';
+import TaskFollowUpPanel from '../tasks/followup/TaskFollowUpPanel';
 import { useSidebarStore } from '../../stores/sidebarStore';
 import styles from './Layout.module.scss';
 
@@ -35,6 +36,7 @@ const PageWrapper = () => {
       </main>
       <Sidebar />
       <ModalManager />
+      <TaskFollowUpPanel />
     </div>
   );
 };

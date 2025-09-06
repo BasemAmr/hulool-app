@@ -4,6 +4,7 @@ import { useSearchClients, useCreateClient } from '../../queries/clientQueries';
 import type { Client, ClientType } from '../../api/types';
 import Input from '../ui/Input';
 import Button from '../ui/Button';
+import { useToast } from '../../hooks/useToast';
 import { User, Plus, Loader2 } from 'lucide-react';
 
 interface ClientSearchCompactProps {
@@ -24,6 +25,7 @@ const ClientSearchCompact = ({ onSelect, onCreate, label, disabled }: ClientSear
   const [newClientDriveLink, setNewClientDriveLink] = useState('');
   const [newClientNotes, setNewClientNotes] = useState('');
   const createClientMutation = useCreateClient();
+  const { error: toast } = useToast();
 
   useEffect(() => {
     setShowCreate(false);
@@ -49,6 +51,17 @@ const ClientSearchCompact = ({ onSelect, onCreate, label, disabled }: ClientSear
           onCreate?.(client);
           onSelect(client);
         },
+        onError: (error: any) => {
+          console.error('Client creation error:', error);
+          const errorMessage = error?.response?.data?.message;
+          
+          // Check for duplicate phone number error
+          if (errorMessage && errorMessage.includes('phone number already exists')) {
+            toast('خطأ في التسجيل', 'رقم الجوال مسجل مسبقاً في النظام. يرجى استخدام رقم جوال آخر.');
+          } else {
+            toast('خطأ في إنشاء العميل', errorMessage || 'حدث خطأ أثناء إنشاء العميل');
+          }
+        }
       }
     );
   };

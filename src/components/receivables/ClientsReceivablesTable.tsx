@@ -1,7 +1,9 @@
-import { MessageSquare, CreditCard, Edit3 } from 'lucide-react';
+import {  CreditCard, Edit3 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import Button from '../ui/Button';
 import { useModalStore } from '../../stores/modalStore';
+import WhatsAppIcon from '../ui/WhatsAppIcon';
+import { sendPaymentReminder, formatPhoneForWhatsApp } from '../../utils/whatsappUtils';
 
 interface ClientReceivablesSummary {
   client_id: number;
@@ -16,9 +18,19 @@ interface ClientReceivablesSummary {
 interface ClientsReceivablesTableProps {
   clients: ClientReceivablesSummary[];
   isLoading: boolean;
+  totals?: {
+    total_amount: number;
+    total_paid: number;
+    total_unpaid: number;
+    clients_count: number;
+    clients_with_debt: number;
+    clients_with_credit: number;
+    balanced_clients: number;
+  };
+  isTotalsLoading?: boolean;
 }
 
-const ClientsReceivablesTable = ({ clients, isLoading }: ClientsReceivablesTableProps) => {
+const ClientsReceivablesTable = ({ clients, isLoading, totals, isTotalsLoading }: ClientsReceivablesTableProps) => {
   const navigate = useNavigate();
   const openModal = useModalStore((state) => state.openModal);
 
@@ -35,8 +47,13 @@ const ClientsReceivablesTable = ({ clients, isLoading }: ClientsReceivablesTable
   };
 
   const handleWhatsApp = (phone: string) => {
-    const cleanPhone = phone.startsWith('+') ? phone : `+966${phone}`;
+    const cleanPhone = formatPhoneForWhatsApp(phone);
     window.open(`https://wa.me/${cleanPhone}`, '_blank');
+  };
+
+  const handleWhatsAppPaymentReminder = (phone: string, clientName: string, remainingAmount: number) => {
+    const formattedAmount = formatCurrency(remainingAmount);
+    sendPaymentReminder(phone, clientName, formattedAmount);
   };
 
   const formatCurrency = (amount: number) => {
@@ -66,7 +83,7 @@ const ClientsReceivablesTable = ({ clients, isLoading }: ClientsReceivablesTable
 
   if (!clients || clients.length === 0 || filteredClients.length === 0) {
     return (
-      <div className="text-center text-muted py-5">
+      <div className="text-center  py-5">
         <p>
           لا يوجد عملاء لديهم مستحقات
         </p>
@@ -74,22 +91,16 @@ const ClientsReceivablesTable = ({ clients, isLoading }: ClientsReceivablesTable
     );
   }
 
-  // Calculate totals based on filtered clients
-  const totals = filteredClients.reduce(
-    (acc, client) => {
-      
-      const debit = Math.abs(Number(client.total_amount) || 0)
-      const credit = Math.abs(Number(client.paid_amount) || 0)
-      const remaining = debit > credit ? Number(client.remaining_amount) || 0 : 0
-      return {
-        totalAmount: acc.totalAmount + debit,
-        paidAmount: acc.paidAmount + credit,
-        remainingAmount: acc.remainingAmount + remaining,
-      };
-    },
-    { totalAmount: 0, paidAmount: 0, remainingAmount: 0 }
-  );
-console.log('Total amounts:', totals);
+  // Use totals from props (from API) instead of calculating from paginated data
+  const displayTotals = totals ? {
+    totalAmount: totals.total_amount,
+    paidAmount: totals.total_paid,
+    remainingAmount: totals.total_unpaid,
+  } : {
+    totalAmount: 0,
+    paidAmount: 0,
+    remainingAmount: 0,
+  };
 
 
   // Sort clients by newest first (assuming client_id represents creation order)
@@ -115,7 +126,7 @@ console.log('Total amounts:', totals);
             <tr key={client.client_id}>
               <td className="text-center">
                 <div
-                  className="fw-bold text-primary cursor-pointer"
+                  className="fw-bold primary cursor-pointer"
                   onClick={() => handleClientClick(client.client_id)}
                   style={{ cursor: 'pointer' }}
                 >
@@ -123,25 +134,25 @@ console.log('Total amounts:', totals);
                 </div>
               </td>
               <td className="text-center">
-                <div className="text-muted small d-flex align-items-center justify-content-end">
+                <div className=" small d-flex align-items-center justify-content-center">
                   <button
                     className="btn btn-link btn-sm p-0 text-success ms-1"
                     onClick={() => handleWhatsApp(client.client_phone)}
                     title="WhatsApp"
                     style={{ fontSize: '12px' }}
                   >
-                    <MessageSquare size={12} />
+                    <WhatsAppIcon size={12} />
                   </button>
                   <span>{client.client_phone}</span>
                 </div>
               </td>
-              <td className="text-center fw-bold text-danger">
+              <td className="text-center fw-bold">
                 {formatCurrency(Number(client.total_amount) || 0)}
               </td>
               <td className="text-center fw-bold text-success">
                 {formatCurrency(Number(client.paid_amount) || 0)}
               </td>
-              <td className="text-center fw-bold text-primary">
+              <td className="text-center fw-bold  text-danger">
                 {formatCurrency(Math.max(0, Number(client.remaining_amount) || 0))}
               </td>
               <td className="text-center">
@@ -153,6 +164,15 @@ console.log('Total amounts:', totals);
                     title="تعديل المستحقات"
                   >
                     <Edit3 size={14} />
+                  </Button>
+                  <Button
+                    variant="outline-success"
+                    size="sm"
+                    onClick={() => handleWhatsAppPaymentReminder(client.client_phone, client.client_name, Number(client.remaining_amount))}
+                    disabled={Number(client.remaining_amount) <= 0}
+                    title="إرسال تذكير دفع عبر واتساب"
+                  >
+                    <WhatsAppIcon size={14} />
                   </Button>
                   <Button
                     variant="primary"
@@ -172,14 +192,32 @@ console.log('Total amounts:', totals);
           <tr className="fw-bold">
             <td className="text-start">الإجمالي</td>
             <td className="text-start"></td>
-            <td className="text-center text-danger">
-              {formatCurrency(totals.totalAmount)}
+            <td className="text-center">
+              {isTotalsLoading ? (
+                <div className="spinner-border spinner-border-sm" role="status">
+                  <span className="visually-hidden">Loading...</span>
+                </div>
+              ) : (
+                formatCurrency(displayTotals.totalAmount)
+              )}
             </td>
             <td className="text-center text-success">
-              {formatCurrency(totals.paidAmount)}
+              {isTotalsLoading ? (
+                <div className="spinner-border spinner-border-sm" role="status">
+                  <span className="visually-hidden">Loading...</span>
+                </div>
+              ) : (
+                formatCurrency(displayTotals.paidAmount)
+              )}
             </td>
-            <td className="text-center text-primary">
-              {formatCurrency(totals.remainingAmount)}
+            <td className="text-center text-danger">
+              {isTotalsLoading ? (
+                <div className="spinner-border spinner-border-sm" role="status">
+                  <span className="visually-hidden">Loading...</span>
+                </div>
+              ) : (
+                formatCurrency(displayTotals.remainingAmount)
+              )}
             </td>
             <td></td>
           </tr>

@@ -1,9 +1,19 @@
 import { create } from 'zustand';
-import type { Client, Task, Receivable, Tag, ClientCredit } from '../api/types';
+import type { 
+  Client, 
+  Task, 
+  Receivable, 
+  Tag, 
+  ClientCredit,
+  PrepaidConflictData,
+  TaskAmountConflictData,
+  TaskCancellationAnalysis,
+  ConcurrentModificationData
+} from '../api/types';
 
 // Define all possible modals in the app.
 // We will add more types like 'task' in later phases.
-export type ModalType = 'clientForm' | 'confirmDelete' | 'taskForm' | 'requirements' | 'manualReceivable' | 'clientReceivables' | 'paymentForm' | 'paymentHistory' | 'clientSearch' | 'tagForm' | 'tagManagement' | 'selectReceivableForPayment' | 'taskCompletion' | 'amountDetails' | 'taskSelection' | 'taskDetails' | 'recordCreditModal' | 'applyCreditModal' | 'clientCreditHistory' | 'creditEdit' | 'creditDelete' | 'allocationEdit' | 'allocationDelete' | 'paymentEdit' | 'paymentDelete' | 'editReceivable' | 'deleteReceivable' | 'clientReceivablesEdit' | 'urgentAlert';
+export type ModalType = 'clientForm' | 'confirmDelete' | 'taskForm' | 'requirements' | 'manualReceivable' | 'clientReceivables' | 'paymentForm' | 'paymentHistory' | 'clientSearch' | 'tagForm' | 'tagManagement' | 'selectReceivableForPayment' | 'taskCompletion' | 'amountDetails' | 'taskSelection' | 'taskDetails' | 'recordCreditModal' | 'applyCreditModal' | 'clientCreditHistory' | 'creditEdit' | 'creditDelete' | 'allocationEdit' | 'allocationDelete' | 'paymentEdit' | 'paymentDelete' | 'editReceivable' | 'deleteReceivable' | 'clientReceivablesEdit' | 'urgentAlert' | 'prepaidConflict' | 'taskAmountConflict' | 'taskCancellation' | 'concurrentModification';
 
 // Define the props each modal type can receive.
 interface ModalProps {
@@ -51,6 +61,29 @@ interface ModalProps {
   deleteReceivable: { receivable: Receivable };
   clientReceivablesEdit: { clientId: number };
 
+  // NEW CONFLICT RESOLUTION MODALS
+  prepaidConflict: { 
+    taskId: number; 
+    conflictData: PrepaidConflictData; 
+    newPrepaidAmount: number; 
+    onResolved: () => void; 
+  };
+  taskAmountConflict: { 
+    taskId: number; 
+    conflictData: TaskAmountConflictData; 
+    newTaskAmount: number; 
+    onResolved: () => void; 
+  };
+  taskCancellation: { 
+    taskId: number; 
+    analysisData: TaskCancellationAnalysis; 
+    onResolved: () => void; 
+  };
+  concurrentModification: { 
+    conflictData: ConcurrentModificationData; 
+    onRetry: (useCurrentData: boolean) => void; 
+    onCancel: () => void; 
+  };
 }
 
 interface ModalState {

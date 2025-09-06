@@ -5,6 +5,7 @@ import type { Client, ClientPayload } from '../../api/types';
 import Button from '../ui/Button';
 import Input from '../ui/Input';
 import Select from '../ui/Select';
+import { useToast } from '../../hooks/useToast';
 
 interface ClientFormProps {
   clientToEdit?: Client;
@@ -13,6 +14,7 @@ interface ClientFormProps {
 
 const ClientForm = ({ clientToEdit, onSuccess }: ClientFormProps) => {
   const { t } = useTranslation();
+  const { error: toast } = useToast();
   const isEditMode = !!clientToEdit;
 
   const {
@@ -44,10 +46,32 @@ const ClientForm = ({ clientToEdit, onSuccess }: ClientFormProps) => {
     if (isEditMode) {
       updateMutation.mutate({ id: clientToEdit.id, clientData: data }, {
         onSuccess,
+        onError: (error: any) => {
+          console.error('Client update error:', error);
+          const errorMessage = error?.response?.data?.message;
+          
+          // Check for duplicate phone number error
+          if (errorMessage && (errorMessage.includes('phone number already exists') || errorMessage.includes('Another client with this phone number'))) {
+            toast('خطأ في التحديث', 'رقم الجوال مسجل مسبقاً لعميل آخر. يرجى استخدام رقم جوال آخر.');
+          } else {
+            toast('خطأ في تحديث العميل', errorMessage || 'حدث خطأ أثناء تحديث العميل');
+          }
+        }
       });
     } else {
       createMutation.mutate(data, {
         onSuccess,
+        onError: (error: any) => {
+          console.error('Client creation error:', error);
+          const errorMessage = error?.response?.data?.message;
+          
+          // Check for duplicate phone number error
+          if (errorMessage && errorMessage.includes('phone number already exists')) {
+            toast('خطأ في التسجيل', 'رقم الجوال مسجل مسبقاً في النظام. يرجى استخدام رقم جوال آخر.');
+          } else {
+            toast('خطأ في إنشاء العميل', errorMessage || 'حدث خطأ أثناء إنشاء العميل');
+          }
+        }
       });
     }
   };

@@ -1,8 +1,10 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient, useInfiniteQuery } from '@tanstack/react-query';
 import apiClient from '../api/apiClient';
 import type { ApiResponse, Client, ClientPayload, ClientPaginatedData, ClientUnpaidAmounts, ClientCountsByType, ClientType } from '../api/types';
 
 // --- Query Functions ---
+const CLIENTS_PER_PAGE = 20; // Define a constant for page size
+
 // Fetch paginated clients (normal list)
 const fetchClients = async (search: string, typeFilter?: ClientType): Promise<ClientPaginatedData> => {
     // If search is present, use the dedicated search endpoint
@@ -21,6 +23,29 @@ const fetchClients = async (search: string, typeFilter?: ClientType): Promise<Cl
         params,
     });
     return data.data;
+};
+
+// New paginated fetch function for infinite queries
+export const fetchPaginatedClients = async ({ pageParam = 1, queryKey }: { pageParam?: number; queryKey: any }): Promise<ClientPaginatedData> => {
+  const [_key, search, typeFilter] = queryKey;
+  
+  // If search is present, use the dedicated search endpoint
+  if (search && search.trim().length > 0) {
+    const { data } = await apiClient.get<ApiResponse<ClientPaginatedData>>('/clients/search', {
+      params: { term: search, limit: CLIENTS_PER_PAGE, page: pageParam },
+    });
+    return data.data;
+  }
+  
+  // Otherwise, fetch clients with pagination and stats
+  const params: any = { page: pageParam, per_page: CLIENTS_PER_PAGE, include_stats: true };
+  if (typeFilter) {
+    params.type = typeFilter;
+  }
+  const { data } = await apiClient.get<ApiResponse<ClientPaginatedData>>('/clients', {
+    params,
+  });
+  return data.data;
 };
 
 const createClient = async (clientData: ClientPayload): Promise<Client> => {
@@ -82,6 +107,25 @@ export const useGetClients = (search: string, typeFilter?: ClientType) => {
   });
 };
 
+// New infinite query hook for paginated clients
+export const useGetClientsInfinite = (search: string, typeFilter?: ClientType) => {
+  return useInfiniteQuery({
+    queryKey: ['clients', search, typeFilter],
+    queryFn: fetchPaginatedClients,
+    initialPageParam: 1,
+    getNextPageParam: (lastPage) => {
+      // If the current page is less than the total pages, return the next page number
+      if (lastPage.pagination.current_page < lastPage.pagination.total_pages) {
+        return lastPage.pagination.current_page + 1;
+      }
+      // Otherwise, return undefined to signify there are no more pages
+      return undefined;
+    },
+    placeholderData: (previousData) => previousData,
+    staleTime: 60 * 1000, // Keep fresh for 1 minute
+  });
+};
+
 export const useCreateClient = () => {
   const queryClient = useQueryClient();
   return useMutation({
@@ -111,13 +155,71 @@ export const useUpdateClient = () => {
 
 export const useDeleteClient = () => {
   const queryClient = useQueryClient();
+  
   return useMutation({
     mutationFn: deleteClient,
-    onSuccess: () => {
+    // --- START: OPTIMISTIC UPDATE LOGIC ---
+    onMutate: async (id) => {
+      // 1. Cancel any outgoing refetches so they don't overwrite our optimistic update
+      await queryClient.cancelQueries({ queryKey: ['clients'] });
+
+      // 2. Snapshot the previous state of clients queries
+      const previousClientsData: any = queryClient.getQueryData(['clients']);
+
+      // 3. Optimistically remove the client from the list
+      if (previousClientsData) {
+        // Handle infinite query data structure
+        if (previousClientsData.pages) {
+          queryClient.setQueryData(['clients'], (oldData: any) => {
+            return {
+              ...oldData,
+              pages: oldData.pages.map((page: any) => ({
+                ...page,
+                clients: page.clients.filter((client: Client) => client.id !== id),
+                pagination: {
+                  ...page.pagination,
+                  total: page.pagination.total - 1
+                }
+              })),
+            };
+          });
+        } else {
+          // Handle regular query data structure
+          queryClient.setQueryData(['clients'], (oldData: any) => {
+            return {
+              ...oldData,
+              clients: oldData.clients.filter((client: Client) => client.id !== id),
+              pagination: {
+                ...oldData.pagination,
+                total: oldData.pagination.total - 1
+              }
+            };
+          });
+        }
+      }
+
+      // 4. Return a context object with the snapshotted values
+      return { previousClientsData };
+    },
+    // --- END: OPTIMISTIC UPDATE LOGIC ---
+    
+    // If the mutation fails, use the context returned from onMutate to roll back
+    onError: (_err, _variables, context) => {
+      if (context?.previousClientsData) {
+        queryClient.setQueryData(['clients'], context.previousClientsData);
+      }
+      // Note: We'll handle toast notifications in the UI components
+    },
+    // Always refetch after error or success to ensure data consistency
+    onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ['clients'] }); // Invalidate all clients lists
       queryClient.invalidateQueries({ queryKey: ['dashboard'] }); // Dashboard stats for total clients
       queryClient.invalidateQueries({ queryKey: ['clientCountsByType'] }); // Client counts by type
     },
+    onSuccess: () => {
+      // The UI has already updated optimistically
+      // Just ensure we invalidate related data
+    }
   });
 };
 

@@ -5,8 +5,24 @@ import { v4 as uuidv4 } from 'uuid';
 import { useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
 
-import type { Client, Task, TaskPayload, Requirement, UpdateTaskPayload, TaskType } from '../../api/types';
-import { useCreateTask, useUpdateTask, useCreateRequirements } from '../../queries/taskQueries';
+import type { 
+  Client, 
+  Task, 
+  TaskPayload, 
+  Requirement, 
+  UpdateTaskPayload, 
+  TaskType,
+  ConflictResponse,
+  PrepaidConflictData,
+  TaskAmountConflictData,
+  ConcurrentModificationData
+} from '../../api/types';
+import { 
+  useCreateTask, 
+  useUpdateTask, 
+  useCreateRequirements, 
+  useUpdateTaskWithConflicts 
+} from '../../queries/taskQueries';
 import { useModalStore } from '../../stores/modalStore';
 import { useToast } from '../../hooks/useToast';
 
@@ -18,6 +34,7 @@ import TaskSuccessModal from './TaskSuccessModal';
 import TaskHistoryModal from '../shared/TaskHistoryModal';
 import PaymentHistoryModal from '../shared/PaymentHistoryModal';
 import AmountDetailsInput from '../shared/AmountDetailsInput';
+import { playNotificationSound } from '../../utils/soundUtils';
 
 // Import step components
 import TaskTypeStep from './steps/TaskTypeStep';
@@ -114,9 +131,86 @@ const TaskModal = () => {
 
   const createTaskMutation = useCreateTask();
   const updateTaskMutation = useUpdateTask();
+  const updateTaskWithConflictsMutation = useUpdateTaskWithConflicts();
   const createRequirementsMutation = useCreateRequirements();
 
-  const isLoading = createTaskMutation.isPending || updateTaskMutation.isPending || createRequirementsMutation.isPending;
+  const isLoading = createTaskMutation.isPending || updateTaskMutation.isPending || updateTaskWithConflictsMutation.isPending || createRequirementsMutation.isPending;
+
+  // Conflict handling function
+  const handleConflictResponse = (
+    conflictResponse: ConflictResponse<PrepaidConflictData | TaskAmountConflictData | ConcurrentModificationData>,
+    originalPayload: UpdateTaskPayload
+  ) => {
+    const conflictData = conflictResponse.data;
+
+    if ('conflict_type' in conflictData) {
+      if (conflictData.conflict_type === 'prepaid_amount_change_conflict') {
+        // Handle prepaid conflict
+        const prepaidConflictData = conflictData as PrepaidConflictData;
+        openModal('prepaidConflict', {
+          taskId: taskToEdit!.id,
+          conflictData: prepaidConflictData,
+          newPrepaidAmount: originalPayload.prepaid_amount || 0,
+          onResolved: () => {
+            toast.showToast({
+              type: 'success',
+              title: t('tasks.conflictResolved')
+            });
+            closeModal();
+          }
+        });
+      } else if (conflictData.conflict_type === 'main_receivable_overpayment') {
+        // Handle task amount conflict
+        const amountConflictData = conflictData as TaskAmountConflictData;
+        openModal('taskAmountConflict', {
+          taskId: taskToEdit!.id,
+          conflictData: amountConflictData,
+          newTaskAmount: originalPayload.amount || 0,
+          onResolved: () => {
+            toast.showToast({
+              type: 'success',
+              title: t('tasks.conflictResolved')
+            });
+            closeModal();
+          }
+        });
+      }
+    } else if ('expected_updated_at' in conflictData) {
+      // Handle concurrent modification
+      const concurrentData = conflictData as ConcurrentModificationData;
+      openModal('concurrentModification', {
+        conflictData: concurrentData,
+        onRetry: (useCurrentData: boolean) => {
+          if (useCurrentData) {
+            // Update form with current data and retry
+            const currentTask = concurrentData.current_task_data;
+            setValue('task_name', currentTask.task_name || '');
+            setValue('amount', currentTask.amount);
+            setValue('prepaid_amount', currentTask.prepaid_amount || 0);
+            setValue('notes', currentTask.notes || '');
+            // Update other fields as needed
+            
+            // Retry the update with current timestamp
+            const retryPayload = {
+              ...originalPayload,
+              expected_updated_at: concurrentData.current_updated_at
+            };
+            updateTaskWithConflictsMutation.mutate({ id: taskToEdit!.id, taskData: retryPayload });
+          } else {
+            // Force overwrite - retry with original payload but new timestamp
+            const forcePayload = {
+              ...originalPayload,
+              expected_updated_at: concurrentData.current_updated_at
+            };
+            updateTaskWithConflictsMutation.mutate({ id: taskToEdit!.id, taskData: forcePayload });
+          }
+        },
+        onCancel: () => {
+          // User cancelled, do nothing
+        }
+      });
+    }
+  };
 
   // Helper to safely parse amount_details
   const parseAmountDetails = (details: any): any[] => {
@@ -177,8 +271,23 @@ const TaskModal = () => {
             is_provided: Boolean(req.is_provided || false)
           })),
       };
-      updateTaskMutation.mutate({ id: taskToEdit.id, taskData: updatePayload }, {
-        onSuccess: () => {
+      // Add optimistic locking timestamp
+      const updatePayloadWithLocking = {
+        ...updatePayload,
+        expected_updated_at: taskToEdit.updated_at
+      };
+
+      // Use the new conflict-aware update mutation
+      updateTaskWithConflictsMutation.mutate({ id: taskToEdit.id, taskData: updatePayloadWithLocking }, {
+        onSuccess: (result) => {
+          // Check if it's a conflict response
+          if ('success' in result && result.success === false) {
+            const conflictResponse = result as ConflictResponse<PrepaidConflictData | TaskAmountConflictData | ConcurrentModificationData>;
+            handleConflictResponse(conflictResponse, updatePayload);
+            return;
+          }
+
+          // It's a successful update
           toast.success('تم التحديث بنجاح', 'تم تحديث المهمة بنجاح');
           closeModal();
         },
@@ -206,6 +315,9 @@ const TaskModal = () => {
       createTaskMutation.mutate(createPayload, {
         onSuccess: (createdTask) => {
           // console.log('Task created successfully:', createdTask);
+          
+          // Play notification sound when task is created successfully
+          playNotificationSound();
           
           if (validRequirements.length > 0) {
             // console.log('Creating requirements for task:', createdTask.id);

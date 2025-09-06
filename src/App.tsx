@@ -5,6 +5,7 @@ import { router } from './router';
 import { ToastProvider } from './hooks/useToast';
 import { useNonceRefresh } from './hooks/useNonceRefresh';
 import { initializeBackgrounds } from './utils/backgroundUtils';
+import { initializeSounds } from './utils/soundUtils';
 
 // Configure QueryClient with default options
 const queryClient = new QueryClient({
@@ -26,6 +27,7 @@ function App() {
 
   useEffect(() => {
     initializeBackgrounds();
+    initializeSounds();
   }, []);
 
   return (

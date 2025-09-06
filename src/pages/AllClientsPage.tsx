@@ -1,7 +1,7 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 // import { useNavigate } from 'react-router-dom';
-import { useGetClients, /*useExportClients*/ } from '../queries/clientQueries';
+import { useGetClientsInfinite, /*useExportClients*/ } from '../queries/clientQueries';
 import { useModalStore } from '../stores/modalStore';
 import { /*useReceivablesPermissions */} from '../hooks/useReceivablesPermissions';
 import { applyPageBackground } from '../utils/backgroundUtils';
@@ -11,13 +11,18 @@ import ClientSearch from '../components/clients/ClientSearch';
 import Button from '../components/ui/Button';
 import Select from '../components/ui/Select';
 import { PlusCircle, FileSpreadsheet, Printer } from 'lucide-react'; // Example icon
-import { exportClientsToExcel, printClientsReport } from '../components/clients/clientExportUtils';
+// --- MODIFICATIONS START ---
+import { useMutation } from '@tanstack/react-query';
+import { exportService } from '../services/export/ExportService';
+import { useToast } from '../hooks/useToast';
+import { useInView } from 'react-intersection-observer';
+// --- MODIFICATIONS END ---
 
 const AllClientsPage = () => {
   const { t } = useTranslation();
   // const navigate = useNavigate();
   const openModal = useModalStore((state) => state.openModal);
-  // const { hasAnyReceivablesPermission } = useReceivablesPermissions();
+  const { showToast } = useToast(); // ADD
 
   const [search, setSearch] = useState('');
   const [typeFilter, setTypeFilter] = useState<ClientType | undefined>(undefined);
@@ -27,8 +32,38 @@ const AllClientsPage = () => {
     applyPageBackground('clients');
   }, []);
 
-  const { data, isLoading } = useGetClients(search, typeFilter);
-  // const exportMutation = useExportClients();
+  // Use infinite query for clients
+  const {
+    data,
+    isLoading,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+  } = useGetClientsInfinite(search, typeFilter);
+
+  // Flatten the pages into a single array for rendering
+  const allClients = useMemo(() => data?.pages.flatMap(page => page.clients) || [], [data]);
+
+  // --- NEW: Logic for infinite scroll ---
+  const { ref } = useInView({
+    threshold: 1, // Trigger when the element is fully in view
+    onChange: (inView) => {
+      if (inView && hasNextPage && !isFetchingNextPage) {
+        fetchNextPage();
+      }
+    },
+  });
+
+  // --- NEW: Mutation for exporting ---
+  const exportMutation = useMutation({
+    mutationFn: exportService.exportAllClients,
+    onSuccess: () => {
+      showToast({ type: 'success', title: 'تم تصدير الملف بنجاح' });
+    },
+    onError: (error: Error) => {
+      showToast({ type: 'error', title: 'فشل التصدير', message: error.message });
+    },
+  });
 
   const typeOptions = [
     { value: '', label: t('clients.allTypes') },
@@ -59,23 +94,30 @@ const AllClientsPage = () => {
   //   navigate(`/clients/${client.id}?mode=receivables&filter=unpaid`);
   // };
 
-  // Export handlers
+  // --- MODIFIED: Export handlers ---
   const handleExportToExcel = () => {
-    if (data?.clients) {
-      exportClientsToExcel(data.clients);
+    if (allClients.length > 0) {
+      const clientsWithBalance = allClients.map(client => ({
+        ...client,
+        // Ensure balance field matches what's displayed in table (total_outstanding)
+        balance: (client.total_outstanding || 0),
+      }));
+
+      const summary = {
+        total_clients: allClients.length,
+        // Use total_outstanding (DUE amount) to match what's displayed in table
+        total_receivables: allClients.reduce((sum, c) => sum + (c.total_outstanding || 0), 0),
+        total_paid: allClients.reduce((sum, c) => sum + (c.total_paid || 0), 0),
+        net_balance: allClients.reduce((sum, c) => sum + (c.total_outstanding || 0), 0),
+      };
+      
+      exportMutation.mutate({ clients: clientsWithBalance, summary });
     }
   };
 
-  // const handleExportToPDF = () => {
-  //   if (data?.clients) {
-  //     exportClientsToPDF(data.clients);
-  //   }
-  // };
-
   const handlePrint = () => {
-    if (data?.clients) {
-      printClientsReport(data.clients);
-    }
+    // This can be implemented later by creating a PrintGenerator
+    showToast({ type: 'info', title: 'قيد التطوير', message: 'ميزة الطباعة ستكون متاحة قريباً.'});
   };
 
   const handleTypeFilterChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
@@ -133,10 +175,12 @@ const AllClientsPage = () => {
         
         {/* Action Buttons */}
         <div className="d-flex gap-2">
+          {/* MODIFIED: Add isLoading state */}
           <Button 
             variant="outline-primary" 
             size="sm"
             onClick={handleExportToExcel}
+            isLoading={exportMutation.isPending}
             title="تصدير إلى Excel"
           >
             <FileSpreadsheet size={16} className="me-1" />
@@ -161,13 +205,28 @@ const AllClientsPage = () => {
       <div className="card">
         <div className="card-body p-0">
           <ClientsTable
-            clients={data?.clients || []}
-            isLoading={isLoading}
+            clients={allClients}
+            isLoading={isLoading && !data}
             onEdit={handleEditClient}
             onAddTask={handleAddTaskToClient}
             onAddReceivable={handleAddReceivable}
           />
-          {/* Pagination component will go here later */}
+          
+          {/* --- NEW: Load More Button & Intersection Observer --- */}
+          <div ref={ref} className="text-center p-4">
+            {hasNextPage && (
+              <Button
+                onClick={() => fetchNextPage()}
+                isLoading={isFetchingNextPage}
+                variant="outline-primary"
+              >
+                {isFetchingNextPage ? 'جاري التحميل...' : 'تحميل المزيد'}
+              </Button>
+            )}
+            {!hasNextPage && !isLoading && allClients.length > 0 && (
+              <p className="text-muted mb-0">وصلت إلى نهاية القائمة</p>
+            )}
+          </div>
         </div>
       </div>
     </div>

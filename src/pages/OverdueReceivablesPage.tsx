@@ -1,12 +1,35 @@
-import { useEffect } from 'react';
-import { useGetFilteredReceivables } from '../queries/receivableQueries';
+import { useEffect, useMemo } from 'react';
+import { useGetFilteredReceivablesInfinite } from '../queries/receivableQueries';
 import { applyPageBackground } from '../utils/backgroundUtils';
 import FilteredReceivablesTable from '../components/receivables/FilteredReceivablesTable';
 import { useReceivablesPermissions } from '../hooks/useReceivablesPermissions';
+import { useInView } from 'react-intersection-observer';
+import Button from '../components/ui/Button';
 
 const OverdueReceivablesPage = () => {
   const { hasViewOverdueReceivablesPermission, isLoading: isPermissionsLoading } = useReceivablesPermissions();
-  const { data, isLoading } = useGetFilteredReceivables('overdue', hasViewOverdueReceivablesPermission);
+  
+  // Use infinite query for overdue receivables
+  const {
+    data,
+    isLoading,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+  } = useGetFilteredReceivablesInfinite('overdue', hasViewOverdueReceivablesPermission);
+
+  // Flatten the pages into a single array for rendering
+  const allReceivables = useMemo(() => data?.pages.flatMap(page => page.receivables) || [], [data]);
+
+  // Logic for infinite scroll
+  const { ref } = useInView({
+    threshold: 1,
+    onChange: (inView) => {
+      if (inView && hasNextPage && !isFetchingNextPage) {
+        fetchNextPage();
+      }
+    },
+  });
 
   // Apply receivables page background
   useEffect(() => {
@@ -42,10 +65,26 @@ const OverdueReceivablesPage = () => {
       <div className="card">
         <div className="card-body p-0">
           <FilteredReceivablesTable
-            receivables={data?.receivables || []}
-            isLoading={isLoading}
+            receivables={allReceivables}
+            isLoading={isLoading && !data}
             filterType="overdue"
           />
+          
+          {/* Load More Button & Intersection Observer */}
+          <div ref={ref} className="text-center p-4">
+            {hasNextPage && (
+              <Button
+                onClick={() => fetchNextPage()}
+                isLoading={isFetchingNextPage}
+                variant="outline-primary"
+              >
+                {isFetchingNextPage ? 'جاري التحميل...' : 'تحميل المزيد'}
+              </Button>
+            )}
+            {!hasNextPage && !isLoading && allReceivables.length > 0 && (
+              <p className="text-muted mb-0">وصلت إلى نهاية القائمة</p>
+            )}
+          </div>
         </div>
       </div>
     </div>

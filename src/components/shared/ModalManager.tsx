@@ -35,6 +35,12 @@ import EditManualReceivableModal from '../receivables/EditManualReceivableModal'
 import DeleteReceivableModal from '../receivables/DeleteReceivableModal';
 import ClientReceivablesEditModal from '../receivables/ClientReceivablesEditModal';
 
+// NEW CONFLICT RESOLUTION MODALS
+import PrepaidConflictModal from '../modals/PrepaidConflictModal';
+import TaskAmountConflictModal from '../modals/TaskAmountConflictModal';
+import TaskCancellationModal from '../modals/TaskCancellationModal';
+import ConcurrentModificationModal from '../modals/ConcurrentModificationModal';
+
 // Separate component for client receivables to avoid re-renders
 const ClientReceivablesFetcher = ({ client }: { client?: any }) => {
   const { data: receivablesData, isLoading } = useGetClientReceivables(client?.id || 0);
@@ -163,6 +169,49 @@ const ModalManager = () => {
 
       case 'urgentAlert':
         return <UrgentAlertModal key="urgentAlert" />;
+
+      // NEW CONFLICT RESOLUTION MODALS
+      case 'prepaidConflict':
+        return (
+          <PrepaidConflictModal
+            key="prepaidConflict"
+            taskId={props.taskId}
+            conflictData={props.conflictData}
+            newPrepaidAmount={props.newPrepaidAmount}
+            onResolved={props.onResolved}
+          />
+        );
+
+      case 'taskAmountConflict':
+        return (
+          <TaskAmountConflictModal
+            key="taskAmountConflict"
+            taskId={props.taskId}
+            conflictData={props.conflictData}
+            newTaskAmount={props.newTaskAmount}
+            onResolved={props.onResolved}
+          />
+        );
+
+      case 'taskCancellation':
+        return (
+          <TaskCancellationModal
+            key="taskCancellation"
+            taskId={props.taskId}
+            analysisData={props.analysisData}
+            onResolved={props.onResolved}
+          />
+        );
+
+      case 'concurrentModification':
+        return (
+          <ConcurrentModificationModal
+            key="concurrentModification"
+            conflictData={props.conflictData}
+            onRetry={props.onRetry}
+            onCancel={props.onCancel}
+          />
+        );
 
       case 'paymentForm':
         return <ReceivablePaymentModal key="paymentForm" />;

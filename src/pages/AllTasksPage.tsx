@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useSearchParams } from 'react-router-dom';
-import { useGetTasks, useDeleteTask } from '../queries/taskQueries';
+import { useGetTasksInfinite, useDeleteTask } from '../queries/taskQueries';
 import { useModalStore } from '../stores/modalStore';
 import { applyPageBackground } from '../utils/backgroundUtils';
 import type { Task } from '../api/types';
@@ -9,7 +9,13 @@ import AllTasksTable from '../components/tasks/AllTasksTable';
 import TaskFilter from '../components/tasks/TaskFilter';
 import TotalsCards from '../components/tasks/TotalsCards';
 import Button from '../components/ui/Button';
-import { PlusCircle } from 'lucide-react';
+import { PlusCircle, FileSpreadsheet } from 'lucide-react';
+// --- MODIFICATIONS START ---
+import { useMutation } from '@tanstack/react-query';
+import { exportService } from '../services/export/ExportService';
+import { useToast } from '../hooks/useToast';
+import { useInView } from 'react-intersection-observer';
+// --- MODIFICATIONS END ---
 
 
 const AllTasksPage = () => {
@@ -17,9 +23,9 @@ const AllTasksPage = () => {
   const openModal = useModalStore((state) => state.openModal);
   const deleteTaskMutation = useDeleteTask();
   const [searchParams, setSearchParams] = useSearchParams();
+  const { showToast } = useToast(); // ADD
 
   // Get filters from URL parameters
-  const [page] = useState(1);
   const [search, setSearch] = useState(searchParams.get('search') || '');
   const [status, setStatus] = useState(searchParams.get('status') || '');
   const [type, setType] = useState(() => searchParams.get('type') || '');
@@ -66,27 +72,56 @@ const AllTasksPage = () => {
     return t('tasks.title');
   }, [status, type, t]);
 
-  // Fetch tasks with current filters (excluding search)
-  const { data, isLoading } = useGetTasks({
-    page,
+  // Fetch tasks with current filters (excluding search) using infinite query
+  const {
+    data,
+    isLoading,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+  } = useGetTasksInfinite({
     status: status || undefined,
-    type: type || undefined
+    type: type || undefined,
+  });
+
+  // Flatten the pages into a single array for rendering
+  const allTasks = useMemo(() => data?.pages.flatMap(page => page.tasks) || [], [data]);
+
+  // --- NEW: Logic for infinite scroll ---
+  const { ref } = useInView({
+    threshold: 1, // Trigger when the element is fully in view
+    onChange: (inView) => {
+      if (inView && hasNextPage && !isFetchingNextPage) {
+        fetchNextPage();
+      }
+    },
+  });
+
+  // --- NEW: Mutation for exporting tasks ---
+  const exportTasksMutation = useMutation({
+    mutationFn: exportService.exportAllTasks,
+    onSuccess: () => {
+      showToast({ type: 'success', title: 'تم تصدير الملف بنجاح' });
+    },
+    onError: (error: Error) => {
+      showToast({ type: 'error', title: 'فشل التصدير', message: error.message });
+    },
   });
 
   // Client-side filtering for search
   const filteredTasks = useMemo(() => {
-    if (!data?.tasks) return [];
-    if (!search.trim()) return data.tasks;
+    if (!allTasks.length) return [];
+    if (!search.trim()) return allTasks;
 
     const searchLower = search.toLowerCase().trim();
-    return data.tasks.filter(task =>
+    return allTasks.filter(task =>
       task.task_name?.toLowerCase().includes(searchLower) ||
       task.client.name.toLowerCase().includes(searchLower) ||
       task.client.phone.includes(searchLower) ||
       task.notes?.toLowerCase().includes(searchLower) ||
       task.type.toLowerCase().includes(searchLower)
     );
-  }, [data?.tasks, search]);
+  }, [allTasks, search]);
 
   const handleAddTask = () => openModal('taskForm', {});
   const handleEditTask = (task: Task) => openModal('taskForm', { taskToEdit: task });
@@ -126,6 +161,37 @@ const AllTasksPage = () => {
     setType('');
   };
 
+  // --- NEW: Export handler ---
+  const handleExportToExcel = () => {
+    if (filteredTasks.length > 0) {
+      const tasksToExport = filteredTasks.map(task => ({
+        ...task,
+        client_name: task.client.name,
+        client_phone: task.client.phone,
+        service_name: task.task_name || t(`type.${task.type}`),
+        task_type: task.type,
+        // Use correct payment calculation based on receivable data
+        amount_paid: task.receivable ? task.amount - task.receivable.amount : task.amount,
+        amount_remaining: task.receivable?.amount || 0,
+        is_overdue: task.receivable ? new Date(task.receivable.due_date || '') < new Date() && task.status !== 'Completed' : false,
+      }));
+
+      const summary = {
+        total_tasks: tasksToExport.length,
+        tasks_new: tasksToExport.filter(t => t.status === 'New').length,
+        tasks_in_progress: tasksToExport.filter(t => t.status === 'Deferred').length, // Assuming Deferred is In Progress
+        tasks_completed: tasksToExport.filter(t => t.status === 'Completed').length,
+        tasks_cancelled: tasksToExport.filter(t => t.status === 'Cancelled').length,
+        total_amount: tasksToExport.reduce((sum, t) => sum + t.amount, 0),
+        total_paid: tasksToExport.reduce((sum, t) => sum + t.amount_paid, 0),
+        total_remaining: tasksToExport.reduce((sum, t) => sum + t.amount_remaining, 0),
+        overdue_tasks: tasksToExport.filter(t => t.is_overdue).length,
+      };
+
+      exportTasksMutation.mutate({ tasks: tasksToExport, summary });
+    }
+  };
+
   return (
     <div>
       <header className="d-flex justify-content-between align-items-center mb-3">
@@ -145,10 +211,23 @@ const AllTasksPage = () => {
           </div>
         </div>
         
-        <Button onClick={handleAddTask} style={{ minWidth: 'fit-content' }}>
-          <PlusCircle size={18} className="ms-2" />
-          {t('tasks.addNew')}
-        </Button>
+        {/* ADDED EXPORT BUTTON */}
+        <div className="d-flex gap-2">
+          <Button 
+            variant="outline-primary" 
+            size="sm"
+            onClick={handleExportToExcel}
+            isLoading={exportTasksMutation.isPending}
+            title="تصدير إلى Excel"
+          >
+            <FileSpreadsheet size={16} className="me-1" />
+            Excel
+          </Button>
+          <Button onClick={handleAddTask} style={{ minWidth: 'fit-content' }}>
+            <PlusCircle size={18} className="ms-2" />
+            {t('tasks.addNew')}
+          </Button>
+        </div>
       </header>
 
       <div className="card">
@@ -166,14 +245,29 @@ const AllTasksPage = () => {
         <div className="card-body p-0">
           <AllTasksTable
             tasks={filteredTasks}
-            isLoading={isLoading}
+            isLoading={isLoading && !data}
             onEdit={handleEditTask}
             onComplete={handleCompleteTask}
             onViewAmountDetails={handleViewAmountDetails}
             onDelete={handleDeleteTask}
             onShowRequirements={handleShowRequirements}
           />
-          {/* Pagination component will go here (use data.pagination) */}
+          
+          {/* --- NEW: Load More Button & Intersection Observer --- */}
+          <div ref={ref} className="text-center p-4">
+            {hasNextPage && (
+              <Button
+                onClick={() => fetchNextPage()}
+                isLoading={isFetchingNextPage}
+                variant="outline-primary"
+              >
+                {isFetchingNextPage ? 'جاري التحميل...' : 'تحميل المزيد'}
+              </Button>
+            )}
+            {!hasNextPage && !isLoading && allTasks.length > 0 && (
+              <p className="text-muted mb-0">وصلت إلى نهاية القائمة</p>
+            )}
+          </div>
         </div>
       </div>
     </div>

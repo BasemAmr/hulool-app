@@ -189,6 +189,7 @@ export interface UpdateTaskPayload {
   requirements?: Requirement[];
   tag_ids?: number[];
   tags?: string[];
+  expected_updated_at?: string; // For optimistic locking
 }
 
 export interface UpdateRequirementsPayload {
@@ -372,6 +373,29 @@ export interface OverpaymentData {
   };
 }
 
+export interface ResolutionOption {
+  label: string;
+  description: string;
+  recommended?: boolean;
+  available?: boolean;
+}
+
+export interface EnhancedOverpaymentData {
+  receivable_id: number;
+  current_amount: number;
+  new_amount: number;
+  total_paid: number;
+  surplus: number;
+  payments: any[];
+  allocations: any[];
+  resolution_options: {
+    auto_reduce_payments: ResolutionOption;
+    auto_reduce_latest: ResolutionOption;
+    convert_surplus_to_credit: ResolutionOption;
+    manual_resolution: ResolutionOption;
+  };
+}
+
 // Paginated Data
 export interface ReceivablePaginatedData {
   receivables: Receivable[];
@@ -471,4 +495,208 @@ export interface ReceivableDeletionResolution {
   payment_decisions?: PaymentDecision[];
   allocation_decisions?: AllocationDecision[];
   overpayment_resolution?: OverpaymentData;
+}
+
+// ========================================
+// NEW TYPES FOR TASK CONFLICT RESOLUTION
+// ========================================
+
+// Conflict Response Types
+export interface ConflictResponse<T> {
+  success: false;
+  code: string;
+  message: string;
+  data: T;
+}
+
+// Prepaid Amount Conflict Data
+export interface PrepaidConflictData {
+  conflict_type: 'prepaid_amount_change_conflict';
+  current_prepaid_amount: number;
+  new_prepaid_amount: number;
+  total_paid: number;
+  task_amount: number;
+  conflicts: PrepaidConflict[];
+  financial_records: {
+    payments: EnrichedPayment[];
+    allocations: EnrichedAllocation[];
+  };
+  resolution_options: ResolutionOptions;
+}
+
+export interface PrepaidConflict {
+  type: 'overpayment' | 'prepaid_elimination' | 'negative_main_receivable';
+  severity: 'high' | 'medium' | 'low';
+  message: string;
+  surplus?: number;
+  affected_amount?: number;
+  calculated_main_amount?: number;
+}
+
+// Task Amount Conflict Data  
+export interface TaskAmountConflictData {
+  conflict_type: 'main_receivable_overpayment';
+  current_task_amount: number;
+  new_task_amount: number;
+  current_main_receivable_amount: number;
+  calculated_new_main_amount: number;
+  main_receivable_paid: number;
+  surplus: number;
+  main_receivable_id: number;
+  financial_records: {
+    payments: EnrichedPayment[];
+    allocations: EnrichedAllocation[];
+  };
+}
+
+// Task Cancellation Analysis
+export interface TaskCancellationAnalysis {
+  task_id: number;
+  prepaid_receivable: ReceivableFinancialState | null;
+  main_receivable: ReceivableFinancialState | null;
+  total_funds_involved: number;
+}
+
+export interface ReceivableFinancialState {
+  receivable_id: number;
+  amount: number;
+  total_paid: number;
+  balance: number;
+  payments: EnrichedPayment[];
+  allocations: EnrichedAllocation[];
+}
+
+// Enhanced Payment/Allocation Types with Context
+export interface EnrichedPayment extends Payment {
+  payment_method_name?: string;
+  created_by_name?: string;
+}
+
+export interface EnrichedAllocation extends CreditAllocation {
+  credit_description?: string;
+  credit_received_at?: string;
+}
+
+// Resolution Options
+export interface ResolutionOptions {
+  payments?: Record<number, PaymentResolutionOption>;
+  allocations?: Record<number, AllocationResolutionOption>;
+}
+
+export interface PaymentResolutionOption {
+  current_amount: number;
+  available_actions: string[];
+  recommendations: string[];
+}
+
+export interface AllocationResolutionOption {
+  current_amount: number;
+  available_actions: string[];
+  credit_source: number;
+}
+
+// Decision Types for Resolution
+export interface PrepaidResolutionDecisions {
+  receivable_decision?: string;
+  payment_decisions?: PrepaidPaymentDecision[];
+  allocation_decisions?: PrepaidAllocationDecision[];
+}
+
+export interface PrepaidPaymentDecision {
+  payment_id: number;
+  action: 'keep' | 'delete' | 'convert_to_credit' | 'reduce_to' | 'split_payment';
+  new_amount?: number;
+  keep_amount?: number;
+  surplus_action?: 'convert_to_credit';
+}
+
+export interface PrepaidAllocationDecision {
+  allocation_id: number;
+  action: 'keep' | 'return_to_credit' | 'delete_allocation';
+}
+
+export interface MainReceivableDecisions {
+  payment_decisions: MainReceivablePaymentDecision[];
+  allocation_decisions: MainReceivableAllocationDecision[];
+}
+
+export interface MainReceivablePaymentDecision {
+  payment_id: number;
+  action: 'keep' | 'delete' | 'convert_to_credit' | 'reduce_to';
+  new_amount?: number;
+}
+
+export interface MainReceivableAllocationDecision {
+  allocation_id: number;
+  action: 'keep' | 'return_to_credit' | 'delete_allocation';
+}
+
+// Task Cancellation Decisions
+export interface TaskCancellationDecisions {
+  prepaid_receivable_decisions?: {
+    payment_decisions: PrepaidPaymentDecision[];
+    allocation_decisions: PrepaidAllocationDecision[];
+  };
+  main_receivable_decisions?: {
+    payment_decisions: MainReceivablePaymentDecision[];
+    allocation_decisions: MainReceivableAllocationDecision[];
+  };
+  task_action: 'cancel' | 'delete';
+}
+
+// Resolution Summary Types
+export interface ResolutionSummary {
+  task?: Task;
+  resolution_summary: {
+    payments_processed?: ProcessedPayment[];
+    allocations_processed?: ProcessedAllocation[];
+    credits_created?: CreatedCredit[];
+    financial_impact?: FinancialImpact;
+    prepaid_resolution?: any;
+    main_resolution?: any;
+    task_action?: string;
+  };
+}
+
+export interface ProcessedPayment {
+  payment_id: number;
+  original_amount: number;
+  action: string;
+  status: string;
+  new_amount?: number;
+  surplus_handled?: number;
+  credit_created?: CreatedCredit;
+}
+
+export interface ProcessedAllocation {
+  allocation_id: number;
+  original_amount: number;
+  action: string;
+  status: string;
+  returned_to_credit_id?: number;
+}
+
+export interface CreatedCredit {
+  credit_id: number;
+  amount: number;
+}
+
+export interface FinancialImpact {
+  task_amount_updated?: {
+    old_amount: number;
+    new_amount: number;
+  };
+  main_receivable_updated?: {
+    receivable_id: number;
+    old_amount: number;
+    new_amount: number;
+  };
+  prepaid_eliminated?: boolean;
+}
+
+// Concurrent Modification Error
+export interface ConcurrentModificationData {
+  expected_updated_at: string;
+  current_updated_at: string;
+  current_task_data: Task;
 }

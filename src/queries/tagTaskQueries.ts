@@ -1,59 +1,35 @@
 import { useQuery } from '@tanstack/react-query';
 import apiClient from '../api/apiClient';
-import type { ApiResponse, Task, Tag } from '../api/types';
+import type { ApiResponse } from '../api/types';
 import type { TagCollection } from '../types/tagTypes';
 
-// Get all tasks and group them by their tags
-const fetchTasksByTags = async (): Promise<TagCollection[]> => {
-    // Fetch all tasks with status "New" (or could be configurable)
-    const { data: tasksResponse } = await apiClient.get<ApiResponse<{tasks: Task[]}>>('/tasks', {
+// Optimized function to get tags with their associated tasks using the new backend endpoint
+const fetchTasksByTags = async (status: string = 'New'): Promise<TagCollection[]> => {
+    // Use the optimized endpoint that does the heavy lifting on the backend
+    const { data: response } = await apiClient.get<ApiResponse<TagCollection[]>>('/tags/with-tasks', {
         params: { 
-            status: 'New',
-            per_page: 1000 // Get a larger set to group properly
+            status: status
         },
     });
 
-    // Fetch all tags
-    const { data: tagsResponse } = await apiClient.get<ApiResponse<Tag[]>>('/tags');
-
-    if (!tasksResponse.success || !tagsResponse.success) {
-        throw new Error('Failed to fetch data for tag collections');
+    if (!response.success) {
+        throw new Error(response.message || 'Failed to fetch tag collections');
     }
 
-    const tasks = tasksResponse.data.tasks || [];
-    const tags = tagsResponse.data || [];
-
-    // Create a map to group tasks by tag
-    const tagCollections: TagCollection[] = [];
-
-    // Create collections for each tag
-    tags.forEach(tag => {
-        const tagTasks = tasks.filter(task => 
-            task.tags?.some(taskTag => taskTag.id === tag.id)
-        );
-
-        tagCollections.push({
-            tag,
-            tasks: tagTasks
-        });
-    });
-
-    // Sort collections by tag name (system tags first)
-    tagCollections.sort((a, b) => {
-        if (a.tag.is_system && !b.tag.is_system) return -1;
-        if (!a.tag.is_system && b.tag.is_system) return 1;
-        return a.tag.name.localeCompare(b.tag.name);
-    });
-
-    return tagCollections;
+    // The backend already returns the data in the correct format with sorting
+    return response.data || [];
 };
 
-// React Query Hook
-export const useGetTasksByTags = () => {
+// React Query Hook with optimized caching and performance
+export const useGetTasksByTags = (status: string = 'New') => {
     return useQuery({
-        queryKey: ['tasks-by-tags'],
-        queryFn: fetchTasksByTags,
-        staleTime: 60 * 1000, // Keep fresh for 1 minute
-        refetchOnWindowFocus: false, // Explicitly false as this can be a heavy query
+        queryKey: ['tasks-by-tags', status],
+        queryFn: () => fetchTasksByTags(status),
+        staleTime: 5 * 60 * 1000, // Keep fresh for 5 minutes (longer since it's optimized)
+        gcTime: 10 * 60 * 1000, // Keep in cache for 10 minutes
+        refetchOnWindowFocus: false, // Prevent unnecessary refetches
+        refetchOnReconnect: false, // Prevent unnecessary refetches on reconnect
+        retry: 2, // Only retry twice on failure
+        retryDelay: attemptIndex => Math.min(1000 * 2 ** attemptIndex, 30000), // Exponential backoff
     });
 };

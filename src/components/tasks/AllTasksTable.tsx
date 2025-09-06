@@ -2,11 +2,13 @@ import type { Task } from '../../api/types';
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
 import Button from '../ui/Button';
-import { Edit, Pause, Play, CheckCircle, ExternalLink, MessageCircle, DollarSign, Trash2, FileText, AlertTriangle } from 'lucide-react';
-import { useDeferTask, useResumeTask } from '../../queries/taskQueries';
+import WhatsAppIcon from '../ui/WhatsAppIcon';
+import { Edit, Pause, Play, CheckCircle, ExternalLink, DollarSign, Trash2, FileText, AlertTriangle, MessageSquare } from 'lucide-react';
+import { useDeferTask, useResumeTask, useUpdateTask } from '../../queries/taskQueries';
 import { useToast } from '../../hooks/useToast';
 import {useCurrentUserCapabilities } from '../../queries/userQueries';
-import { useModalStore } from '../../stores/modalStore';
+import { useDrawerStore } from '../../stores/drawerStore';
+import { useQueryClient } from '@tanstack/react-query';
 
 interface AllTasksTableProps {
   tasks: Task[];
@@ -22,16 +24,18 @@ const AllTasksTable = ({ tasks, isLoading, onEdit, onComplete, onViewAmountDetai
   const { t } = useTranslation();
   const deferTaskMutation = useDeferTask();
   const resumeTaskMutation = useResumeTask();
+  const updateTaskMutation = useUpdateTask();
   const { data: currentCapabilities } = useCurrentUserCapabilities();
   const { success, error } = useToast();
-  const { openModal } = useModalStore();
+  const { openDrawer } = useDrawerStore();
+  const queryClient = useQueryClient();
   
   if (isLoading) {
     return <div className="p-4 text-center">Loading tasks...</div>;
   }
   
   if (!tasks.length) {
-    return <div className="p-4 text-center text-muted">{t('common.noResults')}</div>;
+    return <div className="p-4 text-center ">{t('common.noResults')}</div>;
   }
   const canDeleteTasks = currentCapabilities?.tm_delete_any_task || false;
 
@@ -117,6 +121,55 @@ const AllTasksTable = ({ tasks, isLoading, onEdit, onComplete, onViewAmountDetai
     return `https://wa.me/${formattedPhone}`;
   };
 
+  // Handle urgent tag toggle
+  const handleToggleUrgentTag = (task: Task) => {
+    const isUrgent = task.tags?.some(tag => tag.name === 'قصوى');
+    const urgentTagId = 1;
+
+    const currentTags = Array.isArray(task.tags)
+      ? task.tags.map((tag: any) => typeof tag === 'object' ? tag.id.toString() : tag.toString())
+      : [];
+
+    let updatedTags: string[];
+
+    if (isUrgent) {
+      updatedTags = currentTags.filter(id => id !== urgentTagId.toString());
+    } else {
+      updatedTags = [...currentTags, urgentTagId.toString()];
+    }
+
+    updateTaskMutation.mutate({
+      id: task.id,
+      taskData: {
+        task_name: task.task_name || '',
+        type: task.type,
+        amount: task.amount,
+        start_date: task.start_date,
+        end_date: task.end_date || undefined,
+        prepaid_amount: task.prepaid_amount,
+        notes: task.notes || '',
+        tags: updatedTags,
+        requirements: task.requirements?.map((req: any) => ({
+          id: req.id,
+          requirement_text: req.requirement_text,
+          is_provided: req.is_provided
+        })) || []
+      }
+    }, {
+      onSuccess: () => {
+        success(
+          isUrgent ? 'تم إزالة العلامة' : 'تمت الإضافة',
+          isUrgent ? 'تم إزالة علامة العاجل من المهمة' : 'تم إضافة علامة العاجل للمهمة'
+        );
+        queryClient.invalidateQueries({ queryKey: ['tasks'] });
+        queryClient.invalidateQueries({ queryKey: ['dashboard'] });
+      },
+      onError: (err: any) => {
+        error('خطأ', err.message || 'حدث خطأ أثناء تحديث علامة العاجل');
+      }
+    });
+  };
+
   return (
     <div className="table-responsive">
       <table className="table table-hover mb-0" style={{ '--bs-table-hover-bg': 'transparent' } as React.CSSProperties}>
@@ -152,7 +205,7 @@ const AllTasksTable = ({ tasks, isLoading, onEdit, onComplete, onViewAmountDetai
                     <div>
                       <Link 
                         to={`/clients/${task.client.id}?mode=tasks`} 
-                        className="fw-bold text-primary text-decoration-none"
+                        className="fw-bold text-primary text-decoration-none text-black"
                       >
                         {task.client.name}
                       </Link>
@@ -162,7 +215,7 @@ const AllTasksTable = ({ tasks, isLoading, onEdit, onComplete, onViewAmountDetai
 
                 <td className='text-center'>
                   <div className="d-flex align-items-center justify-content-center gap-1">
-                      <span className="small text-muted">{task.client.phone}</span>
+                      <span className="small ">{task.client.phone}</span>
                       <a 
                         href={getWhatsAppUrl(task.client.phone)}
                         target="_blank"
@@ -171,7 +224,7 @@ const AllTasksTable = ({ tasks, isLoading, onEdit, onComplete, onViewAmountDetai
                         title="فتح واتساب"
                         style={{ fontSize: '12px' }}
                       >
-                        <MessageCircle size={14} />
+                        <WhatsAppIcon size={14} />
                       </a>
                     </div>
                 </td>
@@ -190,7 +243,7 @@ const AllTasksTable = ({ tasks, isLoading, onEdit, onComplete, onViewAmountDetai
 
                 {/* الملاحظات - Notes */}
                 <td>
-                  <div className="small text-muted" style={{ maxWidth: '200px', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                  <div className="small " style={{ maxWidth: '200px', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                     {task.notes || '—'}
                   </div>
                 </td>
@@ -220,6 +273,24 @@ const AllTasksTable = ({ tasks, isLoading, onEdit, onComplete, onViewAmountDetai
                         <ExternalLink size={16} />
                       </a>
                     )}
+
+                    {/* Follow-up Messages Button */}
+                    <Button 
+                      variant="outline-secondary" 
+                      size="sm" 
+                      onClick={() => openDrawer('taskFollowUp', { 
+                        taskId: task.id,
+                        taskName: task.task_name || undefined,
+                        clientName: task.client.name
+                      })} 
+                      title="عرض المراسلات والمتابعة"
+                      style={{ 
+                        borderColor: '#6c757d', 
+                        color: '#6c757d' 
+                      }}
+                    >
+                      <MessageSquare size={16} />
+                    </Button>
 
                     {/* Amount Details Button */}
                     {task.amount_details && task.amount_details.length > 0 && (
@@ -303,12 +374,12 @@ const AllTasksTable = ({ tasks, isLoading, onEdit, onComplete, onViewAmountDetai
                     <Button 
                       variant="secondary" 
                       size="sm" 
-                      onClick={() => openModal('urgentAlert', { taskId: task.id })} 
-                      title="تنبيه عاجل"
+                      onClick={() => handleToggleUrgentTag(task)} 
+                      title={task.tags?.some(tag => tag.name === 'قصوى') ? 'إلغاء العاجل' : 'تعليم عاجل'}
                       style={{ 
-                        borderColor: '#ffc107', 
-                        color: '#856404',
-                        backgroundColor: '#fff3cd'
+                        borderColor: task.tags?.some(tag => tag.name === 'قصوى') ? '#dc3545' : '#ffc107', 
+                        color: task.tags?.some(tag => tag.name === 'قصوى') ? '#dc3545' : '#856404',
+                        backgroundColor: task.tags?.some(tag => tag.name === 'قصوى') ? '#f8d7da' : '#fff3cd'
                       }}
                     >
                       <AlertTriangle size={16} />

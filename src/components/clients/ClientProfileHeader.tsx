@@ -4,7 +4,8 @@ import { useState, useRef, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import type { Client } from '../../api/types';
 import Button from '../ui/Button';
-import { Plus } from 'lucide-react';
+import WhatsAppIcon from '../ui/WhatsAppIcon';
+import { Plus, Download } from 'lucide-react'; // For a generic export icon
 import { useGetClientCredits } from '../../queries/clientCreditQueries';
 import SaudiRiyalIcon from '../ui/SaudiRiyalIcon';
 
@@ -16,9 +17,12 @@ interface ClientProfileHeaderProps {
   onAddTask: () => void;
   onAddReceivable: () => void;
   onAddCredit: () => void;
-  onExportExcel?: () => void;
-  onExportPDF?: () => void;
-  onPrint?: () => void;
+  // --- MODIFIED PROPS ---
+  onExportStatement: () => void;
+  onExportTasks: () => void;
+  onExportCredits: () => void;
+  isExporting: boolean;
+  // --- END MODIFIED PROPS ---
 }
 
 // Custom hook for positioning dropdowns with createPortal
@@ -62,9 +66,10 @@ const ClientProfileHeader = ({
   onAddTask, 
   onAddReceivable, 
   onAddCredit,
-  onExportExcel, 
-  onExportPDF, 
-  onPrint 
+  onExportStatement,
+  onExportTasks,
+  onExportCredits,
+  isExporting,
 }: ClientProfileHeaderProps) => {
   const { t } = useTranslation();
   
@@ -223,16 +228,18 @@ const ClientProfileHeader = ({
               )}
             </div>
 
-            {/* Export Dropdown (Only in receivables mode) */}
-            {mode === 'receivables' && (
+            {/* --- MODIFIED: Export Dropdown logic --- */}
+            {(mode === 'receivables' || mode === 'tasks') && (
               <div className="position-relative">
                 <button
                   ref={exportDropdown.triggerRef}
                   className="btn btn-sm btn-outline-secondary"
                   style={{ fontSize: '0.75rem', padding: '0.2rem 0.4rem' }}
                   onClick={() => setShowExportDropdown(!showExportDropdown)}
+                  disabled={isExporting}
                 >
-                  تصدير
+                  <Download size={12} className="me-1" />
+                  {isExporting ? 'جاري...' : 'تصدير'}
                   <span className="ms-1">▼</span>
                 </button>
                 
@@ -250,37 +257,28 @@ const ClientProfileHeader = ({
                       borderRadius: '0.375rem'
                     }}
                   >
-                    {onExportExcel && (
-                      <button
-                        className="dropdown-item text-end"
-                        onClick={() => {
-                          onExportExcel();
-                          setShowExportDropdown(false);
-                        }}
-                      >
-                        <span className="text-success me-2">📊</span> Excel
-                      </button>
+                    {mode === 'receivables' && (
+                      <>
+                        <button
+                          className="dropdown-item text-end"
+                          onClick={() => { onExportStatement(); setShowExportDropdown(false); }}
+                        >
+                          <span className="text-success me-2">📊</span> كشف الحساب (Excel)
+                        </button>
+                        <button
+                          className="dropdown-item text-end"
+                          onClick={() => { onExportCredits(); setShowExportDropdown(false); }}
+                        >
+                          <span className="text-info me-2">�</span> تقرير الائتمانات (Excel)
+                        </button>
+                      </>
                     )}
-                    {onExportPDF && (
+                    {mode === 'tasks' && (
                       <button
                         className="dropdown-item text-end"
-                        onClick={() => {
-                          onExportPDF();
-                          setShowExportDropdown(false);
-                        }}
+                        onClick={() => { onExportTasks(); setShowExportDropdown(false); }}
                       >
-                        <span className="text-danger me-2">📄</span> PDF
-                      </button>
-                    )}
-                    {onPrint && (
-                      <button
-                        className="dropdown-item text-end"
-                        onClick={() => {
-                          onPrint();
-                          setShowExportDropdown(false);
-                        }}
-                      >
-                        <span className="text-info me-2">🖨️</span> طباعة
+                        <span className="text-primary me-2">�</span> تقرير المهام (Excel)
                       </button>
                     )}
                   </div>,
@@ -288,6 +286,7 @@ const ClientProfileHeader = ({
                 )}
               </div>
             )}
+            {/* --- END MODIFIED EXPORT --- */}
           </div>
 
           {/* Center: Client Info */}
@@ -304,12 +303,7 @@ const ClientProfileHeader = ({
               rel="noopener noreferrer" 
               className="text-success"
             >
-              <img 
-                src="/src/assets/images/whats.svg" 
-                alt="WhatsApp" 
-                width="16" 
-                height="16"
-              />
+              <WhatsAppIcon size={16} />
             </a>
           </div>
 

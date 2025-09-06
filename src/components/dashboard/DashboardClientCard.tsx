@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
 import { useQueryClient } from '@tanstack/react-query';
 import { useModalStore } from '../../stores/modalStore';
+import { useDrawerStore } from '../../stores/drawerStore';
 import { useToast } from '../../hooks/useToast';
 import { useDeferTask, useResumeTask, useUpdateTask } from '../../queries/taskQueries';
 import type { Task } from '../../api/types';
@@ -17,6 +18,7 @@ import {
   MoreVertical,
   AlertTriangle,
   Eye,
+  MessageSquare,
 } from 'lucide-react';
 import WhatsAppIcon from '../../assets/images/whats.svg';
 import GoogleDriveIcon from '../../assets/images/googe_drive.svg';
@@ -61,11 +63,112 @@ const DashboardClientCard = ({ data, index = 0, alternatingColors }: DashboardCl
   const { client, tasks } = data;
   const { t } = useTranslation();
   const openModal = useModalStore(state => state.openModal);
+  const { openDrawer } = useDrawerStore();
   const { success, error } = useToast();
   const queryClient = useQueryClient();
   const deferTaskMutation = useDeferTask();
   const resumeTaskMutation = useResumeTask();
   const updateTaskMutation = useUpdateTask();
+  const [hoveredTaskId, setHoveredTaskId] = useState<number | null>(null);
+  const [isMouseOverPortal, setIsMouseOverPortal] = useState(false);
+  const [isMouseOverRow, setIsMouseOverRow] = useState(false);
+  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Smart hover management
+  const handleRowMouseEnter = (taskId: number) => {
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current);
+      timeoutRef.current = null;
+    }
+    setIsMouseOverRow(true);
+    setHoveredTaskId(taskId);
+  };
+
+  const handleRowMouseLeave = () => {
+    setIsMouseOverRow(false);
+    // Delay hiding the portal to allow mouse to reach it
+    timeoutRef.current = setTimeout(() => {
+      if (!isMouseOverPortal) {
+        setHoveredTaskId(null);
+      }
+    }, 200); // 200ms delay
+  };
+
+  const handlePortalMouseEnter = () => {
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current);
+      timeoutRef.current = null;
+    }
+    setIsMouseOverPortal(true);
+  };
+
+  const handlePortalMouseLeave = () => {
+    setIsMouseOverPortal(false);
+    // Immediately hide since user is moving away from portal
+    timeoutRef.current = setTimeout(() => {
+      if (!isMouseOverRow) {
+        setHoveredTaskId(null);
+      }
+    }, 100);
+  };
+
+  // Global mouse tracking for better portal persistence
+  useEffect(() => {
+    const handleGlobalMouseMove = (e: MouseEvent) => {
+      if (!hoveredTaskId) return;
+      
+      const portalElement = document.querySelector('.task-portal');
+      const hoveredRow = document.querySelector(`tr[data-task-id="${hoveredTaskId}"]`);
+      
+      if (portalElement && hoveredRow) {
+        const portalRect = portalElement.getBoundingClientRect();
+        const rowRect = hoveredRow.getBoundingClientRect();
+        
+        const isOverPortal = (
+          e.clientX >= portalRect.left && 
+          e.clientX <= portalRect.right && 
+          e.clientY >= portalRect.top && 
+          e.clientY <= portalRect.bottom
+        );
+        
+        const isOverRow = (
+          e.clientX >= rowRect.left && 
+          e.clientX <= rowRect.right && 
+          e.clientY >= rowRect.top && 
+          e.clientY <= rowRect.bottom
+        );
+        
+        setIsMouseOverPortal(isOverPortal);
+        setIsMouseOverRow(isOverRow);
+      }
+    };
+
+    if (hoveredTaskId) {
+      document.addEventListener('mousemove', handleGlobalMouseMove);
+      return () => {
+        document.removeEventListener('mousemove', handleGlobalMouseMove);
+      };
+    }
+  }, [hoveredTaskId]);
+
+  // Cleanup timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+      }
+    };
+  }, []);
+
+  // Auto-hide when both mouse states are false
+  useEffect(() => {
+    if (!isMouseOverRow && !isMouseOverPortal && hoveredTaskId) {
+      const timeout = setTimeout(() => {
+        setHoveredTaskId(null);
+      }, 300);
+      return () => clearTimeout(timeout);
+    }
+  }, [isMouseOverRow, isMouseOverPortal, hoveredTaskId]);
 
   const handleAction = (mutation: any, task: Task, successKey: string, successMessageKey: string, errorKey: string) => {
     mutation.mutate({ id: task.id }, {
@@ -143,10 +246,10 @@ const DashboardClientCard = ({ data, index = 0, alternatingColors }: DashboardCl
   let headerColor, borderColor, row1Color, row2Color;
 
   if (isClientUrgent) {
-    headerColor = '#dc3545'; // Red for urgent
-    borderColor = '#c82333';
-    row1Color = '#ffebeb';
-    row2Color = '#ffe6e6';
+    headerColor = hexToRgba('#dc3545', 0.8); // Red for urgent
+    borderColor = hexToRgba('#c82333', 0.6);
+    row1Color = hexToRgba('#ffebeb', 0.5);
+    row2Color = hexToRgba('#ffe6e6', 0.5);
   } else {
     // Use the stronger alternatingColors as header colors
     const colorIndex = index % 2;
@@ -296,7 +399,8 @@ const DashboardClientCard = ({ data, index = 0, alternatingColors }: DashboardCl
       style={{
         borderRadius: '0px', // No border radius
         border: `3px solid ${borderColor}`, // Increased border width
-        overflow: 'hidden'
+        overflow: 'hidden',
+        position: 'relative'
       }}
     >
       {/* Header with alternating strong colors */}
@@ -360,14 +464,15 @@ const DashboardClientCard = ({ data, index = 0, alternatingColors }: DashboardCl
           position: 'relative',
           backgroundColor: row1Color,
           overflow: 'hidden'
-
         }}
       >
         <div className="table-responsive" style={{
           overflow: 'hidden'
         }}>
           <div style={{
-            maxHeight: '300px', overflow: 'hidden'
+            maxHeight: '300px', 
+            overflow: 'hidden',
+            position: 'relative'
           }}>
             <table className="table table-sm mb-0">
               {/* Sticky table header */}
@@ -407,7 +512,8 @@ const DashboardClientCard = ({ data, index = 0, alternatingColors }: DashboardCl
                   <th style={{
                     fontSize: '0.8em',
                     padding: '6px 8px',
-                    width: '60px',
+                    width: '80px',
+                    minWidth: '80px',
                     backgroundColor: headerColor,
                     border: 'none'
                   }}>إجراءات</th>
@@ -428,21 +534,16 @@ const DashboardClientCard = ({ data, index = 0, alternatingColors }: DashboardCl
                   return (
                     <tr
                       key={task.id}
+                      className="task-row"
+                      data-task-id={task.id}
                       style={{
                         backgroundColor: rowBackground,
                         transition: 'all 0.2s ease-in-out',
-                        border: 'none'
+                        border: 'none',
+                        position: 'relative'
                       }}
-                      onMouseEnter={(e) => {
-                        e.currentTarget.style.transform = 'scale(1.02)';
-                        e.currentTarget.style.boxShadow = '0 2px 8px rgba(0,0,0,0.1)';
-                        e.currentTarget.style.zIndex = '2';
-                      }}
-                      onMouseLeave={(e) => {
-                        e.currentTarget.style.transform = 'scale(1)';
-                        e.currentTarget.style.boxShadow = 'none';
-                        e.currentTarget.style.zIndex = '1';
-                      }}
+                      onMouseEnter={() => handleRowMouseEnter(task.id)}
+                      onMouseLeave={handleRowMouseLeave}
                     >
                       <td style={{
                         fontSize: '0.82em',
@@ -507,14 +608,34 @@ const DashboardClientCard = ({ data, index = 0, alternatingColors }: DashboardCl
                           {task.amount?.toLocaleString()}
                         </div>
                       </td>
-                      <td style={{
-                        padding: '8px',
-                        position: 'relative',
-                        color: 'black',
-                        backgroundColor: rowBackground,
-                        border: 'none'
-                      }}>
-                        <div className="d-flex gap-1">
+                      <td 
+                        className="task-actions"
+                        style={{
+                          padding: '8px',
+                          position: 'relative',
+                          color: 'black',
+                          backgroundColor: rowBackground,
+                          border: 'none',
+                          minWidth: '80px',
+                          whiteSpace: 'nowrap'
+                        }}>
+                        <div className="d-flex gap-1" style={{ 
+                          justifyContent: 'flex-start',
+                          minWidth: 'fit-content'
+                        }}>
+                          <button
+                            className="btn btn-outline-secondary btn-sm p-1 me-1"
+                            onClick={() => openDrawer('taskFollowUp', { 
+                              taskId: task.id,
+                              taskName: task.task_name || undefined,
+                              clientName: client.name
+                            })}
+                            title="التعليقات"
+                            style={{ fontSize: '10px', lineHeight: 1 }}
+                          >
+                            <MessageSquare size={10} />
+                          </button>
+
                           <button
                             onClick={() => handleEditTask(task)}
                             className="btn btn-outline-info btn-sm p-1"
@@ -566,6 +687,17 @@ const DashboardClientCard = ({ data, index = 0, alternatingColors }: DashboardCl
                                   <ListChecks size={11} className="ms-2" />
                                   المتطلبات
                                 </Dropdown.Item>
+                                <Dropdown.Item 
+                                  onClick={() => openDrawer('taskFollowUp', { 
+                                    taskId: task.id,
+                                    taskName: task.task_name || undefined,
+                                    clientName: client.name
+                                  })} 
+                                  className="text-end"
+                                >
+                                  <MessageSquare size={11} className="ms-2" />
+                                  التعليقات
+                                </Dropdown.Item>
                                 <Dropdown.Item onClick={() => handleToggleUrgentTag(task)} className="text-end">
                                   <AlertTriangle size={11} className="ms-2" />
                                   {task.tags?.some(tag => tag.name === 'قصوى') ? 'إلغاء العاجل' : 'تعليم عاجل'}
@@ -584,6 +716,172 @@ const DashboardClientCard = ({ data, index = 0, alternatingColors }: DashboardCl
           </div>
         </div>
       </div>
+
+      {/* Compact floating row overlay for hovered task */}
+      {hoveredTaskId && createPortal(
+        (() => {
+          const task = tasks.find(t => t.id === hoveredTaskId);
+          if (!task) return null;
+          
+          const isTaskUrgent = task.tags?.some(tag => tag.name === 'قصوى');
+          let taskRowBackground;
+          if (isTaskUrgent) {
+            taskRowBackground = 'rgba(255, 204, 204, 1)'; // Full opacity for urgent
+          } else {
+            const taskIndex = tasks.findIndex(t => t.id === task.id);
+            const baseColor = taskIndex % 2 === 0 ? row1Color : row2Color;
+            // Convert to full opacity
+            taskRowBackground = baseColor.includes('rgba') 
+              ? baseColor.replace(/[\d\.]+\)$/g, '1)')  // Change last number to 1
+              : baseColor;
+          }
+
+          return (
+            <div
+              className="task-portal"
+              style={{
+                position: 'fixed',
+                top: '50%',
+                left: '50%',
+                transform: 'translate(-50%, -50%)',
+                backgroundColor: taskRowBackground,
+                border: '2px solid #007bff',
+                borderRadius: '8px',
+                boxShadow: '0 8px 32px rgba(0,0,0,0.2)',
+                zIndex: 10000,
+                pointerEvents: 'auto',
+                minWidth: '800px',
+                padding: '0'
+              }}
+              onMouseEnter={handlePortalMouseEnter}
+              onMouseLeave={handlePortalMouseLeave}
+            >
+              {/* Compact table row format */}
+              <table style={{ width: '100%', margin: 0 }}>
+                <thead>
+                  <tr style={{ backgroundColor: 'rgba(0, 123, 255, 0.1)' }}>
+                    <th style={{ padding: '8px 12px', fontSize: '0.85em', textAlign: 'center' }}>المهمة</th>
+                    <th style={{ padding: '8px 12px', fontSize: '0.85em', textAlign: 'center' }}>التاريخ</th>
+                    <th style={{ padding: '8px 12px', fontSize: '0.85em', textAlign: 'center' }}>المدة</th>
+                    <th style={{ padding: '8px 12px', fontSize: '0.85em', textAlign: 'center' }}>المبلغ</th>
+                    <th style={{ padding: '8px 12px', fontSize: '0.85em', textAlign: 'center', minWidth: '200px' }}>الإجراءات</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td style={{ padding: '12px', fontSize: '0.9em', textAlign: 'center' }}>
+                      <div className="d-flex align-items-center justify-content-center gap-1">
+                        <span>{task.task_name || t(`type.${task.type}`)}</span>
+                        {task.tags?.some(tag => tag.name === 'قصوى') && (
+                          <AlertTriangle size={16} className="text-danger" />
+                        )}
+                      </div>
+                    </td>
+                    <td style={{ padding: '12px', fontSize: '0.9em', textAlign: 'center' }}>
+                      {formatDate(task.start_date).replace(/\/20/, '/')}
+                    </td>
+                    <td style={{ padding: '12px', fontSize: '0.9em', textAlign: 'center' }}>
+                      {formatDaysElapsed(task.start_date)}
+                    </td>
+                    <td style={{ padding: '12px', fontSize: '0.9em', textAlign: 'center', color: '#dc3545', fontWeight: 'bold' }}>
+                      {task.amount?.toLocaleString()} ريال
+                    </td>
+                    <td style={{ padding: '12px', textAlign: 'center' }}>
+                      <div className="d-flex gap-1 justify-content-center flex-wrap">
+                        <button
+                          onClick={() => {
+                            handleEditTask(task);
+                            setHoveredTaskId(null);
+                          }}
+                          className="btn btn-outline-info btn-sm"
+                          title="تفاصيل"
+                          style={{ fontSize: '0.75em' }}
+                        >
+                          <Eye size={12} />
+                        </button>
+                        <button
+                          onClick={() => {
+                            handleComplete(task);
+                            setHoveredTaskId(null);
+                          }}
+                          className="btn btn-outline-success btn-sm"
+                          title="إكمال"
+                          style={{ fontSize: '0.75em' }}
+                        >
+                          <Check size={12} />
+                        </button>
+                        {task.status === 'New' ? (
+                          <button
+                            onClick={() => {
+                              handleDefer(task);
+                              setHoveredTaskId(null);
+                            }}
+                            className="btn btn-outline-warning btn-sm"
+                            title="تأجيل"
+                            style={{ fontSize: '0.75em' }}
+                          >
+                            <Pause size={12} />
+                          </button>
+                        ) : (
+                          <button
+                            onClick={() => {
+                              handleResume(task);
+                              setHoveredTaskId(null);
+                            }}
+                            className="btn btn-outline-primary btn-sm"
+                            title="استئناف"
+                            style={{ fontSize: '0.75em' }}
+                          >
+                            <Play size={12} />
+                          </button>
+                        )}
+                        <button
+                          onClick={() => {
+                            handleShowRequirements(task);
+                            setHoveredTaskId(null);
+                          }}
+                          className="btn btn-outline-secondary btn-sm"
+                          title="المتطلبات"
+                          style={{ fontSize: '0.75em' }}
+                        >
+                          <ListChecks size={12} />
+                        </button>
+                        <button
+                          onClick={() => {
+                            openDrawer('taskFollowUp', { 
+                              taskId: task.id,
+                              taskName: task.task_name || undefined,
+                              clientName: client.name
+                            });
+                            setHoveredTaskId(null);
+                          }}
+                          className="btn btn-outline-info btn-sm"
+                          title="التعليقات"
+                          style={{ fontSize: '0.75em' }}
+                        >
+                          <MessageSquare size={12} />
+                        </button>
+                        <button
+                          onClick={() => {
+                            handleToggleUrgentTag(task);
+                            setHoveredTaskId(null);
+                          }}
+                          className="btn btn-outline-danger btn-sm"
+                          title={task.tags?.some(tag => tag.name === 'قصوى') ? 'إلغاء العاجل' : 'تعليم عاجل'}
+                          style={{ fontSize: '0.75em' }}
+                        >
+                          <AlertTriangle size={12} />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          );
+        })(),
+        document.body
+      )}
     </div>
   );
 };
