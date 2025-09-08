@@ -16,7 +16,8 @@ const TagColumnsView = ({ tagCollections, isLoading = false }: TagColumnsViewPro
         );
     }
 
-    if (tagCollections.length === 0) {
+    // Add safety check for tagCollections
+    if (!tagCollections || tagCollections.length === 0) {
         return (
             <div className="text-center py-5">
                 <div className="empty-icon mb-3">
@@ -33,7 +34,7 @@ const TagColumnsView = ({ tagCollections, isLoading = false }: TagColumnsViewPro
             <div className="row g-3">
                 {tagCollections.map(tagCollection => (
                     <TagColumn 
-                        key={tagCollection.tag.id} 
+                        key={tagCollection?.tag?.id || Math.random()} 
                         tagCollection={tagCollection} 
                         isLoading={isLoading}
                     />

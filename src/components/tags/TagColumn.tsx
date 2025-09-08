@@ -5,11 +5,13 @@ import { useModalStore } from '../../stores/modalStore';
 import type { TagColumnProps } from '../../types/tagTypes';
 
 const TagColumn = ({ tagCollection, isLoading = false }: TagColumnProps) => {
-    const { tag, tasks } = tagCollection;
+    const { tag, tasks } = tagCollection || {};
     const openModal = useModalStore((state) => state.openModal);
 
     const handleSelectTasks = () => {
-        openModal('taskSelection', { tagId: tag.id });
+        if (tag?.id) {
+            openModal('taskSelection', { tagId: tag.id });
+        }
     };
 
     if (isLoading) {
@@ -18,6 +20,24 @@ const TagColumn = ({ tagCollection, isLoading = false }: TagColumnProps) => {
                 <div className="card h-100 shadow-sm" style={{ borderRadius: '8px' }}>
                     <div className="card-header d-flex justify-content-center align-items-center py-3">
                         <div className="loading-spinner"></div>
+                    </div>
+                </div>
+            </div>
+        );
+    }
+
+    // Add safety check for tag object
+    if (!tag || !tag.name) {
+        return (
+            <div className="col-lg-3">
+                <div className="card h-100 shadow-sm" style={{ borderRadius: '8px' }}>
+                    <div className="card-header bg-secondary text-white py-2">
+                        <div className="d-flex justify-content-center align-items-center">
+                            <span className="text-muted">علامة غير صالحة</span>
+                        </div>
+                    </div>
+                    <div className="card-body d-flex align-items-center justify-content-center">
+                        <p className="text-muted mb-0">خطأ في تحميل بيانات العلامة</p>
                     </div>
                 </div>
             </div>
@@ -55,7 +75,7 @@ const TagColumn = ({ tagCollection, isLoading = false }: TagColumnProps) => {
                                 fontSize: '11px'
                             }}
                         >
-                            {tasks.length}
+                            {tasks?.length || 0}
                         </span>
                     </div>
                     <div className="d-flex justify-content-center">
@@ -75,7 +95,7 @@ const TagColumn = ({ tagCollection, isLoading = false }: TagColumnProps) => {
                     </div>
                 </div>
                 <div className="card-body p-0" style={{ minHeight: '200px', maxHeight: '600px', overflowY: 'auto' }}>
-                    {tasks.length > 0 ? (
+                    {tasks && tasks.length > 0 ? (
                         <div className="p-2">
                             {tasks.map((task, index) => (
                                 <TagTaskCard 
