@@ -3,6 +3,7 @@ import { useAuthStore } from '../../stores/authStore';
 import { useSidebarStore } from '../../stores/sidebarStore';
 import { useTranslation } from 'react-i18next';
 import Logo from '../ui/Logo';
+import NotificationBell from './NotificationBell';
 import styles from './Layout.module.scss';
 import { Banknote, LayoutDashboard, LogOut, NotebookText, Users, Settings, Building, Calculator, Home, Briefcase, Plus, Receipt, ChevronDown, ChevronRight, Tags, CreditCard, AlertTriangle } from 'lucide-react';
 import { useModalStore } from '../../stores/modalStore';
@@ -115,9 +116,14 @@ const Sidebar = () => {
           </button>
         )}
 
-        {/* Header with Logo */}
+        {/* Header with Logo and Notifications */}
         <div className={styles.sidebarHeader}>
-            <Logo />
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
+              <Logo />
+              {!isCollapsed && (
+                <NotificationBell className="ml-2" />
+              )}
+            </div>
         </div>
 
       {/* Navigation */}

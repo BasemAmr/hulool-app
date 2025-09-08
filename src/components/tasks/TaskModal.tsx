@@ -449,7 +449,6 @@ const TaskModal = () => {
                         <select
                           {...field}
                           className={`form-select form-select-sm ${errors.type ? 'is-invalid' : ''}`}
-                          disabled={step === 2 && !isEditMode}
                         >
                           <option value="">{t('tasks.formTypeLabel')}</option>
                           {taskTypes.map((type) => (
@@ -669,8 +668,7 @@ const TaskModal = () => {
         <style>{`
           .task-modal-compact {
             width: 90vw;
-            max-width: 700px;
-            max-height: 600px;
+            max-width: 900px;
             margin: auto;
           }
           

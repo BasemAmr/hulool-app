@@ -230,9 +230,11 @@ const DashboardPage = () => {
                 onDragEnd={handleDragEnd}
             >
                 {!isLoadingClients && groupedClients && (
-                    <div className="recent-tasks-section">
-                        <div className="row g-0">
-                            {columnTypes.map((type) => {
+                    // *** NEW WRAPPER DIV ***
+                    <div className="dashboard-columns-container" style={{ minHeight: 'calc(100vh - 200px)' }}> 
+                        <div className="recent-tasks-section">
+                            <div className="row g-0">
+                                {columnTypes.map((type) => {
                                 const clients = groupedClients[type] || [];
                                 const config = taskTypeConfig[type];
 
@@ -244,7 +246,8 @@ const DashboardPage = () => {
                                                 borderRadius: '0',
                                                 border: '1px solid #dee2e6',
                                                 borderRight: type === 'Other' ? '1px solid #dee2e6' : 'none',
-                                                height: 'calc(100vh - 250px)',
+                                                // ADJUSTED: Removed fixed height to allow natural growth within the container
+                                                minHeight: '400px', // Minimum height for consistency
                                                 display: 'flex',
                                                 flexDirection: 'column'
                                             }}
@@ -283,10 +286,11 @@ const DashboardPage = () => {
                                                 className="card-body p-0"
                                                 style={{
                                                     minHeight: clients.length === 0 ? '200px' : 'auto',
-                                                    maxHeight: 'calc(100vh - 350px)',
-                                                    overflowY: 'auto',
+                                                    // REMOVED: maxHeight: 'calc(100vh - 350px)', 
+                                                    // NEW styles:
+                                                    overflowY: 'auto', // Keep this to allow scrolling if one column is very long
                                                     overflowX: 'hidden',
-                                                    flex: 1
+                                                    flex: 1 // Ensure it fills the available space in the flex container
                                                 }}
                                             >
                                                 {clients.length > 0 ? (
@@ -342,7 +346,8 @@ const DashboardPage = () => {
                                         </div>
                                     </div>
                                 );
-                            })}
+                                })}
+                            </div>
                         </div>
                     </div>
                 )}

@@ -5,6 +5,7 @@ import Button from '../ui/Button';
 import { ChevronRight, ChevronDown, FileText, CreditCard, MessageSquare, Edit3, Trash2 } from 'lucide-react';
 import { useModalStore } from '../../stores/modalStore';
 import { formatDate } from '../../utils/dateUtils';
+import { useStickyHeader } from '../../hooks/useStickyHeader';
 
 interface FilteredReceivablesTableProps {
   receivables: Receivable[];
@@ -20,6 +21,7 @@ const FilteredReceivablesTable: React.FC<FilteredReceivablesTableProps> = ({
   const navigate = useNavigate();
   const openModal = useModalStore((state) => state.openModal);
   const [expandedRows, setExpandedRows] = useState<Set<number>>(new Set());
+  const { sentinelRef, isSticky } = useStickyHeader();
 
   if (isLoading) {
     return (
@@ -114,8 +116,11 @@ const FilteredReceivablesTable: React.FC<FilteredReceivablesTableProps> = ({
 
   return (
     <div className="table-responsive" dir="rtl">
+      {/* Sentinel element for sticky header detection */}
+      <div ref={sentinelRef} ></div>
+      
       <table className="table table-hover align-middle">
-        <thead className={filterType === 'paid' ? 'table-success' : 'table-danger'}>
+        <thead className={`${filterType === 'paid' ? 'table-success' : 'table-danger'} ${isSticky ? 'is-sticky' : ''}`}>
           <tr className="fw-bold">
             <th scope="col" className="text-center" style={{ width: '5%', color: '#000' }}></th>
             <th scope="col" className="text-center" style={{ width: '8%', color: '#000' }}>العميل</th>

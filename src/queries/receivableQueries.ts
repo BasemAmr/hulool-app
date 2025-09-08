@@ -144,9 +144,14 @@ const fetchClientsReceivablesSummary = async (): Promise<{ clients: ClientSummar
 };
 
 // New paginated fetch function for clients receivables summary (infinite queries)
-export const fetchPaginatedClientsReceivablesSummary = async ({ pageParam = 1 }: { pageParam?: number; queryKey?: any }): Promise<{ clients: ClientSummary[]; pagination: any }> => {
+export const fetchPaginatedClientsReceivablesSummary = async ({ pageParam = 1, search = '' }: { pageParam?: number; search?: string }): Promise<{ clients: ClientSummary[]; pagination: any }> => {
+  const params: any = { page: pageParam, per_page: CLIENTS_SUMMARY_PER_PAGE };
+  if (search) {
+    params.search = search;
+  }
+  
   const { data } = await apiClient.get<ApiResponse<{ clients: any[]; pagination: any }>>('/receivables/clients-summary', {
-    params: { page: pageParam, per_page: CLIENTS_SUMMARY_PER_PAGE }
+    params
   });
   if (!data.success) {
     throw new Error(data.message || 'Failed to fetch clients receivables summary.');
@@ -282,10 +287,10 @@ export const useGetClientsReceivablesSummary = (enabled: boolean = true) => {
 };
 
 // New infinite query hook for paginated clients receivables summary
-export const useGetClientsReceivablesSummaryInfinite = (enabled: boolean = true) => {
+export const useGetClientsReceivablesSummaryInfinite = (enabled: boolean = true, search: string = '') => {
   return useInfiniteQuery({
-    queryKey: ['receivables', 'clients-summary'],
-    queryFn: fetchPaginatedClientsReceivablesSummary,
+    queryKey: ['receivables', 'clients-summary', search],
+    queryFn: ({ pageParam }) => fetchPaginatedClientsReceivablesSummary({ pageParam, search }),
     initialPageParam: 1,
     getNextPageParam: (lastPage) => {
       // If the current page is less than the total pages, return the next page number

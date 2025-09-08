@@ -5,12 +5,11 @@ import { useGetClientsInfinite, /*useExportClients*/ } from '../queries/clientQu
 import { useModalStore } from '../stores/modalStore';
 import { /*useReceivablesPermissions */} from '../hooks/useReceivablesPermissions';
 import { applyPageBackground } from '../utils/backgroundUtils';
-import type { Client, ClientType } from '../api/types';
+import type { Client } from '../api/types';
 import ClientsTable from '../components/clients/ClientsTable';
-import ClientSearch from '../components/clients/ClientSearch';
 import Button from '../components/ui/Button';
-import Select from '../components/ui/Select';
-import { PlusCircle, FileSpreadsheet, Printer } from 'lucide-react'; // Example icon
+import RegionSelect from '../components/shared/RegionSelect';
+import { PlusCircle, FileSpreadsheet, Printer, X } from 'lucide-react';
 // --- MODIFICATIONS START ---
 import { useMutation } from '@tanstack/react-query';
 import { exportService } from '../services/export/ExportService';
@@ -25,7 +24,7 @@ const AllClientsPage = () => {
   const { showToast } = useToast(); // ADD
 
   const [search, setSearch] = useState('');
-  const [typeFilter, setTypeFilter] = useState<ClientType | undefined>(undefined);
+  const [regionFilter, setRegionFilter] = useState<number | null>(null);
 
   // Apply clients page background
   useEffect(() => {
@@ -39,7 +38,7 @@ const AllClientsPage = () => {
     fetchNextPage,
     hasNextPage,
     isFetchingNextPage,
-  } = useGetClientsInfinite(search, typeFilter);
+  } = useGetClientsInfinite(search, regionFilter);
 
   // Flatten the pages into a single array for rendering
   const allClients = useMemo(() => data?.pages.flatMap(page => page.clients) || [], [data]);
@@ -65,13 +64,6 @@ const AllClientsPage = () => {
     },
   });
 
-  const typeOptions = [
-    { value: '', label: t('clients.allTypes') },
-    { value: 'Government', label: t('clients.types.government') },
-    { value: 'RealEstate', label: t('clients.types.realEstate') },
-    { value: 'Accounting', label: t('clients.types.accounting') },
-    { value: 'Other', label: t('clients.types.other') },
-  ];
 
   const handleAddClient = () => {
     openModal('clientForm', {});
@@ -120,85 +112,87 @@ const AllClientsPage = () => {
     showToast({ type: 'info', title: 'قيد التطوير', message: 'ميزة الطباعة ستكون متاحة قريباً.'});
   };
 
-  const handleTypeFilterChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    const value = e.target.value;
-    setTypeFilter(value ? value as ClientType : undefined);
-  };
 
   return (
     <div>
-      {/* Compact single-row header: title - filter - search - buttons */}
-      <div className="d-flex align-items-center gap-3 mb-4 flex-wrap">
-        {/* Title */}
-        <h3 style={{ 
-          background: 'linear-gradient(135deg, #d4af37 0%, #b8941f 100%)',
-          WebkitBackgroundClip: 'text',
-          WebkitTextFillColor: 'transparent',
-          backgroundClip: 'text',
-          fontWeight: 'bold',
-          margin: 0,
-          minWidth: 'fit-content'
-        }}>{t('clients.title')}</h3>
-        
-        {/* Filter Dropdown */}
-        <div style={{ minWidth: '180px' }}>
-          <Select
-            options={typeOptions}
-            value={typeFilter || ''}
-            onChange={handleTypeFilterChange}
-            placeholder={t('clients.allTypes')}
-          />
-        </div>
-        
-        {/* Search Bar */}
-        <div className="flex-grow-1" style={{ minWidth: '200px' }}>
-          <ClientSearch
-            value={search}
-            onChange={setSearch}
-          />
-        </div>
-        
-        {/* Clear Filters Button */}
-        {(search || typeFilter) && (
-          <Button 
-            variant="secondary" 
-            size="sm"
-            onClick={() => {
-              setSearch('');
-              setTypeFilter(undefined);
-            }}
-            title={t('common.clearFilters')}
-          >
-            {t('common.clearFilters')}
-          </Button>
-        )}
-        
-        {/* Action Buttons */}
-        <div className="d-flex gap-2">
-          {/* MODIFIED: Add isLoading state */}
-          <Button 
-            variant="outline-primary" 
-            size="sm"
-            onClick={handleExportToExcel}
-            isLoading={exportMutation.isPending}
-            title="تصدير إلى Excel"
-          >
-            <FileSpreadsheet size={16} className="me-1" />
-            Excel
-          </Button>
-          <Button 
-            variant="outline-primary" 
-            size="sm"
-            onClick={handlePrint}
-            title="طباعة"
-          >
-            <Printer size={16} className="me-1" />
-            طباعة
-          </Button>
-          <Button onClick={handleAddClient}>
-            <PlusCircle size={18} className="me-2" />
+      {/* Compact header with add button next to title */}
+      <div className="d-flex justify-content-between align-items-center mb-1 py-1">
+        {/* Title and Add Button */}
+        <div className="d-flex align-items-center gap-2">
+          <h5 className="mb-0" style={{ 
+            background: 'linear-gradient(135deg, #d4af37 0%, #b8941f 100%)',
+            WebkitBackgroundClip: 'text',
+            WebkitTextFillColor: 'transparent',
+            backgroundClip: 'text',
+            fontWeight: 'bold',
+            minWidth: 'fit-content',
+            fontSize: '1.1rem'
+          }}>{t('clients.title')}</h5>
+          
+          <Button onClick={handleAddClient} size="sm">
+            <PlusCircle size={14} className="me-1" />
             {t('clients.addNew')}
           </Button>
+        </div>
+        
+        {/* Search and Export */}
+        <div className="d-flex align-items-center gap-2">
+          {/* Compact Search */}
+          <div className="position-relative" style={{ minWidth: '200px' }}>
+            <input
+              type="text"
+              className="form-control form-control-sm"
+              placeholder="البحث بالاسم أو رقم الهاتف..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              style={{ fontSize: '0.875rem' }}
+            />
+            {search && (
+              <button
+                type="button"
+                className="btn btn-link position-absolute text-muted p-0"
+                style={{ right: '8px', top: '50%', transform: 'translateY(-50%)' }}
+                onClick={() => setSearch('')}
+                title="مسح البحث"
+              >
+                <X size={14} />
+              </button>
+            )}
+          </div>
+
+          {/* Region Filter */}
+          <div style={{ minWidth: '150px' }}>
+            <RegionSelect
+              value={regionFilter}
+              onChange={setRegionFilter}
+              placeholder="كل المناطق"
+              allowCreate={false}
+              className="mb-0 form-control-sm"
+            />
+          </div>
+          
+          {/* Export Action Buttons */}
+          <div className="d-flex gap-1">
+            <Button 
+              variant="outline-primary" 
+              size="sm"
+              onClick={handleExportToExcel}
+              isLoading={exportMutation.isPending}
+              title="تصدير إلى Excel"
+            >
+              <FileSpreadsheet size={14} className="me-1" />
+              Excel
+            </Button>
+            <Button 
+              variant="outline-primary" 
+              size="sm"
+              onClick={handlePrint}
+              title="طباعة"
+            >
+              <Printer size={14} className="me-1" />
+              طباعة
+            </Button>
+          </div>
         </div>
       </div>
 

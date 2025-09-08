@@ -78,7 +78,8 @@ export interface Client {
   id: number;
   name: string;
   phone: string;
-  type: ClientType;
+  region_id: number | null;
+  region_name?: string | null;
   google_drive_link: string;
   notes?: string | null;
   created_at: string;
@@ -93,7 +94,7 @@ export interface Client {
 export interface ClientPayload {
   name: string;
   phone: string;
-  type: ClientType;
+  region_id?: number | null;
   google_drive_link?: string;
   notes?: string;
 }
@@ -107,6 +108,19 @@ export interface ClientUnpaidAmounts {
   total_pending: number;
 }
 
+// Region Types
+export interface Region {
+  id: number;
+  name: string;
+  created_at: string;
+  client_count?: number; // For usage statistics
+}
+
+export interface RegionPayload {
+  name: string;
+}
+
+// Legacy type for backward compatibility - will be removed
 export interface ClientCountsByType {
   Government: number;
   RealEstate: number;
@@ -114,7 +128,7 @@ export interface ClientCountsByType {
   Other: number;
 }
 
-// Client type enum
+// Legacy type for backward compatibility - will be removed
 export type ClientType = 'Government' | 'RealEstate' | 'Accounting' | 'Other';
 
 // Tag Types

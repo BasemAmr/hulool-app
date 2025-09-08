@@ -1,10 +1,11 @@
 import { useForm } from 'react-hook-form';
 import { useTranslation } from 'react-i18next';
+import { useEffect } from 'react';
 import { useCreateClient, useUpdateClient } from '../../queries/clientQueries';
 import type { Client, ClientPayload } from '../../api/types';
 import Button from '../ui/Button';
 import Input from '../ui/Input';
-import Select from '../ui/Select';
+import RegionSelect from '../shared/RegionSelect';
 import { useToast } from '../../hooks/useToast';
 
 interface ClientFormProps {
@@ -20,27 +21,36 @@ const ClientForm = ({ clientToEdit, onSuccess }: ClientFormProps) => {
   const {
     register,
     handleSubmit,
+    control,
+    reset,
     formState: { errors },
   } = useForm<ClientPayload>({
     defaultValues: {
       name: clientToEdit?.name || '',
       phone: clientToEdit?.phone || '',
-      type: clientToEdit?.type || 'Other',
+      region_id: clientToEdit?.region_id || null,
       google_drive_link: clientToEdit?.google_drive_link || '',
       notes: clientToEdit?.notes || '',
     },
   });
 
+  useEffect(() => {
+    if (clientToEdit) {
+      reset({
+        name: clientToEdit.name,
+        phone: clientToEdit.phone,
+        region_id: clientToEdit.region_id || null,
+        google_drive_link: clientToEdit.google_drive_link || '',
+        notes: clientToEdit.notes || '',
+      });
+    }
+  }, [clientToEdit, reset]);
+
   const createMutation = useCreateClient();
   const updateMutation = useUpdateClient();
   const mutation = isEditMode ? updateMutation : createMutation;
 
-  const clientTypeOptions = [
-    { value: 'Government', label: t('clients.types.government') },
-    { value: 'RealEstate', label: t('clients.types.realEstate') },
-    { value: 'Accounting', label: t('clients.types.accounting') },
-    { value: 'Other', label: t('clients.types.other') },
-  ];
+  // Remove the old clientTypeOptions as we now use RegionSelect
 
   const onSubmit = (data: ClientPayload) => {
     if (isEditMode) {
@@ -76,6 +86,7 @@ const ClientForm = ({ clientToEdit, onSuccess }: ClientFormProps) => {
     }
   };
 
+
   return (
     <form onSubmit={handleSubmit(onSubmit)}>
       <Input
@@ -88,17 +99,17 @@ const ClientForm = ({ clientToEdit, onSuccess }: ClientFormProps) => {
         {...register('phone', { required: true })}
         error={errors.phone ? 'This field is required' : undefined}
       />
-      <Select
-        label={t('clients.formTypeLabel')}
-        options={clientTypeOptions}
-        placeholder={t('common.select')}
-        {...register('type', { required: true })}
-        error={errors.type ? t('common.required') : undefined}
+      <RegionSelect
+        control={control}
+        name="region_id"
+        label={t('clients.formRegionLabel')}
+        placeholder={t('clients.selectRegion')}
+        error={errors.region_id ? t('common.required') : undefined}
+        allowCreate={true}
       />
       <Input
         label={t('clients.formDriveLabel')}
         {...register('google_drive_link', {
-          required: t('common.required') as string,
           pattern: {
             value: /^(https?:\/\/)?([\da-z\.-]+)\.([a-z\.]{2,6})([\/\w \.-]*)*\/?$/,
             message: 'Please enter a valid URL'

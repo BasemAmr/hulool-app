@@ -30,7 +30,7 @@ export function generateAllClientsExcel(
   worksheet.columns = [
     { header: 'اسم العميل', key: 'clientName', width: 25 },
     { header: 'رقم الهاتف', key: 'phoneNumber', width: 15 },
-    { header: 'نوع العميل', key: 'clientType', width: 15 },
+    { header: 'المنطقة', key: 'clientRegion', width: 15 },
     { header: 'الملاحظات', key: 'notes', width: 30 },
     { header: 'المستحقات', key: 'receivables', width: 15 },
   ];
@@ -51,7 +51,7 @@ export function generateAllClientsExcel(
     row.values = [
       client.name || '',
       client.phone ? `+966${client.phone.replace(/^\+?966/, '')}` : '', // Ensure +966 prefix
-      client.type || 'Other',
+      client.region_name || 'غير محدد',
       client.notes || '',
       client.balance || 0, // Use balance (which maps to total_outstanding) to match table display
     ];

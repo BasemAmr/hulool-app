@@ -64,8 +64,8 @@ class SoundManager {
 export const soundManager = SoundManager.getInstance();
 
 // Convenience functions
-export const playNotificationSound = () => {
-  soundManager.playSound('/sounds/notification.mp3', 'notification');
+export const playNotificationSound = (): Promise<void> => {
+  return soundManager.playSound('/sounds/notification.mp3', 'notification');
 };
 
 export const preloadNotificationSound = () => {
@@ -78,4 +78,6 @@ export const initializeSounds = () => {
   // Set default volume to 70%
   soundManager.setVolume(0.7);
 };
+
+
 

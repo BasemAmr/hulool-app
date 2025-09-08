@@ -206,7 +206,7 @@ const AmountDetailsModal = () => {
       {/* Custom Styles */}
       <style>{`
         .amount-details-modal .modal-dialog {
-          max-width: 600px;
+          max-width: 750px;
         }
         
         .amount-details-list .list-group-item {

@@ -9,6 +9,7 @@ import { useToast } from '../../hooks/useToast';
 import {useCurrentUserCapabilities } from '../../queries/userQueries';
 import { useDrawerStore } from '../../stores/drawerStore';
 import { useQueryClient } from '@tanstack/react-query';
+import { useStickyHeader } from '../../hooks/useStickyHeader';
 
 interface AllTasksTableProps {
   tasks: Task[];
@@ -29,6 +30,7 @@ const AllTasksTable = ({ tasks, isLoading, onEdit, onComplete, onViewAmountDetai
   const { success, error } = useToast();
   const { openDrawer } = useDrawerStore();
   const queryClient = useQueryClient();
+  const { sentinelRef, isSticky } = useStickyHeader();
   
   if (isLoading) {
     return <div className="p-4 text-center">Loading tasks...</div>;
@@ -172,8 +174,11 @@ const AllTasksTable = ({ tasks, isLoading, onEdit, onComplete, onViewAmountDetai
 
   return (
     <div className="table-responsive">
+      {/* Sentinel element for sticky header detection */}
+      <div ref={sentinelRef} ></div>
+      
       <table className="table table-hover mb-0" style={{ '--bs-table-hover-bg': 'transparent' } as React.CSSProperties}>
-        <thead>
+        <thead className={isSticky ? 'is-sticky' : ''}>
           <tr>
             <th>{t('tasks.tableHeaderClient')}</th>
             <th>{t('tasks.tableHeaderClientPhone')}</th>

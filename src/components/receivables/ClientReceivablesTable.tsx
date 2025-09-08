@@ -5,6 +5,7 @@ import Button from '../ui/Button';
 import { ChevronRight, ChevronDown, FileText, CreditCard, Edit3, Trash2 } from 'lucide-react';
 import { formatDate } from '../../utils/dateUtils';
 import { useModalStore } from '../../stores/modalStore';
+import { useStickyHeader } from '../../hooks/useStickyHeader';
 
 interface ClientReceivablesTableProps {
   receivables: StatementItem[];
@@ -25,6 +26,7 @@ const ClientReceivablesTable: React.FC<ClientReceivablesTableProps> = ({
   const { t } = useTranslation();
   const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set());
   const openModal = useModalStore(state => state.openModal);
+  const { sentinelRef, isSticky } = useStickyHeader();
 
   if (isLoading) {
     return (
@@ -113,8 +115,11 @@ const ClientReceivablesTable: React.FC<ClientReceivablesTableProps> = ({
       <div className="card border-0 shadow-sm">
         <div className="card-body p-0">
           <div className="table-responsive">
+            {/* Sentinel element for sticky header detection */}
+            <div ref={sentinelRef} ></div>
+            
             <table className="table table-hover mb-0 receivables-table">
-              <thead>
+              <thead className={isSticky ? 'is-sticky' : ''}>
                 <tr style={{ backgroundColor: 'var(--color-primary)', color: 'white' }}>
                   <th className="text-center py-3" style={{ width: '40px' }}></th>
                   <th className="text-center py-3">الوصف</th>

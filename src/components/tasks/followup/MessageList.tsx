@@ -10,6 +10,7 @@ interface MessageListProps {
   onLoadMore: () => void;
   hasNextPage?: boolean;
   isFetchingNextPage: boolean;
+  highlightMessage?: number;
 }
 
 const MessageList: React.FC<MessageListProps> = ({
@@ -19,9 +20,11 @@ const MessageList: React.FC<MessageListProps> = ({
   onLoadMore,
   hasNextPage,
   isFetchingNextPage,
+  highlightMessage,
 }) => {
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
+  const messageRefs = useRef<Map<number, HTMLDivElement>>(new Map());
 
   // Auto-scroll to bottom when new messages arrive (only for the first page)
   useEffect(() => {
@@ -29,6 +32,55 @@ const MessageList: React.FC<MessageListProps> = ({
       bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
     }
   }, [messagesData?.pages[0]?.messages.length]);
+
+  // Scroll to and highlight specific message when highlightMessage is provided
+  useEffect(() => {
+    if (highlightMessage && messagesData?.pages) {
+      console.log('Attempting to highlight message ID:', highlightMessage);
+      
+      // Find all messages across all pages
+      const allMessages = messagesData.pages.flatMap(page => page.messages);
+      const targetMessage = allMessages.find(msg => msg.id === highlightMessage);
+      
+      if (targetMessage) {
+        console.log('Found target message:', targetMessage);
+        
+        // Wait a bit for the DOM to be ready
+        setTimeout(() => {
+          const messageElement = messageRefs.current.get(highlightMessage);
+          if (messageElement) {
+            console.log('Scrolling to message element');
+            messageElement.scrollIntoView({ 
+              behavior: 'smooth', 
+              block: 'center' 
+            });
+            
+            // Add highlight animation
+            messageElement.style.backgroundColor = 'rgba(255, 193, 7, 0.3)';
+            messageElement.style.transition = 'background-color 0.5s ease';
+            
+            // Remove highlight after 3 seconds
+            setTimeout(() => {
+              messageElement.style.backgroundColor = '';
+            }, 3000);
+          } else {
+            console.log('Message element not found in DOM');
+          }
+        }, 500);
+      } else {
+        console.log('Target message not found in loaded messages');
+      }
+    }
+  }, [highlightMessage, messagesData]);
+
+  // Helper function to set message refs
+  const setMessageRef = (messageId: number, element: HTMLDivElement | null) => {
+    if (element) {
+      messageRefs.current.set(messageId, element);
+    } else {
+      messageRefs.current.delete(messageId);
+    }
+  };
 
   if (isLoading) {
     return (
@@ -106,7 +158,11 @@ const MessageList: React.FC<MessageListProps> = ({
       <div className="p-2">
         {/* Reverse the order to show newest first */}
         {[...allMessages].reverse().map((message, index) => (
-          <MessageItem key={`${message.id}-${index}`} message={message} />
+          <MessageItem 
+            key={`${message.id}-${index}`} 
+            message={message}
+            ref={(el) => setMessageRef(message.id, el)}
+          />
         ))}
       </div>
 
@@ -120,12 +176,12 @@ interface MessageItemProps {
   message: TaskMessage;
 }
 
-const MessageItem: React.FC<MessageItemProps> = ({ message }) => {
+const MessageItem = React.forwardRef<HTMLDivElement, MessageItemProps>(({ message }, ref) => {
   const isSystemMessage = message.is_system_message;
   
   if (isSystemMessage) {
     return (
-      <div className="text-center mb-2">
+      <div ref={ref} className="text-center mb-2">
         <div className="d-inline-block bg-light rounded px-2 py-1">
           <div className="d-flex align-items-center">
             <Bot size={12} className="text-muted me-1" />
@@ -137,7 +193,7 @@ const MessageItem: React.FC<MessageItemProps> = ({ message }) => {
   }
 
   return (
-    <div className="d-flex mb-2">
+    <div ref={ref} className="d-flex mb-2">
       {/* Avatar */}
       <div className="flex-shrink-0 me-2">
         <div className="bg-primary bg-opacity-10 rounded-circle d-flex align-items-center justify-content-center" style={{ width: '28px', height: '28px' }}>
@@ -163,6 +219,6 @@ const MessageItem: React.FC<MessageItemProps> = ({ message }) => {
       </div>
     </div>
   );
-};
+});
 
 export default MessageList;

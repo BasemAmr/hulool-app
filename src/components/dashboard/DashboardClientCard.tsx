@@ -72,16 +72,21 @@ const DashboardClientCard = ({ data, index = 0, alternatingColors }: DashboardCl
   const [hoveredTaskId, setHoveredTaskId] = useState<number | null>(null);
   const [isMouseOverPortal, setIsMouseOverPortal] = useState(false);
   const [isMouseOverRow, setIsMouseOverRow] = useState(false);
+  const [taskRowRect, setTaskRowRect] = useState<DOMRect | null>(null);
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   // Smart hover management
-  const handleRowMouseEnter = (taskId: number) => {
+  const handleRowMouseEnter = (taskId: number, event: React.MouseEvent<HTMLTableRowElement>) => {
     if (timeoutRef.current) {
       clearTimeout(timeoutRef.current);
       timeoutRef.current = null;
     }
     setIsMouseOverRow(true);
     setHoveredTaskId(taskId);
+    
+    // Capture task row rectangle
+    const rect = event.currentTarget.getBoundingClientRect();
+    setTaskRowRect(rect);
   };
 
   const handleRowMouseLeave = () => {
@@ -110,6 +115,46 @@ const DashboardClientCard = ({ data, index = 0, alternatingColors }: DashboardCl
         setHoveredTaskId(null);
       }
     }, 100);
+  };
+
+  // Calculate floating overlay position with screen boundary checks
+  const calculateOverlayPosition = (taskRect: DOMRect, overlayWidth: number = 800, overlayHeight: number = 120) => {
+    if (!taskRect) return { top: '50%', left: '50%', transform: 'translate(-50%, -50%)' };
+
+    const viewportWidth = window.innerWidth;
+    const viewportHeight = window.innerHeight;
+    const scrollX = window.scrollX;
+    const scrollY = window.scrollY;
+
+    // Calculate desired position (centered over the task row)
+    let left = taskRect.left + scrollX + (taskRect.width / 2) - (overlayWidth / 2);
+    let top = taskRect.top + scrollY + (taskRect.height / 2) - (overlayHeight / 2); // Centered over the row
+
+    // Check horizontal boundaries
+    if (left < 20) {
+      left = 20; // 20px margin from left edge
+    } else if (left + overlayWidth > viewportWidth - 20) {
+      left = viewportWidth - overlayWidth - 20; // 20px margin from right edge
+    }
+
+    // Check vertical boundaries
+    if (top < 20) {
+      // If not enough space above, place below the row
+      top = taskRect.bottom + scrollY + 10;
+    }
+
+    // Final check if it goes beyond bottom
+    if (top + overlayHeight > viewportHeight + scrollY - 20) {
+      // If still not enough space, place it in the middle of visible area
+      top = scrollY + (viewportHeight / 2) - (overlayHeight / 2);
+    }
+
+    return {
+      position: 'absolute' as const,
+      left: `${left}px`,
+      top: `${top}px`,
+      transform: 'none'
+    };
   };
 
   // Global mouse tracking for better portal persistence
@@ -470,7 +515,8 @@ const DashboardClientCard = ({ data, index = 0, alternatingColors }: DashboardCl
           overflow: 'hidden'
         }}>
           <div style={{
-            maxHeight: '300px', 
+            // ADJUSTED: Allow natural height growth within the flex container
+            // maxHeight: '300px', // Removed fixed max-height
             overflow: 'hidden',
             position: 'relative'
           }}>
@@ -542,7 +588,7 @@ const DashboardClientCard = ({ data, index = 0, alternatingColors }: DashboardCl
                         border: 'none',
                         position: 'relative'
                       }}
-                      onMouseEnter={() => handleRowMouseEnter(task.id)}
+                      onMouseEnter={(e) => handleRowMouseEnter(task.id, e)}
                       onMouseLeave={handleRowMouseLeave}
                     >
                       <td style={{
@@ -736,14 +782,15 @@ const DashboardClientCard = ({ data, index = 0, alternatingColors }: DashboardCl
               : baseColor;
           }
 
+          const overlayPosition = taskRowRect 
+            ? calculateOverlayPosition(taskRowRect, 800, 120)
+            : { top: '50%', left: '50%', transform: 'translate(-50%, -50%)', position: 'fixed' as const };
+
           return (
             <div
               className="task-portal"
               style={{
-                position: 'fixed',
-                top: '50%',
-                left: '50%',
-                transform: 'translate(-50%, -50%)',
+                ...overlayPosition,
                 backgroundColor: taskRowBackground,
                 border: '2px solid #007bff',
                 borderRadius: '8px',

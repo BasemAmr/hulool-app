@@ -55,7 +55,11 @@
     "creditConflictMessage": "المبلغ الجديد ({newAmount}) أقل من المبلغ المخصص ({allocated}). يرجى تعديل التخصيصات لتغطية العجز البالغ {deficit}.",
     "allocationAdjustments": "تعديلات التخصيص",
     "newAmount": "المبلغ الجديد",
-    "totalReduction": "إجمالي التخفيض"
+    "totalReduction": "إجمالي التخفيض",
+    "tableHeaderRegion": "المنطقة",
+    "formRegionLabel": "المنطقة",
+    "selectRegion": "اختر المنطقة",
+    "formNotesPlaceholder": "أدخل ملاحظات العميل..."
   },
   "tasks": {
     "title": "إدارة المهام",
@@ -229,7 +233,8 @@
     "selectPaymentMethod": "اختر طريقة الدفع",
     "amount": "المبلغ",
     "description": "الوصف",
-    "date": "التاريخ"
+    "date": "التاريخ",
+    "continue": "استمرار"
   },
   "validation": {
     "required": "هذا الحقل مطلوب",
@@ -346,7 +351,8 @@
     "invalidAmount": "المبلغ المدفوع غير صالح.",
     "payNow": "ادفع الآن",
     "paymentRequired": "الدفع مطلوب",
-    "paymentRequiredMessage": "يجب دفع المبلغ المقدم قبل المتابعة. لا يمكن إغلاق هذه النافذة بدون الدفع."
+    "paymentRequiredMessage": "يجب دفع المبلغ المقدم قبل المتابعة. لا يمكن إغلاق هذه النافذة بدون الدفع.",
+    "editPayment": "تعديل الدفع"
   },
   "clientProfile": {
     "pageTitle": "ملف العميل: ",

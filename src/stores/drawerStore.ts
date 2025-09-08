@@ -7,6 +7,7 @@ interface DrawerProps {
     taskId: number;
     taskName?: string;
     clientName?: string;
+    highlightMessage?: number;
   };
 }
 

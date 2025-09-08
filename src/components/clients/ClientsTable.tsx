@@ -4,6 +4,7 @@ import { Link } from 'react-router-dom';
 import Button from '../ui/Button';
 import { Edit, Plus, ExternalLink } from 'lucide-react'; // Example icons
 import WhatsAppIcon from '../../assets/images/whats.svg';
+import { useStickyHeader } from '../../hooks/useStickyHeader';
 
 interface ClientsTableProps {
   clients: Client[];
@@ -15,6 +16,7 @@ interface ClientsTableProps {
 
 const ClientsTable = ({ clients, isLoading, onEdit, onAddTask, onAddReceivable}: ClientsTableProps) => {
   const { t } = useTranslation();
+  const { sentinelRef, isSticky } = useStickyHeader();
 
   if (isLoading) {
     return <div className="p-4 text-center">Loading clients...</div>; // Replace with a Spinner component later
@@ -28,12 +30,15 @@ const ClientsTable = ({ clients, isLoading, onEdit, onAddTask, onAddReceivable}:
 
   return (
     <div className="table-responsive">
+      {/* Sentinel element for sticky header detection */}
+      <div ref={sentinelRef} ></div>
+      
       <table className="table table-hover mb-0">
-        <thead>
+        <thead className={isSticky ? 'is-sticky' : ''}>
           <tr>
             <th>{t('clients.tableHeaderName')}</th>
             <th>{t('clients.tableHeaderPhone')}</th>
-            <th>{t('clients.tableHeaderType')}</th>
+            <th>{t('clients.tableHeaderRegion')}</th>
             <th>{t('clients.tableHeaderNotes')}</th>
             <th className="text-center">{t('clients.tableHeaderDueAmount')}</th>
             <th className="text-end">{t('clients.tableHeaderActions')}</th>
@@ -67,24 +72,16 @@ const ClientRow = ({ client, onEdit, onAddTask, onAddReceivable}: ClientRowProps
   // Remove the individual query to improve performance
   // const { data: unpaidAmounts } = useGetClientUnpaidAmounts(client.id);
 
-  const getTypeLabel = (type: string) => {
-    const typeLabels = {
-      Government: t('clients.types.government'),
-      RealEstate: t('clients.types.realEstate'),
-      Accounting: t('clients.types.accounting'),
-      Other: t('clients.types.other')
-    };
-    return typeLabels[type as keyof typeof typeLabels] || type;
-  };
-
-  const getTypeBadgeClass = (type: string) => {
-    const badgeClasses = {
-      Government: 'bg-primary',
-      RealEstate: 'bg-success',
-      Accounting: 'bg-warning',
-      Other: 'bg-secondary'
-    };
-    return badgeClasses[type as keyof typeof badgeClasses] || 'bg-secondary';
+  const getRegionBadgeClass = (regionName: string | null) => {
+    if (!regionName) return 'bg-secondary';
+    
+    // Generate a consistent color based on region name
+    const colors = ['bg-primary', 'bg-success', 'bg-info', 'bg-warning', 'bg-danger', 'bg-dark'];
+    const hash = regionName.split('').reduce((a, b) => {
+      a = ((a << 5) - a) + b.charCodeAt(0);
+      return a & a;
+    }, 0);
+    return colors[Math.abs(hash) % colors.length];
   };
 
   const formatPhoneForWhatsApp = (phone: string) => {
@@ -142,9 +139,13 @@ const ClientRow = ({ client, onEdit, onAddTask, onAddReceivable}: ClientRowProps
         </div>
       </td>
       <td>
-        <span className={`badge ${getTypeBadgeClass(client.type)} text-white`}>
-          {getTypeLabel(client.type)}
-        </span>
+        {client.region_name ? (
+          <span className={`badge ${getRegionBadgeClass(client.region_name)} text-white`}>
+            {client.region_name}
+          </span>
+        ) : (
+          <span className="text-muted">-</span>
+        )}
       </td>
       <td>
         <span className="text-muted small">

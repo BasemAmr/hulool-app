@@ -168,12 +168,44 @@ const ManualReceivableModal = () => {
         {/* Step 2: Details */}
         {step === 2 && (
           <div>
-            <div className="mb-4">
-              <div>
-                <strong>{t('receivables.selectedType')}:</strong> {watch('type')}
-              </div>
-              <div>
-                <strong>{t('receivables.selectedClient')}:</strong> {selectedClient?.name}
+            <div className="mb-4 p-3 bg-light rounded">
+              <div className="row">
+                <div className="col-md-6">
+                  <label className="form-label">{t('receivables.selectedType')}</label>
+                  <Controller
+                    name="type"
+                    control={control}
+                    rules={{ required: true }}
+                    render={({ field }) => (
+                      <select
+                        {...field}
+                        className={`form-select ${errors.type ? 'is-invalid' : ''}`}
+                      >
+                        <option value="">{t('tasks.formTypeLabel')}</option>
+                        {taskTypes.map((type) => (
+                          <option key={type} value={type}>{t(`receivables.type.${type}`)}</option>
+                        ))}
+                      </select>
+                    )}
+                  />
+                  {errors.type && <div className="invalid-feedback">{t('common.required')}</div>}
+                </div>
+                <div className="col-md-6">
+                  <label className="form-label">{t('receivables.selectedClient')}</label>
+                  <div className="form-control-plaintext">
+                    <strong>{selectedClient?.name}</strong>
+                    <small className="d-block text-muted">{selectedClient?.phone}</small>
+                  </div>
+                  <small className="text-muted">
+                    <button 
+                      type="button" 
+                      className="btn btn-link btn-sm p-0 text-decoration-none"
+                      onClick={() => setStep(1)}
+                    >
+                      تغيير العميل
+                    </button>
+                  </small>
+                </div>
               </div>
             </div>
             <Input

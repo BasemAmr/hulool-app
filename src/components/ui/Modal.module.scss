@@ -17,11 +17,14 @@
   background: var(--color-white);
   border-radius: var(--border-radius-lg);
   box-shadow: var(--shadow-xl);
-  max-width: 500px;
-  width: 100%;
+  max-width: 800px;
+  width: 90vw;
+  max-height: 90vh;
   position: relative;
   border: 2px solid #d4af37;
   overflow: hidden;
+  display: flex;
+  flex-direction: column;
 }
 
 .modalHeader {
@@ -45,7 +48,8 @@
 }
 
 .modalBody {
-  max-height: 400px;
+  flex: 1;
   overflow-y: auto;
   padding: var(--space-lg);
+  min-height: 0;
 }

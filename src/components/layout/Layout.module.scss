@@ -3,7 +3,8 @@
 // Main layout adjustments for RTL
 .appLayout {
   display: flex;
-  min-height: 100vh;
+  height: 100vh; // CRITICAL: Force the layout to be exactly the viewport height.
+  overflow: hidden; // CRITICAL: Prevent the entire page from scrolling.
   background-color: var(--color-gray-50);
   direction: rtl;
 }
@@ -79,10 +80,47 @@
 .mainContent {
   flex: 1;
   margin-right: 160px; // RTL adjustment - reduced to match sidebar width
-  padding: var(--space-lg);
-  min-height: 100vh;
+  
+  // CRITICAL CHANGES:
+  overflow-y: auto; // Add a vertical scrollbar ONLY when content overflows.
+  height: 100%; // Make it take the full height of its parent (.appLayout).
+  
+  // FORCE LTR DIRECTION FOR SCROLLBAR POSITIONING
+  direction: ltr; // This makes the scrollbar appear on the right side (opposite of RTL)
+  
+  // Remove padding from main container to allow sticky headers to reach viewport top
   background: #EEEEEE;
   transition: margin-right var(--transition-normal);
+  
+  // Smooth scrollbar styling (optional but recommended)
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-gold) var(--color-gray-100);
+
+  &::-webkit-scrollbar {
+    width: 8px;
+  }
+  &::-webkit-scrollbar-track {
+    background: var(--color-gray-50);
+  }
+  &::-webkit-scrollbar-thumb {
+    background-color: var(--color-gray-400);
+    border-radius: 4px;
+    border: 2px solid var(--color-gray-50);
+    &:hover {
+      background-color: var(--color-gold);
+    }
+  }
+  
+  // Reset direction for child content to maintain RTL layout
+  > * {
+    direction: rtl;
+  }
+}
+
+// Inner content container that provides padding without interfering with sticky headers
+.contentInner {
+  padding: var(--space-lg);
+  min-height: 100%;
 }
 
 // Header section with logo and brand

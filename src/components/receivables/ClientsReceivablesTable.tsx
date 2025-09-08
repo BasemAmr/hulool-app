@@ -4,6 +4,7 @@ import Button from '../ui/Button';
 import { useModalStore } from '../../stores/modalStore';
 import WhatsAppIcon from '../ui/WhatsAppIcon';
 import { sendPaymentReminder, formatPhoneForWhatsApp } from '../../utils/whatsappUtils';
+import { useStickyHeader } from '../../hooks/useStickyHeader';
 
 interface ClientReceivablesSummary {
   client_id: number;
@@ -33,6 +34,7 @@ interface ClientsReceivablesTableProps {
 const ClientsReceivablesTable = ({ clients, isLoading, totals, isTotalsLoading }: ClientsReceivablesTableProps) => {
   const navigate = useNavigate();
   const openModal = useModalStore((state) => state.openModal);
+  const { sentinelRef, isSticky } = useStickyHeader();
 
   const handlePayment = (clientId: number) => {
     // Open the modal to select specific receivable for payment
@@ -110,21 +112,24 @@ const ClientsReceivablesTable = ({ clients, isLoading, totals, isTotalsLoading }
 
   return (
     <div className="table-responsive" dir="rtl">
+      {/* Sentinel element for sticky header detection */}
+      <div ref={sentinelRef} ></div>
+      
       <table className="table table-hover align-middle">
-        <thead className="table-warning">
+        <thead className={`table-warning ${isSticky ? 'is-sticky' : ''}`}>
           <tr className="fw-bold">
-            <th scope="col" className="text-center" style={{ width: '18%', color: '#000' }}>العميل</th>
-            <th scope="col" className="text-center" style={{ width: '12%', color: '#000' }}>رقم الجوال</th>
-            <th scope="col" className="text-center" style={{ width: '20%', color: '#000' }}>إجمالي المدين</th>
-            <th scope="col" className="text-center" style={{ width: '20%', color: '#000' }}>إجمالي الدائن</th>
-            <th scope="col" className="text-center" style={{ width: '20%', color: '#000' }}>إجمالي المستحقات</th>
-            <th scope="col" className="text-center" style={{ width: '15%', color: '#000' }}>الإجراءات</th>
+            <th scope="col" className="text-end" style={{ width: '18%', color: '#000', padding: '12px 8px' }}>العميل</th>
+            <th scope="col" className="text-center" style={{ width: '12%', color: '#000', padding: '12px 8px' }}>رقم الجوال</th>
+            <th scope="col" className="text-center" style={{ width: '20%', color: '#000', padding: '12px 8px' }}>إجمالي المدين</th>
+            <th scope="col" className="text-center" style={{ width: '20%', color: '#000', padding: '12px 8px' }}>إجمالي الدائن</th>
+            <th scope="col" className="text-center" style={{ width: '20%', color: '#000', padding: '12px 8px' }}>إجمالي المستحقات</th>
+            <th scope="col" className="text-center" style={{ width: '15%', color: '#000', padding: '12px 8px' }}>الإجراءات</th>
           </tr>
         </thead>
         <tbody>
           {sortedClients.map((client) => (
             <tr key={client.client_id}>
-              <td className="text-center">
+              <td className="text-end" style={{ padding: '12px 8px' }}>
                 <div
                   className="fw-bold primary cursor-pointer"
                   onClick={() => handleClientClick(client.client_id)}
@@ -133,7 +138,7 @@ const ClientsReceivablesTable = ({ clients, isLoading, totals, isTotalsLoading }
                   {client.client_name}
                 </div>
               </td>
-              <td className="text-center">
+              <td className="text-center" style={{ padding: '12px 8px' }}>
                 <div className=" small d-flex align-items-center justify-content-center">
                   <button
                     className="btn btn-link btn-sm p-0 text-success ms-1"
@@ -146,16 +151,16 @@ const ClientsReceivablesTable = ({ clients, isLoading, totals, isTotalsLoading }
                   <span>{client.client_phone}</span>
                 </div>
               </td>
-              <td className="text-center fw-bold">
+              <td className="text-center fw-bold" style={{ padding: '12px 8px' }}>
                 {formatCurrency(Number(client.total_amount) || 0)}
               </td>
-              <td className="text-center fw-bold text-success">
+              <td className="text-center fw-bold text-success" style={{ padding: '12px 8px' }}>
                 {formatCurrency(Number(client.paid_amount) || 0)}
               </td>
-              <td className="text-center fw-bold  text-danger">
+              <td className="text-center fw-bold  text-danger" style={{ padding: '12px 8px' }}>
                 {formatCurrency(Math.max(0, Number(client.remaining_amount) || 0))}
               </td>
-              <td className="text-center">
+              <td className="text-center" style={{ padding: '12px 8px' }}>
                 <div className="d-flex gap-2 justify-content-center">
                   <Button
                     variant="outline-primary"
@@ -190,9 +195,9 @@ const ClientsReceivablesTable = ({ clients, isLoading, totals, isTotalsLoading }
         </tbody>
         <tfoot className="table-warning">
           <tr className="fw-bold">
-            <td className="text-start">الإجمالي</td>
-            <td className="text-start"></td>
-            <td className="text-center">
+            <td className="text-start" style={{ padding: '12px 8px' }}>الإجمالي</td>
+            <td className="text-start" style={{ padding: '12px 8px' }}></td>
+            <td className="text-center" style={{ padding: '12px 8px' }}>
               {isTotalsLoading ? (
                 <div className="spinner-border spinner-border-sm" role="status">
                   <span className="visually-hidden">Loading...</span>
@@ -201,7 +206,7 @@ const ClientsReceivablesTable = ({ clients, isLoading, totals, isTotalsLoading }
                 formatCurrency(displayTotals.totalAmount)
               )}
             </td>
-            <td className="text-center text-success">
+            <td className="text-center text-success" style={{ padding: '12px 8px' }}>
               {isTotalsLoading ? (
                 <div className="spinner-border spinner-border-sm" role="status">
                   <span className="visually-hidden">Loading...</span>
@@ -210,7 +215,7 @@ const ClientsReceivablesTable = ({ clients, isLoading, totals, isTotalsLoading }
                 formatCurrency(displayTotals.paidAmount)
               )}
             </td>
-            <td className="text-center text-danger">
+            <td className="text-center text-danger" style={{ padding: '12px 8px' }}>
               {isTotalsLoading ? (
                 <div className="spinner-border spinner-border-sm" role="status">
                   <span className="visually-hidden">Loading...</span>
@@ -219,7 +224,7 @@ const ClientsReceivablesTable = ({ clients, isLoading, totals, isTotalsLoading }
                 formatCurrency(displayTotals.remainingAmount)
               )}
             </td>
-            <td></td>
+            <td style={{ padding: '12px 8px' }}></td>
           </tr>
         </tfoot>
       </table>

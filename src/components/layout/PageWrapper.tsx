@@ -32,7 +32,9 @@ const PageWrapper = () => {
           transition: 'margin-right 0.3s ease'
         }}
       >
-        <Outlet /> {/* Child routes will be rendered here */}
+        <div className={styles.contentInner}>
+          <Outlet /> {/* Child routes will be rendered here */}
+        </div>
       </main>
       <Sidebar />
       <ModalManager />

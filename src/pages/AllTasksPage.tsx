@@ -3,11 +3,11 @@ import { useTranslation } from 'react-i18next';
 import { useSearchParams } from 'react-router-dom';
 import { useGetTasksInfinite, useDeleteTask } from '../queries/taskQueries';
 import { useModalStore } from '../stores/modalStore';
+import { useDrawerStore } from '../stores/drawerStore';
 import { applyPageBackground } from '../utils/backgroundUtils';
 import type { Task } from '../api/types';
 import AllTasksTable from '../components/tasks/AllTasksTable';
 import TaskFilter from '../components/tasks/TaskFilter';
-import TotalsCards from '../components/tasks/TotalsCards';
 import Button from '../components/ui/Button';
 import { PlusCircle, FileSpreadsheet } from 'lucide-react';
 // --- MODIFICATIONS START ---
@@ -21,6 +21,7 @@ import { useInView } from 'react-intersection-observer';
 const AllTasksPage = () => {
   const { t } = useTranslation();
   const openModal = useModalStore((state) => state.openModal);
+  const { openDrawer } = useDrawerStore();
   const deleteTaskMutation = useDeleteTask();
   const [searchParams, setSearchParams] = useSearchParams();
   const { showToast } = useToast(); // ADD
@@ -86,6 +87,35 @@ const AllTasksPage = () => {
 
   // Flatten the pages into a single array for rendering
   const allTasks = useMemo(() => data?.pages.flatMap(page => page.tasks) || [], [data]);
+
+  // Handle notification links - open task follow-up panel when taskId is provided
+  useEffect(() => {
+    const taskId = searchParams.get('taskId');
+    const highlightMessage = searchParams.get('highlightMessage');
+    
+    if (taskId) {
+      const taskIdNum = parseInt(taskId, 10);
+      if (!isNaN(taskIdNum)) {
+        console.log('Notification link detected - Task ID:', taskIdNum, 'Highlight Message:', highlightMessage);
+        console.log('Available tasks:', allTasks.length, 'Loading:', isLoading);
+        
+        // Open drawer immediately, even if task details aren't loaded yet
+        // The TaskFollowUpPanel will handle loading its own data
+        openDrawer('taskFollowUp', {
+          taskId: taskIdNum,
+          taskName: undefined, // Let the panel fetch this
+          clientName: undefined, // Let the panel fetch this
+          highlightMessage: highlightMessage ? parseInt(highlightMessage, 10) : undefined
+        });
+        
+        // Clear the URL parameters after handling them
+        const newParams = new URLSearchParams(searchParams);
+        newParams.delete('taskId');
+        newParams.delete('highlightMessage');
+        setSearchParams(newParams, { replace: true });
+      }
+    }
+  }, [searchParams, openDrawer, setSearchParams]); // Removed allTasks dependency
 
   // --- NEW: Logic for infinite scroll ---
   const { ref } = useInView({
@@ -194,44 +224,39 @@ const AllTasksPage = () => {
 
   return (
     <div>
-      <header className="d-flex justify-content-between align-items-center mb-3">
-        <div className="d-flex align-items-center gap-4 flex-grow-1">
-          <h1 style={{
+      <header className="d-flex justify-content-between align-items-center mb-1 py-1">
+        <div className="d-flex align-items-center gap-2">
+          <h5 className="mb-0" style={{
             background: 'linear-gradient(135deg, #d4af37 0%, #b8941f 100%)',
             WebkitBackgroundClip: 'text',
             WebkitTextFillColor: 'transparent',
             backgroundClip: 'text',
             fontWeight: 'bold',
             minWidth: 'fit-content',
-          }}>{pageTitle}</h1>
+            fontSize: '1.1rem'
+          }}>{pageTitle}</h5>
           
-          {/* Totals Cards positioned between title and button */}
-          <div className="flex-grow-1 mx-4 ">
-            <TotalsCards tasks={filteredTasks} isLoading={isLoading} />
-          </div>
-        </div>
-        
-        {/* ADDED EXPORT BUTTON */}
-        <div className="d-flex gap-2">
-          <Button 
-            variant="outline-primary" 
-            size="sm"
-            onClick={handleExportToExcel}
-            isLoading={exportTasksMutation.isPending}
-            title="تصدير إلى Excel"
-          >
-            <FileSpreadsheet size={16} className="me-1" />
-            Excel
-          </Button>
-          <Button onClick={handleAddTask} style={{ minWidth: 'fit-content' }}>
-            <PlusCircle size={18} className="ms-2" />
+          <Button onClick={handleAddTask} size="sm" style={{ minWidth: 'fit-content' }}>
+            <PlusCircle size={14} className="ms-1" />
             {t('tasks.addNew')}
           </Button>
         </div>
+        
+        {/* Export button */}
+        <Button 
+          variant="outline-primary" 
+          size="sm"
+          onClick={handleExportToExcel}
+          isLoading={exportTasksMutation.isPending}
+          title="تصدير إلى Excel"
+        >
+          <FileSpreadsheet size={14} className="me-1" />
+          Excel
+        </Button>
       </header>
 
       <div className="card">
-        <div className="card-header bg-white">
+        <div className="card-header bg-white py-2">
           <TaskFilter
             search={search}
             status={status}

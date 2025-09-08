@@ -1,12 +1,12 @@
 import { useQuery, useMutation, useQueryClient, useInfiniteQuery } from '@tanstack/react-query';
 import apiClient from '../api/apiClient';
-import type { ApiResponse, Client, ClientPayload, ClientPaginatedData, ClientUnpaidAmounts, ClientCountsByType, ClientType } from '../api/types';
+import type { ApiResponse, Client, ClientPayload, ClientPaginatedData, ClientUnpaidAmounts, ClientCountsByType } from '../api/types';
 
 // --- Query Functions ---
 const CLIENTS_PER_PAGE = 20; // Define a constant for page size
 
 // Fetch paginated clients (normal list)
-const fetchClients = async (search: string, typeFilter?: ClientType): Promise<ClientPaginatedData> => {
+const fetchClients = async (search: string, regionFilter?: number | null): Promise<ClientPaginatedData> => {
     try {
         // If search is present, use the dedicated search endpoint
         if (search && search.trim().length > 0) {
@@ -16,9 +16,9 @@ const fetchClients = async (search: string, typeFilter?: ClientType): Promise<Cl
             
             let clients = data.data?.clients || [];
             
-            // Apply type filter client-side if specified
-            if (typeFilter) {
-                clients = clients.filter(client => client.type === typeFilter);
+            // Apply region filter client-side if specified
+            if (regionFilter) {
+                clients = clients.filter(client => client.region_id === regionFilter);
             }
             
             return {
@@ -36,8 +36,8 @@ const fetchClients = async (search: string, typeFilter?: ClientType): Promise<Cl
         
         // Otherwise, fetch all clients with stats for unpaid amounts
         const params: any = { page: 1, per_page: 1000, include_stats: true };
-        if (typeFilter) {
-            params.type = typeFilter;
+        if (regionFilter) {
+            params.region_id = regionFilter;
         }
         const { data } = await apiClient.get<ApiResponse<ClientPaginatedData>>('/clients', {
             params,
@@ -61,11 +61,11 @@ const fetchClients = async (search: string, typeFilter?: ClientType): Promise<Cl
 
 // New paginated fetch function for infinite queries
 export const fetchPaginatedClients = async ({ pageParam = 1, queryKey }: { pageParam?: number; queryKey: any }): Promise<ClientPaginatedData> => {
-  const [_key, search, typeFilter] = queryKey;
+  const [_key, search, regionFilter] = queryKey;
   
   try {
-    // If both search and type filter are present, we need to handle them differently
-    // since the search endpoint doesn't support type filtering
+    // If both search and region filter are present, we need to handle them differently
+    // since the search endpoint doesn't support region filtering
     if (search && search.trim().length > 0) {
       // Use search endpoint first
       const { data } = await apiClient.get<ApiResponse<ClientPaginatedData>>('/clients/search', {
@@ -74,9 +74,9 @@ export const fetchPaginatedClients = async ({ pageParam = 1, queryKey }: { pageP
       
       let clients = data.data?.clients || [];
       
-      // Apply type filter client-side if specified
-      if (typeFilter) {
-        clients = clients.filter(client => client.type === typeFilter);
+      // Apply region filter client-side if specified
+      if (regionFilter) {
+        clients = clients.filter(client => client.region_id === regionFilter);
       }
       
       // Calculate pagination for filtered results
@@ -99,10 +99,10 @@ export const fetchPaginatedClients = async ({ pageParam = 1, queryKey }: { pageP
       };
     }
     
-    // Otherwise, fetch clients with pagination and stats (no search, just type filter)
+    // Otherwise, fetch clients with pagination and stats (no search, just region filter)
     const params: any = { page: pageParam, per_page: CLIENTS_PER_PAGE, include_stats: true };
-    if (typeFilter) {
-      params.type = typeFilter;
+    if (regionFilter) {
+      params.region_id = regionFilter;
     }
     const { data } = await apiClient.get<ApiResponse<ClientPaginatedData>>('/clients', {
       params,
@@ -178,22 +178,22 @@ const fetchClientCountsByType = async (): Promise<ClientCountsByType> => {
     return data.data;
 };
 
-const exportClients = async (type?: ClientType): Promise<{ clients: Client[]; type?: ClientType; count: number }> => {
+const exportClients = async (regionId?: number): Promise<{ clients: Client[]; region_id?: number; count: number }> => {
     const params: any = {};
-    if (type) {
-        params.type = type;
+    if (regionId) {
+        params.region_id = regionId;
     }
-    const { data } = await apiClient.get<ApiResponse<{ clients: Client[]; type?: ClientType; count: number }>>('/clients/export', {
+    const { data } = await apiClient.get<ApiResponse<{ clients: Client[]; region_id?: number; count: number }>>('/clients/export', {
         params,
     });
     return data.data;
 };
 
 // --- React Query Hooks ---
-export const useGetClients = (search: string, typeFilter?: ClientType) => {
+export const useGetClients = (search: string, regionFilter?: number | null) => {
   return useQuery({
-    queryKey: ['clients', search, typeFilter],
-    queryFn: () => fetchClients(search, typeFilter),
+    queryKey: ['clients', search, regionFilter],
+    queryFn: () => fetchClients(search, regionFilter),
     placeholderData: (previousData) => previousData,
     staleTime: 60 * 1000, // Keep fresh for 1 minute
     // refetchOnWindowFocus: false (inherited from global default)
@@ -201,9 +201,9 @@ export const useGetClients = (search: string, typeFilter?: ClientType) => {
 };
 
 // New infinite query hook for paginated clients
-export const useGetClientsInfinite = (search: string, typeFilter?: ClientType) => {
+export const useGetClientsInfinite = (search: string, regionFilter?: number | null) => {
   return useInfiniteQuery({
-    queryKey: ['clients', search, typeFilter],
+    queryKey: ['clients', search, regionFilter],
     queryFn: fetchPaginatedClients,
     initialPageParam: 1,
     getNextPageParam: (lastPage) => {
