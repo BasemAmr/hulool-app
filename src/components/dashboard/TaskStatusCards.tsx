@@ -98,44 +98,49 @@ const TaskStatusCards = ({ stats, totalPaidAmount = 0, isLoading }: TaskStatusCa
     
     if (isLoading) {
         return (
-            <div className="row g-3">
+            <div className="d-flex gap-2 flex-wrap">
                 {[1, 2, 3, 4, 5, 6, 7].map(i => (
-                    <div className="col-md-2" key={i}>
-                        <div 
-                            className="card border-0 shadow-sm h-100"
-                            style={{ 
-                                backgroundColor: '#f8fafc',
-                                borderRadius: '8px'
-                            }}
-                        >
-                            <div className="card-body text-center p-3">
+                    <div 
+                        key={i} 
+                        className="card border-0 shadow-sm"
+                        style={{ 
+                            backgroundColor: '#f8fafc',
+                            borderRadius: '8px',
+                            minWidth: '140px',
+                            flex: '1 1 auto'
+                        }}
+                    >
+                        <div className="card-body p-2">
+                            <div className="d-flex align-items-center gap-2">
                                 <div 
-                                    className="skeleton mx-auto mb-2" 
+                                    className="skeleton" 
                                     style={{ 
-                                        width: '24px', 
-                                        height: '24px', 
+                                        width: '20px', 
+                                        height: '20px', 
                                         borderRadius: '4px',
                                         backgroundColor: '#e2e8f0'
                                     }}
                                 ></div>
-                                <div 
-                                    className="skeleton mx-auto mb-1" 
-                                    style={{ 
-                                        width: '32px', 
-                                        height: '24px',
-                                        backgroundColor: '#e2e8f0',
-                                        borderRadius: '4px'
-                                    }}
-                                ></div>
-                                <div 
-                                    className="skeleton mx-auto" 
-                                    style={{ 
-                                        width: '60px', 
-                                        height: '14px',
-                                        backgroundColor: '#e2e8f0',
-                                        borderRadius: '4px'
-                                    }}
-                                ></div>
+                                <div className="flex-grow-1">
+                                    <div 
+                                        className="skeleton mb-1" 
+                                        style={{ 
+                                            width: '50px', 
+                                            height: '10px',
+                                            backgroundColor: '#e2e8f0',
+                                            borderRadius: '4px'
+                                        }}
+                                    ></div>
+                                    <div 
+                                        className="skeleton" 
+                                        style={{ 
+                                            width: '30px', 
+                                            height: '16px',
+                                            backgroundColor: '#e2e8f0',
+                                            borderRadius: '4px'
+                                        }}
+                                    ></div>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -145,87 +150,90 @@ const TaskStatusCards = ({ stats, totalPaidAmount = 0, isLoading }: TaskStatusCa
     }
 
     return (
-        <div className="row g-3 mb-4">
+        <div className="d-flex gap-2 mb-4 flex-wrap">
             {cardData.map(card => {
                 const CardContent = (
                     <div 
-                        className="card border-0 shadow-sm h-100"
+                        className="card border-0 shadow-sm"
                         style={{ 
                             backgroundColor: card.bgColor,
                             borderLeft: `3px solid ${card.borderColor}`,
                             borderRadius: '8px',
-                            transition: 'all 0.2s ease'
+                            transition: 'all 0.2s ease',
+                            minWidth: '140px',
+                            flex: '1 1 auto'
                         }}
                     >
-                        <div className="card-body text-center p-3">
-                            <div className="d-flex align-items-center justify-content-center mb-2">
-                                {card.icon === SaudiRiyalIcon ? (
-                                    <SaudiRiyalIcon 
-                                        size={24} 
-                                        style={{ color: card.iconColor }}
-                                    />
-                                ) : (
-                                    <card.icon 
-                                        size={24} 
-                                        strokeWidth={1.5} 
-                                        style={{ color: card.iconColor }}
-                                    />
-                                )}
+                        <div className="card-body p-2">
+                            <div className="d-flex align-items-center gap-2">
+                                <div className="icon-wrapper">
+                                    {card.icon === SaudiRiyalIcon ? (
+                                        <SaudiRiyalIcon 
+                                            size={20} 
+                                            style={{ color: card.iconColor }}
+                                        />
+                                    ) : (
+                                        <card.icon 
+                                            size={20} 
+                                            strokeWidth={1.5} 
+                                            style={{ color: card.iconColor }}
+                                        />
+                                    )}
+                                </div>
+                                <div className="content-wrapper flex-grow-1">
+                                    <p 
+                                        className="mb-0" 
+                                        style={{ 
+                                            color: card.textColor,
+                                            fontSize: '0.7rem',
+                                            fontWeight: '600',
+                                            opacity: '0.9',
+                                            lineHeight: '1.1'
+                                        }}
+                                    >
+                                        {card.label}
+                                    </p>
+                                    <h6 
+                                        className="mb-0 fw-bold" 
+                                        style={{ 
+                                            color: card.textColor,
+                                            fontSize: '1rem',
+                                            lineHeight: '1.2'
+                                        }}
+                                    >
+                                        {(card.label === 'مستحقات مسددة' || card.label === 'مستحقات متأخرة') 
+                                            ? (typeof card.value === 'number' ? card.value.toLocaleString('ar-SA') : card.value)
+                                            : card.value}
+                                    </h6>
+                                </div>
                             </div>
-                            <h4 
-                                className="mb-1 fw-semibold" 
-                                style={{ 
-                                    color: card.textColor,
-                                    fontSize: '1.5rem',
-                                    lineHeight: '1.2'
-                                }}
-                            >
-                                {(card.label === 'مستحقات مسددة' || card.label === 'مستحقات متأخرة') 
-                                    ? (typeof card.value === 'number' ? card.value.toLocaleString('ar-SA') : card.value)
-                                    : card.value}
-                            </h4>
-                            <p 
-                                className="mb-0" 
-                                style={{ 
-                                    color: card.textColor,
-                                    fontSize: '0.75rem',
-                                    fontWeight: '500',
-                                    opacity: '0.8'
-                                }}
-                            >
-                                {card.label}
-                            </p>
                         </div>
                     </div>
                 );
 
                 if (card.isClickable === false) {
-                    return (
-                        <div className="col-md-2" key={card.label}>
-                            {CardContent}
-                        </div>
-                    );
+                    return CardContent;
                 }
 
                 return (
-                    <div className="col-md-2" key={card.label}>
-                        <Link 
-                            to={card.to} 
-                            className="text-decoration-none"
-                            style={{
-                                display: 'block',
-                                transition: 'transform 0.2s ease'
-                            }}
-                            onMouseEnter={(e) => {
-                                e.currentTarget.style.transform = 'translateY(-2px)';
-                            }}
-                            onMouseLeave={(e) => {
-                                e.currentTarget.style.transform = 'translateY(0)';
-                            }}
-                        >
-                            {CardContent}
-                        </Link>
-                    </div>
+                    <Link 
+                        key={card.label}
+                        to={card.to} 
+                        className="text-decoration-none"
+                        style={{
+                            flex: '1 1 auto',
+                            minWidth: '140px',
+                            transition: 'transform 0.2s ease'
+                        }}
+                        onMouseEnter={(e) => {
+                            e.currentTarget.style.transform = 'translateY(-2px)';
+                        }}
+                        onMouseLeave={(e) => {
+                            e.currentTarget.style.transform = 'translateY(0)';
+                        }}
+                    >
+                        {CardContent}
+                    </Link>
                 );
             })}
         </div>
