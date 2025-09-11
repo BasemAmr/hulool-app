@@ -2,6 +2,8 @@ import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
 import { useGetDashboardStats, useGetClientsWithActiveTasks, type GroupedClientsResponse, type ClientWithTasksAndStats } from '../queries/dashboardQueries';
+import { useModalStore } from '../stores/modalStore';
+import type { Task } from '../api/types';
 import { FileText, BookOpen, Home, Briefcase } from 'lucide-react';
 import { applyPageBackground } from '../utils/backgroundUtils';
 
@@ -25,12 +27,17 @@ import { useUpdateClientSortOrder } from '../queries/clientQueries';
 
 const DashboardPage = () => {
     const { t } = useTranslation();
+    const openModal = useModalStore(state => state.openModal);
     const { data: stats, isLoading: isLoadingStats } = useGetDashboardStats();
     const [groupedClients, setGroupedClients] = useState<GroupedClientsResponse | null>(null);
     const [activeDragItem, setActiveDragItem] = useState<ClientWithTasksAndStats | null>(null);
     const [activeContainer, setActiveContainer] = useState<keyof GroupedClientsResponse | null>(null);
 
     const updateSortOrderMutation = useUpdateClientSortOrder();
+
+    const handleAssignTask = (task: Task) => {
+        openModal('assignTask', { task });
+    };
 
     const { data: initialGroupedClients, isLoading: isLoadingClients } = useGetClientsWithActiveTasks();
 
@@ -304,6 +311,7 @@ const DashboardPage = () => {
                                                                     clientData={clientData}
                                                                     containerType={type}
                                                                     alternatingColors={config.alternatingColors}
+                                                                    onAssign={handleAssignTask}
                                                                 />
                                                                 {index < clients.length - 1 && (
                                                                     <hr className="m-0" style={{ borderColor: '#dee2e6', pointerEvents: 'none' }} />

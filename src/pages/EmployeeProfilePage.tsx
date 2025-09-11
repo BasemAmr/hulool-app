@@ -1,0 +1,160 @@
+import React, { useState } from 'react';
+import { useParams } from 'react-router-dom';
+import { User, DollarSign, FileText, Users as UsersIcon, CreditCard, Activity } from 'lucide-react';
+import Button from '../components/ui/Button';
+import { useModalStore } from '../stores/modalStore';
+import { useGetEmployee } from '../queries/employeeQueries';
+
+// Import table components (to be created)
+import EmployeeTransactionsTable from '../components/employees/EmployeeTransactionsTable';
+import EmployeeTasksTable from '../components/employees/EmployeeTasksTable';
+import EmployeeClientsTable from '../components/employees/EmployeeClientsTable';
+import EmployeeReceivablesTable from '../components/employees/EmployeeReceivablesTable';
+
+type ViewMode = 'transactions' | 'tasks' | 'clients' | 'receivables';
+
+interface EmployeePageHeader {
+  employee: any;
+  onAddPayout: () => void;
+  activeMode: ViewMode;
+  onModeChange: (mode: ViewMode) => void;
+  modeOptions: ReadonlyArray<{key: ViewMode; label: string; icon: any}>;
+}
+
+const EmployeeHeader: React.FC<EmployeePageHeader> = ({ employee, onAddPayout, activeMode, onModeChange, modeOptions }) => {
+  return (
+    <div className="d-flex justify-content-between align-items-center mb-4">
+      <div className="d-flex align-items-center">
+        <div className="avatar-lg bg-primary text-white rounded-circle d-flex align-items-center justify-content-center me-3">
+          <User size={24} />
+        </div>
+        <div>
+          <h1 className="h4 mb-0">{employee.display_name}</h1>
+        </div>
+      </div>
+      <div className="d-flex align-items-center gap-2">
+        <select 
+          className="form-select form-select-sm"
+          style={{ width: 'auto' }}
+          value={activeMode}
+          onChange={(e) => onModeChange(e.target.value as ViewMode)}
+        >
+          {modeOptions.map(({ key, label }) => (
+            <option key={key} value={key}>{label}</option>
+          ))}
+        </select>
+        <Button
+          variant="primary"
+          size="sm"
+          onClick={onAddPayout}
+        >
+          <DollarSign size={16} className="me-1" />
+          صرف
+        </Button>
+      </div>
+    </div>
+  );
+};
+
+const EmployeeProfilePage = () => {
+  const { id } = useParams<{ id: string }>();
+  const { openModal } = useModalStore();
+  
+  const [activeMode, setActiveMode] = useState<ViewMode>('transactions');
+  const [currentPage, setCurrentPage] = useState(1);
+  const perPage = 20;
+
+  const employeeTableId = parseInt(id || '0', 10);
+  const { data: employee, isLoading, error: employeeError } = useGetEmployee(employeeTableId);
+
+  const handleAddPayout = () => {
+    if (!employee) return;
+    openModal('employeePayout', { 
+      employee: { 
+        ...employee, 
+        id: employeeTableId // Ensure the table ID is included
+      },
+      onSuccess: () => {
+        // Refresh transactions data when payout is successfully added
+        window.location.reload();
+      }
+    });
+  };
+
+  const handleModeChange = (mode: ViewMode) => {
+    setActiveMode(mode);
+    setCurrentPage(1); // Reset to first page when changing modes
+  };
+
+  if (isLoading) {
+    return <div className="p-4 text-center">Loading employee...</div>;
+  }
+
+  if (employeeError || !employee) {
+    return (
+      <div className="alert alert-danger text-center">
+        <h4>Employee Not Found</h4>
+        <p>The requested employee could not be found.</p>
+      </div>
+    );
+  }
+
+  const modeOptions = [
+    { key: 'transactions', label: 'المعاملات', icon: Activity },
+    { key: 'tasks', label: 'المهام', icon: FileText },
+    { key: 'clients', label: 'العملاء', icon: UsersIcon },
+    { key: 'receivables', label: 'المستحقات', icon: CreditCard },
+  ] as const;
+
+  return (
+    <div className="container-fluid">
+      <EmployeeHeader 
+        employee={employee} 
+        onAddPayout={handleAddPayout}
+        activeMode={activeMode}
+        onModeChange={handleModeChange}
+        modeOptions={modeOptions}
+      />
+
+      <div className="card">
+        <div className="card-body p-0">
+          {activeMode === 'transactions' && (
+            <EmployeeTransactionsTable
+              employeeId={employeeTableId}
+              page={currentPage}
+              perPage={perPage}
+              onPageChange={setCurrentPage}
+            />
+          )}
+          
+          {activeMode === 'tasks' && (
+            <EmployeeTasksTable
+              employeeId={employeeTableId}
+              page={currentPage}
+              perPage={perPage}
+              onPageChange={setCurrentPage}
+            />
+          )}
+          
+          {activeMode === 'clients' && (
+            <EmployeeClientsTable
+              employeeId={employeeTableId}
+              page={currentPage}
+              perPage={perPage}
+            />
+          )}
+          
+          {activeMode === 'receivables' && (
+            <EmployeeReceivablesTable
+              employeeId={employeeTableId}
+              page={currentPage}
+              perPage={perPage}
+            />
+          )}
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default EmployeeProfilePage;

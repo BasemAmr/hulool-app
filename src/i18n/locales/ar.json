@@ -499,5 +499,83 @@
     "bankTransfer": "تحويل بنكي",
     "check": "شيك",
     "creditCard": "بطاقة ائتمان"
+  },
+  "employee": {
+    "dashboard": {
+      "title": "لوحة تحكم الموظف",
+      "welcomeMessage": "مرحباً {name}",
+      "recentTasks": "المهام الأخيرة",
+      "recentReceivables": "المستحقات الأخيرة", 
+      "recentTransactions": "المعاملات المالية الأخيرة",
+      "assignedTasks": "المهام المكلف بها",
+      "pendingReview": "قيد المراجعة",
+      "completedThisMonth": "مكتملة هذا الشهر",
+      "pendingCommission": "عمولة معلقة"
+    },
+    "tasks": {
+      "title": "المهام المكلف بها",
+      "submitForReview": "تقديم للمراجعة",
+      "addMessage": "إضافة رسالة",
+      "assignedToMe": "المكلف بها",
+      "pendingMyReview": "قيد مراجعتي",
+      "myCompleted": "مكتملة من قبلي",
+      "submitSuccess": "تم تقديم المهمة للمراجعة بنجاح",
+      "submitSuccessMessage": "تم تقديم المهمة {{taskName}} للمراجعة بنجاح",
+      "submitError": "حدث خطأ أثناء تقديم المهمة للمراجعة"
+    },
+    "clients": {
+      "title": "العملاء المرتبطين",
+      "activeClients": "عملاء نشطون",
+      "completedClients": "عملاء منجزون",
+      "myTasksFor": "مهامي لدى"
+    },
+    "financials": {
+      "title": "الماليات والعمولات",
+      "commissionDashboard": "لوحة العمولات",
+      "pendingCommissions": "العمولات المعلقة",
+      "transactionHistory": "سجل المعاملات",
+      "financialSummary": "الملخص المالي",
+      "totalEarned": "إجمالي المكتسب",
+      "totalPaidOut": "إجمالي المدفوع",
+      "balanceDue": "الرصيد المستحق",
+      "lastPayout": "آخر صرفية",
+      "earnedThisMonth": "مكتسب هذا الشهر",
+      "averageMonthly": "المتوسط الشهري"
+    },
+    "notifications": {
+      "title": "الإشعارات",
+      "taskAssigned": "تم تكليفك بمهمة جديدة",
+      "taskUnassigned": "تم إلغاء تكليفك بمهمة",
+      "taskReassigned": "تم إعادة تكليف مهمة",
+      "taskApproved": "تم قبول مهمتك",
+      "taskRejected": "تم رفض مهمتك",
+      "commissionEarned": "تم اكتساب عمولة جديدة",
+      "payoutReceived": "تم استلام صرفية",
+      "newMessage": "رسالة جديدة في مهمة"
+    }
+  },
+  "admin": {
+    "employeeManagement": {
+      "title": "إدارة الموظفين",
+      "viewEmployee": "عرض الموظف",
+      "recordPayout": "تسجيل صرفية",
+      "employeeStats": "إحصائيات الموظف",
+      "totalCommission": "إجمالي العمولة",
+      "pendingPayout": "صرفية معلقة",
+      "lastActivity": "آخر نشاط",
+      "payoutAmount": "مبلغ الصرفية",
+      "payoutType": "نوع الصرفية",
+      "payoutNotes": "ملاحظات الصرفية"
+    }
+  },
+  "commissionTypes": {
+    "COMMISSION": "عمولة",
+    "SALARY": "راتب", 
+    "PAYOUT": "صرفية",
+    "BONUS": "مكافأة"
+  },
+  "transactionDirections": {
+    "CREDIT": "دائن",
+    "DEBIT": "مدين"
   }
 }

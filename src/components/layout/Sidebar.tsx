@@ -5,7 +5,7 @@ import { useTranslation } from 'react-i18next';
 import Logo from '../ui/Logo';
 import NotificationBell from './NotificationBell';
 import styles from './Layout.module.scss';
-import { Banknote, LayoutDashboard, LogOut, NotebookText, Users, Settings, Building, Calculator, Home, Briefcase, Plus, Receipt, ChevronDown, ChevronRight, Tags, CreditCard, AlertTriangle } from 'lucide-react';
+import { Banknote, LayoutDashboard, LogOut, NotebookText, Users, Settings, Building, Calculator, Home, Briefcase, Plus, Receipt, ChevronDown, ChevronRight, Tags, CreditCard, AlertTriangle, UserCog } from 'lucide-react';
 import { useModalStore } from '../../stores/modalStore';
 import { Search } from 'lucide-react';
 import { useState } from 'react';
@@ -45,6 +45,11 @@ const Sidebar = () => {
       path: '/clients',
       icon: Users,
       label: t('clients.title') || 'العملاء'
+    },
+    {
+      path: '/employees',
+      icon: UserCog,
+      label: 'إدارة الموظفين'
     },
     {
       path: '/receivables',

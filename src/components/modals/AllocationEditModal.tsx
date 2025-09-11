@@ -71,7 +71,7 @@ const AllocationEditModal: React.FC = () => {
   };
   // const formatCurrency = (amount: number) => {
   //   if (isNaN(amount) || amount === null || amount === undefined) return 'SAR 0.00';
-  //   return new Intl.NumberFormat('ar-SA', { style: 'currency', currency: 'SAR' }).format(amount);
+  //   return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'SAR' }).format(amount);
   // };
 
 

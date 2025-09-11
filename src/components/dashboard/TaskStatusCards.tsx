@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { Clock, PauseCircle, CheckCircle, AlertTriangle } from 'lucide-react';
+import { Clock, PauseCircle, CheckCircle, AlertTriangle, ClipboardCheck } from 'lucide-react';
 import SaudiRiyalIcon from '../ui/SaudiRiyalIcon';
 import { useReceivablesPermissions } from '../../hooks/useReceivablesPermissions';
 
@@ -7,6 +7,7 @@ interface TaskStatusCardsProps {
   stats: {
     new_tasks: number;
     deferred_tasks: number;
+    pending_review_tasks?: number;
     completed_tasks: number;
     late_tasks: number;
     late_receivables: number;
@@ -38,6 +39,16 @@ const TaskStatusCards = ({ stats, totalPaidAmount = 0, isLoading }: TaskStatusCa
             borderColor: '#22c55e',
             iconColor: '#c21818a8',
             textColor: '#c21818a8'
+        },
+        { 
+            to: '/tasks?status=Pending Review', 
+            icon: ClipboardCheck, 
+            label: 'مهام قيد المراجعة', 
+            bgColor: '#FFF4E6', // Light orange
+            value: stats.pending_review_tasks || 0, 
+            borderColor: '#FF8C00',
+            iconColor: '#FF8C00',
+            textColor: '#FF8C00'
         },
         { 
             to: '/tasks?status=Completed', 
@@ -88,7 +99,7 @@ const TaskStatusCards = ({ stats, totalPaidAmount = 0, isLoading }: TaskStatusCa
     if (isLoading) {
         return (
             <div className="row g-3">
-                {[1, 2, 3, 4, 5, 6].map(i => (
+                {[1, 2, 3, 4, 5, 6, 7].map(i => (
                     <div className="col-md-2" key={i}>
                         <div 
                             className="card border-0 shadow-sm h-100"

@@ -23,7 +23,9 @@ import {
   useCreateRequirements, 
   useUpdateTaskWithConflicts 
 } from '../../queries/taskQueries';
+import { useGetEmployeesForSelection } from '../../queries/employeeQueries';
 import { useModalStore } from '../../stores/modalStore';
+import { useAuthStore } from '../../stores/authStore';
 import { useToast } from '../../hooks/useToast';
 
 import BaseModal from '../ui/BaseModal';
@@ -53,6 +55,8 @@ const TaskModal = () => {
   const queryClient = useQueryClient();
   const navigate = useNavigate();
   
+  const { isAdmin } = useAuthStore();
+  
   const closeModal = useModalStore((state) => state.closeModal);
   const openModal = useModalStore((state) => state.openModal);
   const props = useModalStore((state) => state.props as TaskModalProps);
@@ -66,6 +70,9 @@ const TaskModal = () => {
   const [showPaymentHistory, setShowPaymentHistory] = useState(false);
   const [localRequirements, setLocalRequirements] = useState<Requirement[]>([]);
 
+  // Fetch employees for assignment dropdown
+  const { data: employees = [] } = useGetEmployeesForSelection();
+
   const {
     register,
     handleSubmit,
@@ -76,6 +83,7 @@ const TaskModal = () => {
   } = useForm<TaskPayload>({
     defaultValues: {
       client_id: taskToEdit?.client_id || client?.id,
+      assigned_to_id: taskToEdit?.assigned_to_id || undefined,
       task_name: taskToEdit?.task_name || '',
       type: taskToEdit?.type || undefined,
       amount: taskToEdit?.amount || undefined,
@@ -263,6 +271,7 @@ const TaskModal = () => {
         prepaid_amount: data.prepaid_amount ? Number(data.prepaid_amount) : undefined,
         tags: data.tags || [],
         amount_details: parseAmountDetails(data.amount_details),
+        assigned_to_id: isAdmin() ? data.assigned_to_id : undefined,
         requirements: localRequirements
           .filter(req => req.requirement_text && String(req.requirement_text).trim() !== '')
           .map(req => ({
@@ -308,6 +317,7 @@ const TaskModal = () => {
         notes: data.notes,
         tags: data.tags || [],
         amount_details: parseAmountDetails(data.amount_details),
+        assigned_to_id: isAdmin() ? data.assigned_to_id : undefined,
       };
       
       // console.log('Create payload (with tags):', createPayload);
@@ -503,6 +513,32 @@ const TaskModal = () => {
                       )}
                     />
                   </div>
+
+                  {/* Employee Assignment Field */}
+                  {isAdmin() && (
+                    <div className="form-group-compact">
+                      <label className="form-label-compact">تكليف الموظف</label>
+                      <Controller
+                        name="assigned_to_id"
+                        control={control}
+                        render={({ field }) => (
+                          <select
+                            {...field}
+                            className="form-select form-select-sm"
+                            value={field.value || ''}
+                            onChange={(e) => field.onChange(e.target.value === '' ? null : Number(e.target.value))}
+                          >
+                            <option value="">غير مكلف</option>
+                            {employees.map((employee) => (
+                              <option key={employee.user_id} value={employee.user_id}>
+                                {employee.display_name}
+                              </option>
+                            ))}
+                          </select>
+                        )}
+                      />
+                    </div>
+                  )}
                 </div>
 
                 {/* Date fields row */}
@@ -836,7 +872,9 @@ const TaskModal = () => {
         onViewAllTasks={() => {
           setShowSuccessModal(false);
           closeModal();
-          navigate('/tasks');
+          navigate(
+            isAdmin() ? '/tasks' : '/employee/tasks'
+          );
         }}
         onAddNewTask={() => {
           setShowSuccessModal(false);

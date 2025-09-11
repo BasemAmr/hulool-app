@@ -165,6 +165,41 @@ const cancelTask = async ({
   return data.data;
 };
 
+// NEW API FUNCTIONS FOR APPROVAL WORKFLOW
+
+// API function to submit task for review
+const submitTaskForReview = async ({ id }: { id: number }): Promise<Task> => {
+  const { data } = await apiClient.post<ApiResponse<Task>>(`/tasks/${id}/submit-for-review`);
+  if (!data.success) throw new Error(data.message || 'Failed to submit task for review');
+  return data.data;
+};
+
+// API function to approve task with financial data
+const approveTask = async ({ id, expense_amount, notes }: { 
+  id: number; 
+  expense_amount: number; 
+  notes?: string 
+}): Promise<Task> => {
+  const { data } = await apiClient.post<ApiResponse<Task>>(`/tasks/${id}/approve`, {
+    expense_amount,
+    notes
+  });
+  if (!data.success) throw new Error(data.message || 'Failed to approve task');
+  return data.data;
+};
+
+// API function to reject task
+const rejectTask = async ({ id, rejection_reason }: { 
+  id: number; 
+  rejection_reason?: string 
+}): Promise<Task> => {
+  const { data } = await apiClient.post<ApiResponse<Task>>(`/tasks/${id}/reject`, {
+    rejection_reason
+  });
+  if (!data.success) throw new Error(data.message || 'Failed to reject task');
+  return data.data;
+};
+
 // Enhanced updateTask function that handles conflicts
 const updateTaskWithConflictHandling = async ({ 
   id, 
@@ -475,9 +510,9 @@ export const useResumeTask = () => {
       queryClient.invalidateQueries({ queryKey: ['dashboard', 'stats'] });
       queryClient.invalidateQueries({ queryKey: ['tasks-by-tags'] });
     },
-    onSuccess: (updatedTask: Task) => {
+    onSuccess: (response: {id: number; status: string; receivable_id?: number}) => {
       // The UI has already updated optimistically
-      queryClient.invalidateQueries({ queryKey: ['task', updatedTask.id] });
+      queryClient.invalidateQueries({ queryKey: ['task', response.id] });
       queryClient.invalidateQueries({ queryKey: ['clients'] });
     }
   });
@@ -651,12 +686,12 @@ export const useDeferTask = () => {
       queryClient.invalidateQueries({ queryKey: ['dashboard', 'clientsWithActiveTasks'] });
       queryClient.invalidateQueries({ queryKey: ['dashboard', 'stats'] });
     },
-    onSuccess: (updatedTask: Task) => {
+    onSuccess: (response: {id: number; status: string; receivable_id?: number}) => {
       // The UI has already updated optimistically
-      queryClient.invalidateQueries({ queryKey: ['task', updatedTask.id] });
+      queryClient.invalidateQueries({ queryKey: ['task', response.id] });
       queryClient.invalidateQueries({ queryKey: ['clients'] });
       queryClient.invalidateQueries({ queryKey: ['receivables'] });
-      queryClient.invalidateQueries({ queryKey: ['receivables', 'client', updatedTask.client.id] });
+      // Don't try to access client.id since it's not in the response
     }
   });
 };
@@ -686,4 +721,203 @@ export const useCompleteTask = () => {
             queryClient.invalidateQueries({ queryKey: ['receivables', 'filtered', 'overdue'] });
         },
     });
+};
+
+// NEW REACT QUERY HOOKS FOR APPROVAL WORKFLOW
+
+export const useSubmitTaskForReview = () => {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: submitTaskForReview,
+    // --- START: OPTIMISTIC UPDATE LOGIC ---
+    onMutate: async ({ id }) => {
+      // Cancel any outgoing refetches so they don't overwrite our optimistic update
+      await queryClient.cancelQueries({ queryKey: ['tasks'] });
+      await queryClient.cancelQueries({ queryKey: ['dashboard', 'clientsWithActiveTasks'] });
+
+      // Snapshot the previous state
+      const previousTasksData: any = queryClient.getQueryData(['tasks']);
+      const previousDashboardData: any = queryClient.getQueryData(['dashboard', 'clientsWithActiveTasks']);
+
+      // Optimistically update to Pending Review status
+      if (previousTasksData) {
+        if (previousTasksData.pages) {
+          queryClient.setQueryData(['tasks'], (oldData: any) => {
+            return {
+              ...oldData,
+              pages: oldData.pages.map((page: any) => ({
+                ...page,
+                tasks: page.tasks.map((task: Task) =>
+                  task.id === id ? { ...task, status: 'Pending Review' } : task
+                ),
+              })),
+            };
+          });
+        } else {
+          queryClient.setQueryData(['tasks'], (oldData: any) => {
+            return {
+              ...oldData,
+              tasks: oldData.tasks.map((task: Task) =>
+                task.id === id ? { ...task, status: 'Pending Review' } : task
+              ),
+            };
+          });
+        }
+      }
+
+      // Update dashboard view
+      if (previousDashboardData) {
+        queryClient.setQueryData(['dashboard', 'clientsWithActiveTasks'], (oldData: any) => {
+          const newData = { ...oldData };
+          for (const type in newData) {
+            if (newData.hasOwnProperty(type)) {
+              newData[type] = newData[type].map((clientGroup: any) => {
+                const taskIndex = clientGroup.tasks.findIndex((t: Task) => t.id === id);
+                if (taskIndex > -1) {
+                  const updatedTasks = clientGroup.tasks.map((t: Task, index: number) =>
+                    index === taskIndex ? { ...t, status: 'Pending Review' } : t
+                  );
+                  return { ...clientGroup, tasks: updatedTasks };
+                }
+                return clientGroup;
+              });
+            }
+          }
+          return newData;
+        });
+      }
+
+      return { previousTasksData, previousDashboardData };
+    },
+    // --- END: OPTIMISTIC UPDATE LOGIC ---
+    
+    onError: (_err, _variables, context) => {
+      if (context?.previousTasksData) {
+        queryClient.setQueryData(['tasks'], context.previousTasksData);
+      }
+      if (context?.previousDashboardData) {
+        queryClient.setQueryData(['dashboard', 'clientsWithActiveTasks'], context.previousDashboardData);
+      }
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ['tasks'] });
+      queryClient.invalidateQueries({ queryKey: ['dashboard', 'clientsWithActiveTasks'] });
+      queryClient.invalidateQueries({ queryKey: ['dashboard', 'stats'] });
+    },
+    onSuccess: (updatedTask: Task) => {
+      queryClient.invalidateQueries({ queryKey: ['task', updatedTask.id] });
+      queryClient.invalidateQueries({ queryKey: ['clients'] });
+    }
+  });
+};
+
+export const useApproveTask = () => {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: approveTask,
+    onSuccess: (updatedTask: Task) => {
+      // Invalidate all relevant queries since task completion affects many areas
+      queryClient.invalidateQueries({ queryKey: ['tasks'] });
+      queryClient.invalidateQueries({ queryKey: ['task', updatedTask.id] });
+      queryClient.invalidateQueries({ queryKey: ['clients'] });
+      queryClient.invalidateQueries({ queryKey: ['dashboard'] });
+      queryClient.invalidateQueries({ queryKey: ['tasks-by-tags'] });
+      queryClient.invalidateQueries({ queryKey: ['receivables'] });
+      
+      // Invalidate client-specific data
+      if (updatedTask.client?.id) {
+        queryClient.invalidateQueries({ queryKey: ['receivables', 'client', updatedTask.client.id] });
+        queryClient.invalidateQueries({ queryKey: ['client', updatedTask.client.id] });
+      }
+    }
+  });
+};
+
+export const useRejectTask = () => {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: rejectTask,
+    // --- START: OPTIMISTIC UPDATE LOGIC ---
+    onMutate: async ({ id }) => {
+      // Cancel any outgoing refetches so they don't overwrite our optimistic update
+      await queryClient.cancelQueries({ queryKey: ['tasks'] });
+      await queryClient.cancelQueries({ queryKey: ['dashboard', 'clientsWithActiveTasks'] });
+
+      // Snapshot the previous state
+      const previousTasksData: any = queryClient.getQueryData(['tasks']);
+      const previousDashboardData: any = queryClient.getQueryData(['dashboard', 'clientsWithActiveTasks']);
+
+      // Optimistically update to New status
+      if (previousTasksData) {
+        if (previousTasksData.pages) {
+          queryClient.setQueryData(['tasks'], (oldData: any) => {
+            return {
+              ...oldData,
+              pages: oldData.pages.map((page: any) => ({
+                ...page,
+                tasks: page.tasks.map((task: Task) =>
+                  task.id === id ? { ...task, status: 'New' } : task
+                ),
+              })),
+            };
+          });
+        } else {
+          queryClient.setQueryData(['tasks'], (oldData: any) => {
+            return {
+              ...oldData,
+              tasks: oldData.tasks.map((task: Task) =>
+                task.id === id ? { ...task, status: 'New' } : task
+              ),
+            };
+          });
+        }
+      }
+
+      // Update dashboard view
+      if (previousDashboardData) {
+        queryClient.setQueryData(['dashboard', 'clientsWithActiveTasks'], (oldData: any) => {
+          const newData = { ...oldData };
+          for (const type in newData) {
+            if (newData.hasOwnProperty(type)) {
+              newData[type] = newData[type].map((clientGroup: any) => {
+                const taskIndex = clientGroup.tasks.findIndex((t: Task) => t.id === id);
+                if (taskIndex > -1) {
+                  const updatedTasks = clientGroup.tasks.map((t: Task, index: number) =>
+                    index === taskIndex ? { ...t, status: 'New' } : t
+                  );
+                  return { ...clientGroup, tasks: updatedTasks };
+                }
+                return clientGroup;
+              });
+            }
+          }
+          return newData;
+        });
+      }
+
+      return { previousTasksData, previousDashboardData };
+    },
+    // --- END: OPTIMISTIC UPDATE LOGIC ---
+    
+    onError: (_err, _variables, context) => {
+      if (context?.previousTasksData) {
+        queryClient.setQueryData(['tasks'], context.previousTasksData);
+      }
+      if (context?.previousDashboardData) {
+        queryClient.setQueryData(['dashboard', 'clientsWithActiveTasks'], context.previousDashboardData);
+      }
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ['tasks'] });
+      queryClient.invalidateQueries({ queryKey: ['dashboard', 'clientsWithActiveTasks'] });
+      queryClient.invalidateQueries({ queryKey: ['dashboard', 'stats'] });
+    },
+    onSuccess: (updatedTask: Task) => {
+      queryClient.invalidateQueries({ queryKey: ['task', updatedTask.id] });
+      queryClient.invalidateQueries({ queryKey: ['clients'] });
+    }
+  });
 };

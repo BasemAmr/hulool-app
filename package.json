@@ -19,6 +19,7 @@
     "@types/uuid": "^10.0.0",
     "axios": "^1.11.0",
     "bootstrap": "^5.3.7",
+    "date-fns": "^4.1.0",
     "exceljs": "^4.4.0",
     "file-saver": "^2.0.5",
     "html2pdf.js": "^0.9.3",

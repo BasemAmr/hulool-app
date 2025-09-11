@@ -258,6 +258,8 @@ const ClientProfilePage = () => {
         exportCreditsMutation.mutate(reportData);
     };
 
+    const handleAssignTask = (task: Task) => openModal('assignTask', { task });
+
     if (isLoading) return <div>Loading...</div>;
     if (!client) return <div>Client not found.</div>;
 
@@ -302,6 +304,7 @@ const ClientProfilePage = () => {
                             onDelete={handleDeleteTask}
                             onShowRequirements={handleShowRequirements}
                             onComplete={handleCompleteTask}
+                            onAssign={handleAssignTask}
                         />
                     </div>
                 </div>

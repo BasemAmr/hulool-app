@@ -16,7 +16,7 @@ const SaudiRiyalIcon: React.FC<SaudiRiyalIconProps> = ({
   amount 
 }) => {
   const displayAmount = amount !== undefined ? 
-    new Intl.NumberFormat('ar-SA', { 
+    new Intl.NumberFormat('en-US', { 
       style: 'currency', 
       currency: 'SAR',
       minimumFractionDigits: 2,

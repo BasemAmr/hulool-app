@@ -180,6 +180,10 @@ const AllTasksPage = () => {
     openModal('requirements', { task });
   };
 
+  const handleAssignTask = (task: Task) => {
+    openModal('assignTask', { task });
+  };
+
   // Filter handlers
   const handleSearchChange = (value: string) => setSearch(value);
   const handleStatusChange = (value: string) => setStatus(value);
@@ -276,6 +280,7 @@ const AllTasksPage = () => {
             onViewAmountDetails={handleViewAmountDetails}
             onDelete={handleDeleteTask}
             onShowRequirements={handleShowRequirements}
+            onAssign={handleAssignTask}
           />
           
           {/* --- NEW: Load More Button & Intersection Observer --- */}

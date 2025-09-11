@@ -3,14 +3,16 @@ import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import DashboardClientCard from './DashboardClientCard';
 import type { ClientWithTasksAndStats } from '../../queries/dashboardQueries';
+import type { Task } from '../../api/types';
 
 interface SortableClientCardProps {
     clientData: ClientWithTasksAndStats;
     containerType: string;
     alternatingColors: string[];
+    onAssign?: (task: Task) => void;
 }
 
-const SortableClientCard = ({ clientData, containerType, alternatingColors }: SortableClientCardProps) => {
+const SortableClientCard = ({ clientData, containerType, alternatingColors, onAssign }: SortableClientCardProps) => {
     const {
         attributes,
         listeners,
@@ -55,6 +57,7 @@ const SortableClientCard = ({ clientData, containerType, alternatingColors }: So
             <DashboardClientCard
                 data={clientData}
                 alternatingColors={alternatingColors}
+                onAssign={onAssign}
             />
         </div>
     );

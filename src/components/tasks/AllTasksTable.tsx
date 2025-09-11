@@ -3,9 +3,11 @@ import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
 import Button from '../ui/Button';
 import WhatsAppIcon from '../ui/WhatsAppIcon';
-import { Edit, Pause, Play, CheckCircle, ExternalLink, DollarSign, Trash2, FileText, AlertTriangle, MessageSquare } from 'lucide-react';
+import { Edit, Pause, Play, CheckCircle, ExternalLink, DollarSign, Trash2, FileText, AlertTriangle, MessageSquare, UserPlus, ClipboardCheck } from 'lucide-react';
 import { useDeferTask, useResumeTask, useUpdateTask } from '../../queries/taskQueries';
+import { useGetEmployeesForSelection } from '../../queries/employeeQueries';
 import { useToast } from '../../hooks/useToast';
+import { useModalStore } from '../../stores/modalStore';
 import {useCurrentUserCapabilities } from '../../queries/userQueries';
 import { useDrawerStore } from '../../stores/drawerStore';
 import { useQueryClient } from '@tanstack/react-query';
@@ -19,9 +21,10 @@ interface AllTasksTableProps {
   onViewAmountDetails?: (task: Task) => void;
   onDelete: (task: Task) => void;
   onShowRequirements?: (task: Task) => void;
+  onAssign?: (task: Task) => void;
 }
 
-const AllTasksTable = ({ tasks, isLoading, onEdit, onComplete, onViewAmountDetails, onDelete, onShowRequirements }: AllTasksTableProps) => {
+const AllTasksTable = ({ tasks, isLoading, onEdit, onComplete, onViewAmountDetails, onDelete, onShowRequirements, onAssign }: AllTasksTableProps) => {
   const { t } = useTranslation();
   const deferTaskMutation = useDeferTask();
   const resumeTaskMutation = useResumeTask();
@@ -29,8 +32,25 @@ const AllTasksTable = ({ tasks, isLoading, onEdit, onComplete, onViewAmountDetai
   const { data: currentCapabilities } = useCurrentUserCapabilities();
   const { success, error } = useToast();
   const { openDrawer } = useDrawerStore();
+  const { openModal } = useModalStore();
   const queryClient = useQueryClient();
   const { sentinelRef, isSticky } = useStickyHeader();
+  
+  // Get employees for assignment
+  const { data: employees = [] } = useGetEmployeesForSelection();
+
+  // Helper function to get employee display name
+  const getEmployeeName = (assignedToId: number | null) => {
+    if (!assignedToId) return '—';
+    const employee = employees.find(emp => emp.user_id === assignedToId);
+    return employee ? employee.display_name : 'Unknown Employee';
+  };
+
+
+  // Handle opening approval modal
+  const handleApproveTask = (task: Task) => {
+    openModal('approval', { task });
+  };
   
   if (isLoading) {
     return <div className="p-4 text-center">Loading tasks...</div>;
@@ -185,6 +205,7 @@ const AllTasksTable = ({ tasks, isLoading, onEdit, onComplete, onViewAmountDetai
             <th>{t('tasks.tableHeaderService')}</th>
             <th>{t('tasks.tableHeaderType')}</th>
             <th>{t('tasks.tableHeaderNotes')}</th>
+            <th>المكلف</th>
             <th>{t('tasks.tableHeaderStatus')}</th>
             <th className="text-end">{t('tasks.tableHeaderActions')}</th>
           </tr>
@@ -208,30 +229,40 @@ const AllTasksTable = ({ tasks, isLoading, onEdit, onComplete, onViewAmountDetai
                 <td>
                   <div className="d-flex justify-content-between align-items-center">
                     <div>
-                      <Link 
-                        to={`/clients/${task.client.id}?mode=tasks`} 
-                        className="fw-bold text-primary text-decoration-none text-black"
-                      >
-                        {task.client.name}
-                      </Link>
+                      {task.client ? (
+                        <Link 
+                          to={`/clients/${task.client.id}?mode=tasks`} 
+                          className="fw-bold text-primary text-decoration-none text-black"
+                        >
+                          {task.client.name}
+                        </Link>
+                      ) : (
+                        <span className="text-muted">لا يوجد عميل</span>
+                      )}
                     </div>
                   </div>
                 </td>
 
                 <td className='text-center'>
                   <div className="d-flex align-items-center justify-content-center gap-1">
-                      <span className="small ">{task.client.phone}</span>
-                      <a 
-                        href={getWhatsAppUrl(task.client.phone)}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="btn btn-sm p-1 text-success"
-                        title="فتح واتساب"
-                        style={{ fontSize: '12px' }}
-                      >
-                        <WhatsAppIcon size={14} />
-                      </a>
-                    </div>
+                      {task.client ? (
+                        <>
+                          <span className="small ">{task.client.phone}</span>
+                          <a 
+                            href={getWhatsAppUrl(task.client.phone)}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="btn btn-sm p-1 text-success"
+                            title="فتح واتساب"
+                            style={{ fontSize: '12px' }}
+                          >
+                            <WhatsAppIcon size={14} />
+                          </a>
+                        </>
+                      ) : (
+                        <span className="text-muted">—</span>
+                      )}
+                  </div>
                 </td>
 
                 {/* الخدمة المقدمة - Service/Task name */}
@@ -253,6 +284,13 @@ const AllTasksTable = ({ tasks, isLoading, onEdit, onComplete, onViewAmountDetai
                   </div>
                 </td>
 
+                {/* المكلف - Assigned Employee */}
+                <td>
+                  <div className="small fw-medium text-muted">
+                    {getEmployeeName(task.assigned_to_id)}
+                  </div>
+                </td>
+
                 {/* الحالة - Status */}
                 <td>
                   <span 
@@ -267,7 +305,7 @@ const AllTasksTable = ({ tasks, isLoading, onEdit, onComplete, onViewAmountDetai
                 <td className="text-end">
                   <div className="d-flex justify-content-end gap-1">
                     {/* Google Drive Link */}
-                    {task.client.google_drive_link && (
+                    {task.client?.google_drive_link && (
                       <a
                         href={task.client.google_drive_link}
                         target="_blank"
@@ -286,7 +324,7 @@ const AllTasksTable = ({ tasks, isLoading, onEdit, onComplete, onViewAmountDetai
                       onClick={() => openDrawer('taskFollowUp', { 
                         taskId: task.id,
                         taskName: task.task_name || undefined,
-                        clientName: task.client.name
+                        clientName: task.client?.name || 'عميل غير محدد'
                       })} 
                       title="عرض المراسلات والمتابعة"
                       style={{ 
@@ -296,6 +334,22 @@ const AllTasksTable = ({ tasks, isLoading, onEdit, onComplete, onViewAmountDetai
                     >
                       <MessageSquare size={16} />
                     </Button>
+
+                    {/* Assign Task Button - Only for New or Deferred tasks */}
+                    {onAssign && (task.status === 'New' || task.status === 'Deferred') && (
+                      <Button 
+                        variant="outline-primary" 
+                        size="sm" 
+                        onClick={() => onAssign(task)} 
+                        title="تكليف موظف"
+                        style={{ 
+                          borderColor: '#0d6efd', 
+                          color: '#0d6efd' 
+                        }}
+                      >
+                        <UserPlus size={16} />
+                      </Button>
+                    )}
 
                     {/* Amount Details Button */}
                     {task.amount_details && task.amount_details.length > 0 && (
@@ -348,7 +402,7 @@ const AllTasksTable = ({ tasks, isLoading, onEdit, onComplete, onViewAmountDetai
                       </Button>
                     )}
 
-                    {task.status !== 'Completed' && (
+                    {task.status !== 'Completed' && task.status !== 'Pending Review' && (
                       <Button 
                         variant="primary" 
                         size="sm" 
@@ -362,6 +416,24 @@ const AllTasksTable = ({ tasks, isLoading, onEdit, onComplete, onViewAmountDetai
                         }}
                       >
                         <CheckCircle size={16} />
+                      </Button>
+                    )}
+
+                    {/* Review Action for Pending Review tasks */}
+                    {task.status === 'Pending Review' && (
+                      <Button 
+                        variant="primary" 
+                        size="sm" 
+                        onClick={() => handleApproveTask(task)} 
+                        title="مراجعة"
+                        style={{ 
+                          backgroundColor: 'rgba(255, 140, 0, 0.9)', 
+                          borderColor: 'rgba(255, 140, 0, 0.9)',
+                          color: '#fff',
+                          fontWeight: 'bold'
+                        }}
+                      >
+                        <ClipboardCheck size={16} />
                       </Button>
                     )}
 

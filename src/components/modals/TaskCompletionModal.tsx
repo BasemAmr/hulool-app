@@ -24,7 +24,10 @@ const TaskCompletionModal = () => {
   const queryClient = useQueryClient();
 
   // Correctly calculate the remaining amount for this task
-  const remainingAmount = task.amount - (task.prepaid_amount || 0);
+  // If there's a prepaid receivable but prepaid_amount is 0, we need to get the actual prepaid amount
+  // For now, we'll use the prepaid_receivable amount if available, otherwise fall back to prepaid_amount
+  const actualPrepaidAmount = task.prepaid_receivable?.amount || task.prepaid_amount || 0;
+  const remainingAmount = task.amount - actualPrepaidAmount;
 
   const { data: paymentMethods, isLoading: isLoadingMethods } = useGetPaymentMethods();
   const completeTaskMutation = useCompleteTask();
@@ -46,7 +49,7 @@ const TaskCompletionModal = () => {
   // Update payment amount when full payment checkbox changes
   useEffect(() => {
     if (watchIsFullPayment && watchIsPaid) {
-      setValue('payment_amount', remainingAmount); // Use remaining amount
+      setValue('payment_amount', remainingAmount); // Use calculated remaining amount
     }
   }, [watchIsFullPayment, watchIsPaid, remainingAmount, setValue]);
 

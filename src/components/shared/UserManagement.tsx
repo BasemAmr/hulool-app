@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Users, UserPlus, Shield } from 'lucide-react';
+import { Users, UserPlus, Shield, Briefcase, UserMinus } from 'lucide-react';
 import styles from './UserManagement.module.scss';
 import { useUsers, useCreateUser, useUpdateUserCapabilities, useCurrentUserCapabilities } from '../../queries/userQueries';
+import { useCreateEmployee, useRemoveEmployeeStatus } from '../../queries/employeeQueries';
 import { useToast } from '../../hooks/useToast';
 import type { CreateUserRequest, User } from '../../api/types';
 
@@ -23,10 +24,15 @@ const UserManagement: React.FC = () => {
   const { data: currentCapabilities } = useCurrentUserCapabilities();
   const createUserMutation = useCreateUser();
   const updateCapabilitiesMutation = useUpdateUserCapabilities();
+  const createEmployeeMutation = useCreateEmployee();
+  const removeEmployeeStatusMutation = useRemoveEmployeeStatus();
 
   // Check if current user can manage users
   console.log('Current capabilities:', currentCapabilities);
   const canManageUsers = currentCapabilities?.tm_manage_users || false;
+
+  // Employee status is now directly available in the user object
+  const isEmployee = (user: User) => user.employee_id !== null;
 
   const handleCreateUser = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -70,6 +76,42 @@ const UserManagement: React.FC = () => {
       showToast({
         type: 'error',
         title: t('users.capabilityUpdateError') || 'خطأ في تحديث الصلاحيات',
+        message: error.message || 'حدث خطأ غير متوقع'
+      });
+    }
+  };
+
+  const handleMakeEmployee = async (userId: number) => {
+    try {
+      await createEmployeeMutation.mutateAsync({ user_id: userId });
+      
+      showToast({
+        type: 'success',
+        title: 'تم إنشاء الموظف بنجاح',
+        message: 'يمكن الآن تكليف هذا المستخدم بمهام'
+      });
+    } catch (error: any) {
+      showToast({
+        type: 'error',
+        title: 'خطأ في إنشاء الموظف',
+        message: error.message || 'حدث خطأ غير متوقع'
+      });
+    }
+  };
+
+  const handleRemoveEmployee = async (userId: number) => {
+    try {
+      await removeEmployeeStatusMutation.mutateAsync(userId);
+      
+      showToast({
+        type: 'success',
+        title: 'تم إزالة صفة الموظف بنجاح',
+        message: 'لن يتمكن هذا المستخدم من تلقي مهام جديدة'
+      });
+    } catch (error: any) {
+      showToast({
+        type: 'error',
+        title: 'خطأ في إزالة صفة الموظف',
         message: error.message || 'حدث خطأ غير متوقع'
       });
     }
@@ -223,6 +265,29 @@ const UserManagement: React.FC = () => {
                   </label>
                 ))}
               </div>
+            </div>
+            
+            <div className={styles.employeeActions}>
+              <h5>حالة الموظف</h5>
+              {isEmployee(user) ? (
+                <button 
+                  className={`${styles.employeeButton} ${styles.removeEmployee}`}
+                  onClick={() => handleRemoveEmployee(user.id)}
+                  disabled={removeEmployeeStatusMutation.isPending}
+                >
+                  <UserMinus size={16} />
+                  {removeEmployeeStatusMutation.isPending ? 'جاري الإزالة...' : 'إزالة كموظف'}
+                </button>
+              ) : (
+                <button 
+                  className={`${styles.employeeButton} ${styles.makeEmployee}`}
+                  onClick={() => handleMakeEmployee(user.id)}
+                  disabled={createEmployeeMutation.isPending}
+                >
+                  <Briefcase size={16} />
+                  {createEmployeeMutation.isPending ? 'جاري الإنشاء...' : 'تعيين كموظف'}
+                </button>
+              )}
             </div>
           </div>
         ))}

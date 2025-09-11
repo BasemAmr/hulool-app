@@ -24,6 +24,9 @@ import CreditDeleteModal from '../modals/CreditDeleteModal';
 import AllocationEditModal from '../modals/AllocationEditModal';
 import AllocationDeleteModal from '../modals/AllocationDeleteModal';
 import UrgentAlertModal from '../modals/UrgentAlertModal';
+import EmployeePayoutModal from '../modals/EmployeePayoutModal';
+import EditEmployeePayoutModal from '../modals/EditEmployeePayoutModal';
+import EditTaskExpenseModal from '../modals/EditTaskExpenseModal';
 
 
 import Button from '../ui/Button';
@@ -40,6 +43,8 @@ import PrepaidConflictModal from '../modals/PrepaidConflictModal';
 import TaskAmountConflictModal from '../modals/TaskAmountConflictModal';
 import TaskCancellationModal from '../modals/TaskCancellationModal';
 import ConcurrentModificationModal from '../modals/ConcurrentModificationModal';
+import AssignTaskModal from '../modals/AssignTaskModal';
+import ApprovalModal from '../modals/ApprovalModal';
 
 // Separate component for client receivables to avoid re-renders
 const ClientReceivablesFetcher = ({ client }: { client?: any }) => {
@@ -82,6 +87,12 @@ const ModalManager = () => {
 
       case 'taskForm':
         return <TaskModal key="taskForm" />;
+
+      case 'assignTask':
+        return <AssignTaskModal key="assignTask" />;
+
+      case 'approval':
+        return <ApprovalModal key="approval" />;
 
       case 'requirements':
         return <RequirementsModal key="requirements" />;
@@ -251,6 +262,15 @@ const ModalManager = () => {
             </footer>
           </BaseModal>
         );
+
+      case 'employeePayout':
+        return <EmployeePayoutModal key="employeePayout" />;
+
+      case 'editEmployeePayout':
+        return <EditEmployeePayoutModal key="editEmployeePayout" />;
+
+      case 'editTaskExpense':
+        return <EditTaskExpenseModal key="editTaskExpense" />;
 
       default:
         return null;

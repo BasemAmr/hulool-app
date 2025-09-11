@@ -33,8 +33,44 @@ export interface User {
   username: string;
   email: string;
   display_name: string;
+  employee_id: number | null;
+  commission_rate: number | null;
   roles: string[];
   capabilities: Record<string, boolean>;
+}
+
+// Employee Management Types
+export interface Employee {
+  id: number;
+  user_id: number;
+  commission_rate: number;
+  created_at: string;
+  user_login: string;
+  user_email: string;
+  display_name: string;
+}
+
+export interface CreateEmployeeRequest {
+  user_id: number;
+  commission_rate?: number;
+}
+
+export interface UpdateEmployeeRequest {
+  commission_rate?: number;
+}
+
+export interface EmployeePaginatedData {
+  employees: Employee[];
+  total: number;
+  page: number;
+  per_page: number;
+  total_pages: number;
+}
+
+export interface EmployeeStats {
+  total: number;
+  active: number;
+  inactive: number;
 }
 
 // User Management Types
@@ -157,6 +193,7 @@ export interface Requirement {
 export interface Task {
   id: number;
   client_id: number;
+  assigned_to_id: number | null;
   task_name: string | null;
   type: TaskType;
   status: TaskStatus;
@@ -166,6 +203,8 @@ export interface Task {
   end_date: string | null;
   prepaid_amount: number;
   prepaid_receivable_id: number | null;
+  expense_amount?: number;
+  
   notes: string | null;
   created_at: string;
   updated_at: string;
@@ -178,6 +217,7 @@ export interface Task {
 
 export interface TaskPayload {
   client_id: number;
+  assigned_to_id?: number | null;
   task_name: string;
   type: TaskType;
   amount: number;
@@ -192,6 +232,7 @@ export interface TaskPayload {
 }
 
 export interface UpdateTaskPayload {
+  assigned_to_id?: number | null;
   task_name?: string;
   type?: TaskType;
   amount?: number;
@@ -211,7 +252,7 @@ export interface UpdateRequirementsPayload {
   requirements: Requirement[];
 }
 
-export type TaskStatus = 'New' | 'Deferred' | 'Completed' | 'Cancelled';
+export type TaskStatus = 'New' | 'Deferred' | 'Pending Review' | 'Completed' | 'Cancelled';
 export type TaskType = 'Government' | 'RealEstate' | 'Accounting' | 'Other';
 
 // Receivables & Payments Types
@@ -713,4 +754,25 @@ export interface ConcurrentModificationData {
   expected_updated_at: string;
   current_updated_at: string;
   current_task_data: Task;
+}
+
+// Employee Receivables Summary Types
+export interface EmployeeReceivablesClient {
+  id: string;
+  name: string;
+  phone: string;
+  region_id: string | null;
+  google_drive_link: string;
+  notes: string | null;
+  created_at: string;
+  updated_at: string;
+  total_receivables: string;
+  total_paid: string;
+  total_outstanding: string;
+  receivables_count: string;
+}
+
+export interface EmployeeReceivablesData {
+  clients: EmployeeReceivablesClient[];
+  pagination: Pagination;
 }

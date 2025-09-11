@@ -19,6 +19,7 @@ import {
   AlertTriangle,
   Eye,
   MessageSquare,
+  UserPlus,
 } from 'lucide-react';
 import WhatsAppIcon from '../../assets/images/whats.svg';
 import GoogleDriveIcon from '../../assets/images/googe_drive.svg';
@@ -30,6 +31,7 @@ interface DashboardClientCardProps {
   data: ClientWithTasksAndStats;
   index?: number;
   alternatingColors: string[];
+  onAssign?: (task: Task) => void;
 }
 
 const hexToRgba = (hex: string, opacity: number): string => {
@@ -59,7 +61,7 @@ const formatDaysElapsed = (dateString: string): string => {
   }
 };
 
-const DashboardClientCard = ({ data, index = 0, alternatingColors }: DashboardClientCardProps) => {
+const DashboardClientCard = ({ data, index = 0, alternatingColors, onAssign }: DashboardClientCardProps) => {
   const { client, tasks } = data;
   const { t } = useTranslation();
   const openModal = useModalStore(state => state.openModal);
@@ -733,6 +735,13 @@ const DashboardClientCard = ({ data, index = 0, alternatingColors }: DashboardCl
                                   <ListChecks size={11} className="ms-2" />
                                   المتطلبات
                                 </Dropdown.Item>
+                                {/* Assign Task - Only for New or Deferred tasks */}
+                                {onAssign && (task.status === 'New' || task.status === 'Deferred') && (
+                                  <Dropdown.Item onClick={() => onAssign(task)} className="text-end">
+                                    <UserPlus size={11} className="ms-2" />
+                                    تعيين موظف
+                                  </Dropdown.Item>
+                                )}
                                 <Dropdown.Item 
                                   onClick={() => openDrawer('taskFollowUp', { 
                                     taskId: task.id,
@@ -893,6 +902,20 @@ const DashboardClientCard = ({ data, index = 0, alternatingColors }: DashboardCl
                         >
                           <ListChecks size={12} />
                         </button>
+                        {/* Assign Task - Only for New or Deferred tasks in portal */}
+                        {onAssign && (task.status === 'New' || task.status === 'Deferred') && (
+                          <button
+                            onClick={() => {
+                              onAssign(task);
+                              setHoveredTaskId(null);
+                            }}
+                            className="btn btn-outline-primary btn-sm"
+                            title="تعيين موظف"
+                            style={{ fontSize: '0.75em' }}
+                          >
+                            <UserPlus size={12} />
+                          </button>
+                        )}
                         <button
                           onClick={() => {
                             openDrawer('taskFollowUp', { 
