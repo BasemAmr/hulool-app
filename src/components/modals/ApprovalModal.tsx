@@ -42,12 +42,12 @@ const ApprovalModal = () => {
 
   const onApprove = (data: ApprovalFormData) => {
     if (data.expense_amount < 0) {
-      error(t('common.error'), 'Expense amount cannot be negative');
+      error(t('common.error'), 'لا يمكن أن يكون مبلغ المصروف سلبياً');
       return;
     }
 
     if (data.expense_amount > task.amount) {
-      error(t('common.error'), 'Expense amount cannot exceed task amount');
+      error(t('common.error'), 'لا يمكن أن يتجاوز مبلغ المصروف مبلغ المهمة');
       return;
     }
 
@@ -61,12 +61,12 @@ const ApprovalModal = () => {
         onSuccess: () => {
           success(
             t('tasks.approvalSuccess'),
-            `Task "${task.task_name || `Task #${task.id}`}" has been approved and completed with net earning of ${netEarning.toFixed(2)}`
+            `تمت الموافقة على المهمة "${task.task_name || `المهمة #${task.id}`}" وإكمالها بصافي ربح ${netEarning.toFixed(2)}`
           );
           closeModal();
         },
         onError: (err: any) => {
-          error(t('common.error'), err.message || 'Failed to approve task');
+          error(t('common.error'), err.message || 'فشل في الموافقة على المهمة');
         }
       }
     );
@@ -81,13 +81,13 @@ const ApprovalModal = () => {
       {
         onSuccess: () => {
           success(
-            'Task Rejected',
-            `Task "${task.task_name || `Task #${task.id}`}" has been rejected and reverted to New status`
+            'تم رفض المهمة',
+            `تم رفض المهمة "${task.task_name || `المهمة #${task.id}`}" وتمت إعادتها إلى الحالة "جديدة"`
           );
           closeModal();
         },
         onError: (err: any) => {
-          error(t('common.error'), err.message || 'Failed to reject task');
+          error(t('common.error'), err.message || 'فشل في رفض المهمة');
         }
       }
     );
@@ -97,27 +97,27 @@ const ApprovalModal = () => {
     <BaseModal
       isOpen={true}
       onClose={closeModal}
-      title="Task Approval"
+      title="الموافقة على المهمة"
     >
       <div className="space-y-6">
         {/* Task Summary */}
         <div className="bg-gray-50 p-4 rounded-lg">
-          <h3 className="font-medium text-gray-900 mb-3">Task Details</h3>
+          <h3 className="font-medium text-gray-900 mb-3">تفاصيل المهمة</h3>
           <div className="grid grid-cols-2 gap-4 text-sm">
             <div>
-              <span className="text-gray-500">Task Name:</span>
-              <p className="font-medium">{task.task_name || `Task #${task.id}`}</p>
+              <span className="text-gray-500">اسم المهمة:</span>
+              <p className="font-medium">{task.task_name || `المهمة #${task.id}`}</p>
             </div>
             <div>
-              <span className="text-gray-500">Client:</span>
-              <p className="font-medium">{task.client ? task.client.name : 'Unknown Client'}</p>
+              <span className="text-gray-500">العميل:</span>
+              <p className="font-medium">{task.client ? task.client.name : 'عميل غير معروف'}</p>
             </div>
             <div>
-              <span className="text-gray-500">Task Amount:</span>
+              <span className="text-gray-500">مبلغ المهمة:</span>
               <p className="font-medium">{task.amount.toFixed(2)}</p>
             </div>
             <div>
-              <span className="text-gray-500">Status:</span>
+              <span className="text-gray-500">الحالة:</span>
               <p className="font-medium text-orange-600">{task.status}</p>
             </div>
           </div>
@@ -127,7 +127,7 @@ const ApprovalModal = () => {
           <form onSubmit={handleSubmit(onApprove)} className="space-y-4">
             <div>
               <label htmlFor="expense_amount" className="block text-sm font-medium text-gray-700 mb-1">
-                Expense Amount *
+                مبلغ المصروف *
               </label>
               <Input
                 id="expense_amount"
@@ -136,39 +136,39 @@ const ApprovalModal = () => {
                 min="0"
                 max={task.amount}
                 {...register('expense_amount', {
-                  required: 'Expense amount is required',
+                  required: 'مبلغ المصروف مطلوب',
                   valueAsNumber: true,
-                  min: { value: 0, message: 'Expense amount cannot be negative' },
-                  max: { value: task.amount, message: 'Expense amount cannot exceed task amount' }
+                  min: { value: 0, message: 'لا يمكن أن يكون مبلغ المصروف سلبياً' },
+                  max: { value: task.amount, message: 'لا يمكن أن يتجاوز مبلغ المصروف مبلغ المهمة' }
                 })}
                 error={errors.expense_amount?.message}
-                placeholder="Enter task expenses"
+                placeholder="أدخل مصروفات المهمة"
               />
             </div>
 
             {/* Calculated Net Earning */}
             <div className="bg-blue-50 p-3 rounded-lg">
               <div className="flex justify-between items-center">
-                <span className="text-sm text-gray-600">Net Earning:</span>
+                <span className="text-sm text-gray-600">صافي الربح:</span>
                 <span className={`font-semibold ${netEarning >= 0 ? 'text-green-600' : 'text-red-600'}`}>
                   {netEarning.toFixed(2)}
                 </span>
               </div>
               <div className="text-xs text-gray-500 mt-1">
-                Task Amount ({task.amount.toFixed(2)}) - Expense Amount ({(Number(watchExpenseAmount) || 0).toFixed(2)})
+                مبلغ المهمة ({task.amount.toFixed(2)}) - مبلغ المصروف ({(Number(watchExpenseAmount) || 0).toFixed(2)})
               </div>
             </div>
 
             <div>
               <label htmlFor="notes" className="block text-sm font-medium text-gray-700 mb-1">
-                Notes (Optional)
+                ملاحظات (اختياري)
               </label>
               <textarea
                 id="notes"
                 rows={3}
                 {...register('notes')}
                 className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
-                placeholder="Add any additional notes about this task approval..."
+                placeholder="أضف أي ملاحظات إضافية حول موافقة هذه المهمة..."
               />
             </div>
 
@@ -179,7 +179,7 @@ const ApprovalModal = () => {
                 onClick={() => setIsRejecting(true)}
                 disabled={approveTaskMutation.isPending || rejectTaskMutation.isPending}
               >
-                Reject
+                رفض
               </Button>
               <Button
                 type="button"
@@ -187,7 +187,7 @@ const ApprovalModal = () => {
                 onClick={closeModal}
                 disabled={approveTaskMutation.isPending || rejectTaskMutation.isPending}
               >
-                Cancel
+                إلغاء
               </Button>
               <Button
                 type="submit"
@@ -195,17 +195,16 @@ const ApprovalModal = () => {
                 isLoading={approveTaskMutation.isPending}
                 disabled={approveTaskMutation.isPending || rejectTaskMutation.isPending}
               >
-                Approve & Complete
+                الموافقة وإكمال
               </Button>
             </div>
           </form>
         ) : (
           <div className="space-y-4">
             <div className="bg-red-50 p-4 rounded-lg border border-red-200">
-              <h3 className="font-medium text-red-800 mb-2">Reject Task</h3>
+              <h3 className="font-medium text-red-800 mb-2">رفض المهمة</h3>
               <p className="text-red-700 text-sm">
-                Are you sure you want to reject this task? This will revert the task status back to "New" 
-                and the assigned employee will need to resubmit it for review.
+                هل أنت متأكد أنك تريد رفض هذه المهمة؟ سيؤدي ذلك إلى إعادة حالة المهمة إلى "جديدة" وسيتعين على الموظف المعَيَّن إعادة تقديمها للمراجعة.
               </p>
             </div>
 
@@ -216,7 +215,7 @@ const ApprovalModal = () => {
                 onClick={() => setIsRejecting(false)}
                 disabled={rejectTaskMutation.isPending}
               >
-                Back
+                عودة
               </Button>
               <Button
                 type="button"
@@ -224,7 +223,7 @@ const ApprovalModal = () => {
                 onClick={closeModal}
                 disabled={rejectTaskMutation.isPending}
               >
-                Cancel
+                إلغاء
               </Button>
               <Button
                 type="button"
@@ -233,7 +232,7 @@ const ApprovalModal = () => {
                 isLoading={rejectTaskMutation.isPending}
                 disabled={rejectTaskMutation.isPending}
               >
-                Confirm Rejection
+                تأكيد الرفض
               </Button>
             </div>
           </div>

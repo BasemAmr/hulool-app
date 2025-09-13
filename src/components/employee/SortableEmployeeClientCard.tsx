@@ -1,19 +1,15 @@
-// src/components/dashboard/SortableClientCard.tsx
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import DashboardClientCard from './DashboardClientCard';
+import EmployeeDashboardClientCard from './EmployeeDashboardClientCard';
 import { FloatingCardWrapper } from '../common/FloatingCardWrapper';
 import type { ClientWithTasksAndStats } from '../../queries/dashboardQueries';
-import type { Task } from '../../api/types';
 
-interface SortableClientCardProps {
+interface SortableEmployeeClientCardProps {
     clientData: ClientWithTasksAndStats;
-    containerType: string;
     alternatingColors: string[];
-    onAssign?: (task: Task) => void;
 }
 
-const SortableClientCard = ({ clientData, containerType, alternatingColors, onAssign }: SortableClientCardProps) => {
+const SortableEmployeeClientCard = ({ clientData, alternatingColors }: SortableEmployeeClientCardProps) => {
     const {
         attributes,
         listeners,
@@ -22,14 +18,13 @@ const SortableClientCard = ({ clientData, containerType, alternatingColors, onAs
         transition,
         isDragging,
     } = useSortable({
-        id: `${containerType}-${clientData.client.id}` // Composite ID: containerType-clientId
+        id: `employee-${clientData.client.id}`
     });
 
     const style = {
         transform: CSS.Transform.toString(transform),
         transition,
         opacity: isDragging ? 0.5 : 1,
-        zIndex: isDragging ? 1000 : 'auto',
     };
 
     return (
@@ -37,7 +32,7 @@ const SortableClientCard = ({ clientData, containerType, alternatingColors, onAs
             ref={setNodeRef}
             style={style}
             {...attributes}
-            className="sortable-client-card"
+            className="sortable-employee-client-card"
         >
             {/* Add a drag handle area */}
             <div
@@ -55,16 +50,14 @@ const SortableClientCard = ({ clientData, containerType, alternatingColors, onAs
                 ⋮⋮ اسحب لإعادة الترتيب
             </div>
 
-            {/* Wrap the card with our floating wrapper */}
             <FloatingCardWrapper>
-                <DashboardClientCard
+                <EmployeeDashboardClientCard
                     data={clientData}
                     alternatingColors={alternatingColors}
-                    onAssign={onAssign}
                 />
             </FloatingCardWrapper>
         </div>
     );
 };
 
-export default SortableClientCard;
+export default SortableEmployeeClientCard;

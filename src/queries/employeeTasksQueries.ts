@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient, useInfiniteQuery } from '@tanstack/react-query';
 import apiClient from '../api/apiClient';
-import type { ApiResponse, Task } from '../api/types';
+import type { ApiResponse, Task, Receivable } from '../api/types';
+import { useModalStore } from '../stores/modalStore';
 
 // Interface for employee tasks pagination response
 export interface EmployeeTasksResponse {
@@ -96,23 +97,42 @@ export const useGetEmployeeOwnTasksInfinite = (filters: Omit<EmployeeTasksParams
  */
 export const useSubmitTaskForReview = () => {
   const queryClient = useQueryClient();
-  
+  const { openModal } = useModalStore();
+
   return useMutation({
     mutationFn: async (taskId: number) => {
-      const response = await apiClient.put<ApiResponse<Task>>(
+      const response = await apiClient.post<ApiResponse<Task & { receivable_id?: number }>>(
         `/tasks/${taskId}/submit-for-review`
       );
-      
+
       if (!response.data.success) {
         throw new Error(response.data.message || 'Failed to submit task for review');
       }
-      
+
       return response.data.data;
     },
-    onSuccess: () => {
+    onSuccess: async (data) => {
       // Invalidate and refetch employee tasks
       queryClient.invalidateQueries({ queryKey: ['employee', 'tasks', 'own'] });
       queryClient.invalidateQueries({ queryKey: ['employee', 'dashboard'] });
+
+      // If a receivable was created, fetch it and open the payment modal
+      if (data.receivable_id) {
+        try {
+          const receivableResponse = await apiClient.get<ApiResponse<Receivable>>(
+            `/receivables/${data.receivable_id}`
+          );
+
+          if (receivableResponse.data.success) {
+            const receivable = receivableResponse.data.data;
+            // Open the payment modal with the newly created receivable
+            openModal('paymentForm', { receivable, isRequired: true });
+          }
+        } catch (error) {
+          console.error('Failed to fetch receivable for payment modal:', error);
+          // Don't fail the entire operation if fetching the receivable fails
+        }
+      }
     },
   });
 };

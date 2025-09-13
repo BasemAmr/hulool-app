@@ -187,14 +187,37 @@
     "complete": "إكمال",
     "completeAndPay": "إكمال وتسجيل دفعة",
     "completeWithPaymentSuccessMessage": "تم إكمال المهمة  وتسجيل دفعة بنجاح.",
-    "wasPaid": "تم الدفع"
+    "wasPaid": "تم الدفع",
+    "approvalSuccess": "تمت الموافقة بنجاح",
+    "submitSuccess":" تم التقديم بنجاح",
+    "submitSuccessMessage": "تم تقديم المهمة  للمراجعة بنجاح.",
+    "submitForReviewModal": {
+      "title": "تقديم المهمة للمراجعة",
+      "taskWillBeSubmitted": "سيتم تقديم المهمة '{taskName}' للمراجعة وإنشاء مستحق مالي.",
+      "askAboutPayment": "هل تم دفع المبلغ؟",
+      "paymentReceived": "تم استلام الدفع",
+      "noPaymentReceived": "لم يتم استلام الدفع بعد",
+      "paymentAmount": "مبلغ الدفع",
+      "fullPayment": "دفع كامل",
+      "partialPayment": "دفع جزئي",
+      "paymentMethod": "طريقة الدفع",
+      "paymentDate": "تاريخ الدفع",
+      "paymentNotes": "ملاحظات الدفع (اختياري)",
+      "submitWithoutPayment": "تقديم بدون دفع",
+      "submitWithPayment": "تقديم مع تسجيل الدفع",
+      "submittingTask": "جاري تقديم المهمة...",
+      "submittingWithPayment": "جاري تقديم المهمة وتسجيل الدفع...",
+      "submitError": "حدث خطأ أثناء التقديم",
+      "paymentError": "حدث خطأ أثناء تسجيل الدفع"
+    }
   },
   "status": {
     "New": "جديدة",
     "Deferred": "مؤجلة",
     "Completed": "مكتملة",
     "Late": "متأخرة",
-    "Cancelled": "ملغاة"
+    "Cancelled": "ملغاة",
+    "Pending Review": "قيد المراجعة"
   },
   "type": {
     "Government": "حكومية",
@@ -293,20 +316,8 @@
     "convertToCredit": "تحويل إلى رصيد",
     "refund": "استرداد",
     "tiedToTaskNotice": "لا يمكن تعديل الوصف أو النوع لأن هذا المستحق مرتبط بمهمة",
-    "overpaymentDetected": "تم اكتشاف زيادة في الدفع",
-    "overpaymentMessage": "المبلغ الجديد ({new_amount}) أقل من إجمالي المدفوع ({total_paid}). هناك فائض بمقدار {surplus}. يرجى اتخاذ قرار بشأن التعامل مع الزيادة.",
-    "paymentDecisions": "قرارات الدفعات",
-    "allocationDecisions": "قرارات التخصيص",
-    "convertToCredit": "تحويل إلى رصيد",
     "unallocate": "إلغاء التخصيص",
     "keep": "احتفاظ",
-    "deleteAllocation": "حذف التخصيص",
-    "returnToCredit": "إرجاع إلى رصيد",
-    "keepAllocation": "احتفاظ بالتخصيص",
-    "keepPayment": "احتفاظ بالدفعة",
-    "deletePayment": "حذف الدفعة",
-    "reducePayment": "تقليل الدفعة",
-    "cannotDeleteWithPayments": "لا يمكن حذف المستحق الذي يحتوي على دفعات أو تخصيصات. يرجى اتخاذ قرار بشأن كل عنصر أدناه.",
     "notes": "ملاحظات",
     "notesPlaceholder": "أدخل أي ملاحظات إضافية هنا...",
     "settlePayment": "سداد",
@@ -325,11 +336,7 @@
     },
     "chooseType": "اختر نوع المستحق",
     "dueDate": "تاريخ الأمر",
-    "dueDateRequired": "يرجى اختيار تاريخ الأمر.",
-    "client": "العميل",
-    "task": "المهمة",
-    "tiedToTaskNotice": "لا يمكن تعديل الوصف أو النوع لأن هذا المستحق مرتبط بمهمة",
-    "refund": "استرداد"
+    "dueDateRequired": "يرجى اختيار تاريخ الأمر."
   },
   "payments": {
     "settleTitle": "تسجيل دفعة للمستحق: ",

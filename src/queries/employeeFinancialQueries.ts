@@ -126,3 +126,77 @@ export const useGetMyClientsReceivablesTotals = () => {
     staleTime: 2 * 60 * 1000, // Keep fresh for 2 minutes
   });
 };
+
+// New types for employee dashboard
+export interface EmployeeReceivableDashboardItem {
+  id: string;
+  client_id: string;
+  task_id: string;
+  created_by: string | null;
+  type: string;
+  description: string;
+  amount: string;
+  amount_details: string;
+  notes: string;
+  due_date: string;
+  created_at: string;
+  updated_at: string;
+  client_name: string;
+  client_phone: string;
+  task_name: string;
+  task_type: string;
+  task_assigned_to_id: string | null;
+  task_created_by: string;
+  total_paid: number;
+  total_allocated: number;
+  remaining_amount: number;
+  payments: any[];
+  credit_allocations: any[];
+  payment_status: string;
+  employee_relationship: string[];
+  receivables_details: any[];
+}
+
+export interface EmployeeReceivableDashboardResponse {
+  success: boolean;
+  data: {
+    receivables: EmployeeReceivableDashboardItem[];
+    pagination: {
+      total: number;
+      per_page: number;
+      current_page: number;
+      total_pages: number;
+      has_next: boolean;
+      has_prev: boolean;
+    };
+  };
+}
+
+/**
+ * Get employee receivables dashboard with infinite scroll
+ */
+export const useGetMyReceivablesDashboardInfinite = (params?: {
+  payment_status?: 'unpaid' | 'paid';
+  client_id?: string;
+  search?: string;
+}) => {
+  return useInfiniteQuery({
+    queryKey: ['employee', 'receivables', 'dashboard', 'infinite', params],
+    queryFn: async ({ pageParam = 1 }): Promise<EmployeeReceivableDashboardResponse> => {
+      const response = await apiClient.get('/receivables/employee/me/dashboard', {
+        params: { 
+          page: pageParam, 
+          per_page: 20,
+          ...params
+        }
+      });
+      return response.data;
+    },
+    initialPageParam: 1,
+    getNextPageParam: (lastPage) => {
+      const { pagination } = lastPage.data;
+      return pagination.has_next ? pagination.current_page + 1 : undefined;
+    },
+    staleTime: 1 * 60 * 1000, // Keep fresh for 1 minute
+  });
+};

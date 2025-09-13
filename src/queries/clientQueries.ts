@@ -234,6 +234,10 @@ export const useCreateClient = () => {
       queryClient.invalidateQueries({ queryKey: ['clientCountsByType'] }); // Client counts by type
       // If creating from a specific client profile context, consider invalidating that client:
       queryClient.invalidateQueries({ queryKey: ['client', newClient.id] });
+      
+      // Employee-related invalidations
+      queryClient.invalidateQueries({ queryKey: ['employee'] });
+      queryClient.invalidateQueries({ queryKey: ['employees'] });
     },
   });
 };
@@ -247,6 +251,10 @@ export const useUpdateClient = () => {
       queryClient.invalidateQueries({ queryKey: ['client', updatedClient.id] }); // Invalidate specific client profile
       // If client type changed, counts might need updating:
       queryClient.invalidateQueries({ queryKey: ['clientCountsByType'] });
+      
+      // Employee-related invalidations
+      queryClient.invalidateQueries({ queryKey: ['employee'] });
+      queryClient.invalidateQueries({ queryKey: ['employees'] });
     },
   });
 };
@@ -313,6 +321,10 @@ export const useDeleteClient = () => {
       queryClient.invalidateQueries({ queryKey: ['clients'] }); // Invalidate all clients lists
       queryClient.invalidateQueries({ queryKey: ['dashboard'] }); // Dashboard stats for total clients
       queryClient.invalidateQueries({ queryKey: ['clientCountsByType'] }); // Client counts by type
+      
+      // Employee-related invalidations
+      queryClient.invalidateQueries({ queryKey: ['employee'] });
+      queryClient.invalidateQueries({ queryKey: ['employees'] });
     },
     onSuccess: () => {
       // The UI has already updated optimistically

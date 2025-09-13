@@ -83,6 +83,10 @@ export const useRecordClientCredit = () => {
         onSuccess: (newCredit) => {
             queryClient.invalidateQueries({ queryKey: ['clientCredits', newCredit.client_id] });
             queryClient.invalidateQueries({ queryKey: ['clients'] });
+            
+            // Employee-related invalidations
+            queryClient.invalidateQueries({ queryKey: ['employee'] });
+            queryClient.invalidateQueries({ queryKey: ['employees'] });
         },
     });
 };
@@ -94,6 +98,10 @@ export const useUpdateClientCredit = () => {
         onSuccess: (updatedCredit) => {
             queryClient.invalidateQueries({ queryKey: ['clientCredits', updatedCredit.client_id] });
             queryClient.invalidateQueries({ queryKey: ['clients'] });
+            
+            // Employee-related invalidations
+            queryClient.invalidateQueries({ queryKey: ['employee'] });
+            queryClient.invalidateQueries({ queryKey: ['employees'] });
         },
     });
 };
@@ -106,6 +114,10 @@ export const useDeleteClientCredit = () => {
             // Since we don't have client_id in variables, we'll invalidate all client credits
             queryClient.invalidateQueries({ queryKey: ['clientCredits'] });
             queryClient.invalidateQueries({ queryKey: ['clients'] });
+            
+            // Employee-related invalidations
+            queryClient.invalidateQueries({ queryKey: ['employee'] });
+            queryClient.invalidateQueries({ queryKey: ['employees'] });
         },
     });
 };
@@ -118,6 +130,10 @@ export const useResolveCreditReduction = () => {
             queryClient.invalidateQueries({ queryKey: ['clientCredits', updatedCredit.client_id] });
             queryClient.invalidateQueries({ queryKey: ['clients'] });
             queryClient.invalidateQueries({ queryKey: ['receivables'] });
+            
+            // Employee-related invalidations
+            queryClient.invalidateQueries({ queryKey: ['employee'] });
+            queryClient.invalidateQueries({ queryKey: ['employees'] });
         },
     });
 };
@@ -130,6 +146,10 @@ export const useResolveCreditDeletion = () => {
             queryClient.invalidateQueries({ queryKey: ['clientCredits'] });
             queryClient.invalidateQueries({ queryKey: ['clients'] });
             queryClient.invalidateQueries({ queryKey: ['receivables'] });
+            
+            // Employee-related invalidations
+            queryClient.invalidateQueries({ queryKey: ['employee'] });
+            queryClient.invalidateQueries({ queryKey: ['employees'] });
         },
     });
 };
@@ -142,6 +162,10 @@ export const useApplyCreditToReceivable = () => {
             queryClient.invalidateQueries({ queryKey: ['receivables'] });
             queryClient.invalidateQueries({ queryKey: ['clients'] });
             queryClient.invalidateQueries({ queryKey: ['clientCredits'] });
+            
+            // Employee-related invalidations
+            queryClient.invalidateQueries({ queryKey: ['employee'] });
+            queryClient.invalidateQueries({ queryKey: ['employees'] });
         },
     });
 };
@@ -155,6 +179,10 @@ export const useReplacePaymentWithCredit = () => {
             queryClient.invalidateQueries({ queryKey: ['clients'] });
             queryClient.invalidateQueries({ queryKey: ['clientCredits'] });
             queryClient.invalidateQueries({ queryKey: ['payments'] });
+            
+            // Employee-related invalidations
+            queryClient.invalidateQueries({ queryKey: ['employee'] });
+            queryClient.invalidateQueries({ queryKey: ['employees'] });
         },
     });
 };

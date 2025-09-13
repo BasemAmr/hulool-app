@@ -271,7 +271,7 @@ const TaskModal = () => {
         prepaid_amount: data.prepaid_amount ? Number(data.prepaid_amount) : undefined,
         tags: data.tags || [],
         amount_details: parseAmountDetails(data.amount_details),
-        assigned_to_id: isAdmin() ? data.assigned_to_id : undefined,
+        assigned_to_id: isAdmin() ? (data.assigned_to_id !== undefined ? data.assigned_to_id : taskToEdit?.assigned_to_id) : undefined,
         requirements: localRequirements
           .filter(req => req.requirement_text && String(req.requirement_text).trim() !== '')
           .map(req => ({
@@ -280,11 +280,36 @@ const TaskModal = () => {
             is_provided: Boolean(req.is_provided || false)
           })),
       };
+
+      console.log('Debug assignment logic:', {
+        isAdmin: isAdmin(),
+        updatePayload_assigned_to_id: updatePayload.assigned_to_id,
+        taskToEdit_assigned_to_id: taskToEdit?.assigned_to_id,
+        areEqual: updatePayload.assigned_to_id === taskToEdit?.assigned_to_id
+      });
+
+      // For admins, always set created_by to match assigned_to_id when assignment is involved
+      if (isAdmin()) {
+        updatePayload.created_by = updatePayload.assigned_to_id;
+        console.log('Admin assignment - setting created_by:', {
+          assigned_to_id: updatePayload.assigned_to_id,
+          created_by: updatePayload.created_by
+        });
+      }
+      
       // Add optimistic locking timestamp
       const updatePayloadWithLocking = {
         ...updatePayload,
         expected_updated_at: taskToEdit.updated_at
       };
+
+      // Ensure created_by is explicitly included when it should be sent
+      if (isAdmin() && updatePayload.hasOwnProperty('created_by')) {
+        updatePayloadWithLocking.created_by = updatePayload.created_by;
+        console.log('Final payload created_by:', updatePayloadWithLocking.created_by);
+      }
+
+      console.log('Final update payload:', updatePayloadWithLocking);
 
       // Use the new conflict-aware update mutation
       updateTaskWithConflictsMutation.mutate({ id: taskToEdit.id, taskData: updatePayloadWithLocking }, {

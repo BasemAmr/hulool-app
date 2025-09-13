@@ -45,6 +45,7 @@ import TaskCancellationModal from '../modals/TaskCancellationModal';
 import ConcurrentModificationModal from '../modals/ConcurrentModificationModal';
 import AssignTaskModal from '../modals/AssignTaskModal';
 import ApprovalModal from '../modals/ApprovalModal';
+import SubmitForReviewModal from '../modals/SubmitForReviewModal';
 
 // Separate component for client receivables to avoid re-renders
 const ClientReceivablesFetcher = ({ client }: { client?: any }) => {
@@ -271,6 +272,9 @@ const ModalManager = () => {
 
       case 'editTaskExpense':
         return <EditTaskExpenseModal key="editTaskExpense" />;
+
+      case 'submitForReview':
+        return <SubmitForReviewModal key="submitForReview" />;
 
       default:
         return null;

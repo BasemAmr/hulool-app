@@ -1,4 +1,4 @@
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import apiClient from '../api/apiClient';
 import type { ApiResponse, TaskType } from '../api/types';
 
@@ -95,5 +95,29 @@ export const useEmployeeDashboard = () => {
     },
     staleTime: 1 * 60 * 1000, // Keep fresh for 1 minute
     refetchInterval: 5 * 60 * 1000, // Auto-refetch every 5 minutes
+  });
+};
+
+/**
+ * Update employee sort order for clients
+ */
+const updateEmployeeSortOrder = async ({ clientIds }: { clientIds: number[] }) => {
+  const { data } = await apiClient.post<ApiResponse<any>>('/clients/employee/sort-order', {
+    client_ids: clientIds,
+  });
+  return data;
+};
+
+/**
+ * Hook to update employee sort order
+ */
+export const useUpdateEmployeeSortOrder = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: updateEmployeeSortOrder,
+    onSuccess: () => {
+      // Invalidate to get the latest server-confirmed order
+      queryClient.invalidateQueries({ queryKey: ['employee', 'dashboard'] });
+    },
   });
 };

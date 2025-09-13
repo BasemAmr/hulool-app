@@ -64,6 +64,13 @@ const fetchClientsWithActiveTasks = async (): Promise<GroupedClientsResponse> =>
     return data.data;
 }
 
+const fetchEmployeeClientsWithActiveTasks = async (): Promise<ClientWithTasksAndStats[]> => {
+    // Employee dashboard endpoint returns flat array, not grouped by type
+    const { data } = await apiClient.get<ApiResponse<ClientWithTasksAndStats[]>>('/dashboard/employee/clients-with-active-tasks');
+    if (!data.success) throw new Error(data.message || 'Failed to fetch employee dashboard client tasks.');
+    return data.data;
+}
+
 // --- React Query Hooks ---
 
 export const useGetDashboardStats = () => {
@@ -98,6 +105,16 @@ export const useGetClientsWithActiveTasks = () => {
   return useQuery<GroupedClientsResponse, Error>({
     queryKey: ['dashboard', 'clientsWithActiveTasks'],
     queryFn: fetchClientsWithActiveTasks,
+    staleTime: 30 * 1000, // Keep fresh for 30 seconds
+    refetchInterval: 15 * 1000, // Refetch every 15 seconds
+  });
+};
+
+// Employee dashboard hook
+export const useGetEmployeeClientsWithActiveTasks = () => {
+  return useQuery<ClientWithTasksAndStats[], Error>({
+    queryKey: ['dashboard', 'employee', 'clientsWithActiveTasks'],
+    queryFn: fetchEmployeeClientsWithActiveTasks,
     staleTime: 30 * 1000, // Keep fresh for 30 seconds
     refetchInterval: 15 * 1000, // Refetch every 15 seconds
   });

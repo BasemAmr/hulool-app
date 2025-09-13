@@ -238,25 +238,31 @@ const DashboardPage = () => {
             >
                 {!isLoadingClients && groupedClients && (
                     // *** NEW WRAPPER DIV ***
-                    <div className="dashboard-columns-container" style={{ minHeight: 'calc(100vh - 200px)' }}> 
-                        <div className="recent-tasks-section">
-                            <div className="row g-0">
-                                {columnTypes.map((type) => {
+                    <div className="dashboard-columns-container" style={{ minHeight: 'calc(100vh - 200px)', overflow: 'visible', position: 'relative', zIndex: 1 }}>
+                        <div className="recent-tasks-section" style={{ overflow: 'visible', position: 'relative', zIndex: 1 }}>
+                            <div className="row g-0" style={{ overflow: 'visible', position: 'relative', zIndex: 1 }}>
+                                {columnTypes.map((type, columnIndex) => {
                                 const clients = groupedClients[type] || [];
                                 const config = taskTypeConfig[type];
 
                                 return (
-                                    <div className="col-lg-3" key={type}>
+                                    <div className="col-lg-3 p-2" key={type} style={{
+                                        overflow: 'visible',
+                                        position: 'relative',
+                                        zIndex: 10 - columnIndex, // Higher z-index for leftmost columns
+                                        isolation: 'auto' // Don't create new stacking context
+                                    }}>
                                         <div
                                             className="card"
                                             style={{
                                                 borderRadius: '0',
                                                 border: '1px solid #dee2e6',
                                                 borderRight: type === 'Other' ? '1px solid #dee2e6' : 'none',
-                                                // ADJUSTED: Removed fixed height to allow natural growth within the container
-                                                minHeight: '400px', // Minimum height for consistency
+                                                minHeight: '400px',
                                                 display: 'flex',
-                                                flexDirection: 'column'
+                                                flexDirection: 'column',
+                                                overflow: 'visible',
+                                                position: 'relative'
                                             }}
                                         >
                                             {/* Fixed Header */}
@@ -293,11 +299,10 @@ const DashboardPage = () => {
                                                 className="card-body p-0"
                                                 style={{
                                                     minHeight: clients.length === 0 ? '200px' : 'auto',
-                                                    // REMOVED: maxHeight: 'calc(100vh - 350px)', 
-                                                    // NEW styles:
-                                                    overflowY: 'auto', // Keep this to allow scrolling if one column is very long
-                                                    overflowX: 'hidden',
-                                                    flex: 1 // Ensure it fills the available space in the flex container
+                                                    overflowY: 'visible',
+                                                    overflowX: 'visible',
+                                                    flex: 1,
+                                                    zIndex: 0
                                                 }}
                                             >
                                                 {clients.length > 0 ? (

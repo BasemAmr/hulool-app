@@ -186,6 +186,10 @@ export const useCreateTaskMessage = () => {
       queryClient.invalidateQueries({ queryKey: ['taskMessages', variables.taskId] });
       queryClient.invalidateQueries({ queryKey: ['taskMessageStats', variables.taskId] });
       queryClient.invalidateQueries({ queryKey: ['recentMessages'] });
+      
+      // Employee-related invalidations
+      queryClient.invalidateQueries({ queryKey: ['employee'] });
+      queryClient.invalidateQueries({ queryKey: ['employees'] });
     },
   });
 };

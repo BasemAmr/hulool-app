@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useGetEmployeeOwnTasksInfinite, useSubmitTaskForReview } from '../../queries/employeeTasksQueries';
 import { useModalStore } from '../../stores/modalStore';
@@ -34,7 +34,6 @@ const EmployeeOwnTasksTable: React.FC<EmployeeOwnTasksTableProps> = ({
 }) => {
   const navigate = useNavigate();
   const { openModal } = useModalStore();
-  const [hoveredRow, setHoveredRow] = useState<number | null>(null);
 
   const handleHighlightClick = () => {
     // Remove highlight by navigating to tasks page without highlight parameter
@@ -79,14 +78,8 @@ const EmployeeOwnTasksTable: React.FC<EmployeeOwnTasksTableProps> = ({
     openModal('taskForm', { taskToEdit: task });
   };
 
-  const handleSubmitForReview = async (task: Task) => {
-    if (confirm(`هل أنت متأكد من تقديم المهمة "${task.task_name}" للمراجعة؟`)) {
-      try {
-        await submitForReviewMutation.mutateAsync(task.id);
-      } catch (error) {
-        console.error('Failed to submit task for review:', error);
-      }
-    }
+  const handleSubmitForReview = (task: Task) => {
+    openModal('submitForReview', { task });
   };
 
   const handleViewAmountDetails = (task: Task) => {
@@ -166,7 +159,7 @@ const EmployeeOwnTasksTable: React.FC<EmployeeOwnTasksTableProps> = ({
     <div className="card border-0 shadow-sm">
       <div className="card-body p-0">
         <div className="table-responsive">
-          <table className="table table-hover mb-0">
+          <table className="table mb-0">
             <thead style={{ backgroundColor: 'var(--color-gray-50)' }}>
               <tr>
                 <th style={{ padding: '8px', fontSize: 'var(--font-size-sm)', fontWeight: 'bold' }}>
@@ -204,16 +197,10 @@ const EmployeeOwnTasksTable: React.FC<EmployeeOwnTasksTableProps> = ({
                   style={{
                     backgroundColor: isHighlighted 
                       ? 'rgba(255, 193, 7, 0.1)' 
-                      : hoveredRow === task.id 
-                        ? 'var(--color-gray-25)' 
-                        : (getTypeRowStyle ? getTypeRowStyle(task.type).backgroundColor : 'transparent'),
-                    transition: 'background-color 0.2s ease',
-                    cursor: 'pointer',
+                      : (getTypeRowStyle ? getTypeRowStyle(task.type).backgroundColor : 'transparent'),
                     border: isHighlighted ? '2px solid rgba(255, 193, 7, 0.3)' : 'none',
                     position: 'relative'
                   }}
-                  onMouseEnter={() => setHoveredRow(task.id)}
-                  onMouseLeave={() => setHoveredRow(null)}
                 >
                   {isHighlighted && (
                     <td colSpan={8} className="p-0" style={{ position: 'absolute', top: 0, left: 0, right: 0, zIndex: 10 }}>
@@ -234,10 +221,10 @@ const EmployeeOwnTasksTable: React.FC<EmployeeOwnTasksTableProps> = ({
                     </td>
                   )}
                   {[
-                    <td key="name" style={{ backgroundColor: getTypeRowStyle ? getTypeRowStyle(task.type).backgroundColor : undefined, padding: '8px', fontSize: 'var(--font-size-sm)' }}>
+                    <td key="name" style={{ backgroundColor: getTypeRowStyle ? getTypeRowStyle(task.type).backgroundColor : 'transparent', padding: '8px', fontSize: 'var(--font-size-sm)' }}>
                       <span className="fw-bold text-dark">{task.task_name || 'مهمة بدون اسم'}</span>
                     </td>,
-                    <td key="notes" style={{ backgroundColor: getTypeRowStyle ? getTypeRowStyle(task.type).backgroundColor : undefined, padding: '8px', fontSize: 'var(--font-size-sm)' }}>
+                    <td key="notes" style={{ backgroundColor: getTypeRowStyle ? getTypeRowStyle(task.type).backgroundColor : 'transparent', padding: '8px', fontSize: 'var(--font-size-sm)' }}>
                       {task.notes ? (
                         <div className="text-muted" style={{ fontSize: 'var(--font-size-xs)' }}>
                           {task.notes.length > 40 ? `${task.notes.substring(0, 40)}...` : task.notes}
@@ -246,7 +233,7 @@ const EmployeeOwnTasksTable: React.FC<EmployeeOwnTasksTableProps> = ({
                         <span className="text-muted">—</span>
                       )}
                     </td>,
-                    <td key="client" style={{ backgroundColor: getTypeRowStyle ? getTypeRowStyle(task.type).backgroundColor : undefined, padding: '8px', fontSize: 'var(--font-size-sm)' }}>
+                    <td key="client" style={{ backgroundColor: getTypeRowStyle ? getTypeRowStyle(task.type).backgroundColor : 'transparent', padding: '8px', fontSize: 'var(--font-size-sm)' }}>
                       <div className="d-flex align-items-center gap-2">
                         <span className="fw-medium">{task.client?.name}</span>
                         <span className="text-muted" style={{ fontSize: 'var(--font-size-xs)' }}>{task.client?.phone}</span>
@@ -264,10 +251,10 @@ const EmployeeOwnTasksTable: React.FC<EmployeeOwnTasksTableProps> = ({
                         )}
                       </div>
                     </td>,
-                    <td key="type" style={{ backgroundColor: getTypeRowStyle ? getTypeRowStyle(task.type).backgroundColor : undefined, padding: '8px', fontSize: 'var(--font-size-sm)' }}>
+                    <td key="type" style={{ backgroundColor: getTypeRowStyle ? getTypeRowStyle(task.type).backgroundColor : 'transparent', padding: '8px', fontSize: 'var(--font-size-sm)' }}>
                       <span className="badge" style={{ backgroundColor: 'var(--color-primary)', color: 'white', fontSize: '0.75rem' }}>{task.type}</span>
                     </td>,
-                    <td key="status" style={{ backgroundColor: getTypeRowStyle ? getTypeRowStyle(task.type).backgroundColor : undefined, padding: '8px', fontSize: 'var(--font-size-sm)' }}>
+                    <td key="status" style={{ backgroundColor: getTypeRowStyle ? getTypeRowStyle(task.type).backgroundColor : 'transparent', padding: '8px', fontSize: 'var(--font-size-sm)' }}>
                       {getStatusBadgeStyle ? (
                         <span 
                           className="badge"
@@ -285,19 +272,19 @@ const EmployeeOwnTasksTable: React.FC<EmployeeOwnTasksTableProps> = ({
                         getStatusBadge(task.status)
                       )}
                     </td>,
-                    <td key="start" style={{ backgroundColor: getTypeRowStyle ? getTypeRowStyle(task.type).backgroundColor : undefined, padding: '8px', fontSize: 'var(--font-size-sm)' }}>
+                    <td key="start" style={{ backgroundColor: getTypeRowStyle ? getTypeRowStyle(task.type).backgroundColor : 'transparent', padding: '8px', fontSize: 'var(--font-size-sm)' }}>
                       <div className="d-flex align-items-center text-muted">
                         <Calendar size={14} className="me-1" />
                         {formatDate(task.start_date)}
                       </div>
                     </td>,
-                    <td key="end" style={{ backgroundColor: getTypeRowStyle ? getTypeRowStyle(task.type).backgroundColor : undefined, padding: '8px', fontSize: 'var(--font-size-sm)' }}>
+                    <td key="end" style={{ backgroundColor: getTypeRowStyle ? getTypeRowStyle(task.type).backgroundColor : 'transparent', padding: '8px', fontSize: 'var(--font-size-sm)' }}>
                       <div className="d-flex align-items-center text-muted">
                         <Calendar size={14} className="me-1" />
                         {formatDate(task.end_date)}
                       </div>
                     </td>,
-                    <td key="actions" style={{ backgroundColor: getTypeRowStyle ? getTypeRowStyle(task.type).backgroundColor : undefined, padding: '8px', fontSize: 'var(--font-size-sm)' }}>
+                    <td key="actions" style={{ backgroundColor: getTypeRowStyle ? getTypeRowStyle(task.type).backgroundColor : 'transparent', padding: '8px', fontSize: 'var(--font-size-sm)' }}>
                       <div className="d-flex justify-content-center gap-1">
                         {/* View Amount Details */}
                         <button

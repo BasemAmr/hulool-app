@@ -1,0 +1,36 @@
+/* Global CSS Rules for Floating Card Hover Effect */
+
+/* Break Bootstrap container constraints for floating cards */
+.row, .col, [class^="col-"] {
+  overflow: visible !important;
+}
+
+.dashboard-columns-container,
+.dashboard-client-card,
+.card-body,
+.table-responsive,
+.employee-client-column,
+.clients-list {
+  overflow: visible !important;
+}
+
+/* Improve performance with hardware acceleration */
+.floating-card-container > div {
+  transform: translateZ(0);
+  backface-visibility: hidden;
+}
+
+/* Ensure smooth transitions for floating cards */
+.floating-card-container {
+  position: relative;
+  isolation: isolate;
+}
+
+/* Additional rules for better floating effect */
+.card {
+  overflow: visible !important;
+}
+
+.table-responsive {
+  overflow: visible !important;
+}

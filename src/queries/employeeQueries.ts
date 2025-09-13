@@ -150,9 +150,10 @@ export const useAssignTask = () => {
   const queryClient = useQueryClient();
   
   return useMutation({
-    mutationFn: async ({ taskId, assignedToId }: { taskId: number; assignedToId: number | null }) => {
+    mutationFn: async ({ taskId, assignedToId, created_by }: { taskId: number; assignedToId: number | null; created_by?: number | null }) => {
       const response = await apiClient.put(`/tasks/${taskId}/assign`, {
         assigned_to_id: assignedToId,
+        created_by: created_by,
       });
       return response.data;
     },

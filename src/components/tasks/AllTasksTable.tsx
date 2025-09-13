@@ -46,6 +46,22 @@ const AllTasksTable = ({ tasks, isLoading, onEdit, onComplete, onViewAmountDetai
     return employee ? employee.display_name : 'Unknown Employee';
   };
 
+  // Helper function to check if a user is an employee
+  const isUserEmployee = (userId: number | null) => {
+    if (!userId) return false;
+    return employees.some(emp => emp.user_id === userId);
+  };
+
+  // Helper function to check if task should show complete button
+  const shouldShowCompleteButton = (task: Task) => {
+    // Don't show complete button if task is assigned to an employee
+    if (task.assigned_to_id && isUserEmployee(task.assigned_to_id)) {
+      return false;
+    }
+    // TODO: Check if task was created by an employee when backend supports created_by field
+    return true;
+  };
+
 
   // Handle opening approval modal
   const handleApproveTask = (task: Task) => {
@@ -402,7 +418,7 @@ const AllTasksTable = ({ tasks, isLoading, onEdit, onComplete, onViewAmountDetai
                       </Button>
                     )}
 
-                    {task.status !== 'Completed' && task.status !== 'Pending Review' && (
+                    {task.status !== 'Completed' && task.status !== 'Pending Review' && shouldShowCompleteButton(task) && (
                       <Button 
                         variant="primary" 
                         size="sm" 

@@ -274,6 +274,9 @@ export const useCreateTask = () => {
       // Specific client tasks in case task was added from client profile
       queryClient.invalidateQueries({ queryKey: ['client', createdTask.client.id] }); // Correct client_id access
       queryClient.invalidateQueries({ queryKey: ['receivables', 'client', createdTask.client.id] }); // Invalidate receivables of the client
+      // Employee-related invalidations
+      queryClient.invalidateQueries({ queryKey: ['employee'] }); // Invalidate all employee queries
+      queryClient.invalidateQueries({ queryKey: ['employees'] }); // Invalidate employees list
     },
   });
 };
@@ -290,6 +293,9 @@ export const useUpdateTask = () => {
       queryClient.invalidateQueries({ queryKey: ['tasks-by-tags'] }); // Invalidate tags columns view
       // Invalidate receivables for the client if task is updated
       queryClient.invalidateQueries({ queryKey: ['receivables', 'client', updatedTask.client.id] });
+      // Employee-related invalidations
+      queryClient.invalidateQueries({ queryKey: ['employee'] }); // Invalidate all employee queries
+      queryClient.invalidateQueries({ queryKey: ['employees'] }); // Invalidate employees list
     },
   });
 };
@@ -514,6 +520,9 @@ export const useResumeTask = () => {
       // The UI has already updated optimistically
       queryClient.invalidateQueries({ queryKey: ['task', response.id] });
       queryClient.invalidateQueries({ queryKey: ['clients'] });
+      // Employee-related invalidations
+      queryClient.invalidateQueries({ queryKey: ['employee'] });
+      queryClient.invalidateQueries({ queryKey: ['employees'] });
     }
   });
 };
@@ -532,6 +541,9 @@ export const useResolvePrepaidChange = () => {
       queryClient.invalidateQueries({ queryKey: ['dashboard'] });
       queryClient.invalidateQueries({ queryKey: ['receivables'] });
       queryClient.invalidateQueries({ queryKey: ['client-credits'] });
+      // Employee-related invalidations
+      queryClient.invalidateQueries({ queryKey: ['employee'] }); 
+      queryClient.invalidateQueries({ queryKey: ['employees'] });
     },
   });
 };

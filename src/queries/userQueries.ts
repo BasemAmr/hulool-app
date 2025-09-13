@@ -26,6 +26,10 @@ export const useCreateUser = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['users'] }); // Invalidate all users lists
+      
+      // Employee-related invalidations
+      queryClient.invalidateQueries({ queryKey: ['employee'] });
+      queryClient.invalidateQueries({ queryKey: ['employees'] });
     },
   });
 };
@@ -43,6 +47,10 @@ export const useUpdateUserCapabilities = () => {
       queryClient.invalidateQueries({ queryKey: ['users'] }); // Invalidate all users lists
       // If the current user's capabilities changed, invalidate their own capabilities too
       queryClient.invalidateQueries({ queryKey: ['current-user-capabilities'] });
+      
+      // Employee-related invalidations
+      queryClient.invalidateQueries({ queryKey: ['employee'] });
+      queryClient.invalidateQueries({ queryKey: ['employees'] });
     },
   });
 };

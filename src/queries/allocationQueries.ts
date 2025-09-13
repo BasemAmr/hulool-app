@@ -17,6 +17,10 @@ export const useDeleteAllocation = () => {
             queryClient.invalidateQueries({ queryKey: ['receivables'] });
             queryClient.invalidateQueries({ queryKey: ['clientCredits'] });
             queryClient.invalidateQueries({ queryKey: ['clients'] });
+            
+            // Employee-related invalidations
+            queryClient.invalidateQueries({ queryKey: ['employee'] });
+            queryClient.invalidateQueries({ queryKey: ['employees'] });
         },
     });
 };
@@ -46,6 +50,10 @@ export const useUpdateAllocation = () => {
       queryClient.invalidateQueries({ queryKey: ['receivables'] });
       queryClient.invalidateQueries({ queryKey: ['clientCredits'] });
       queryClient.invalidateQueries({ queryKey: ['clients'] });
+      
+      // Employee-related invalidations
+      queryClient.invalidateQueries({ queryKey: ['employee'] });
+      queryClient.invalidateQueries({ queryKey: ['employees'] });
     },
   });
 };

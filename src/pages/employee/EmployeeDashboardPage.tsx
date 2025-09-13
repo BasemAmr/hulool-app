@@ -53,7 +53,7 @@ const EmployeeDashboardPage = () => {
   const handleRecordCredit = () => openModal('recordCreditModal', {});
 
   return (
-    <div className="container-fluid p-2" style={{ height: '100vh', overflow: 'hidden' }}>
+    <div className="container-fluid p-2" style={{ height: '100vh', overflow: 'visible' }}>
       {/* Compact Header */}
       <div className="row mt-2 mb-2">
         <div className="col-12">
@@ -96,20 +96,20 @@ const EmployeeDashboardPage = () => {
       </div>
 
       {/* Main Dashboard Panels */}
-      <div className="row" style={{ height: 'calc(100vh - 120px)', overflow: 'hidden' }}>
+      <div className="row" style={{ height: 'calc(100vh - 120px)', overflow: 'visible', position: 'relative' }}>
         {/* Recent Tasks Panel - col-4 */}
-        <div className="col-4 mb-2" style={{ height: '100%', overflow: 'hidden' }}>
+        <div className="col-4 mb-2" style={{ height: '100%', overflow: 'visible', position: 'relative', zIndex: 10 }}>
           {dashboardData?.recent_tasks && (
             <RecentTasksPanel tasks={dashboardData.recent_tasks} />
           )}
         </div>
 
         {/* Placeholder for other panels - col-4 each */}
-        <div className="col-4 mb-2" style={{ height: '100%' }}>
+        <div className="col-4 mb-2" style={{ height: '100%', overflow: 'visible' }}>
           <RecentClientsReceivablesPanel />
         </div>
 
-        <div className="col-4 mb-2" style={{ height: '100%' }}>
+        <div className="col-4 mb-2" style={{ height: '100%', overflow: 'visible' }}>
           {dashboardData?.recent_transactions && dashboardData?.financial_summary && (
             <RecentTransactionsPanel 
               transactions={dashboardData.recent_transactions} 

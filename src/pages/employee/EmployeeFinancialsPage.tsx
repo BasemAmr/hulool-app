@@ -7,26 +7,15 @@ import { Spinner, Alert } from 'react-bootstrap';
 import { 
   useGetMyTransactions, 
   useGetMyCreditsInfinite,
-  useGetMyClientsReceivablesSummaryInfinite,
-  useGetMyClientsReceivablesTotals
+  useGetMyReceivablesDashboardInfinite
 } from '../../queries/employeeFinancialQueries';
 import EmployeeTransactionsTable from '../../components/employee/EmployeeTransactionsTable';
 import EmployeeCreditsTable from '../../components/employee/EmployeeCreditsTable';
-import EmployeeClientReceivablesSummaryTable from '../../components/employee/EmployeeClientReceivablesSummaryTable';
+import EmployeeClientsStatementsTable from '../../components/employee/EmployeeClientsStatementsTable';
 
 type ViewMode = 'all' | 'transactions' | 'clients';
 
-/**
- * EmployeeFinancialsPage - Employee financial tracking and commission management
- * 
- * Features:
- * - Commission dashboard with pending/earned amounts
- * - Pending commissions table (tasks approved but not paid)
- * - Transaction history (commissions, salaries, payouts)
- * - Financial summary with balance due
- * - Client receivables summary
- * - Employee credits management
- */
+
 const EmployeeFinancialsPage = () => {
   const [activeMode, setActiveMode] = useState<ViewMode>('all');
   const [searchParams] = useSearchParams();
@@ -65,9 +54,7 @@ const EmployeeFinancialsPage = () => {
     hasNextPage: hasNextReceivablesPage,
     isFetchingNextPage: isFetchingNextReceivablesPage,
     error: receivablesError
-  } = useGetMyClientsReceivablesSummaryInfinite();
-
-  const { data: receivablesTotalsData, isLoading: isReceivablesTotalsLoading } = useGetMyClientsReceivablesTotals();
+  } = useGetMyReceivablesDashboardInfinite();
 
   // Flatten paginated data
   const allCredits = useMemo(() => 
@@ -75,8 +62,8 @@ const EmployeeFinancialsPage = () => {
     [creditsData]
   );
 
-  const allClients = useMemo(() => 
-    receivablesData?.pages.flatMap(page => page.data.clients) || [], 
+  const allReceivables = useMemo(() => 
+    receivablesData?.pages.flatMap(page => page.data.receivables) || [], 
     [receivablesData]
   );
 
@@ -114,7 +101,7 @@ const EmployeeFinancialsPage = () => {
   ];
 
   // Handle loading states
-  const isLoading = isTransactionsLoading || isReceivablesLoading || isCreditsLoading || isReceivablesTotalsLoading;
+  const isLoading = isTransactionsLoading || isReceivablesLoading || isCreditsLoading;
   const hasError = transactionsError || creditsError || receivablesError;
 
   if (isLoading && activeMode === 'all') {
@@ -175,12 +162,11 @@ const EmployeeFinancialsPage = () => {
           <div className="col-12 mb-4">
             <div className="card border-0 shadow-sm">
               <div className="card-header bg-primary text-white">
-                <h5 className="mb-0">ملخص مستحقات العملاء</h5>
+                <h5 className="mb-0">بيانات مستحقات العملاء</h5>
               </div>
               <div className="card-body p-0">
-                <EmployeeClientReceivablesSummaryTable
-                  clients={allClients}
-                  totals={receivablesTotalsData?.data}
+                <EmployeeClientsStatementsTable
+                  receivables={allReceivables}
                   isLoading={isReceivablesLoading}
                 />
                 {/* Infinite scroll trigger */}
@@ -277,12 +263,11 @@ const EmployeeFinancialsPage = () => {
           <div className="col-12 mb-4">
             <div className="card border-0 shadow-sm">
               <div className="card-header bg-primary text-white">
-                <h5 className="mb-0">ملخص مستحقات العملاء</h5>
+                <h5 className="mb-0">بيانات مستحقات العملاء</h5>
               </div>
               <div className="card-body p-0">
-                <EmployeeClientReceivablesSummaryTable
-                  clients={allClients}
-                  totals={receivablesTotalsData?.data}
+                <EmployeeClientsStatementsTable
+                  receivables={allReceivables}
                   isLoading={isReceivablesLoading}
                 />
                 {/* Infinite scroll trigger */}

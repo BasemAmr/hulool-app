@@ -251,6 +251,10 @@ export const useCreateManualReceivable = () => {
             queryClient.invalidateQueries({ queryKey: ['receivables', 'payable', newReceivable.client_id] }); // Invalidate payable list for that client
             queryClient.invalidateQueries({ queryKey: ['receivables', 'filtered', 'paid'] }); // Might affect paid list
             queryClient.invalidateQueries({ queryKey: ['receivables', 'filtered', 'overdue'] }); // Might affect overdue list
+            
+            // Employee-related invalidations
+            queryClient.invalidateQueries({ queryKey: ['employee'] });
+            queryClient.invalidateQueries({ queryKey: ['employees'] });
         },
     });
 };
@@ -369,6 +373,10 @@ export const useUpdateReceivable = () => {
       queryClient.invalidateQueries({ queryKey: ['receivables', 'payable', updatedReceivable.client_id] });
       queryClient.invalidateQueries({ queryKey: ['receivables', 'filtered', 'paid'] });
       queryClient.invalidateQueries({ queryKey: ['receivables', 'filtered', 'overdue'] });
+      
+      // Employee-related invalidations
+      queryClient.invalidateQueries({ queryKey: ['employee'] });
+      queryClient.invalidateQueries({ queryKey: ['employees'] });
     },
   });
 };
@@ -384,6 +392,10 @@ export const useDeleteReceivable = () => {
       queryClient.invalidateQueries({ queryKey: ['dashboard'] });
       // Note: We can't invalidate specific client queries without knowing the client_id
       // This will be handled by the calling component
+      
+      // Employee-related invalidations
+      queryClient.invalidateQueries({ queryKey: ['employee'] });
+      queryClient.invalidateQueries({ queryKey: ['employees'] });
     },
   });
 };
@@ -401,6 +413,10 @@ export const useResolveReceivableOverpayment = () => {
       queryClient.invalidateQueries({ queryKey: ['receivables', 'payable', updatedReceivable.client_id] });
       queryClient.invalidateQueries({ queryKey: ['receivables', 'filtered', 'paid'] });
       queryClient.invalidateQueries({ queryKey: ['receivables', 'filtered', 'overdue'] });
+      
+      // Employee-related invalidations
+      queryClient.invalidateQueries({ queryKey: ['employee'] });
+      queryClient.invalidateQueries({ queryKey: ['employees'] });
     },
   });
 };
@@ -418,6 +434,10 @@ export const useAutoResolveReceivableOverpayment = () => {
       queryClient.invalidateQueries({ queryKey: ['receivables', 'payable', updatedReceivable.client_id] });
       queryClient.invalidateQueries({ queryKey: ['receivables', 'filtered', 'paid'] });
       queryClient.invalidateQueries({ queryKey: ['receivables', 'filtered', 'overdue'] });
+      
+      // Employee-related invalidations
+      queryClient.invalidateQueries({ queryKey: ['employee'] });
+      queryClient.invalidateQueries({ queryKey: ['employees'] });
     },
   });
 };
@@ -433,6 +453,10 @@ export const useDeleteReceivableWithResolution = () => {
       queryClient.invalidateQueries({ queryKey: ['dashboard'] });
       // Note: We can't invalidate specific client queries without knowing the client_id
       // This will be handled by the calling component
+      
+      // Employee-related invalidations
+      queryClient.invalidateQueries({ queryKey: ['employee'] });
+      queryClient.invalidateQueries({ queryKey: ['employees'] });
     },
   });
 }

@@ -4,20 +4,9 @@ import { CreditCard, Edit3, MoreHorizontal } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useModalStore } from '../../stores/modalStore';
 import WhatsAppIcon from '../ui/WhatsAppIcon';
-import { sendPaymentReminder, formatPhoneForWhatsApp } from '../../utils/whatsappUtils';
+import { sendPaymentReminder } from '../../utils/whatsappUtils';
 import apiClient from '../../api/apiClient';
 import { useQuery } from '@tanstack/react-query';
-
-// Type for the API response
-interface ClientReceivableSummary {
-  client_id: string;
-  client_name: string;
-  client_phone: string;
-  total_receivables: string;
-  total_paid: string;
-  total_outstanding: string;
-  receivables_count: string;
-}
 
 interface RecentClientsReceivablesPanelProps {}
 
@@ -25,19 +14,23 @@ const RecentClientsReceivablesPanel: React.FC<RecentClientsReceivablesPanelProps
   const navigate = useNavigate();
   const { openModal } = useModalStore();
 
-  // Fetch recent receivables with per_page=5
+
+  // Fetch recent receivables with pagination
   const { data: receivablesData, isLoading } = useQuery({
-    queryKey: ['receivables', 'clients-summary', { per_page: 5 }],
+    queryKey: ['receivables', 'employee-dashboard', 'unpaid'],
     queryFn: async () => {
-      const response = await apiClient.get('/receivables/clients-summary', {
-        params: { per_page: 5 }
+      const response = await apiClient.get('/receivables/employee/me/dashboard', {
+        params: { 
+          per_page: 20,
+          payment_status: 'unpaid'
+        }
       });
       return response.data;
     },
     staleTime: 1 * 60 * 1000, // 1 minute
   });
 
-  const clients = receivablesData?.data?.clients || [];
+  const clients = receivablesData?.data?.receivables || [];
 
   const handlePayment = (clientId: number) => {
     openModal('selectReceivableForPayment', {
@@ -46,14 +39,9 @@ const RecentClientsReceivablesPanel: React.FC<RecentClientsReceivablesPanelProps
     });
   };
 
-  const handleClientClick = (clientId: number) => {
-    navigate(`/clients/${clientId}?mode=receivables`);
-  };
-
-  const handleWhatsApp = (phone: string) => {
-    const cleanPhone = formatPhoneForWhatsApp(phone);
-    window.open(`https://wa.me/${cleanPhone}`, '_blank');
-  };
+  // const handleClientClick = (clientId: number) => {
+  //   navigate(`/clients/${clientId}?mode=receivables`);
+  // };
 
   const handleWhatsAppPaymentReminder = (phone: string, clientName: string, remainingAmount: number) => {
     const formattedAmount = formatCurrency(remainingAmount);
@@ -79,7 +67,7 @@ const RecentClientsReceivablesPanel: React.FC<RecentClientsReceivablesPanelProps
         style={{
           borderRadius: 'var(--border-radius)',
           border: '1px solid var(--color-gray-100)',
-          overflow: 'hidden',
+          overflow: 'visible',
           position: 'relative',
           display: 'flex',
           flexDirection: 'column'
@@ -106,9 +94,9 @@ const RecentClientsReceivablesPanel: React.FC<RecentClientsReceivablesPanelProps
     );
   }
 
-  // Filter out clients with zero outstanding amounts
-  const filteredClients = clients.filter((client: ClientReceivableSummary) => 
-    (Number(client.total_outstanding) || 0) > 0
+  // Filter out receivables with zero outstanding amounts
+  const filteredReceivables = clients.filter((receivable: any) => 
+    (Number(receivable.remaining_amount) || 0) > 0
   );
 
   return (
@@ -117,34 +105,32 @@ const RecentClientsReceivablesPanel: React.FC<RecentClientsReceivablesPanelProps
       style={{
         borderRadius: 'var(--border-radius)',
         border: '1px solid var(--color-gray-100)',
-        overflow: 'hidden',
+        overflow: 'visible',
         position: 'relative',
         display: 'flex',
-        flexDirection: 'column'
+        flexDirection: 'column',
+        zIndex: 1
       }}
     >
       {/* Header */}
       <div
         className="card-header border-0 py-2"
         style={{
-          backgroundColor: 'var(--color-primary)',
-          color: 'var(--color-white)',
+          backgroundColor: '#ffc107',
+          color: '#fff',
           flexShrink: 0
         }}
       >
-        <div className="d-flex justify-content-between align-items-center">
-          <h6 className="mb-0 fw-bold" style={{ fontSize: 'var(--font-size-base)' }}>
-            المستحقات الأخيرة
+        <div className="d-flex justify-content-center align-items-center">
+          <h6 className="mb-0 text-white fw-bold" style={{ fontSize: 'var(--font-size-base)' }}>
+            المستحقات عند العملاء
           </h6>
-          <span style={{ fontSize: 'var(--font-size-sm)' }}>
-            {filteredClients.length} عميل
-          </span>
         </div>
       </div>
 
       {/* Body - Receivables Table */}
-      <div className="card-body p-0" style={{ flex: 1, overflow: 'hidden' }}>
-        {filteredClients.length === 0 ? (
+      <div className="card-body p-0" style={{ flex: 1, overflow: 'visible', position: 'relative' }}>
+        {filteredReceivables.length === 0 ? (
           <div className="d-flex justify-content-center align-items-center h-100">
             <div className="text-center">
               <p className="text-muted mb-0" style={{ fontSize: 'var(--font-size-sm)' }}>
@@ -153,13 +139,12 @@ const RecentClientsReceivablesPanel: React.FC<RecentClientsReceivablesPanelProps
             </div>
           </div>
         ) : (
-          <div className="table-responsive h-100" style={{ overflow: 'auto' }}>
-            <table className="table table-sm mb-0">
+          <div className="table-responsive h-100" style={{ overflow: 'visible', position: 'relative', zIndex: 10 }}>
+            <table className="table table-sm mb-0" style={{ position: 'relative', zIndex: 10 }}>
               <thead
                 style={{
                   position: 'sticky',
                   top: 0,
-                  zIndex: 1,
                   backgroundColor: 'var(--color-gray-50)'
                 }}
               >
@@ -175,7 +160,7 @@ const RecentClientsReceivablesPanel: React.FC<RecentClientsReceivablesPanelProps
                     padding: '8px',
                     borderBottom: '2px solid var(--color-gray-100)',
                     textAlign: 'center'
-                  }}>الجوال</th>
+                  }}>الوصف</th>
                   <th style={{
                     fontSize: 'var(--font-size-xs)',
                     padding: '8px',
@@ -192,11 +177,10 @@ const RecentClientsReceivablesPanel: React.FC<RecentClientsReceivablesPanelProps
                 </tr>
               </thead>
               <tbody>
-                {filteredClients.map((client: ClientReceivableSummary) => (
+                {clients.map((receivable: any, index: number) => (
                   <tr
-                    key={client.client_id}
+                    key={receivable.id}
                     style={{
-                      backgroundColor: 'var(--color-white)',
                       transition: 'all 0.2s ease-in-out',
                       cursor: 'pointer'
                     }}
@@ -205,7 +189,8 @@ const RecentClientsReceivablesPanel: React.FC<RecentClientsReceivablesPanelProps
                       fontSize: 'var(--font-size-xs)',
                       padding: '6px',
                       textAlign: 'center',
-                      borderBottom: '1px solid var(--color-gray-100)'
+                      borderBottom: '1px solid var(--color-gray-100)',
+                      backgroundColor: index % 2 === 0 ? '#fff8e1' : '#ffecb3'
                     }}>
                       <span 
                         className="text-truncate fw-medium" 
@@ -215,53 +200,46 @@ const RecentClientsReceivablesPanel: React.FC<RecentClientsReceivablesPanelProps
                           cursor: 'pointer',
                           color: 'var(--color-primary)'
                         }}
-                        onClick={() => handleClientClick(parseInt(client.client_id))}
-                        title={client.client_name}
+                        // onClick={() => handleClientClick(parseInt(receivable.client_id))}
+                        title={receivable.client_name}
                       >
-                        {client.client_name}
+                        {receivable.client_name}
                       </span>
                     </td>
                     <td style={{
                       fontSize: 'var(--font-size-xs)',
                       padding: '6px',
                       textAlign: 'center',
-                      borderBottom: '1px solid var(--color-gray-100)'
+                      borderBottom: '1px solid var(--color-gray-100)',
+                      backgroundColor: index % 2 === 0 ? '#fff8e1' : '#ffecb3'
                     }}>
-                      <div className="d-flex align-items-center justify-content-center gap-1">
-                        <button
-                          className="btn btn-link btn-sm p-0 text-success"
-                          onClick={() => handleWhatsApp(client.client_phone)}
-                          title="WhatsApp"
-                          style={{ fontSize: '10px' }}
-                        >
-                          <WhatsAppIcon size={10} />
-                        </button>
-                        <span style={{ fontSize: '10px' }}>
-                          {client.client_phone}
-                        </span>
-                      </div>
+                      <span style={{ fontSize: '10px' }}>
+                        {receivable.description || receivable.task_name}
+                      </span>
                     </td>
                     <td style={{
                       fontSize: 'var(--font-size-xs)',
                       padding: '6px',
                       textAlign: 'center',
-                      borderBottom: '1px solid var(--color-gray-100)'
+                      borderBottom: '1px solid var(--color-gray-100)',
+                      backgroundColor: index % 2 === 0 ? '#fff8e1' : '#ffecb3'
                     }}>
                       <span className="fw-bold text-danger">
-                        {formatCurrency(Number(client.total_outstanding) || 0)} ر.س
+                        {formatCurrency(Number(receivable.remaining_amount) || 0)} ر.س
                       </span>
                     </td>
                     <td style={{
                       padding: '6px',
                       textAlign: 'center',
                       borderBottom: '1px solid var(--color-gray-100)',
-                      minWidth: '80px'
+                      minWidth: '80px',
+                      backgroundColor: index % 2 === 0 ? '#fff8e1' : '#ffecb3'
                     }}>
                       <div className="d-flex justify-content-center gap-1">
                         <button
                           className="btn btn-outline-info btn-sm p-1"
-                          onClick={() => openModal('clientReceivablesEdit', { clientId: parseInt(client.client_id) })}
-                          title="تعديل المستحقات"
+                          onClick={() => openModal('editReceivable', { receivable })}
+                          title="تعديل المستحق"
                           style={{ fontSize: '10px', lineHeight: 1 }}
                         >
                           <Edit3 size={10} />
@@ -269,8 +247,8 @@ const RecentClientsReceivablesPanel: React.FC<RecentClientsReceivablesPanelProps
 
                         <button
                           className="btn btn-outline-success btn-sm p-1"
-                          onClick={() => handleWhatsAppPaymentReminder(client.client_phone, client.client_name, Number(client.total_outstanding))}
-                          disabled={Number(client.total_outstanding) <= 0}
+                          onClick={() => handleWhatsAppPaymentReminder(receivable.client_phone, receivable.client_name, Number(receivable.remaining_amount))}
+                          disabled={Number(receivable.remaining_amount) <= 0}
                           title="إرسال تذكير دفع عبر واتساب"
                           style={{ fontSize: '10px', lineHeight: 1 }}
                         >
@@ -279,8 +257,8 @@ const RecentClientsReceivablesPanel: React.FC<RecentClientsReceivablesPanelProps
 
                         <button
                           className="btn btn-primary btn-sm p-1"
-                          onClick={() => handlePayment(parseInt(client.client_id))}
-                          disabled={Number(client.total_outstanding) <= 0}
+                          onClick={() => handlePayment(parseInt(receivable.client_id))}
+                          disabled={Number(receivable.remaining_amount) <= 0}
                           title="سداد"
                           style={{ fontSize: '10px', lineHeight: 1 }}
                         >
@@ -298,19 +276,25 @@ const RecentClientsReceivablesPanel: React.FC<RecentClientsReceivablesPanelProps
         )}
       </div>
 
-      {/* Footer - Show More Button */}
+      {/* Footer - Pagination and Show More */}
       <div 
         className="card-footer bg-light border-0 py-2"
-        style={{ flexShrink: 0, textAlign: 'center' }}
+        style={{ flexShrink: 0 }}
       >
-        <button
-          onClick={navigateToFinancials}
-          className="btn btn-link text-primary p-0 d-flex align-items-center justify-content-center gap-1 w-100"
-          style={{ fontSize: 'var(--font-size-sm)' }}
-        >
-          <MoreHorizontal size={16} />
-          <span>عرض جميع المستحقات</span>
-        </button>
+        <div className="d-flex justify-content-center align-items-center">
+          {/* Items per page selector */}
+         
+
+          {/* Show More Button */}
+          <button
+            onClick={navigateToFinancials}
+            className="btn btn-link text-primary p-0 d-flex align-items-center gap-1"
+            style={{ fontSize: 'var(--font-size-sm)' }}
+          >
+            <MoreHorizontal size={16} />
+            <span>عرض المزيد</span>
+          </button>
+        </div>
       </div>
     </div>
   );

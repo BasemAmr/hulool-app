@@ -1,4 +1,5 @@
 // src/components/dashboard/ClientTypeColumn.tsx
+import { useState, useCallback } from 'react';
 import type { ClientWithTasksAndStats } from '../../queries/dashboardQueries';
 
 import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable';
@@ -10,6 +11,13 @@ interface ClientTypeColumnProps {
 }
 
 const ClientTypeColumn = ({ type, clients }: ClientTypeColumnProps) => {
+  // State for managing hovered card to allow advanced effects
+  const [hoveredCardId, setHoveredCardId] = useState<number | null>(null);
+
+  const handleCardHover = useCallback((cardId: number | null) => {
+    setHoveredCardId(cardId);
+  }, []);
+
   const getTypeTitle = (type: string) => {
     const typeMap = {
       'Government': 'حكومي',
@@ -37,7 +45,14 @@ const ClientTypeColumn = ({ type, clients }: ClientTypeColumnProps) => {
   const clientIds = clients.map(c => c.client.id);
 
   return (
-    <div className="client-type-column">
+    <div 
+      className="client-type-column"
+      style={{
+        position: 'relative',
+        overflow: 'visible', // Allow cards to expand beyond boundaries
+        isolation: 'isolate', // Create new stacking context
+      }}
+    >
       <div
         className="type-header mb-3 p-3 rounded-3"
         style={{
@@ -52,16 +67,49 @@ const ClientTypeColumn = ({ type, clients }: ClientTypeColumnProps) => {
 
       {/* CRITICAL: Wrap the list in SortableContext */}
       <SortableContext items={clientIds} strategy={verticalListSortingStrategy}>
-        <div className="clients-list">
+        <div 
+          className="clients-list"
+          style={{
+            position: 'relative',
+            overflow: 'visible', // Allow expansion
+          }}
+        >
           {clients.length > 0 ? (
             clients.map((clientData) => (
-              // Ensure a stable, unique key
-              <div key={clientData.client.id} className="mb-3">
-                <SortableClientCard
-                  clientData={clientData}
-                  containerType={type}
-                  alternatingColors={alternatingColors}
-                />
+              // Enhanced wrapper with smart positioning for pop-out effects
+              <div 
+                key={clientData.client.id} 
+                className="mb-3"
+                style={{
+                  position: 'relative',
+                  zIndex: hoveredCardId === clientData.client.id ? 1000 : 1,
+                  transition: 'z-index 0.2s ease',
+                }}
+                onMouseEnter={() => handleCardHover(clientData.client.id)}
+                onMouseLeave={() => handleCardHover(null)}
+              >
+                <div
+                  style={{
+                    transform: hoveredCardId === clientData.client.id 
+                      ? 'scale(1.08) translateX(-8%)' // Scale + slight left shift for dramatic effect
+                      : 'scale(1) translateX(0)',
+                    transformOrigin: 'center center',
+                    transition: 'transform 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94)',
+                    width: hoveredCardId === clientData.client.id ? '115%' : '100%',
+                    filter: hoveredCardId === clientData.client.id 
+                      ? 'drop-shadow(0 15px 35px rgba(0,0,0,0.2))' 
+                      : 'none',
+                    position: 'relative',
+                    backfaceVisibility: 'hidden', // Performance optimization
+                    willChange: 'transform, filter, width', // GPU acceleration hint
+                  }}
+                >
+                  <SortableClientCard
+                    clientData={clientData}
+                    containerType={type}
+                    alternatingColors={alternatingColors}
+                  />
+                </div>
               </div>
             ))
           ) : (
