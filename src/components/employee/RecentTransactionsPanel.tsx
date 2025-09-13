@@ -51,7 +51,7 @@ const RecentTransactionsPanel: React.FC<RecentTransactionsPanelProps> = ({ trans
       >
         <div className="d-flex justify-content-center align-items-center">
           <h6 className="mb-0 fw-bold text-white" style={{ fontSize: 'var(--font-size-base)' }}>
-            المعاملات الأخيرة
+           مستحقات الموظف
           </h6>
         </div>
       </div>
@@ -82,7 +82,7 @@ const RecentTransactionsPanel: React.FC<RecentTransactionsPanelProps> = ({ trans
                     fontSize: 'var(--font-size-xs)',
                     padding: '8px',
                     borderBottom: '2px solid var(--color-gray-100)',
-                    textAlign: 'center'
+                    textAlign: 'start'
                   }}>العميل/المهمة</th>
 
                   <th style={{
@@ -117,11 +117,11 @@ const RecentTransactionsPanel: React.FC<RecentTransactionsPanelProps> = ({ trans
                     <td style={{
                       fontSize: 'var(--font-size-xs)',
                       padding: '6px',
-                      textAlign: 'center',
+                      textAlign: 'start',
                       borderBottom: '1px solid var(--color-gray-100)',
                       backgroundColor: index % 2 === 0 ? '#e8f5e8' : '#c8e6c9'
                     }}>
-                      <div className="text-center">
+                      <div className="text-end">
                         {transaction.client_name && (
                           <span style={{ fontSize: '11px' }}>
                             {transaction.client_name}: &nbsp;

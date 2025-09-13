@@ -5,6 +5,7 @@ import DashboardClientCard from './DashboardClientCard';
 import { FloatingCardWrapper } from '../common/FloatingCardWrapper';
 import type { ClientWithTasksAndStats } from '../../queries/dashboardQueries';
 import type { Task } from '../../api/types';
+import { useState } from 'react';
 
 interface SortableClientCardProps {
     clientData: ClientWithTasksAndStats;
@@ -14,6 +15,7 @@ interface SortableClientCardProps {
 }
 
 const SortableClientCard = ({ clientData, containerType, alternatingColors, onAssign }: SortableClientCardProps) => {
+    const [dynamicWidth, setDynamicWidth] = useState<string | undefined>(undefined);
     const {
         attributes,
         listeners,
@@ -56,11 +58,12 @@ const SortableClientCard = ({ clientData, containerType, alternatingColors, onAs
             </div>
 
             {/* Wrap the card with our floating wrapper */}
-            <FloatingCardWrapper>
+            <FloatingCardWrapper dynamicWidth={dynamicWidth}>
                 <DashboardClientCard
                     data={clientData}
                     alternatingColors={alternatingColors}
                     onAssign={onAssign}
+                    onWidthCalculated={setDynamicWidth}
                 />
             </FloatingCardWrapper>
         </div>

@@ -23,11 +23,13 @@ import {
 import WhatsAppIcon from '../../assets/images/whats.svg';
 import GoogleDriveIcon from '../../assets/images/googe_drive.svg';
 import type { ClientWithTasksAndStats } from '../../queries/dashboardQueries';
+import { useRef, useEffect, useState } from 'react';
 
 interface EmployeeDashboardClientCardProps {
   data: ClientWithTasksAndStats;
   index?: number;
   alternatingColors: string[];
+  onWidthCalculated?: (width: string) => void;
 }
 
 const hexToRgba = (hex: string, opacity: number): string => {
@@ -57,7 +59,7 @@ const formatDaysElapsed = (dateString: string): string => {
   }
 };
 
-const EmployeeDashboardClientCard = ({ data, index = 0, alternatingColors }: EmployeeDashboardClientCardProps) => {
+const EmployeeDashboardClientCard = ({ data, index = 0, alternatingColors, onWidthCalculated }: EmployeeDashboardClientCardProps) => {
   const { client, tasks } = data;
   const { t } = useTranslation();
   const openModal = useModalStore(state => state.openModal);
@@ -67,7 +69,37 @@ const EmployeeDashboardClientCard = ({ data, index = 0, alternatingColors }: Emp
   const deferTaskMutation = useDeferTask();
   const resumeTaskMutation = useResumeTask();
   const updateTaskMutation = useUpdateTask();
-  
+  const cardRef = useRef<HTMLDivElement>(null);
+  const taskRowRefs = useRef<(HTMLTableRowElement | null)[]>([]);
+  const [isHovered, setIsHovered] = useState(false);
+
+  // Calculate dynamic width on hover
+  useEffect(() => {
+    if (isHovered && cardRef.current && taskRowRefs.current.length > 0 && onWidthCalculated) {
+      const cardWidth = cardRef.current.offsetWidth;
+      let maxTaskRowWidth = 0;
+
+      taskRowRefs.current.forEach(ref => {
+        if (ref) {
+          maxTaskRowWidth = Math.max(maxTaskRowWidth, ref.offsetWidth);
+        }
+      });
+
+      if (maxTaskRowWidth > cardWidth) {
+        const excessPercentage = ((maxTaskRowWidth - cardWidth) / cardWidth) * 100;
+        const newWidth = `${100 + excessPercentage}%`;
+        onWidthCalculated(newWidth);
+      } else {
+        onWidthCalculated('100%');
+      }
+    }
+  }, [isHovered, onWidthCalculated]);
+
+  // Initialize refs array
+  useEffect(() => {
+    taskRowRefs.current = taskRowRefs.current.slice(0, tasks.length);
+  }, [tasks.length]);
+
   const handleAction = (mutation: any, task: Task, successKey: string, successMessageKey: string, errorKey: string) => {
     mutation.mutate({ id: task.id }, {
       onSuccess: () => {
@@ -88,6 +120,12 @@ const EmployeeDashboardClientCard = ({ data, index = 0, alternatingColors }: Emp
   const handleAddTask = () => openModal('taskForm', { client });
   const handleAddReceivable = () => openModal('manualReceivable', { client_id: client.id });
   const handleRecordCredit = () => openModal('recordCreditModal', { client });
+
+  const amountDebug = (task: Task   ) => {
+    console.log('Amount:', task.amount);
+    console.log('Prepaid Amount:', task.prepaid_amount);
+    return <span>{task.amount.toLocaleString()}</span>;
+  }
 
   const handleToggleUrgentTag = (task: Task) => {
     const isUrgent = task.tags?.some(tag => tag.name === 'قصوى');
@@ -214,21 +252,21 @@ const EmployeeDashboardClientCard = ({ data, index = 0, alternatingColors }: Emp
             position: 'absolute'
           }}
         >
-          <Dropdown.Item 
+          <Dropdown.Item
             onClick={() => handleAddTask()}
             className="text-end"
           >
             <Receipt size={14} className="ms-2" />
             إضافة مهمة
           </Dropdown.Item>
-          <Dropdown.Item 
+          <Dropdown.Item
             onClick={() => handleAddReceivable()}
             className="text-end"
           >
             <Receipt size={14} className="ms-2" />
             إضافة مستحق
           </Dropdown.Item>
-          <Dropdown.Item 
+          <Dropdown.Item
             onClick={() => handleRecordCredit()}
             className="text-end"
           >
@@ -242,24 +280,29 @@ const EmployeeDashboardClientCard = ({ data, index = 0, alternatingColors }: Emp
 
   return (
     <div
+      ref={cardRef}
       className="card h-100 shadow-sm employee-dashboard-client-card"
       style={{
         borderRadius: '0px', // No border radius
         border: `3px solid ${borderColor}`, // Increased border width
-        overflow: 'visible',
+        overflow: 'hidden', // Hide overflow normally, show on hover
         position: 'relative',
         transition: 'all 0.3s ease-in-out',
         transform: 'scale(1)',
       }}
       onMouseEnter={(e) => {
+        setIsHovered(true);
         e.currentTarget.style.transform = 'scale(1.02)';
         e.currentTarget.style.zIndex = '10';
         e.currentTarget.style.boxShadow = '0 8px 25px rgba(0,0,0,0.15)';
+        e.currentTarget.style.overflow = 'visible'; // Show overflow on hover
       }}
       onMouseLeave={(e) => {
+        setIsHovered(false);
         e.currentTarget.style.transform = 'scale(1)';
         e.currentTarget.style.zIndex = '1';
         e.currentTarget.style.boxShadow = '';
+        e.currentTarget.style.overflow = 'hidden'; // Hide overflow on mouse leave
       }}
     >
       {/* Header with alternating strong colors */}
@@ -325,10 +368,10 @@ const EmployeeDashboardClientCard = ({ data, index = 0, alternatingColors }: Emp
           overflow: 'visible',
         }}
       >
-        <div 
-          className="table-responsive" 
+        <div
+          className="table-responsive"
           style={{
-            overflow: 'visible',
+            overflow: 'hidden', // Match card overflow behavior
             position: 'relative'
           }}
         >
@@ -342,223 +385,223 @@ const EmployeeDashboardClientCard = ({ data, index = 0, alternatingColors }: Emp
                 border: 'none'
               }}
             >
-                <tr>
-                  <th style={{
-                    fontSize: '0.8em',
-                    padding: '6px 8px',
-                    backgroundColor: headerColor,
-                    border: 'none'
-                  }}>المهمة</th>
-                  <th style={{
-                    fontSize: '0.8em',
-                    padding: '6px 8px',
-                    backgroundColor: headerColor,
-                    border: 'none'
-                  }}>تاريخ</th>
-                  <th style={{
-                    fontSize: '0.8em',
-                    padding: '6px 8px',
-                    backgroundColor: headerColor,
-                    border: 'none'
-                  }}>اليوم</th>
-                  <th style={{
-                    fontSize: '0.8em',
-                    padding: '6px 8px',
-                    backgroundColor: headerColor,
-                    border: 'none'
-                  }}>المبلغ</th>
-                  <th style={{
-                    fontSize: '0.8em',
-                    padding: '6px 8px',
-                    width: '80px',
-                    minWidth: '80px',
-                    backgroundColor: headerColor,
-                    border: 'none'
-                  }}>إجراءات</th>
-                </tr>
-              </thead>
-              <tbody
-                style={{
-                  position: 'relative'
-                }}
-                >
-                {tasks.map((task, taskIndex) => {
-                  const isTaskUrgent = task.tags?.some(tag => tag.name === 'قصوى');
+              <tr>
+                <th style={{
+                  fontSize: '0.8em',
+                  padding: '6px 8px',
+                  backgroundColor: headerColor,
+                  border: 'none'
+                }}>المهمة</th>
+                <th style={{
+                  fontSize: '0.8em',
+                  padding: '6px 8px',
+                  backgroundColor: headerColor,
+                  border: 'none'
+                }}>تاريخ</th>
+                <th style={{
+                  fontSize: '0.8em',
+                  padding: '6px 8px',
+                  backgroundColor: headerColor,
+                  border: 'none'
+                }}>اليوم</th>
+                <th style={{
+                  fontSize: '0.8em',
+                  padding: '6px 8px',
+                  backgroundColor: headerColor,
+                  border: 'none'
+                }}>المبلغ</th>
+                <th style={{
+                  fontSize: '0.8em',
+                  padding: '6px 8px',
+                  width: '80px',
+                  minWidth: '80px',
+                  backgroundColor: headerColor,
+                  border: 'none'
+                }}>إجراءات</th>
+              </tr>
+            </thead>
+            <tbody
+              style={{
+                position: 'relative',
+                overflow: isHovered ? 'visible' : 'hidden' // Match card overflow behavior
+              }}
+            >
+              {tasks.map((task, taskIndex) => {
+                const isTaskUrgent = task.tags?.some(tag => tag.name === 'قصوى');
 
-                  // Row background logic
-                  let rowBackground;
+                // Row background logic
+                let rowBackground;
 
-                  if (isTaskUrgent) {
-                    rowBackground = '#ffcccc'; // Red for urgent tasks
-                  } else {
-                    rowBackground = taskIndex % 2 === 0 ? row1Color : row2Color;
-                  }
+                if (isTaskUrgent) {
+                  rowBackground = '#ffcccc'; // Red for urgent tasks
+                } else {
+                  rowBackground = taskIndex % 2 === 0 ? row1Color : row2Color;
+                }
 
-                  return (
-                    <tr
-                      key={task.id}
-                      className="task-row"
-                      style={{
-                        backgroundColor: rowBackground,
-                        transition: 'all 0.2s ease-in-out',
-                        border: 'none',
-                        position: 'relative',
-                        overflow: 'visible'
-                      }}
-                    >
-                      <td style={{
-                        fontSize: '0.82em',
-                        padding: '8px',
-                        color: 'black',
-                        backgroundColor: rowBackground,
-                        border: 'none'
-                      }}>
-                        <div className="d-flex align-items-center gap-1">
-                          <span className="text-truncate" style={{ maxWidth: '120px' }}>
-                            {task.task_name || t(`type.${task.type}`)}
-                          </span>
-                          {isTaskUrgent && (
-                            <AlertTriangle size={10} className="text-danger" />
-                          )}
-                        </div>
-                      </td>
-                      <td style={{
-                        fontSize: '0.77em',
-                        padding: '8px',
-                        color: 'black',
-                        backgroundColor: rowBackground,
-                        border: 'none'
-                      }}>
-                        {formatDate(task.start_date).replace(/\/20/, '/')}
-                      </td>
-                      <td style={{
-                        fontSize: '0.77em',
-                        padding: '8px',
-                        color: 'black',
-                        backgroundColor: rowBackground,
-                        border: 'none'
-                      }}>
-                        {formatDaysElapsed(task.start_date)}
-                      </td>
-                      <td style={{
-                        fontSize: '0.77em',
-                        padding: '8px',
-                        color: 'black',
-                        backgroundColor: rowBackground,
-                        border: 'none'
-                      }} className="text-success fw-bold">
-                        {task.amount ? (
-                          <>
-                            {task.amount.toLocaleString()} 
-                            {task.prepaid_amount && task.prepaid_amount > 0 && (
-                              <div className="small text-muted">
-                                مدفوع: {task.prepaid_amount.toLocaleString()}
-                              </div>
-                            )}
-                          </>
-                        ) : (
-                          <span className="text-muted">-</span>
+                return (
+                  <tr
+                    ref={(el) => { taskRowRefs.current[taskIndex] = el; }}
+                    key={task.id}
+                    className="task-row"
+                    style={{
+                      backgroundColor: rowBackground,
+                      transition: 'all 0.2s ease-in-out',
+                      border: 'none',
+                      position: 'relative',
+                      overflow: 'visible'
+                    }}
+                  >
+                    <td style={{
+                      fontSize: '0.82em',
+                      padding: '8px',
+                      color: 'black',
+                      backgroundColor: rowBackground,
+                      border: 'none'
+                    }}>
+                      <div className="d-flex align-items-center gap-1">
+                        <span className="text-truncate" style={{ maxWidth: '120px' }}>
+                          {task.task_name || t(`type.${task.type}`)}
+                        </span>
+                        {isTaskUrgent && (
+                          <AlertTriangle size={10} className="text-danger" />
                         )}
-                      </td>
-                      <td 
-                        className="task-actions"
-                        style={{
-                          padding: '8px',
-                          position: 'static',
-                          color: 'black',
-                          backgroundColor: rowBackground,
-                          border: 'none',
-                          minWidth: '80px',
-                          whiteSpace: 'nowrap'
-                        }}>
-                        <div className="d-flex gap-1 justify-content-center">
+                      </div>
+                    </td>
+                    <td style={{
+                      fontSize: '0.77em',
+                      padding: '8px',
+                      color: 'black',
+                      backgroundColor: rowBackground,
+                      border: 'none'
+                    }}>
+                      {formatDate(task.start_date).replace(/\/20/, '/')}
+                    </td>
+                    <td style={{
+                      fontSize: '0.77em',
+                      padding: '8px',
+                      color: 'black',
+                      backgroundColor: rowBackground,
+                      border: 'none'
+                    }}>
+                      {formatDaysElapsed(task.start_date)}
+                    </td>
+                    <td style={{
+                      fontSize: '0.77em',
+                      padding: '8px',
+                      color: 'black',
+                      backgroundColor: rowBackground,
+                      border: 'none'
+                    }} className="text-success fw-bold">
+                      {task.prepaid_amount > 0 ? (
+                        <div>
+                          <div>{task.amount.toLocaleString()} ر.س</div>
+                          <small className="text-muted">
+                            مدفوع: {task.prepaid_amount.toLocaleString()} ر.س
+                          </small>
+                        </div>
+                      ) : (
+                        <span>{task.amount.toLocaleString()} ر.س</span>
+                      )}
+                    </td>
+                    <td
+                      className="task-actions"
+                      style={{
+                        padding: '8px',
+                        position: 'static',
+                        color: 'black',
+                        backgroundColor: rowBackground,
+                        border: 'none',
+                        minWidth: '80px',
+                        whiteSpace: 'nowrap'
+                      }}>
+                      <div className="d-flex gap-1 justify-content-center">
+                        <button
+                          onClick={() => handleEditTask(task)}
+                          className="btn btn-outline-info btn-sm p-1"
+                          title="تفاصيل"
+                          style={{ fontSize: '10px', lineHeight: 1 }}
+                        >
+                          <Eye size={10} />
+                        </button>
+
+                        {/* Submit for Review - instead of Complete button */}
+                        {task.status !== 'Completed' && task.status !== 'Pending Review' && (
                           <button
-                            onClick={() => handleEditTask(task)}
-                            className="btn btn-outline-info btn-sm p-1"
-                            title="تفاصيل"
+                            onClick={() => handleSubmitForReview(task)}
+                            className="btn btn-outline-success btn-sm p-1"
+                            title="إرسال للمراجعة"
                             style={{ fontSize: '10px', lineHeight: 1 }}
                           >
-                            <Eye size={10} />
+                            <Upload size={10} />
                           </button>
+                        )}
 
-                          {/* Submit for Review - instead of Complete button */}
-                          {task.status !== 'Completed' && task.status !== 'Pending Review' && (
-                            <button
-                              onClick={() => handleSubmitForReview(task)}
-                              className="btn btn-outline-success btn-sm p-1"
-                              title="إرسال للمراجعة"
-                              style={{ fontSize: '10px', lineHeight: 1 }}
-                            >
-                              <Upload size={10} />
-                            </button>
-                          )}
+                        {task.status === 'New' ? (
+                          <button
+                            onClick={() => handleDefer(task)}
+                            className="btn btn-outline-warning btn-sm p-1"
+                            title="تأجيل"
+                            style={{ fontSize: '10px', lineHeight: 1 }}
+                          >
+                            <Pause size={10} />
+                          </button>
+                        ) : task.status === 'Deferred' ? (
+                          <button
+                            onClick={() => handleResume(task)}
+                            className="btn btn-outline-primary btn-sm p-1"
+                            title="استئناف"
+                            style={{ fontSize: '10px', lineHeight: 1 }}
+                          >
+                            <Play size={10} />
+                          </button>
+                        ) : null}
 
-                          {task.status === 'New' ? (
-                            <button
-                              onClick={() => handleDefer(task)}
-                              className="btn btn-outline-warning btn-sm p-1"
-                              title="تأجيل"
+                        <div style={{ position: 'static' }}>
+                          <Dropdown>
+                            <Dropdown.Toggle
+                              as="button"
+                              className="btn btn-outline-secondary btn-sm p-1"
                               style={{ fontSize: '10px', lineHeight: 1 }}
+                              title="المزيد"
                             >
-                              <Pause size={10} />
-                            </button>
-                          ) : task.status === 'Deferred' ? (
-                            <button
-                              onClick={() => handleResume(task)}
-                              className="btn btn-outline-primary btn-sm p-1"
-                              title="استئناف"
-                              style={{ fontSize: '10px', lineHeight: 1 }}
+                              <MoreVertical size={10} />
+                            </Dropdown.Toggle>
+                            <Dropdown.Menu
+                              align="end"
+                              style={{
+                                fontSize: '0.8em',
+                                minWidth: '150px',
+                                zIndex: 1060
+                              }}
                             >
-                              <Play size={10} />
-                            </button>
-                          ) : null}
-
-                          <div style={{ position: 'static' }}>
-                            <Dropdown>
-                              <Dropdown.Toggle
-                                as="button"
-                                className="btn btn-outline-secondary btn-sm p-1"
-                                style={{ fontSize: '10px', lineHeight: 1 }}
-                                title="المزيد"
+                              <Dropdown.Item onClick={() => handleShowRequirements(task)}>
+                                <ListChecks size={12} className="me-2" />
+                                المتطلبات
+                              </Dropdown.Item>
+                              <Dropdown.Item
+                                onClick={() => openDrawer('taskFollowUp', {
+                                  taskId: task.id,
+                                  taskName: task.task_name || undefined,
+                                  clientName: client.name
+                                })}
                               >
-                                <MoreVertical size={10} />
-                              </Dropdown.Toggle>
-                              <Dropdown.Menu 
-                                align="end" 
-                                style={{ 
-                                  fontSize: '0.8em', 
-                                  minWidth: '150px',
-                                  zIndex: 1060
-                                }}
-                              >
-                                <Dropdown.Item onClick={() => handleShowRequirements(task)}>
-                                  <ListChecks size={12} className="me-2" />
-                                  المتطلبات
-                                </Dropdown.Item>
-                                <Dropdown.Item 
-                                  onClick={() => openDrawer('taskFollowUp', {
-                                    taskId: task.id,
-                                    taskName: task.task_name || undefined,
-                                    clientName: client.name
-                                  })}
-                                >
-                                  <MessageSquare size={12} className="me-2" />
-                                  التعليقات
-                                </Dropdown.Item>
-                                <Dropdown.Item onClick={() => handleToggleUrgentTag(task)}>
-                                  <AlertTriangle size={12} className="me-2" />
-                                  {task.tags?.some(tag => tag.name === 'قصوى') ? 'إلغاء العاجل' : 'تعليم عاجل'}
-                                </Dropdown.Item>
-                              </Dropdown.Menu>
-                            </Dropdown>
-                          </div>
+                                <MessageSquare size={12} className="me-2" />
+                                التعليقات
+                              </Dropdown.Item>
+                              <Dropdown.Item onClick={() => handleToggleUrgentTag(task)}>
+                                <AlertTriangle size={12} className="me-2" />
+                                {task.tags?.some(tag => tag.name === 'قصوى') ? 'إلغاء العاجل' : 'تعليم عاجل'}
+                              </Dropdown.Item>
+                            </Dropdown.Menu>
+                          </Dropdown>
                         </div>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
+                      </div>
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
         </div>
       </div>
     </div>

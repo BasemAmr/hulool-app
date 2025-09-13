@@ -3,6 +3,7 @@ import { CSS } from '@dnd-kit/utilities';
 import EmployeeDashboardClientCard from './EmployeeDashboardClientCard';
 import { FloatingCardWrapper } from '../common/FloatingCardWrapper';
 import type { ClientWithTasksAndStats } from '../../queries/dashboardQueries';
+import { useState } from 'react';
 
 interface SortableEmployeeClientCardProps {
     clientData: ClientWithTasksAndStats;
@@ -10,6 +11,7 @@ interface SortableEmployeeClientCardProps {
 }
 
 const SortableEmployeeClientCard = ({ clientData, alternatingColors }: SortableEmployeeClientCardProps) => {
+    const [dynamicWidth, setDynamicWidth] = useState<string | undefined>(undefined);
     const {
         attributes,
         listeners,
@@ -50,10 +52,11 @@ const SortableEmployeeClientCard = ({ clientData, alternatingColors }: SortableE
                 ⋮⋮ اسحب لإعادة الترتيب
             </div>
 
-            <FloatingCardWrapper>
+            <FloatingCardWrapper dynamicWidth={dynamicWidth}>
                 <EmployeeDashboardClientCard
                     data={clientData}
                     alternatingColors={alternatingColors}
+                    onWidthCalculated={setDynamicWidth}
                 />
             </FloatingCardWrapper>
         </div>

@@ -25,12 +25,14 @@ import {
 import WhatsAppIcon from '../../assets/images/whats.svg';
 import GoogleDriveIcon from '../../assets/images/googe_drive.svg';
 import type { ClientWithTasksAndStats } from '../../queries/dashboardQueries';
+import { useRef, useEffect, useState } from 'react';
 
 interface DashboardClientCardProps {
   data: ClientWithTasksAndStats;
   index?: number;
   alternatingColors: string[];
   onAssign?: (task: Task) => void;
+  onWidthCalculated?: (width: string) => void;
 }
 
 const hexToRgba = (hex: string, opacity: number): string => {
@@ -60,7 +62,7 @@ const formatDaysElapsed = (dateString: string): string => {
   }
 };
 
-const DashboardClientCard = ({ data, index = 0, alternatingColors, onAssign }: DashboardClientCardProps) => {
+const DashboardClientCard = ({ data, index = 0, alternatingColors, onAssign, onWidthCalculated }: DashboardClientCardProps) => {
   const { client, tasks } = data;
   const { t } = useTranslation();
   const openModal = useModalStore(state => state.openModal);
@@ -70,6 +72,36 @@ const DashboardClientCard = ({ data, index = 0, alternatingColors, onAssign }: D
   const deferTaskMutation = useDeferTask();
   const resumeTaskMutation = useResumeTask();
   const updateTaskMutation = useUpdateTask();
+  const cardRef = useRef<HTMLDivElement>(null);
+  const taskRowRefs = useRef<(HTMLTableRowElement | null)[]>([]);
+
+  // Initialize refs array
+  useEffect(() => {
+    taskRowRefs.current = taskRowRefs.current.slice(0, tasks.length);
+  }, [tasks.length]);
+  const [isHovered, setIsHovered] = useState(false);
+
+  // Calculate dynamic width on hover
+  useEffect(() => {
+    if (isHovered && cardRef.current && taskRowRefs.current.length > 0 && onWidthCalculated) {
+      const cardWidth = cardRef.current.offsetWidth;
+      let maxTaskRowWidth = 0;
+
+      taskRowRefs.current.forEach(ref => {
+        if (ref) {
+          maxTaskRowWidth = Math.max(maxTaskRowWidth, ref.offsetWidth);
+        }
+      });
+
+      if (maxTaskRowWidth > cardWidth) {
+        const excessPercentage = ((maxTaskRowWidth - cardWidth) / cardWidth) * 100;
+        const newWidth = `${100 + excessPercentage}%`;
+        onWidthCalculated(newWidth);
+      } else {
+        onWidthCalculated('100%');
+      }
+    }
+  }, [isHovered, onWidthCalculated]);
   const { data: employees = [] } = useGetEmployeesForSelection();
   
   const handleAction = (mutation: any, task: Task, successKey: string, successMessageKey: string, errorKey: string) => {
@@ -188,7 +220,7 @@ const DashboardClientCard = ({ data, index = 0, alternatingColors, onAssign }: D
 
     // Create fainter colors using reduced opacity of the base alternating colors
     row1Color = hexToRgba(alternatingColors[1], 0.3); // Very faint
-    row2Color = hexToRgba(alternatingColors[1], 1); // Slightly more visible
+    row2Color = hexToRgba(alternatingColors[1], 1); // Slightly more hidden
   }
 
   const openGoogleDrive = () => {
@@ -262,24 +294,29 @@ const DashboardClientCard = ({ data, index = 0, alternatingColors, onAssign }: D
 
   return (
     <div
+      ref={cardRef}
       className="card h-100 shadow-sm dashboard-client-card"
       style={{
         borderRadius: '0px', // No border radius
         border: `3px solid ${borderColor}`, // Increased border width
-        overflow: 'visible',
+        overflow: isHovered ? 'visible' : 'hidden', // Hide overflow normally, show on hover
         position: 'relative',
         transition: 'all 0.3s ease-in-out',
         transform: 'scale(1)',
       }}
       onMouseEnter={(e) => {
+        setIsHovered(true);
         e.currentTarget.style.transform = 'scale(1.02)';
         e.currentTarget.style.zIndex = '10';
         e.currentTarget.style.boxShadow = '0 8px 25px rgba(0,0,0,0.15)';
+        e.currentTarget.style.overflow = 'visible'; // Show overflow on hover
       }}
       onMouseLeave={(e) => {
+        setIsHovered(false);
         e.currentTarget.style.transform = 'scale(1)';
         e.currentTarget.style.zIndex = '1';
         e.currentTarget.style.boxShadow = '';
+        e.currentTarget.style.overflow = 'hidden'; // Hide overflow on mouse leave
       }}
     >
       {/* Header with alternating strong colors */}
@@ -342,13 +379,13 @@ const DashboardClientCard = ({ data, index = 0, alternatingColors, onAssign }: D
         style={{
           position: 'relative',
           backgroundColor: row1Color,
-          overflow: 'visible',
+          overflow: 'hidden',
         }}
       >
         <div
           className="table-responsive"
           style={{
-            overflow: 'visible',
+            overflow: isHovered ? 'visible' : 'hidden', // Match card overflow behavior
             position: 'relative'
           }}
         >
@@ -397,7 +434,11 @@ const DashboardClientCard = ({ data, index = 0, alternatingColors, onAssign }: D
                   }}>إجراءات</th>
                 </tr>
               </thead>
-              <tbody>
+              <tbody
+                style={{
+                  overflow: isHovered ? 'visible' : 'hidden' // Match card overflow behavior
+                }}
+              >
                 {tasks.map((task, taskIndex) => {
                   const isTaskUrgent = task.tags?.some(tag => tag.name === 'قصوى');
 
@@ -414,6 +455,7 @@ const DashboardClientCard = ({ data, index = 0, alternatingColors, onAssign }: D
 
                   return (
                     <tr
+                      ref={(el) => { taskRowRefs.current[taskIndex] = el; }}
                       key={task.id}
                       className="task-row"
                       data-task-id={task.id}
@@ -485,7 +527,7 @@ const DashboardClientCard = ({ data, index = 0, alternatingColors, onAssign }: D
                               fill="#f00"
                             />
                           </svg>
-                          {task.amount?.toLocaleString()}
+                          {Number(task.amount).toLocaleString()}
                         </div>
                       </td>
                       <td

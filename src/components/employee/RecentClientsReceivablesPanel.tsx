@@ -153,7 +153,7 @@ const RecentClientsReceivablesPanel: React.FC<RecentClientsReceivablesPanelProps
                     fontSize: 'var(--font-size-xs)',
                     padding: '8px',
                     borderBottom: '2px solid var(--color-gray-100)',
-                    textAlign: 'center'
+                    textAlign: 'start'
                   }}>العميل</th>
                   <th style={{
                     fontSize: 'var(--font-size-xs)',
@@ -188,7 +188,7 @@ const RecentClientsReceivablesPanel: React.FC<RecentClientsReceivablesPanelProps
                     <td style={{
                       fontSize: 'var(--font-size-xs)',
                       padding: '6px',
-                      textAlign: 'center',
+                      textAlign: 'start',
                       borderBottom: '1px solid var(--color-gray-100)',
                       backgroundColor: index % 2 === 0 ? '#fff8e1' : '#ffecb3'
                     }}>
