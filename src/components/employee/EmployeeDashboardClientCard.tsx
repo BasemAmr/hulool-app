@@ -24,6 +24,7 @@ import WhatsAppIcon from '../../assets/images/whats.svg';
 import GoogleDriveIcon from '../../assets/images/googe_drive.svg';
 import type { ClientWithTasksAndStats } from '../../queries/dashboardQueries';
 import { useRef, useEffect, useState } from 'react';
+import { createPortal } from 'react-dom';
 
 interface EmployeeDashboardClientCardProps {
   data: ClientWithTasksAndStats;
@@ -71,7 +72,11 @@ const EmployeeDashboardClientCard = ({ data, index = 0, alternatingColors, onWid
   const updateTaskMutation = useUpdateTask();
   const cardRef = useRef<HTMLDivElement>(null);
   const taskRowRefs = useRef<(HTMLTableRowElement | null)[]>([]);
+  const cardBodyRef = useRef<HTMLDivElement>(null);
+  const dropdownMenuRef = useRef<HTMLDivElement>(null);
   const [isHovered, setIsHovered] = useState(false);
+  const [dropdownPosition, setDropdownPosition] = useState<{ top: number; left: number } | null>(null);
+  const [activeDropdownTaskId, setActiveDropdownTaskId] = useState<number | null>(null);
 
   // Calculate dynamic width on hover
   useEffect(() => {
@@ -95,10 +100,30 @@ const EmployeeDashboardClientCard = ({ data, index = 0, alternatingColors, onWid
     }
   }, [isHovered, onWidthCalculated]);
 
-  // Initialize refs array
+  // Handle click outside to close dropdown
   useEffect(() => {
-    taskRowRefs.current = taskRowRefs.current.slice(0, tasks.length);
-  }, [tasks.length]);
+    const handleClickOutside = (event: MouseEvent) => {
+      if (activeDropdownTaskId && dropdownPosition) {
+        // Check if click was outside the dropdown menu and toggle button
+        const dropdownToggle = document.querySelector(`[data-task-id="${activeDropdownTaskId}"] .dropdown-toggle`);
+
+        if (dropdownMenuRef.current && dropdownToggle &&
+            !dropdownMenuRef.current.contains(event.target as Node) &&
+            !dropdownToggle.contains(event.target as Node)) {
+          setActiveDropdownTaskId(null);
+          setDropdownPosition(null);
+        }
+      }
+    };
+
+    if (activeDropdownTaskId) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [activeDropdownTaskId, dropdownPosition]);
 
   const handleAction = (mutation: any, task: Task, successKey: string, successMessageKey: string, errorKey: string) => {
     mutation.mutate({ id: task.id }, {
@@ -356,6 +381,7 @@ const EmployeeDashboardClientCard = ({ data, index = 0, alternatingColors, onWid
 
       {/* Body - Tasks Table */}
       <div
+        ref={cardBodyRef}
         className="card-body p-0"
         style={{
           position: 'relative',
@@ -417,8 +443,7 @@ const EmployeeDashboardClientCard = ({ data, index = 0, alternatingColors, onWid
             </thead>
             <tbody
               style={{
-                position: 'relative',
-                overflow: isHovered ? 'visible' : 'hidden' // Match card overflow behavior
+                overflow: 'hidden'
               }}
             >
               {tasks.map((task, taskIndex) => {
@@ -438,12 +463,12 @@ const EmployeeDashboardClientCard = ({ data, index = 0, alternatingColors, onWid
                     ref={(el) => { taskRowRefs.current[taskIndex] = el; }}
                     key={task.id}
                     className="task-row"
+                    data-task-id={task.id}
                     style={{
                       backgroundColor: rowBackground,
                       transition: 'all 0.2s ease-in-out',
                       border: 'none',
-                      position: 'relative',
-                      overflow: 'visible'
+                      position: 'relative'
                     }}
                   >
                     <td style={{
@@ -551,43 +576,34 @@ const EmployeeDashboardClientCard = ({ data, index = 0, alternatingColors, onWid
                           </button>
                         ) : null}
 
-                        <div style={{ position: 'static' }}>
-                          <Dropdown>
+                        <div style={{ position: 'relative' }}>
+                          <Dropdown show={activeDropdownTaskId === task.id} onToggle={(isOpen) => {
+                            if (isOpen) {
+                              setActiveDropdownTaskId(task.id);
+                              // Calculate position relative to the trigger button
+                              const triggerElement = document.querySelector(`[data-task-id="${task.id}"] .dropdown-toggle`) as HTMLElement;
+                              if (triggerElement && cardBodyRef.current) {
+                                const triggerRect = triggerElement.getBoundingClientRect();
+                                const cardBodyRect = cardBodyRef.current.getBoundingClientRect();
+                                setDropdownPosition({
+                                  top: triggerRect.bottom - cardBodyRect.top + 2,
+                                  left: triggerRect.right - cardBodyRect.left - 120 // 120px is menu width
+                                });
+                              }
+                            } else {
+                              setActiveDropdownTaskId(null);
+                              setDropdownPosition(null);
+                            }
+                          }}>
                             <Dropdown.Toggle
-                              as="button"
-                              className="btn btn-outline-secondary btn-sm p-1"
-                              style={{ fontSize: '10px', lineHeight: 1 }}
-                              title="المزيد"
+                              variant="outline-secondary"
+                              size="sm"
+                              className="p-1"
+                              style={{ fontSize: '10px' }}
+                              data-task-id={task.id}
                             >
                               <MoreVertical size={10} />
                             </Dropdown.Toggle>
-                            <Dropdown.Menu
-                              align="end"
-                              style={{
-                                fontSize: '0.8em',
-                                minWidth: '150px',
-                                zIndex: 1060
-                              }}
-                            >
-                              <Dropdown.Item onClick={() => handleShowRequirements(task)}>
-                                <ListChecks size={12} className="me-2" />
-                                المتطلبات
-                              </Dropdown.Item>
-                              <Dropdown.Item
-                                onClick={() => openDrawer('taskFollowUp', {
-                                  taskId: task.id,
-                                  taskName: task.task_name || undefined,
-                                  clientName: client.name
-                                })}
-                              >
-                                <MessageSquare size={12} className="me-2" />
-                                التعليقات
-                              </Dropdown.Item>
-                              <Dropdown.Item onClick={() => handleToggleUrgentTag(task)}>
-                                <AlertTriangle size={12} className="me-2" />
-                                {task.tags?.some(tag => tag.name === 'قصوى') ? 'إلغاء العاجل' : 'تعليم عاجل'}
-                              </Dropdown.Item>
-                            </Dropdown.Menu>
                           </Dropdown>
                         </div>
                       </div>
@@ -598,6 +614,52 @@ const EmployeeDashboardClientCard = ({ data, index = 0, alternatingColors, onWid
             </tbody>
           </table>
         </div>
+
+        {/* Render active dropdown menu via createPortal */}
+        {(() => {
+          const task = tasks.find(t => t.id === activeDropdownTaskId);
+          if (!task || !dropdownPosition || !cardBodyRef.current) return null;
+
+          return createPortal(
+            <div ref={dropdownMenuRef}>
+              <Dropdown.Menu
+                show
+                align="end"
+                className="text-end"
+                style={{
+                  zIndex: 9999,
+                  minWidth: '120px',
+                  fontSize: '0.85em',
+                  position: 'absolute',
+                  top: dropdownPosition.top,
+                  left: dropdownPosition.left,
+                  marginTop: '2px'
+                }}
+              >
+                <Dropdown.Item onClick={() => handleShowRequirements(task)} className="text-end">
+                  <ListChecks size={11} className="ms-2" />
+                  المتطلبات
+                </Dropdown.Item>
+                <Dropdown.Item
+                  onClick={() => openDrawer('taskFollowUp', {
+                    taskId: task.id,
+                    taskName: task.task_name || undefined,
+                    clientName: client.name
+                  })}
+                  className="text-end"
+                >
+                  <MessageSquare size={11} className="ms-2" />
+                  التعليقات
+                </Dropdown.Item>
+                <Dropdown.Item onClick={() => handleToggleUrgentTag(task)} className="text-end">
+                  <AlertTriangle size={11} className="ms-2" />
+                  {task.tags?.some(tag => tag.name === 'قصوى') ? 'إلغاء العاجل' : 'تعليم عاجل'}
+                </Dropdown.Item>
+              </Dropdown.Menu>
+            </div>,
+            cardBodyRef.current
+          );
+        })()}
       </div>
     </div>
   );
