@@ -121,11 +121,6 @@ const EmployeeDashboardClientCard = ({ data, index = 0, alternatingColors, onWid
   const handleAddReceivable = () => openModal('manualReceivable', { client_id: client.id });
   const handleRecordCredit = () => openModal('recordCreditModal', { client });
 
-  const amountDebug = (task: Task   ) => {
-    console.log('Amount:', task.amount);
-    console.log('Prepaid Amount:', task.prepaid_amount);
-    return <span>{task.amount.toLocaleString()}</span>;
-  }
 
   const handleToggleUrgentTag = (task: Task) => {
     const isUrgent = task.tags?.some(tag => tag.name === 'قصوى');
