@@ -436,7 +436,7 @@ const AllTasksTable = ({ tasks, isLoading, onEdit, onComplete, onViewAmountDetai
                     )}
 
                     {/* Review Action for Pending Review tasks */}
-                    {task.status === 'Pending Review' && (
+                    {task.assigned_to_id && (task.status !== 'Completed' && task.status !== 'Cancelled' && task.status !== 'New' && task.status !== 'Deferred') && (
                       <Button 
                         variant="primary" 
                         size="sm" 
