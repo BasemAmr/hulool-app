@@ -5,20 +5,22 @@ import { useQueryClient } from '@tanstack/react-query';
 import { useModalStore } from '../../stores/modalStore';
 import { useDrawerStore } from '../../stores/drawerStore';
 import { useToast } from '../../hooks/useToast';
-import { useDeferTask, useResumeTask, useUpdateTask } from '../../queries/taskQueries';
+import { useDeferTask, useResumeTask, useUpdateTask, useCancelTask } from '../../queries/taskQueries';
+import { useSubmitTaskForReview } from '../../queries/employeeTasksQueries';
 import type { Task } from '../../api/types';
 import { formatDate } from '../../utils/dateUtils';
 import { Dropdown } from 'react-bootstrap';
 import {
   Receipt,
-  Pause,
-  Play,
-  ListChecks,
   MoreVertical,
   AlertTriangle,
   Eye,
   MessageSquare,
+  ListChecks,
   Upload,
+  Pause,
+  Play,
+  X
 } from 'lucide-react';
 import WhatsAppIcon from '../../assets/images/whats.svg';
 import GoogleDriveIcon from '../../assets/images/googe_drive.svg';
@@ -70,6 +72,8 @@ const EmployeeDashboardClientCard = ({ data, index = 0, alternatingColors, onWid
   const deferTaskMutation = useDeferTask();
   const resumeTaskMutation = useResumeTask();
   const updateTaskMutation = useUpdateTask();
+  const submitForReviewMutation = useSubmitTaskForReview();
+  const cancelTaskMutation = useCancelTask();
   const cardRef = useRef<HTMLDivElement>(null);
   const taskRowRefs = useRef<(HTMLTableRowElement | null)[]>([]);
   const cardBodyRef = useRef<HTMLDivElement>(null);
@@ -139,7 +143,33 @@ const EmployeeDashboardClientCard = ({ data, index = 0, alternatingColors, onWid
 
   const handleDefer = (task: Task) => handleAction(deferTaskMutation, task, 'tasks.deferSuccess', 'tasks.deferSuccessMessage', 'tasks.deferError');
   const handleResume = (task: Task) => handleAction(resumeTaskMutation, task, 'tasks.resumeSuccess', 'tasks.resumeSuccessMessage', 'tasks.resumeError');
-  const handleSubmitForReview = (task: Task) => openModal('submitForReview', { task });
+  const handleSubmitForReview = (task: Task) => {
+    submitForReviewMutation.mutate(task.id, {
+      onSuccess: () => {
+        success('تم الإرسال', `تم إرسال المهمة "${task.task_name || 'مهمة'}" للمراجعة بنجاح`);
+        queryClient.invalidateQueries({ queryKey: ['dashboard', 'employee', 'clientsWithActiveTasks'] });
+      },
+      onError: (err: any) => {
+        error('خطأ', err.message || 'حدث خطأ أثناء إرسال المهمة للمراجعة');
+      }
+    });
+  };
+  const handleCancelTask = (task: Task) => {
+    cancelTaskMutation.mutate({
+      id: task.id,
+      decisions: {
+        task_action: 'cancel'
+      }
+    }, {
+      onSuccess: () => {
+        success('تم الإلغاء', 'تم إلغاء المهمة بنجاح');
+        queryClient.invalidateQueries({ queryKey: ['dashboard', 'employee', 'clientsWithActiveTasks'] });
+      },
+      onError: (err: any) => {
+        error('خطأ', err.message || 'حدث خطأ أثناء إلغاء المهمة');
+      }
+    });
+  };
   const handleShowRequirements = (task: Task) => openModal('requirements', { task });
 
   const handleAddTask = () => openModal('taskForm', { client });
@@ -351,7 +381,7 @@ const EmployeeDashboardClientCard = ({ data, index = 0, alternatingColors, onWid
           {/* Center: Client name with Google Drive */}
           <div className="d-flex align-items-center justify-content-center gap-2">
             <Link
-              to={`/clients/${client.id}`}
+              to={`/employee/clients/${client.id}`}
               className="text-decoration-none fw-bold text-black"
               style={{ fontSize: '0.95em' }}
             >
@@ -535,6 +565,7 @@ const EmployeeDashboardClientCard = ({ data, index = 0, alternatingColors, onWid
                         whiteSpace: 'nowrap'
                       }}>
                       <div className="d-flex gap-1 justify-content-center">
+                        {/* Edit Task (Eye icon) */}
                         <button
                           onClick={() => handleEditTask(task)}
                           className="btn btn-outline-info btn-sm p-1"
@@ -544,38 +575,7 @@ const EmployeeDashboardClientCard = ({ data, index = 0, alternatingColors, onWid
                           <Eye size={10} />
                         </button>
 
-                        {/* Submit for Review - instead of Complete button */}
-                        {task.status !== 'Completed' && task.status !== 'Pending Review' && (
-                          <button
-                            onClick={() => handleSubmitForReview(task)}
-                            className="btn btn-outline-success btn-sm p-1"
-                            title="إرسال للمراجعة"
-                            style={{ fontSize: '10px', lineHeight: 1 }}
-                          >
-                            <Upload size={10} />
-                          </button>
-                        )}
-
-                        {task.status === 'New' ? (
-                          <button
-                            onClick={() => handleDefer(task)}
-                            className="btn btn-outline-warning btn-sm p-1"
-                            title="تأجيل"
-                            style={{ fontSize: '10px', lineHeight: 1 }}
-                          >
-                            <Pause size={10} />
-                          </button>
-                        ) : task.status === 'Deferred' ? (
-                          <button
-                            onClick={() => handleResume(task)}
-                            className="btn btn-outline-primary btn-sm p-1"
-                            title="استئناف"
-                            style={{ fontSize: '10px', lineHeight: 1 }}
-                          >
-                            <Play size={10} />
-                          </button>
-                        ) : null}
-
+                        {/* Dropdown with actions */}
                         <div style={{ position: 'relative' }}>
                           <Dropdown show={activeDropdownTaskId === task.id} onToggle={(isOpen) => {
                             if (isOpen) {
@@ -628,7 +628,7 @@ const EmployeeDashboardClientCard = ({ data, index = 0, alternatingColors, onWid
                 className="text-end"
                 style={{
                   zIndex: 9999,
-                  minWidth: '120px',
+                  minWidth: '140px',
                   fontSize: '0.85em',
                   position: 'absolute',
                   top: dropdownPosition.top,
@@ -636,10 +636,35 @@ const EmployeeDashboardClientCard = ({ data, index = 0, alternatingColors, onWid
                   marginTop: '2px'
                 }}
               >
+                {/* Submit for Review */}
+                {task.status !== 'Completed' && task.status !== 'Pending Review' && (
+                  <Dropdown.Item onClick={() => handleSubmitForReview(task)} className="text-end">
+                    <Upload size={11} className="ms-2" />
+                    إرسال للمراجعة
+                  </Dropdown.Item>
+                )}
+                
+                {/* Defer/Resume */}
+                {task.status === 'New' && (
+                  <Dropdown.Item onClick={() => handleDefer(task)} className="text-end">
+                    <Pause size={11} className="ms-2" />
+                    تأجيل
+                  </Dropdown.Item>
+                )}
+                {task.status === 'Deferred' && (
+                  <Dropdown.Item onClick={() => handleResume(task)} className="text-end">
+                    <Play size={11} className="ms-2" />
+                    استئناف
+                  </Dropdown.Item>
+                )}
+                
+                {/* Requirements */}
                 <Dropdown.Item onClick={() => handleShowRequirements(task)} className="text-end">
                   <ListChecks size={11} className="ms-2" />
                   المتطلبات
                 </Dropdown.Item>
+                
+                {/* Comments */}
                 <Dropdown.Item
                   onClick={() => openDrawer('taskFollowUp', {
                     taskId: task.id,
@@ -651,10 +676,22 @@ const EmployeeDashboardClientCard = ({ data, index = 0, alternatingColors, onWid
                   <MessageSquare size={11} className="ms-2" />
                   التعليقات
                 </Dropdown.Item>
+                
+                {/* Toggle Urgent */}
                 <Dropdown.Item onClick={() => handleToggleUrgentTag(task)} className="text-end">
                   <AlertTriangle size={11} className="ms-2" />
                   {task.tags?.some(tag => tag.name === 'قصوى') ? 'إلغاء العاجل' : 'تعليم عاجل'}
                 </Dropdown.Item>
+                
+                <Dropdown.Divider />
+                
+                {/* Cancel Task - only for non-completed tasks */}
+                {task.status !== 'Completed' && task.status !== 'Cancelled' && (
+                  <Dropdown.Item onClick={() => handleCancelTask(task)} className="text-end text-danger">
+                    <X size={11} className="ms-2" />
+                    إلغاء المهمة
+                  </Dropdown.Item>
+                )}
               </Dropdown.Menu>
             </div>,
             cardBodyRef.current

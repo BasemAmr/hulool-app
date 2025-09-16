@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import type { Payment, CreditAllocation } from '../../api/types';
 import type { EmployeeReceivableDashboardItem } from '../../queries/employeeFinancialQueries';
 import Button from '../ui/Button';
-import { ChevronRight, ChevronDown, FileText, CreditCard, Edit3, Trash2 } from 'lucide-react';
+import { ChevronRight, ChevronDown, FileText, Edit3, Trash2 } from 'lucide-react';
 import { formatDate } from '../../utils/dateUtils';
 import { useModalStore } from '../../stores/modalStore';
 import { useStickyHeader } from '../../hooks/useStickyHeader';
@@ -255,51 +255,6 @@ const EmployeeClientsStatementsTable: React.FC<EmployeeClientsStatementsTablePro
                                                                 <Trash2 size={12} />
                                                             </Button>
                                                         </>
-                                                    )}
-
-                                                    {/* Payment button */}
-                                                    {item.remaining_amount > 0 && (
-                                                        <Button
-                                                            variant="primary" size="sm"
-                                                            onClick={(e) => {
-                                                                e.stopPropagation();
-                                                                // Build minimal receivable object compatible with payment modal
-                                                                const pseudoReceivable = {
-                                                                    id: item.receivables_details?.[0]?.id || Number(item.id.split('_')[1]),
-                                                                    client_id: Number(item.client_id),
-                                                                    task_id: item.task_id ? Number(item.task_id) : null,
-                                                                    reference_receivable_id: null,
-                                                                    prepaid_receivable_id: null,
-                                                                    created_by: Number(item.client_id),
-                                                                    type: item.type as any,
-                                                                    description: item.description,
-                                                                    amount: Number(item.amount),
-                                                                    original_amount: null,
-                                                                    amount_details: [],
-                                                                    adjustment_reason: null,
-                                                                    notes: item.notes,
-                                                                    due_date: item.due_date,
-                                                                    created_at: item.created_at,
-                                                                    updated_at: item.updated_at,
-                                                                    client_name: item.client_name,
-                                                                    client_phone: item.client_phone,
-                                                                    task_name: item.task_name,
-                                                                    task_type: item.task_type,
-                                                                    total_paid: item.total_paid,
-                                                                    remaining_amount: item.remaining_amount,
-                                                                    payments: item.payments || [],
-                                                                    allocations: [] as CreditAllocation[],
-                                                                    client: {
-                                                                        id: Number(item.client_id),
-                                                                        name: item.client_name,
-                                                                        phone: item.client_phone
-                                                                    }
-                                                                };
-                                                                openModal('paymentForm', { receivable: pseudoReceivable });
-                                                            }}
-                                                        >
-                                                            <CreditCard size={14} /> دفع
-                                                        </Button>
                                                     )}
 
                                                     {item.remaining_amount > 0 && (

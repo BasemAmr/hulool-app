@@ -28,13 +28,14 @@ const RecentClientsReceivablesPanel: React.FC<RecentClientsReceivablesPanelProps
       return response.data;
     },
     staleTime: 1 * 60 * 1000, // 1 minute
+    refetchInterval: 20000, // Refetch every 20 seconds
   });
 
   const clients = receivablesData?.data?.receivables || [];
 
-  const handlePayment = (receivable: any) => {
-    openModal('paymentForm', { receivable });
-  };
+  // const handlePayment = (receivable: any) => {
+  //   openModal('paymentForm', { receivable });
+  // };
 
   // const handleClientClick = (clientId: number) => {
   //   navigate(`/clients/${clientId}?mode=receivables`);
@@ -252,7 +253,7 @@ const RecentClientsReceivablesPanel: React.FC<RecentClientsReceivablesPanelProps
                           <WhatsAppIcon size={10} />
                         </button>
 
-                        <button
+                        {/* <button
                           className="btn btn-primary btn-sm p-1"
                           onClick={() => handlePayment(receivable)}
                           disabled={Number(receivable.remaining_amount) <= 0}
@@ -260,7 +261,7 @@ const RecentClientsReceivablesPanel: React.FC<RecentClientsReceivablesPanelProps
                           style={{ fontSize: '10px', lineHeight: 1 }}
                         >
                           <CreditCard size={10} />
-                        </button>
+                        </button> */}
                       </div>
                     </td>
                   </tr>

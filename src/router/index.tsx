@@ -24,6 +24,7 @@ import EmployeeDashboardPage from '../pages/employee/EmployeeDashboardPage';
 import EmployeeTasksPage from '../pages/employee/EmployeeTasksPage';
 import EmployeeClientsPage from '../pages/employee/EmployeeClientsPage';
 import EmployeeFinancialsPage from '../pages/employee/EmployeeFinancialsPage';
+import EmployeeClientProfilePage from '../pages/employee/EmployeeClientProfilePage';
 import EmployeeNotificationsPage from '../pages/employee/EmployeeNotificationsPage';
 
 const routes: RouteObject[] = [
@@ -140,6 +141,7 @@ const routes: RouteObject[] = [
               { path: 'dashboard', element: <EmployeeDashboardPage /> },
               { path: 'tasks', element: <EmployeeTasksPage /> },
               { path: 'clients', element: <EmployeeClientsPage /> },
+              { path: 'clients/:id', element: <EmployeeClientProfilePage /> },
               { path: 'financials', element: <EmployeeFinancialsPage /> },
               { path: 'notifications', element: <EmployeeNotificationsPage /> },
             ],

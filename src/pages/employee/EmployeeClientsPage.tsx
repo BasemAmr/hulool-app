@@ -122,6 +122,7 @@ const EmployeeClientsPage = () => {
                 onEdit={handleEditClient}
                 onAddTask={handleAddTask}
                 onAddReceivable={handleAddReceivable}
+                linkBasePath="/employee/clients"
               />
               
               {/* Infinite scroll trigger */}

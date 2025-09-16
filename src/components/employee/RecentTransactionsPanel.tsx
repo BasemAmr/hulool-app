@@ -146,7 +146,7 @@ const RecentTransactionsPanel: React.FC<RecentTransactionsPanelProps> = ({ trans
                       borderBottom: '1px solid var(--color-gray-100)',
                       backgroundColor: index % 2 === 0 ? '#e8f5e8' : '#c8e6c9'
                     }}>
-                      <span className="text-danger">
+                      <span className="text-success">
                         {transaction.related_task_id && transaction.amount ? (
                           <>
                             {formatCurrency(transaction.amount)} ر.س
@@ -163,7 +163,7 @@ const RecentTransactionsPanel: React.FC<RecentTransactionsPanelProps> = ({ trans
                       borderBottom: '1px solid var(--color-gray-100)',
                       backgroundColor: index % 2 === 0 ? '#e8f5e8' : '#c8e6c9'
                     }}>
-                      <span className="text-success">
+                      <span className="text-danger">
                         {!transaction.related_task_id && transaction.amount ? (
                           <>
                             {formatCurrency(transaction.amount)} ر.س
@@ -208,7 +208,7 @@ const RecentTransactionsPanel: React.FC<RecentTransactionsPanelProps> = ({ trans
                     fontWeight: 'bold',
                     backgroundColor: 'var(--color-gray-50)'
                   }}>
-                    <span className="text-danger">
+                    <span className="text-success">
                       {formatCurrency(financialSummary.total_earned.toString())} ر.س
                     </span>
                   </td>
@@ -219,7 +219,7 @@ const RecentTransactionsPanel: React.FC<RecentTransactionsPanelProps> = ({ trans
                     fontWeight: 'bold',
                     backgroundColor: 'var(--color-gray-50)'
                   }}>
-                    <span className="text-success">
+                    <span className="text-danger">
                       {formatCurrency(financialSummary.total_paid_out.toString())} ر.س
                     </span>
                   </td>
@@ -230,7 +230,7 @@ const RecentTransactionsPanel: React.FC<RecentTransactionsPanelProps> = ({ trans
                     fontWeight: 'bold',
                     backgroundColor: 'var(--color-gray-50)'
                   }}>
-                    <span className={financialSummary.balance_due > 0 ? 'text-success' : 'text-muted'}>
+                    <span className={financialSummary.balance_due > 0 ? 'text-danger' : 'text-muted'}>
                       {formatCurrency(financialSummary.balance_due.toString())} ر.س
                     </span>
                   </td>

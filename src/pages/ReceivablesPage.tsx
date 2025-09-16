@@ -25,7 +25,7 @@ const ReceivablesPage = () => {
 
   // Search state management
   const [search, setSearch] = useState('');
-  const [debouncedSearch] = useDebounce(search, 500); // 500ms delay
+  const debouncedSearch = useDebounce(search, 500); // 500ms delay
 
 
   // Use infinite query for clients receivables summary with search

@@ -12,9 +12,10 @@ interface ClientsTableProps {
   onEdit: (client: Client) => void;
   onAddTask: (client: Client) => void;
   onAddReceivable: (client: Client) => void;
+  linkBasePath?: string; // New prop for custom link base path
 }
 
-const ClientsTable = ({ clients, isLoading, onEdit, onAddTask, onAddReceivable}: ClientsTableProps) => {
+const ClientsTable = ({ clients, isLoading, onEdit, onAddTask, onAddReceivable, linkBasePath = '/clients'}: ClientsTableProps) => {
   const { t } = useTranslation();
   const { sentinelRef, isSticky } = useStickyHeader();
 
@@ -112,7 +113,7 @@ const ClientRow = ({ client, onEdit, onAddTask, onAddReceivable}: ClientRowProps
   return (
     <tr>
       <td className="ps-2" style={{paddingRight: '16px'}}>
-        <Link to={`/clients/${client.id}`} className="text-decoration-none text-dark fw-bold link-hover">
+        <Link to={`${linkBasePath}/${client.id}`} className="text-decoration-none text-dark fw-bold link-hover">
           {client.name}
         </Link>
       </td>

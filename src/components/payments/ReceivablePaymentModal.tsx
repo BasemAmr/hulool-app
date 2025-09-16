@@ -58,12 +58,16 @@ const ReceivablePaymentModal = () => {
     if (isPrepaidReceivable && existingPayments && existingPayments.length > 0) {
       const existingPayment = existingPayments[0];
       updatePaymentMutation.mutate(
-        { id: existingPayment.id, ...data, amount: Number(data.amount) },
+        { id: existingPayment.id, ...data, amount: Number(data.amount), receivable_id: Number(receivable.id) },
         { onSuccess: closeModal }
       );
     } else {
       // For new payments, use POST
-      createPaymentMutation.mutate({ ...data, amount: Number(data.amount) }, {
+      createPaymentMutation.mutate({ 
+        ...data, 
+        amount: Number(data.amount), 
+        receivable_id: Number(receivable.id) 
+      }, {
         onSuccess: closeModal,
       });
     }

@@ -1,7 +1,6 @@
 import { useQuery, useMutation, useQueryClient, useInfiniteQuery } from '@tanstack/react-query';
 import apiClient from '../api/apiClient';
-import type { ApiResponse, Task, Receivable } from '../api/types';
-import { useModalStore } from '../stores/modalStore';
+import type { ApiResponse, Task } from '../api/types';
 
 // Interface for employee tasks pagination response
 export interface EmployeeTasksResponse {
@@ -22,6 +21,7 @@ export interface EmployeeTasksParams {
   per_page?: number;
   status?: string;
   search?: string;
+  client_id?: number; // NEW: Optional client filter
 }
 
 /**
@@ -29,10 +29,10 @@ export interface EmployeeTasksParams {
  * Uses the /tasks/employee/me endpoint
  */
 export const useGetEmployeeOwnTasks = (params: EmployeeTasksParams = {}) => {
-  const { page = 1, per_page = 20, status, search } = params;
+  const { page = 1, per_page = 20, status, search, client_id } = params;
   
   return useQuery({
-    queryKey: ['employee', 'tasks', 'own', { page, per_page, status, search }],
+    queryKey: ['employee', 'tasks', 'own', { page, per_page, status, search, client_id }],
     queryFn: async (): Promise<EmployeeTasksResponse> => {
       const queryParams = new URLSearchParams();
       queryParams.append('page', page.toString());
@@ -40,6 +40,7 @@ export const useGetEmployeeOwnTasks = (params: EmployeeTasksParams = {}) => {
       
       if (status) queryParams.append('status', status);
       if (search) queryParams.append('search', search);
+      if (client_id) queryParams.append('client_id', client_id.toString());
 
       const response = await apiClient.get<ApiResponse<EmployeeTasksResponse>>(
         `/tasks/employee/me?${queryParams.toString()}`
@@ -60,10 +61,10 @@ export const useGetEmployeeOwnTasks = (params: EmployeeTasksParams = {}) => {
  * Fetch employee's own tasks with infinite scroll
  */
 export const useGetEmployeeOwnTasksInfinite = (filters: Omit<EmployeeTasksParams, 'page'> = {}) => {
-  const { per_page = 20, status, search } = filters;
+  const { per_page = 20, status, search, client_id } = filters;
   
   return useInfiniteQuery({
-    queryKey: ['employee', 'tasks', 'own', 'infinite', { per_page, status, search }],
+    queryKey: ['employee', 'tasks', 'own', 'infinite', { per_page, status, search, client_id }],
     queryFn: async ({ pageParam }: { pageParam: number }): Promise<EmployeeTasksResponse> => {
       const queryParams = new URLSearchParams();
       queryParams.append('page', pageParam.toString());
@@ -71,6 +72,7 @@ export const useGetEmployeeOwnTasksInfinite = (filters: Omit<EmployeeTasksParams
       
       if (status) queryParams.append('status', status);
       if (search) queryParams.append('search', search);
+      if (client_id) queryParams.append('client_id', client_id.toString());
 
       const response = await apiClient.get<ApiResponse<EmployeeTasksResponse>>(
         `/tasks/employee/me?${queryParams.toString()}`
@@ -97,7 +99,6 @@ export const useGetEmployeeOwnTasksInfinite = (filters: Omit<EmployeeTasksParams
  */
 export const useSubmitTaskForReview = () => {
   const queryClient = useQueryClient();
-  const { openModal } = useModalStore();
 
   return useMutation({
     mutationFn: async (taskId: number) => {
@@ -111,28 +112,13 @@ export const useSubmitTaskForReview = () => {
 
       return response.data.data;
     },
-    onSuccess: async (data) => {
+    onSuccess: () => {
       // Invalidate and refetch employee tasks
       queryClient.invalidateQueries({ queryKey: ['employee', 'tasks', 'own'] });
       queryClient.invalidateQueries({ queryKey: ['employee', 'dashboard'] });
-
-      // If a receivable was created, fetch it and open the payment modal
-      if (data.receivable_id) {
-        try {
-          const receivableResponse = await apiClient.get<ApiResponse<Receivable>>(
-            `/receivables/${data.receivable_id}`
-          );
-
-          if (receivableResponse.data.success) {
-            const receivable = receivableResponse.data.data;
-            // Open the payment modal with the newly created receivable
-            openModal('paymentForm', { receivable, isRequired: true });
-          }
-        } catch (error) {
-          console.error('Failed to fetch receivable for payment modal:', error);
-          // Don't fail the entire operation if fetching the receivable fails
-        }
-      }
+      queryClient.invalidateQueries({ queryKey: ['dashboard'] });
+      queryClient.invalidateQueries({ queryKey: ['tasks'] });
+      queryClient.invalidateQueries({ queryKey: ['receivables'] });
     },
   });
 };

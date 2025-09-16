@@ -1,7 +1,8 @@
 import React, { useMemo } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { useGetEmployeeOwnTasksInfinite, useSubmitTaskForReview } from '../../queries/employeeTasksQueries';
 import { useModalStore } from '../../stores/modalStore';
+import { useToast } from '../../hooks/useToast';
 import { formatDate } from '../../utils/dateUtils';
 import type { Task } from '../../api/types';
 import { useInView } from 'react-intersection-observer';
@@ -20,6 +21,7 @@ import { useDeleteTask } from '../../queries/taskQueries';
 interface EmployeeOwnTasksTableProps {
   searchTerm?: string;
   statusFilter?: string;
+  clientId?: number; // NEW: Optional client filter
   highlightTaskId?: string;
   getTypeRowStyle?: (type: string) => { backgroundColor: string };
   getStatusBadgeStyle?: (status: string) => { backgroundColor: string; color: string; border: string };
@@ -28,12 +30,14 @@ interface EmployeeOwnTasksTableProps {
 const EmployeeOwnTasksTable: React.FC<EmployeeOwnTasksTableProps> = ({
   searchTerm,
   statusFilter,
+  clientId, // NEW: Optional client filter
   highlightTaskId,
   getTypeRowStyle,
   getStatusBadgeStyle,
 }) => {
   const navigate = useNavigate();
   const { openModal } = useModalStore();
+  const { success, error: showError } = useToast();
 
   const handleHighlightClick = () => {
     // Remove highlight by navigating to tasks page without highlight parameter
@@ -51,6 +55,7 @@ const EmployeeOwnTasksTable: React.FC<EmployeeOwnTasksTableProps> = ({
   } = useGetEmployeeOwnTasksInfinite({ 
     search: searchTerm,
     status: statusFilter,
+    client_id: clientId, // NEW: Add client filter
     per_page: 20,
   });
 
@@ -79,7 +84,14 @@ const EmployeeOwnTasksTable: React.FC<EmployeeOwnTasksTableProps> = ({
   };
 
   const handleSubmitForReview = (task: Task) => {
-    openModal('submitForReview', { task });
+    submitForReviewMutation.mutate(task.id, {
+      onSuccess: () => {
+        success('تم الإرسال', `تم إرسال المهمة "${task.task_name || 'مهمة'}" للمراجعة بنجاح`);
+      },
+      onError: (err: any) => {
+        showError('خطأ', err.message || 'حدث خطأ أثناء إرسال المهمة للمراجعة');
+      }
+    });
   };
 
   const handleViewAmountDetails = (task: Task) => {
@@ -235,7 +247,16 @@ const EmployeeOwnTasksTable: React.FC<EmployeeOwnTasksTableProps> = ({
                     </td>,
                     <td key="client" style={{ backgroundColor: getTypeRowStyle ? getTypeRowStyle(task.type).backgroundColor : 'transparent', padding: '8px', fontSize: 'var(--font-size-sm)' }}>
                       <div className="d-flex align-items-center gap-2">
-                        <span className="fw-medium">{task.client?.name}</span>
+                        {task.client?.id ? (
+                          <Link 
+                            to={`/employee/clients/${task.client.id}`}
+                            className="fw-medium text-decoration-none text-dark"
+                          >
+                            {task.client.name}
+                          </Link>
+                        ) : (
+                          <span className="fw-medium">{task.client?.name || 'غير محدد'}</span>
+                        )}
                         <span className="text-muted" style={{ fontSize: 'var(--font-size-xs)' }}>{task.client?.phone}</span>
                         {task.client?.phone && (
                           <a
