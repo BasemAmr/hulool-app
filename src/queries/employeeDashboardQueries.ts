@@ -94,7 +94,7 @@ export const useEmployeeDashboard = () => {
       return response.data.data;
     },
     staleTime: 1 * 60 * 1000, // Keep fresh for 1 minute
-    refetchInterval: 5 * 60 * 1000, // Auto-refetch every 5 minutes
+    refetchInterval: 20 * 1000, // Auto-refetch every 20 seconds
   });
 };
 

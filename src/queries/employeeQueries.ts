@@ -356,3 +356,28 @@ export const useAddEmployeePayout = () => {
     },
   });
 };
+
+/**
+ * Add borrow to employee
+ */
+export const useAddEmployeeBorrow = () => {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: async ({ 
+      employeeUserId, 
+      borrowData 
+    }: { 
+      employeeUserId: number;
+      borrowData: { amount: number; notes?: string; }
+    }) => {
+      // The POST API endpoint expects user_id in the URL
+      const response = await apiClient.post(`/employees/${employeeUserId}/borrow`, borrowData);
+      return response.data;
+    },
+    onSuccess: (_, { employeeUserId }) => {
+      // Invalidate query using the employee table ID
+      queryClient.invalidateQueries({ queryKey: ['employees', employeeUserId, 'transactions'] });
+    },
+  });
+};

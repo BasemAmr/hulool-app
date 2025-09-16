@@ -25,6 +25,7 @@ import AllocationEditModal from '../modals/AllocationEditModal';
 import AllocationDeleteModal from '../modals/AllocationDeleteModal';
 import UrgentAlertModal from '../modals/UrgentAlertModal';
 import EmployeePayoutModal from '../modals/EmployeePayoutModal';
+import EmployeeBorrowModal from '../modals/EmployeeBorrowModal';
 import EditEmployeePayoutModal from '../modals/EditEmployeePayoutModal';
 import EditTaskExpenseModal from '../modals/EditTaskExpenseModal';
 
@@ -266,6 +267,9 @@ const ModalManager = () => {
 
       case 'employeePayout':
         return <EmployeePayoutModal key="employeePayout" />;
+
+      case 'employeeBorrow':
+        return <EmployeeBorrowModal key="employeeBorrow" />;
 
       case 'editEmployeePayout':
         return <EditEmployeePayoutModal key="editEmployeePayout" />;

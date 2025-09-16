@@ -32,11 +32,8 @@ const RecentClientsReceivablesPanel: React.FC<RecentClientsReceivablesPanelProps
 
   const clients = receivablesData?.data?.receivables || [];
 
-  const handlePayment = (clientId: number) => {
-    openModal('selectReceivableForPayment', {
-      clientId,
-      receivables: []
-    });
+  const handlePayment = (receivable: any) => {
+    openModal('paymentForm', { receivable });
   };
 
   // const handleClientClick = (clientId: number) => {
@@ -257,7 +254,7 @@ const RecentClientsReceivablesPanel: React.FC<RecentClientsReceivablesPanelProps
 
                         <button
                           className="btn btn-primary btn-sm p-1"
-                          onClick={() => handlePayment(parseInt(receivable.client_id))}
+                          onClick={() => handlePayment(receivable)}
                           disabled={Number(receivable.remaining_amount) <= 0}
                           title="سداد"
                           style={{ fontSize: '10px', lineHeight: 1 }}

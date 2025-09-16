@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useParams } from 'react-router-dom';
-import { User, DollarSign, FileText, Users as UsersIcon, CreditCard, Activity } from 'lucide-react';
+import { User, DollarSign, FileText, Users as UsersIcon, CreditCard, Activity, HandCoins } from 'lucide-react';
 import Button from '../components/ui/Button';
 import { useModalStore } from '../stores/modalStore';
 import { useGetEmployee } from '../queries/employeeQueries';
@@ -16,12 +16,13 @@ type ViewMode = 'transactions' | 'tasks' | 'clients' | 'receivables';
 interface EmployeePageHeader {
   employee: any;
   onAddPayout: () => void;
+  onAddBorrow: () => void;
   activeMode: ViewMode;
   onModeChange: (mode: ViewMode) => void;
   modeOptions: ReadonlyArray<{key: ViewMode; label: string; icon: any}>;
 }
 
-const EmployeeHeader: React.FC<EmployeePageHeader> = ({ employee, onAddPayout, activeMode, onModeChange, modeOptions }) => {
+const EmployeeHeader: React.FC<EmployeePageHeader> = ({ employee, onAddPayout, onAddBorrow, activeMode, onModeChange, modeOptions }) => {
   return (
     <div className="d-flex justify-content-between align-items-center mb-4">
       <div className="d-flex align-items-center">
@@ -43,6 +44,14 @@ const EmployeeHeader: React.FC<EmployeePageHeader> = ({ employee, onAddPayout, a
             <option key={key} value={key}>{label}</option>
           ))}
         </select>
+        <Button
+          variant="outline-primary"
+          size="sm"
+          onClick={onAddBorrow}
+        >
+          <HandCoins size={16} className="me-1" />
+          اضافة مقترض
+        </Button>
         <Button
           variant="primary"
           size="sm"
@@ -81,6 +90,20 @@ const EmployeeProfilePage = () => {
     });
   };
 
+  const handleAddBorrow = () => {
+    if (!employee) return;
+    openModal('employeeBorrow', { 
+      employee: { 
+        ...employee, 
+        id: employeeTableId // Ensure the table ID is included
+      },
+      onSuccess: () => {
+        // Refresh transactions data when borrow is successfully added
+        window.location.reload();
+      }
+    });
+  };
+
   const handleModeChange = (mode: ViewMode) => {
     setActiveMode(mode);
     setCurrentPage(1); // Reset to first page when changing modes
@@ -111,6 +134,7 @@ const EmployeeProfilePage = () => {
       <EmployeeHeader 
         employee={employee} 
         onAddPayout={handleAddPayout}
+        onAddBorrow={handleAddBorrow}
         activeMode={activeMode}
         onModeChange={handleModeChange}
         modeOptions={modeOptions}

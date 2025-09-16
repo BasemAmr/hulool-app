@@ -231,6 +231,7 @@ export const useGetTasks = (filters: TaskFilters) => {
     queryFn: () => fetchTasks(filters),
     placeholderData: (previousData) => previousData, // Keep previous data while fetching new
     staleTime: 30 * 1000, // Keep data fresh for 30 seconds
+    refetchInterval: 20 * 1000, // Refetch every 20 seconds
   });
 };
 
@@ -250,6 +251,7 @@ export const useGetTasksInfinite = (filters: Omit<TaskFilters, 'page'>) => {
     },
     placeholderData: (previousData) => previousData,
     staleTime: 30 * 1000, // Keep data fresh for 30 seconds
+    refetchInterval: 20 * 1000, // Refetch every 20 seconds
   });
 };
 

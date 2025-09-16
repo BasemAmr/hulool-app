@@ -1,4 +1,5 @@
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useEffect, useRef } from 'react';
 import apiClient from '../api/apiClient';
 import type { ApiResponse, Task,Client } from '../api/types';
 
@@ -78,6 +79,7 @@ export const useGetDashboardStats = () => {
     queryKey: ['dashboard', 'stats'],
     queryFn: fetchDashboardStats,
     staleTime: 30 * 1000, // Keep fresh for 30 seconds
+    refetchInterval: 20 * 1000, // Refetch every 20 seconds
     // refetchOnWindowFocus: false (inherited)
   });
 };
@@ -87,6 +89,7 @@ export const useGetRecentTasks = () => {
         queryKey: ['dashboard', 'recentTasks'],
         queryFn: fetchRecentTasks,
         staleTime: 30 * 1000, // Keep fresh for 30 seconds
+        refetchInterval: 20 * 1000, // Refetch every 20 seconds
         // refetchOnWindowFocus: false (inherited)
     });
 };
@@ -96,26 +99,53 @@ export const useGetTotalPaidAmount = () => {
         queryKey: ['dashboard', 'totalPaidAmount'],
         queryFn: fetchTotalPaidAmount,
         staleTime: 30 * 1000, // Keep fresh for 30 seconds
+        refetchInterval: 20 * 1000, // Refetch every 20 seconds
         // refetchOnWindowFocus: false (inherited)
     });
 };
 
 // Add this new hook
 export const useGetClientsWithActiveTasks = () => {
-  return useQuery<GroupedClientsResponse, Error>({
+  const queryClient = useQueryClient();
+  const previousDataRef = useRef<GroupedClientsResponse | undefined>(undefined);
+
+  const query = useQuery<GroupedClientsResponse, Error>({
     queryKey: ['dashboard', 'clientsWithActiveTasks'],
     queryFn: fetchClientsWithActiveTasks,
     staleTime: 30 * 1000, // Keep fresh for 30 seconds
-    refetchInterval: 15 * 1000, // Refetch every 15 seconds
+    refetchInterval: 20 * 1000, // Refetch every 20 seconds
   });
+
+  useEffect(() => {
+    if (query.data && JSON.stringify(query.data) !== JSON.stringify(previousDataRef.current)) {
+      // Data has changed, invalidate receivables queries
+      queryClient.invalidateQueries({ queryKey: ['receivables'] });
+      previousDataRef.current = query.data;
+    }
+  }, [query.data, queryClient]);
+
+  return query;
 };
 
 // Employee dashboard hook
 export const useGetEmployeeClientsWithActiveTasks = () => {
-  return useQuery<ClientWithTasksAndStats[], Error>({
+  const queryClient = useQueryClient();
+  const previousDataRef = useRef<ClientWithTasksAndStats[] | undefined>(undefined);
+
+  const query = useQuery<ClientWithTasksAndStats[], Error>({
     queryKey: ['dashboard', 'employee', 'clientsWithActiveTasks'],
     queryFn: fetchEmployeeClientsWithActiveTasks,
     staleTime: 30 * 1000, // Keep fresh for 30 seconds
-    refetchInterval: 15 * 1000, // Refetch every 15 seconds
+    refetchInterval: 20 * 1000, // Refetch every 20 seconds
   });
+
+  useEffect(() => {
+    if (query.data && JSON.stringify(query.data) !== JSON.stringify(previousDataRef.current)) {
+      // Data has changed, invalidate receivables queries
+      queryClient.invalidateQueries({ queryKey: ['receivables'] });
+      previousDataRef.current = query.data;
+    }
+  }, [query.data, queryClient]);
+
+  return query;
 };

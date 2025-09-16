@@ -27,6 +27,7 @@ const TaskFilter = ({
     { value: 'Deferred', label: t('status.Deferred') },
     { value: 'Completed', label: t('status.Completed') },
     { value: 'Late', label: t('status.Late') },
+    { value: 'Pending Review', label: t('status.Pending Review') },
   ];
 
   const typeOptions: { value: string; label: string }[] = [
