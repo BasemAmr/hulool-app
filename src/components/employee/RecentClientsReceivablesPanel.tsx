@@ -1,6 +1,6 @@
 // src/components/employee/RecentClientsReceivablesPanel.tsx
 import React from 'react';
-import { CreditCard, Edit3, MoreHorizontal } from 'lucide-react';
+import { Edit3, MoreHorizontal } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useModalStore } from '../../stores/modalStore';
 import WhatsAppIcon from '../ui/WhatsAppIcon';

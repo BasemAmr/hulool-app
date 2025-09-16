@@ -53,6 +53,7 @@ const ClientsTable = ({ clients, isLoading, onEdit, onAddTask, onAddReceivable, 
               onEdit={onEdit}
               onAddTask={onAddTask}
               onAddReceivable={onAddReceivable}
+              linkBasePath={linkBasePath}
             />
           ))}
         </tbody>
@@ -66,9 +67,10 @@ interface ClientRowProps {
   onEdit: (client: Client) => void;
   onAddTask: (client: Client) => void;
   onAddReceivable: (client: Client) => void;
+  linkBasePath?: string;
 }
 
-const ClientRow = ({ client, onEdit, onAddTask, onAddReceivable}: ClientRowProps) => {
+const ClientRow = ({ client, onEdit, onAddTask, onAddReceivable, linkBasePath = '/clients'}: ClientRowProps) => {
   const { t } = useTranslation();
   // Remove the individual query to improve performance
   // const { data: unpaidAmounts } = useGetClientUnpaidAmounts(client.id);
