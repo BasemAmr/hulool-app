@@ -34,3 +34,15 @@
 .table-responsive {
   overflow: visible !important;
 }
+
+/* Subtasks Button Indicators */
+.btn-subtasks.has-subtasks {
+  border-color: #0d6efd !important;
+  background-color: #e7f3ff !important;
+  color: #0d6efd !important;
+}
+
+.btn-subtasks.has-subtasks:hover {
+  background-color: #0d6efd !important;
+  color: white !important;
+}

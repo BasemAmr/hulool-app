@@ -17,12 +17,12 @@ const RecentClientsReceivablesPanel: React.FC<RecentClientsReceivablesPanelProps
 
   // Fetch recent receivables with pagination
   const { data: receivablesData, isLoading } = useQuery({
-    queryKey: ['receivables', 'employee-dashboard', 'unpaid'],
+    queryKey: ['receivables', 'employee-dashboard', 'unpaid-partial'],
     queryFn: async () => {
       const response = await apiClient.get('/receivables/employee/me/dashboard', {
         params: { 
           per_page: 20,
-          payment_status: 'unpaid'
+          payment_status: ['unpaid', 'partial']
         }
       });
       return response.data;
@@ -223,7 +223,7 @@ const RecentClientsReceivablesPanel: React.FC<RecentClientsReceivablesPanelProps
                       backgroundColor: index % 2 === 0 ? '#fff8e1' : '#ffecb3'
                     }}>
                       <span className="fw-bold text-danger">
-                        {formatCurrency(Number(receivable.remaining_amount) || 0)} ر.س
+                        {formatCurrency(Number(receivable.remaining_amount) || Number(receivable.amount) )} ر.س
                       </span>
                     </td>
                     <td style={{

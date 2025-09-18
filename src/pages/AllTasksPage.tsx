@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useSearchParams } from 'react-router-dom';
-import { useGetTasksInfinite, useDeleteTask } from '../queries/taskQueries';
+import { useGetTasksInfinite, useCancelTask } from '../queries/taskQueries';
 import { useModalStore } from '../stores/modalStore';
 import { useDrawerStore } from '../stores/drawerStore';
 import { applyPageBackground } from '../utils/backgroundUtils';
@@ -22,7 +22,8 @@ const AllTasksPage = () => {
   const { t } = useTranslation();
   const openModal = useModalStore((state) => state.openModal);
   const { openDrawer } = useDrawerStore();
-  const deleteTaskMutation = useDeleteTask();
+  const cancelTaskMutation = useCancelTask();
+  const { success, error } = useToast();
   const [searchParams, setSearchParams] = useSearchParams();
   const { showToast } = useToast(); // ADD
 
@@ -167,11 +168,24 @@ const AllTasksPage = () => {
   const handleDeleteTask = (task: Task) => {
     openModal('confirmDelete', {
       title: t('common.confirm'),
-      message: t('tasks.deleteConfirmMessage', { 
+      message: t('tasks.cancelConfirmMessage', { 
         taskName: task.task_name || t(`type.${task.type}`) 
       }),
       onConfirm: () => {
-        deleteTaskMutation.mutate(task.id);
+        cancelTaskMutation.mutate({
+          id: task.id,
+          decisions: {
+            task_action: 'cancel'
+          }
+        }, {
+          onSuccess: () => {
+            success(t('tasks.cancelSuccess'), t('tasks.cancelSuccessMessage'));
+            // The useCancelTask hook automatically invalidates queries
+          },
+          onError: (err: any) => {
+            error(t('common.error'), err.message || t('tasks.cancelError'));
+          }
+        });
       },
     });
   };

@@ -9,14 +9,14 @@ import { useInView } from 'react-intersection-observer';
 import { 
   Eye, 
   Edit2, 
-  Trash2, 
+  X, 
   CheckCircle, 
   FileText, 
   AlertCircle,
   Calendar,
   MessageCircle
 } from 'lucide-react';
-import { useDeleteTask } from '../../queries/taskQueries';
+import { useCancelTask } from '../../queries/taskQueries';
 
 interface EmployeeOwnTasksTableProps {
   searchTerm?: string;
@@ -62,12 +62,17 @@ const EmployeeOwnTasksTable: React.FC<EmployeeOwnTasksTableProps> = ({
   // Submit task for review mutation
   const submitForReviewMutation = useSubmitTaskForReview();
 
-  // Delete task mutation
-  const deleteTaskMutation = useDeleteTask();
+  // Cancel task mutation (replacing delete)
+  const cancelTaskMutation = useCancelTask();
 
   // Flatten the pages into a single array for rendering
   const tasks = useMemo(() => data?.pages.flatMap(page => page.tasks) || [], [data]);
-
+  const sortedTasks = useMemo(() => {
+    return [...tasks].sort((a, b) => {
+      let statusOrder = ['New', 'Deferred', 'Pending Review', 'Completed', 'Cancelled'];
+      return statusOrder.indexOf(a.status) - statusOrder.indexOf(b.status);
+    });
+  }, [tasks]);
   // Intersection observer for infinite scroll
   const { ref } = useInView({
     threshold: 1,
@@ -99,8 +104,20 @@ const EmployeeOwnTasksTable: React.FC<EmployeeOwnTasksTableProps> = ({
   };
 
   const handleDeleteTask = (task: Task) => {
-    if (confirm(`هل أنت متأكد من حذف المهمة "${task.task_name}"؟`)) {
-      deleteTaskMutation.mutate(task.id);
+    if (confirm(`هل أنت متأكد من إلغاء المهمة "${task.task_name}"؟`)) {
+      cancelTaskMutation.mutate({
+        id: task.id,
+        decisions: {
+          task_action: 'cancel'
+        }
+      }, {
+        onSuccess: () => {
+          success('تم الإلغاء', 'تم إلغاء المهمة بنجاح');
+        },
+        onError: (err: any) => {
+          showError('خطأ', err.message || 'حدث خطأ أثناء إلغاء المهمة');
+        }
+      });
     }
   };
 
@@ -201,7 +218,7 @@ const EmployeeOwnTasksTable: React.FC<EmployeeOwnTasksTableProps> = ({
               </tr>
             </thead>
             <tbody>
-              {tasks.map((task) => {
+              {sortedTasks.map((task) => {
                 const isHighlighted = highlightTaskId && task.id.toString() === highlightTaskId;
                 return (
                 <tr
@@ -352,14 +369,14 @@ const EmployeeOwnTasksTable: React.FC<EmployeeOwnTasksTableProps> = ({
                           </button>
                         )}
 
-                        {/* Delete Task */}
+                        {/* Cancel Task */}
                         <button
                           onClick={() => handleDeleteTask(task)}
                           className="btn btn-sm btn-outline-danger"
                           title="حذف المهمة"
                           style={{ padding: '2px 6px' }}
                         >
-                          <Trash2 size={12} />
+                          <X size={12} />
                         </button>
                       </div>
                     </td>

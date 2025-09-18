@@ -199,6 +199,7 @@ export interface Task {
   status: TaskStatus;
   amount: number;
   amount_details: AmountDetail[] | null;
+  subtasks?: any[];
   start_date: string;
   end_date: string | null;
   prepaid_amount: number;
@@ -222,6 +223,7 @@ export interface TaskPayload {
   type: TaskType;
   amount: number;
   amount_details?: AmountDetail[];
+  subtasks?: any[];
   start_date: string;
   end_date?: string;
   prepaid_amount?: number;
@@ -238,6 +240,7 @@ export interface UpdateTaskPayload {
   type?: TaskType;
   amount?: number;
   amount_details?: AmountDetail[];
+  subtasks?: any[];
   start_date?: string;
   end_date?: string;
   prepaid_amount?: number;

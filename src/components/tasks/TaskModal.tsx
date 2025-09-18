@@ -30,12 +30,13 @@ import { useToast } from '../../hooks/useToast';
 
 import BaseModal from '../ui/BaseModal';
 import Button from '../ui/Button';
-import { XCircle, PlusCircle } from 'lucide-react';
+import { XCircle, PlusCircle, Settings } from 'lucide-react';
 import ClientHistoryIcons from '../shared/ClientHistoryIcons';
 import TaskSuccessModal from './TaskSuccessModal';
 import TaskHistoryModal from '../shared/TaskHistoryModal';
 import PaymentHistoryModal from '../shared/PaymentHistoryModal';
 import AmountDetailsInput from '../shared/AmountDetailsInput';
+import SubtasksModal from '../modals/SubtasksModal';
 import { playNotificationSound } from '../../utils/soundUtils';
 
 // Import step components
@@ -69,6 +70,8 @@ const TaskModal = () => {
   const [showTaskHistory, setShowTaskHistory] = useState(false);
   const [showPaymentHistory, setShowPaymentHistory] = useState(false);
   const [localRequirements, setLocalRequirements] = useState<Requirement[]>([]);
+  const [localSubtasks, setLocalSubtasks] = useState<any[]>([]);
+  const [showSubtasksModal, setShowSubtasksModal] = useState(false);
 
   // Fetch employees for assignment dropdown
   const { data: employees = [] } = useGetEmployeesForSelection();
@@ -93,6 +96,7 @@ const TaskModal = () => {
       notes: taskToEdit?.notes || '',
       tags: [],
       amount_details: [],
+      subtasks: [],
     },
   });
 
@@ -116,6 +120,8 @@ const TaskModal = () => {
       setValue('notes', taskToEdit.notes || '');
       setValue('tags', taskToEdit.tags ? taskToEdit.tags.map(tag => typeof tag === 'object' ? String(tag.id || tag) : String(tag)) : []);
       setValue('amount_details', taskToEdit.amount_details || []);
+      setValue('subtasks', taskToEdit.subtasks || []);
+      setLocalSubtasks(taskToEdit.subtasks || []);
       setStep(2);
       setSearchedClient(taskToEdit.client);
     } else if (client) {
@@ -271,6 +277,7 @@ const TaskModal = () => {
         prepaid_amount: data.prepaid_amount ? Number(data.prepaid_amount) : undefined,
         tags: data.tags || [],
         amount_details: parseAmountDetails(data.amount_details),
+        subtasks: localSubtasks || [],
         assigned_to_id: isAdmin() ? (data.assigned_to_id !== undefined ? data.assigned_to_id : taskToEdit?.assigned_to_id) : undefined,
         requirements: localRequirements
           .filter(req => req.requirement_text && String(req.requirement_text).trim() !== '')
@@ -342,6 +349,7 @@ const TaskModal = () => {
         notes: data.notes,
         tags: data.tags || [],
         amount_details: parseAmountDetails(data.amount_details),
+        subtasks: localSubtasks || [],
         assigned_to_id: isAdmin() ? data.assigned_to_id : undefined,
       };
       
@@ -425,6 +433,28 @@ const TaskModal = () => {
   const removeRequirementField = (id: string | number | undefined) => {
     if (id === undefined) return;
     setLocalRequirements((prev) => prev.filter((req) => req.temp_id !== id && req.id !== id));
+  };
+
+  // Subtasks management functions
+  const openSubtasksModal = () => {
+    setShowSubtasksModal(true);
+  };
+
+  // Check if amount should be disabled (when subtasks exist and sum matches amount)
+  const shouldDisableAmount = () => {
+    if (!localSubtasks || localSubtasks.length === 0) {
+      return false;
+    }
+
+    const subtasksTotal = localSubtasks.reduce((sum, subtask) => sum + (subtask.amount || 0), 0);
+    const currentAmount = watch('amount') || 0;
+    
+    // Allow for small floating point differences
+    return Math.abs(currentAmount - subtasksTotal) < 0.01;
+  };
+
+  const hasSubtasks = () => {
+    return localSubtasks && localSubtasks.length > 0;
   };
 
   const taskTypes: TaskType[] = ['Government', 'RealEstate', 'Accounting', 'Other'];
@@ -590,17 +620,48 @@ const TaskModal = () => {
                 {/* Amount and Prepaid row */}
                 <div className="form-row">
                   <div className="form-group-half">
-                    <label className="form-label-compact">{t('tasks.formAmountLabel')}</label>
-                    <input
-                      className={`form-control form-control-sm ${errors.amount ? 'is-invalid' : ''}`}
-                      type="number"
-                      step="1"
-                      placeholder="المبلغ المطلوب"
-                      {...register('amount', { 
-                        required: true, 
-                        valueAsNumber: true
-                      })}
-                    />
+                    <div className="d-flex justify-content-between align-items-center mb-1">
+                      <label className="form-label-compact mb-0">{t('tasks.formAmountLabel')}</label>
+                      {hasSubtasks() && (
+                        <span className="badge bg-info text-dark small">
+                          محسوب من المهام الفرعية
+                        </span>
+                      )}
+                    </div>
+                    <div className="input-group">
+                      <input
+                        className={`form-control form-control-sm ${errors.amount ? 'is-invalid' : ''} ${shouldDisableAmount() ? 'bg-light' : ''}`}
+                        type="number"
+                        step="1"
+                        placeholder="المبلغ المطلوب"
+                        disabled={shouldDisableAmount()}
+                        {...register('amount', { 
+                          required: true, 
+                          valueAsNumber: true
+                        })}
+                      />
+                      <Button
+                        type="button"
+                        variant="outline-secondary"
+                        size="sm"
+                        onClick={openSubtasksModal}
+                        className={`btn-subtasks ${hasSubtasks() ? 'has-subtasks' : ''}`}
+                        title="إدارة المهام الفرعية"
+                      >
+                        <Settings size={14} />
+                        {hasSubtasks() && <span className="ms-1">({localSubtasks.length})</span>}
+                      </Button>
+                    </div>
+                    {shouldDisableAmount() && (
+                      <small className="text-muted mt-1">
+                        المبلغ محسوب تلقائياً من المهام الفرعية ({localSubtasks.length} مهمة)
+                      </small>
+                    )}
+                    {hasSubtasks() && !shouldDisableAmount() && (
+                      <small className="text-info mt-1">
+                        هذه المهمة تحتوي على {localSubtasks.length} مهام فرعية
+                      </small>
+                    )}
                     {errors.amount && <div className="invalid-feedback-compact">Amount is required</div>}
                   </div>
                   <div className="form-group-half">
@@ -924,6 +985,26 @@ const TaskModal = () => {
         clientName={currentClientDisplay?.name || ''}
         clientId={currentClientDisplay?.id || 0}
       />
+
+      {/* Subtasks Modal */}
+      {showSubtasksModal && (
+        <SubtasksModal
+          subtasks={localSubtasks}
+          onSave={(updatedSubtasks) => {
+            setLocalSubtasks(updatedSubtasks);
+            setValue('subtasks', updatedSubtasks);
+            
+            // Calculate and update amount from subtasks
+            if (updatedSubtasks.length > 0) {
+              const calculatedAmount = updatedSubtasks.reduce((sum, subtask) => sum + (subtask.amount || 0), 0);
+              setValue('amount', calculatedAmount);
+            }
+            
+            setShowSubtasksModal(false);
+          }}
+          onClose={() => setShowSubtasksModal(false)}
+        />
+      )}
     </>
   );
 };

@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
 import Button from '../ui/Button';
 import WhatsAppIcon from '../ui/WhatsAppIcon';
-import { Edit, Pause, Play, CheckCircle, ExternalLink, DollarSign, Trash2, FileText, AlertTriangle, MessageSquare, UserPlus, ClipboardCheck } from 'lucide-react';
+import { Edit, Pause, Play, CheckCircle, ExternalLink, DollarSign, X, FileText, AlertTriangle, MessageSquare, UserPlus, ClipboardCheck } from 'lucide-react';
 import { useDeferTask, useResumeTask, useUpdateTask } from '../../queries/taskQueries';
 import { useGetEmployeesForSelection } from '../../queries/employeeQueries';
 import { useToast } from '../../hooks/useToast';
@@ -78,7 +78,7 @@ const AllTasksTable = ({ tasks, isLoading, onEdit, onComplete, onViewAmountDetai
   const canDeleteTasks = currentCapabilities?.tm_delete_any_task || false;
 
   // Sort tasks: Newest Urgent first, then Urgent, then newest normal tasks
-  const sortedTasks = [...tasks].sort((a, b) => {
+  let sortedTasks = [...tasks].sort((a, b) => {
     const aIsUrgent = a.tags?.some(tag => tag.name === 'قصوى') || false;
     const bIsUrgent = b.tags?.some(tag => tag.name === 'قصوى') || false;
     const aDate = new Date(a.created_at || a.start_date).getTime();
@@ -94,6 +94,11 @@ const AllTasksTable = ({ tasks, isLoading, onEdit, onComplete, onViewAmountDetai
     
     // Urgent tasks always come first
     return aIsUrgent ? -1 : 1;
+  });
+
+  sortedTasks = sortedTasks.sort((a, b) => {
+    const statusOrder = ['New','Pending Review', 'Deferred', 'Completed', 'Cancelled'];
+    return statusOrder.indexOf(a.status) - statusOrder.indexOf(b.status);
   });
 
   // Handle defer task
@@ -501,9 +506,9 @@ const AllTasksTable = ({ tasks, isLoading, onEdit, onComplete, onViewAmountDetai
                         variant="danger" 
                         size="sm" 
                         onClick={() => onDelete(task)} 
-                        title="حذف"
+                        title="إلغاء"
                       >
-                        <Trash2 size={16} />
+                        <X size={16} />
                       </Button>
                     )}
 

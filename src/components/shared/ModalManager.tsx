@@ -15,6 +15,7 @@ import PaymentEditModal from '../payments/PaymentEditModal';
 import PaymentDeleteModal from '../payments/PaymentDeleteModal';
 import TaskCompletionModal from '../modals/TaskCompletionModal';
 import AmountDetailsModal from '../modals/AmountDetailsModal';
+import SubtasksModal from '../modals/SubtasksModal';
 import TaskSelectionModal from '../modals/TaskSelectionModal';
 import TaskDetailsModal from '../modals/TaskDetailsModal';
 
@@ -149,6 +150,9 @@ const ModalManager = () => {
 
       case 'amountDetails':
         return <AmountDetailsModal key="amountDetails" />;
+
+      case 'subtasksModal':
+        return <SubtasksModal key="subtasksModal" />;
 
       case 'taskSelection':
         return <TaskSelectionModal key="taskSelection" />;
