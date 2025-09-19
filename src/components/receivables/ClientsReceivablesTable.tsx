@@ -106,9 +106,9 @@ const ClientsReceivablesTable = ({ clients, isLoading, totals, isTotalsLoading }
 
 
   // Sort clients by newest first (assuming client_id represents creation order)
-  const sortedClients = [...filteredClients].sort((a, b) => {
-    return b.client_id - a.client_id; // Newest first (higher IDs are newer)
-  });
+  // const sortedClients = [...filteredClients].sort((a, b) => {
+  //   return b.client_id - a.client_id; // Newest first (higher IDs are newer)
+  // });
 
   return (
     <div className="table-responsive" dir="rtl">
@@ -127,7 +127,7 @@ const ClientsReceivablesTable = ({ clients, isLoading, totals, isTotalsLoading }
           </tr>
         </thead>
         <tbody>
-          {sortedClients.map((client) => (
+          {clients.map((client) => (
             <tr key={client.client_id}>
               <td className="text-end" style={{ padding: '12px 8px' }}>
                 <div
