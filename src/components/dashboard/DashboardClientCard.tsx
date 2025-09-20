@@ -5,7 +5,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import { useModalStore } from '../../stores/modalStore';
 import { useDrawerStore } from '../../stores/drawerStore';
 import { useToast } from '../../hooks/useToast';
-import { useDeferTask, useResumeTask, useUpdateTask } from '../../queries/taskQueries';
+import { useDeferTask, useResumeTask, useUpdateTask, useCancelTask } from '../../queries/taskQueries';
 import { useGetEmployeesForSelection } from '../../queries/employeeQueries';
 import type { Task } from '../../api/types';
 import { formatDate } from '../../utils/dateUtils';
@@ -21,6 +21,7 @@ import {
   Eye,
   MessageSquare,
   UserPlus,
+  X
 } from 'lucide-react';
 import WhatsAppIcon from '../../assets/images/whats.svg';
 import GoogleDriveIcon from '../../assets/images/googe_drive.svg';
@@ -73,6 +74,7 @@ const DashboardClientCard = ({ data, index = 0, alternatingColors, onAssign, onW
   const deferTaskMutation = useDeferTask();
   const resumeTaskMutation = useResumeTask();
   const updateTaskMutation = useUpdateTask();
+  const cancelTaskMutation = useCancelTask();
   const cardRef = useRef<HTMLDivElement>(null);
   const taskRowRefs = useRef<(HTMLTableRowElement | null)[]>([]);
   const cardBodyRef = useRef<HTMLDivElement>(null);
@@ -153,21 +155,27 @@ const DashboardClientCard = ({ data, index = 0, alternatingColors, onAssign, onW
   const handleResume = (task: Task) => handleAction(resumeTaskMutation, task, 'tasks.resumeSuccess', 'tasks.resumeSuccessMessage', 'tasks.resumeError');
   const handleComplete = (task: Task) => openModal('taskCompletion', { task });
   const handleShowRequirements = (task: Task) => openModal('requirements', { task });
+  const handleCancelTask = (task: Task) => {
+    cancelTaskMutation.mutate({
+      id: task.id,
+      decisions: {
+        task_action: 'cancel'
+      }
+    }, {
+      onSuccess: () => {
+        success('تم الإلغاء', 'تم إلغاء المهمة بنجاح');
+        queryClient.invalidateQueries({ queryKey: ['dashboard', 'clientsWithActiveTasks'] });
+      },
+      onError: (err: any) => {
+        error('خطأ', err.message || 'حدث خطأ أثناء إلغاء المهمة');
+      }
+    });
+  };
 
   const isUserEmployee = (userId: number | null) => {
   if (!userId) return false;
   return employees.some(emp => emp.user_id == userId);
 };
-
-  // Helper function to check if task should show complete button
-  const shouldShowCompleteButton = (task: Task) => {
-    // Don't show complete button if task is assigned to an employee
-    if (task.assigned_to_id && isUserEmployee(task.assigned_to_id)) {
-      return false;
-    }
-    // TODO: Check if task was created by an employee when backend supports created_by field
-    return true;
-  };
   const handleAddTask = () => openModal('taskForm', { client });
   const handleAddReceivable = () => openModal('manualReceivable', { client_id: client.id });
   const handleRecordCredit = () => openModal('recordCreditModal', { client });
@@ -267,7 +275,7 @@ const DashboardClientCard = ({ data, index = 0, alternatingColors, onAssign, onW
     window.open(whatsappUrl, '_blank');
   };
 
-  const handleEditTask = (task: Task) => openModal('taskForm', { taskToEdit: task, client });
+  const handleViewSubtasks = (task: Task) => openModal('taskSubtasks', { task });
 
   // Header dropdown component using Bootstrap Dropdown for consistency
   const HeaderDropdownSection = ({
@@ -598,9 +606,9 @@ const DashboardClientCard = ({ data, index = 0, alternatingColors, onAssign, onW
                         </button>
 
                         <button
-                          onClick={() => handleEditTask(task)}
+                          onClick={() => handleViewSubtasks(task)}
                           className="btn btn-outline-info btn-sm p-1"
-                          title="تفاصيل"
+                          title="المهام الفرعية"
                           style={{ fontSize: '10px', lineHeight: 1 }}
                         >
                           <Eye size={10} />
@@ -666,12 +674,15 @@ const DashboardClientCard = ({ data, index = 0, alternatingColors, onAssign, onW
                   marginTop: '2px'
                 }}
               >
-                {shouldShowCompleteButton(task) && (
-                  <Dropdown.Item onClick={() => handleComplete(task)} className="text-end">
-                    <Check size={11} className="ms-2" />
-                    إكمال
-                  </Dropdown.Item>
-                )}
+                {/* Section 1: Task Status Actions */}
+                <Dropdown.Item 
+                  onClick={() => handleComplete(task)} 
+                  className="text-end"
+                  disabled={Boolean(task.assigned_to_id) && Boolean(isUserEmployee(task.assigned_to_id))}
+                >
+                  <Check size={11} className="ms-2" />
+                  {task.assigned_to_id && isUserEmployee(task.assigned_to_id) ? 'موظف مكلف' : 'إكمال'}
+                </Dropdown.Item>
                 {task.status === 'New' ? (
                   <Dropdown.Item onClick={() => handleDefer(task)} className="text-end">
                     <Pause size={11} className="ms-2" />
@@ -683,17 +694,29 @@ const DashboardClientCard = ({ data, index = 0, alternatingColors, onAssign, onW
                     استئناف
                   </Dropdown.Item>
                 )}
+                {/* Cancel Task - only for non-completed tasks */}
+                {task.status !== 'Completed' && task.status !== 'Cancelled' && (
+                  <Dropdown.Item onClick={() => handleCancelTask(task)} className="text-end text-danger">
+                    <X size={11} className="ms-2" />
+                    إلغاء المهمة
+                  </Dropdown.Item>
+                )}
+
+                <Dropdown.Divider />
+
+                {/* Section 2: Urgent Tag */}
+                <Dropdown.Item onClick={() => handleToggleUrgentTag(task)} className="text-end">
+                  <AlertTriangle size={11} className="ms-2" />
+                  {task.tags?.some(tag => tag.name === 'قصوى') ? 'إلغاء العاجل' : 'تعليم عاجل'}
+                </Dropdown.Item>
+
+                <Dropdown.Divider />
+
+                {/* Section 3: Communication & Assignment */}
                 <Dropdown.Item onClick={() => handleShowRequirements(task)} className="text-end">
                   <ListChecks size={11} className="ms-2" />
                   المتطلبات
                 </Dropdown.Item>
-                {/* Assign Task - Only for New or Deferred tasks */}
-                {onAssign && (task.status === 'New' || task.status === 'Deferred') && (
-                  <Dropdown.Item onClick={() => onAssign(task)} className="text-end">
-                    <UserPlus size={11} className="ms-2" />
-                    تعيين موظف
-                  </Dropdown.Item>
-                )}
                 <Dropdown.Item
                   onClick={() => openDrawer('taskFollowUp', {
                     taskId: task.id,
@@ -705,10 +728,13 @@ const DashboardClientCard = ({ data, index = 0, alternatingColors, onAssign, onW
                   <MessageSquare size={11} className="ms-2" />
                   التعليقات
                 </Dropdown.Item>
-                <Dropdown.Item onClick={() => handleToggleUrgentTag(task)} className="text-end">
-                  <AlertTriangle size={11} className="ms-2" />
-                  {task.tags?.some(tag => tag.name === 'قصوى') ? 'إلغاء العاجل' : 'تعليم عاجل'}
-                </Dropdown.Item>
+                {/* Assign Task - Only for New or Deferred tasks */}
+                {onAssign && (task.status === 'New' || task.status === 'Deferred') && (
+                  <Dropdown.Item onClick={() => onAssign(task)} className="text-end">
+                    <UserPlus size={11} className="ms-2" />
+                    {task.assigned_to_id ? 'الغاء/تغيير الموظف' : 'تعيين موظف'}
+                  </Dropdown.Item>
+                )}
               </Dropdown.Menu>
             </div>,
             cardBodyRef.current

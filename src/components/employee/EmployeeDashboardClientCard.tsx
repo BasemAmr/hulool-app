@@ -271,7 +271,7 @@ const EmployeeDashboardClientCard = ({ data, index = 0, alternatingColors, onWid
     window.open(whatsappUrl, '_blank');
   };
 
-  const handleEditTask = (task: Task) => openModal('taskForm', { taskToEdit: task, client });
+  const handleViewSubtasks = (task: Task) => openModal('taskSubtasks', { task });
 
   // Header dropdown component using Bootstrap Dropdown for consistency
   const HeaderDropdownSection = ({
@@ -565,11 +565,11 @@ const EmployeeDashboardClientCard = ({ data, index = 0, alternatingColors, onWid
                         whiteSpace: 'nowrap'
                       }}>
                       <div className="d-flex gap-1 justify-content-center">
-                        {/* Edit Task (Eye icon) */}
+                        {/* View Subtasks (Eye icon) */}
                         <button
-                          onClick={() => handleEditTask(task)}
+                          onClick={() => handleViewSubtasks(task)}
                           className="btn btn-outline-info btn-sm p-1"
-                          title="تفاصيل"
+                          title="المهام الفرعية"
                           style={{ fontSize: '10px', lineHeight: 1 }}
                         >
                           <Eye size={10} />

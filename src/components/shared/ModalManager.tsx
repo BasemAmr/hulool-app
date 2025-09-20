@@ -18,6 +18,7 @@ import AmountDetailsModal from '../modals/AmountDetailsModal';
 import SubtasksModal from '../modals/SubtasksModal';
 import TaskSelectionModal from '../modals/TaskSelectionModal';
 import TaskDetailsModal from '../modals/TaskDetailsModal';
+import TaskSubtasksModal from '../modals/TaskSubtasksModal';
 
 import RecordCreditModal from '../modals/RecordCreditModal';
 import CreditEditModal from '../modals/CreditEditModal';
@@ -104,6 +105,9 @@ const ModalManager = () => {
         return <ManualReceivableModal key="manualReceivable" />;
        case 'taskDetails':
         return <TaskDetailsModal key="taskDetails" />;
+
+      case 'taskSubtasks':
+        return <TaskSubtasksModal key="taskSubtasks" />;
 
       case 'clientReceivables':
         return (
