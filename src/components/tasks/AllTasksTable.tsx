@@ -58,8 +58,8 @@ const AllTasksTable = ({ tasks, isLoading, onEdit, onComplete, onViewAmountDetai
     if (task.assigned_to_id && isUserEmployee(task.assigned_to_id)) {
       return false;
     }
-    // TODO: Check if task was created by an employee when backend supports created_by field
-    return true;
+    // Check if task is assigned to an employee
+    return task.assigned_to_id !== null;
   };
 
 

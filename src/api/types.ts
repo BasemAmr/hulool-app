@@ -235,7 +235,6 @@ export interface TaskPayload {
 
 export interface UpdateTaskPayload {
   assigned_to_id?: number | null;
-  created_by?: number | null;
   task_name?: string;
   type?: TaskType;
   amount?: number;

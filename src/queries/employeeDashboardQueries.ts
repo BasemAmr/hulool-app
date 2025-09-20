@@ -39,7 +39,6 @@ export interface TaskStats {
 
 export interface EmployeeDashboardTask {
   client_id: number;
-  created_by: number;
   assigned_to_id: number | null;
   task_name: string;
   type: TaskType;

@@ -61,20 +61,10 @@ const AssignTaskModal = () => {
     if (!task) return;
 
     // Prepare payload
-    const payload: any = {
-      assigned_to_id: data.assigned_to_id,
-    };
-
-    // If admin is changing the assignee, set created_by to the same value
-    if (data.assigned_to_id !== task.assigned_to_id) {
-      payload.created_by = data.assigned_to_id;
-    }
-
     assignTaskMutation.mutate(
       {
         taskId: task.id,
         assignedToId: data.assigned_to_id,
-        created_by: payload.created_by,
       },
       {
         onSuccess: () => {
