@@ -275,7 +275,7 @@ const DashboardClientCard = ({ data, index = 0, alternatingColors, onAssign, onW
     window.open(whatsappUrl, '_blank');
   };
 
-  const handleViewSubtasks = (task: Task) => openModal('taskSubtasks', { task });
+  const handleViewSubtasks = (task: Task) => openModal('taskForm', { taskToEdit: task, client: task.client });
 
   // Header dropdown component using Bootstrap Dropdown for consistency
   const HeaderDropdownSection = ({

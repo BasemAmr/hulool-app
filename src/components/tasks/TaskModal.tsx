@@ -30,14 +30,13 @@ import { useToast } from '../../hooks/useToast';
 
 import BaseModal from '../ui/BaseModal';
 import Button from '../ui/Button';
-import { XCircle, PlusCircle, Settings } from 'lucide-react';
+import { XCircle, PlusCircle, Trash2, CheckCircle, Layers, Plus } from 'lucide-react';
 import ClientHistoryIcons from '../shared/ClientHistoryIcons';
 import TaskSuccessModal from './TaskSuccessModal';
 import TaskHistoryModal from '../shared/TaskHistoryModal';
 import PaymentHistoryModal from '../shared/PaymentHistoryModal';
-import AmountDetailsInput from '../shared/AmountDetailsInput';
-import SubtasksModal from '../modals/SubtasksModal';
 import { playNotificationSound } from '../../utils/soundUtils';
+import { Accordion } from 'react-bootstrap';
 
 // Import step components
 import TaskTypeStep from './steps/TaskTypeStep';
@@ -71,7 +70,6 @@ const TaskModal = () => {
   const [showPaymentHistory, setShowPaymentHistory] = useState(false);
   const [localRequirements, setLocalRequirements] = useState<Requirement[]>([]);
   const [localSubtasks, setLocalSubtasks] = useState<any[]>([]);
-  const [showSubtasksModal, setShowSubtasksModal] = useState(false);
 
   // Fetch employees for assignment dropdown
   const { data: employees = [] } = useGetEmployeesForSelection();
@@ -100,7 +98,12 @@ const TaskModal = () => {
     },
   });
 
-  const totalAmount = watch('amount') || 0;
+  const createTaskMutation = useCreateTask();
+  const updateTaskMutation = useUpdateTask();
+  const updateTaskWithConflictsMutation = useUpdateTaskWithConflicts();
+  const createRequirementsMutation = useCreateRequirements();
+
+  const isLoading = createTaskMutation.isPending || updateTaskMutation.isPending || updateTaskWithConflictsMutation.isPending || createRequirementsMutation.isPending;
 
   useEffect(() => {
     if (taskToEdit) {
@@ -120,18 +123,32 @@ const TaskModal = () => {
       setValue('notes', taskToEdit.notes || '');
       setValue('tags', taskToEdit.tags ? taskToEdit.tags.map(tag => typeof tag === 'object' ? String(tag.id || tag) : String(tag)) : []);
       setValue('amount_details', taskToEdit.amount_details || []);
-      setValue('subtasks', taskToEdit.subtasks || []);
-      setLocalSubtasks(taskToEdit.subtasks || []);
+      // If existing task has subtasks use them, otherwise for legacy tasks create a virtual subtask representing the main amount
+      const existingSubtasks = taskToEdit.subtasks && taskToEdit.subtasks.length > 0 ? taskToEdit.subtasks : [];
+      if (existingSubtasks.length > 0) {
+        setValue('subtasks', existingSubtasks);
+        setLocalSubtasks(existingSubtasks);
+      } else if (taskToEdit.amount && Number(taskToEdit.amount) > 0) {
+        // create a virtual subtask so UI shows progress and allows editing; marked as not-completed
+        const virtual = [{ description: taskToEdit.task_name || 'المهمة الرئيسية', amount: Number(taskToEdit.amount), is_completed: false }];
+        setValue('subtasks', virtual);
+        setLocalSubtasks(virtual);
+      } else {
+        setValue('subtasks', []);
+        setLocalSubtasks([]);
+      }
       setStep(2);
       setSearchedClient(taskToEdit.client);
     } else if (client) {
       setValue('client_id', client.id);
       setValue('tags', []);
       setLocalRequirements([]);
+      setLocalSubtasks([{ description: '', amount: 0, is_completed: false }]); // Initialize with one empty subtask
       setStep(0);
       setSearchedClient(client);
     } else {
       setValue('tags', []);
+      setLocalSubtasks([{ description: '', amount: 0, is_completed: false }]); // Initialize with one empty subtask
       setStep(0);
       setSearchedClient(undefined);
     }
@@ -143,12 +160,18 @@ const TaskModal = () => {
     }
   }, [watch('type'), client, step, isEditMode]);
 
-  const createTaskMutation = useCreateTask();
-  const updateTaskMutation = useUpdateTask();
-  const updateTaskWithConflictsMutation = useUpdateTaskWithConflicts();
-  const createRequirementsMutation = useCreateRequirements();
-
-  const isLoading = createTaskMutation.isPending || updateTaskMutation.isPending || updateTaskWithConflictsMutation.isPending || createRequirementsMutation.isPending;
+  // Effect to update amount when subtasks change
+  useEffect(() => {
+    if (localSubtasks.length > 0) {
+      const validSubtasks = localSubtasks.filter(subtask => 
+        subtask.description && subtask.description.trim() && subtask.amount > 0
+      );
+      if (validSubtasks.length > 0) {
+        const total = calculateTotal();
+        setValue('amount', total);
+      }
+    }
+  }, [localSubtasks, setValue]);
 
   // Conflict handling function
   const handleConflictResponse = (
@@ -226,22 +249,6 @@ const TaskModal = () => {
     }
   };
 
-  // Helper to safely parse amount_details
-  const parseAmountDetails = (details: any): any[] => {
-    if (Array.isArray(details)) {
-      return details;
-    }
-    if (typeof details === 'string') {
-      try {
-        const parsed = JSON.parse(details);
-        return Array.isArray(parsed) ? parsed : [];
-      } catch (e) {
-        return [];
-      }
-    }
-    return [];
-  };
-
   // Helper function to handle prepaid payment flow with credit support
   const handlePrepaidPayment = (createdTask: any) => {
     if (createdTask.prepaid_receivable_id && createdTask.receivable) {
@@ -266,18 +273,21 @@ const TaskModal = () => {
         is_provided: Boolean(req.is_provided || false)
       }));
 
-    // console.log('Valid requirements being sent:', validRequirements);
-    // console.log('Tags being sent:', data.tags);
+    // Filter valid subtasks and calculate final amount
+    const validSubtasks = localSubtasks.filter(subtask => 
+      subtask.description && subtask.description.trim() && subtask.amount > 0
+    );
+    const finalAmount = validSubtasks.length > 0 ? calculateTotal() : Number(data.amount);
     
     if (isEditMode && taskToEdit) {
       const updatePayload: UpdateTaskPayload = {
         ...data,
-        amount: Number(data.amount),
+        amount: finalAmount,
         end_date: data.end_date || undefined,
         prepaid_amount: data.prepaid_amount ? Number(data.prepaid_amount) : undefined,
         tags: data.tags || [],
-        amount_details: parseAmountDetails(data.amount_details),
-        subtasks: localSubtasks || [],
+        amount_details: [], // Remove amount_details as per requirements
+        subtasks: validSubtasks,
         assigned_to_id: isAdmin() ? (data.assigned_to_id !== undefined ? data.assigned_to_id : taskToEdit?.assigned_to_id) : undefined,
         requirements: localRequirements
           .filter(req => req.requirement_text && String(req.requirement_text).trim() !== '')
@@ -327,14 +337,14 @@ const TaskModal = () => {
         client_id: data.client_id,
         task_name: data.task_name,
         type: data.type,
-        amount: Number(data.amount),
+        amount: finalAmount,
         start_date: data.start_date,
         end_date: data.end_date || undefined,
         prepaid_amount: data.prepaid_amount ? Number(data.prepaid_amount) : undefined,
         notes: data.notes,
         tags: data.tags || [],
-        amount_details: parseAmountDetails(data.amount_details),
-        subtasks: localSubtasks || [],
+        amount_details: [], // Remove amount_details as per requirements
+        subtasks: validSubtasks,
         assigned_to_id: isAdmin() ? data.assigned_to_id : undefined,
       };
       
@@ -421,25 +431,54 @@ const TaskModal = () => {
   };
 
   // Subtasks management functions
-  const openSubtasksModal = () => {
-    setShowSubtasksModal(true);
+  const addSubtask = () => {
+    setLocalSubtasks([...localSubtasks, { description: '', amount: 0, is_completed: false }]);
   };
 
-  // Check if amount should be disabled (when subtasks exist and sum matches amount)
-  const shouldDisableAmount = () => {
-    if (!localSubtasks || localSubtasks.length === 0) {
-      return false;
+  const removeSubtask = (index: number) => {
+    if (localSubtasks.length > 1) {
+      const updatedSubtasks = localSubtasks.filter((_, i) => i !== index);
+      setLocalSubtasks(updatedSubtasks);
+      // Update the amount field when subtasks change
+      const newTotal = updatedSubtasks.reduce((sum, subtask) => sum + (subtask.amount || 0), 0);
+      setValue('amount', newTotal);
     }
+  };
 
-    const subtasksTotal = localSubtasks.reduce((sum, subtask) => sum + (subtask.amount || 0), 0);
-    const currentAmount = watch('amount') || 0;
+  const handleSubtaskChange = (index: number, field: keyof any, value: string | number | boolean) => {
+    const updatedSubtasks = [...localSubtasks];
+    if (field === 'amount') {
+      updatedSubtasks[index] = { ...updatedSubtasks[index], [field]: Number(value) };
+    } else {
+      updatedSubtasks[index] = { ...updatedSubtasks[index], [field]: value };
+    }
+    setLocalSubtasks(updatedSubtasks);
     
-    // Allow for small floating point differences
-    return Math.abs(currentAmount - subtasksTotal) < 0.01;
+    // Update the total amount automatically
+    const newTotal = updatedSubtasks.reduce((sum, subtask) => sum + (subtask.amount || 0), 0);
+    setValue('amount', newTotal);
+  };
+
+  const calculateTotal = () => {
+    return localSubtasks.reduce((sum, subtask) => sum + (subtask.amount || 0), 0);
+  };
+
+  const calculateProgress = () => {
+    const validSubtasks = localSubtasks.filter(subtask => 
+      subtask.description && subtask.description.trim() && subtask.amount > 0
+    );
+    
+    if (validSubtasks.length === 0) return { completed: 0, total: 0, percentage: 0 };
+    
+    const completed = validSubtasks.filter(subtask => subtask.is_completed).length;
+    const total = validSubtasks.length;
+    const percentage = total > 0 ? Math.round((completed / total) * 100) : 0;
+    
+    return { completed, total, percentage };
   };
 
   const hasSubtasks = () => {
-    return localSubtasks && localSubtasks.length > 0;
+    return localSubtasks && localSubtasks.length > 0 && localSubtasks.some(s => s.description && s.description.trim());
   };
 
   const taskTypes: TaskType[] = ['Government', 'RealEstate', 'Accounting', 'Other'];
@@ -486,11 +525,10 @@ const TaskModal = () => {
             {/* Step 2: Main form content */}
             {(step === 2 || isEditMode) && (
               <div className="step-content main-form fade-in">
-                {/* Compact grid layout for main fields */}
-                <div className="form-grid">
-                  {/* Task Type - smaller */}
-                  <div className="form-group-compact">
-                    <label className="form-label-compact">{t('tasks.formTypeLabel')}</label>
+                {/* Row 1: Task Type, Client Name, Assigned Employee */}
+                <div className="row g-2 mb-3">
+                  <div className="col-md-4">
+                    <label className="form-label small fw-bold mb-1">نوع مهمة</label>
                     <Controller
                       name="type"
                       control={control}
@@ -507,43 +545,36 @@ const TaskModal = () => {
                         </select>
                       )}
                     />
-                    {errors.type && <div className="invalid-feedback-compact">{t('tasks.formTypeLabel')} is required</div>}
+                    {errors.type && <div className="invalid-feedback">مطلوب</div>}
                   </div>
 
-                  {/* Client Display with History Icons - compact */}
-                  <div className="form-group-compact client-section">
-                    <div className="d-flex align-items-end gap-2">
-                      <div className="flex-grow-1">
-                        <label className="form-label-compact">{t('tasks.formClientLabel')}</label>
-                        <div className="client-input-wrapper">
-                          <input
-                            className="form-control form-control-sm"
-                            value={currentClientDisplay?.name || ''}
-                            readOnly={isEditMode}
-                            disabled={isEditMode}
-                          />
-                          {!isEditMode && step === 2 && (
-                            <small className="text-muted mt-1">
-                              <button 
-                                type="button" 
-                                className="btn btn-link btn-sm p-0 text-decoration-none"
-                                onClick={() => setStep(1)}
-                              >
-                                تغيير العميل
-                              </button>
-                            </small>
-                          )}
-                        </div>
-                      </div>
+                  <div className="col-md-4">
+                    <label className="form-label small fw-bold mb-1">اسم العميل</label>
+                    <div className="d-flex align-items-center gap-2">
+                      <input
+                        className="form-control form-control-sm"
+                        value={currentClientDisplay?.name || ''}
+                        readOnly={isEditMode}
+                        disabled={isEditMode}
+                      />
                       {currentClientDisplay && (
-                        <div className="client-icons">
-                          <ClientHistoryIcons
-                            onViewTaskHistory={() => setShowTaskHistory(true)}
-                            onViewPaymentHistory={() => setShowPaymentHistory(true)}
-                          />
-                        </div>
+                        <ClientHistoryIcons
+                          onViewTaskHistory={() => setShowTaskHistory(true)}
+                          onViewPaymentHistory={() => setShowPaymentHistory(true)}
+                        />
                       )}
                     </div>
+                    {!isEditMode && step === 2 && (
+                      <small className="text-muted">
+                        <button 
+                          type="button" 
+                          className="btn btn-link btn-sm p-0 text-decoration-none"
+                          onClick={() => setStep(1)}
+                        >
+                          تغيير العميل
+                        </button>
+                      </small>
+                    )}
                     <Controller
                       name="client_id"
                       control={control}
@@ -554,10 +585,9 @@ const TaskModal = () => {
                     />
                   </div>
 
-                  {/* Employee Assignment Field */}
                   {isAdmin() && (
-                    <div className="form-group-compact">
-                      <label className="form-label-compact">تكليف الموظف</label>
+                    <div className="col-md-4">
+                      <label className="form-label small fw-bold mb-1">تكليف الموظف</label>
                       <Controller
                         name="assigned_to_id"
                         control={control}
@@ -581,182 +611,295 @@ const TaskModal = () => {
                   )}
                 </div>
 
-                {/* Date fields row */}
-                <div className="form-row">
-                  <div className="form-group-half">
-                    <label className="form-label-compact">{t('tasks.formDateLabel')}</label>
+                {/* Row: Task Name (Required) + Start Date */}
+                <div className="row g-2 mb-3">
+                  <div className="col-md-8">
+                    <label className="form-label small fw-bold mb-1">
+                      المهمة الرئيسية <span className="text-danger">*</span>
+                    </label>
+                    <input
+                      className={`form-control form-control-sm ${errors.task_name ? 'is-invalid' : ''}`}
+                      {...register('task_name', { required: true })}
+                      placeholder="أدخل اسم المهمة..."
+                    />
+                    {errors.task_name && <div className="invalid-feedback">اسم المهمة مطلوب</div>}
+                  </div>
+
+                  <div className="col-md-4">
+                    <label className="form-label small fw-bold mb-1">التاريخ الإنشاء</label>
                     <input
                       className={`form-control form-control-sm ${errors.start_date ? 'is-invalid' : ''}`}
                       type="date"
                       {...register('start_date', { required: true })}
                     />
-                    {errors.start_date && <div className="invalid-feedback-compact">Start date is required</div>}
-                  </div>
-                  <div className="form-group-half">
-                    <label className="form-label-compact">{t('tasks.formEndDateLabel', 'تاريخ الانتهاء (اختياري)')}</label>
-                    <input
-                      className="form-control form-control-sm"
-                      type="date"
-                      {...register('end_date')}
-                    />
+                    {errors.start_date && <div className="invalid-feedback">مطلوب</div>}
                   </div>
                 </div>
 
-                {/* Amount and Prepaid row */}
-                <div className="form-row">
-                  <div className="form-group-half">
-                    <div className="d-flex justify-content-between align-items-center mb-1">
-                      <label className="form-label-compact mb-0">{t('tasks.formAmountLabel')}</label>
-                      {hasSubtasks() && (
-                        <span className="badge bg-info text-dark small">
-                          محسوب من المهام الفرعية
-                        </span>
-                      )}
+                {/* Progress Bar for Subtasks (if exists) */}
+                {hasSubtasks() && (
+                  <div 
+                    className="mb-3 p-3 rounded"
+                    style={{ 
+                      background: 'linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%)',
+                      border: '1px solid #dee2e6'
+                    }}
+                  >
+                    <div className="row">
+                      <div className="col-md-8">
+                        <div className="fw-bold mb-2 d-flex align-items-center">
+                          <Layers size={16} className="me-2" style={{ color: '#0ea5e9' }} />
+                          تقدم إنجاز المهام الفرعية
+                        </div>
+                        <div className="progress mb-2" style={{ height: '8px' }}>
+                          <div 
+                            className="progress-bar bg-success" 
+                            style={{ width: `${calculateProgress().percentage}%` }}
+                          ></div>
+                        </div>
+                        <small className="text-muted">
+                          {calculateProgress().completed} من {calculateProgress().total} مهام مكتملة
+                        </small>
+                      </div>
+                      <div className="col-md-4 text-end">
+                        <div className="d-flex flex-column align-items-end">
+                          <div className="h5 mb-1">{calculateProgress().percentage}%</div>
+                          <small className="text-success fw-bold">
+                            {calculateProgress().completed}/{calculateProgress().total}
+                          </small>
+                        </div>
+                      </div>
                     </div>
-                    <div className="input-group">
-                      <input
-                        className={`form-control form-control-sm ${errors.amount ? 'is-invalid' : ''} ${shouldDisableAmount() ? 'bg-light' : ''}`}
-                        type="number"
-                        step="1"
-                        placeholder="المبلغ المطلوب"
-                        disabled={shouldDisableAmount()}
-                        {...register('amount', { 
-                          required: true, 
-                          valueAsNumber: true
-                        })}
-                      />
-                      <Button
-                        type="button"
-                        variant="outline-secondary"
-                        size="sm"
-                        onClick={openSubtasksModal}
-                        className={`btn-subtasks ${hasSubtasks() ? 'has-subtasks' : ''}`}
-                        title="إدارة المهام الفرعية"
-                      >
-                        <Settings size={14} />
-                        {hasSubtasks() && <span className="ms-1">({localSubtasks.length})</span>}
-                      </Button>
-                    </div>
-                    {shouldDisableAmount() && (
-                      <small className="text-muted mt-1">
-                        المبلغ محسوب تلقائياً من المهام الفرعية ({localSubtasks.length} مهمة)
-                      </small>
-                    )}
-                    {hasSubtasks() && !shouldDisableAmount() && (
-                      <small className="text-info mt-1">
-                        هذه المهمة تحتوي على {localSubtasks.length} مهام فرعية
-                      </small>
-                    )}
-                    {errors.amount && <div className="invalid-feedback-compact">Amount is required</div>}
                   </div>
-                  <div className="form-group-half">
-                    <label className="form-label-compact">{t('tasks.formPrepaidAmountLabel', 'المدفوع مقدما')}</label>
-                    <input
-                      className="form-control form-control-sm"
-                      type="number"
-                      step="1"
-                      placeholder="المبلغ المقدم"
-                      {...register('prepaid_amount', { 
-                        validate: value => {
-                          const amount = watch('amount') || 0;
-                          return !value || value <= amount || 'Prepaid amount cannot exceed task amount';
-                        }
-                      })}
-                    />
-                    {errors.prepaid_amount && <div className="invalid-feedback-compact">{errors.prepaid_amount.message}</div>}
-                  </div>
-                  
-                </div>
+                )}
 
-                {/* { Name Row } */}
-                <div className="form-row">
-                  <div className="form-group-half">
-                    <label className="form-label-compact">{t('tasks.formTaskNameLabel')}</label>
-                    <input
-                      className="form-control form-control-sm"
-                      {...register('task_name')}
-                    />
-                  </div>
-                  </div>
-
-
-                {/* Amount Details & Notes row */}
-                <div className="form-row">
-                  <div className="form-group-half" style={{ width: '100%' }}>
-                    <label className="form-label-compact">{t('tasks.formNotesLabel')}</label>
-                    <textarea
-                      className="form-control form-control-sm"
-                      {...register('notes')}
-                      rows={2}
-                    />
-                  </div>
-                  <div className="form-group-half" style={{ width: '100%' }}>
-                    <AmountDetailsInput 
-                      control={control}
-                      register={register}
-                      totalAmount={totalAmount}
-                    />
-                  </div>
-                </div>
-                      
-                {/* Requirements Section - Compact */}
-                <div className="form-group-compact requirements-section">
+                {/* Subtasks Table */}
+                <div className="mb-4">
                   <div className="d-flex justify-content-between align-items-center mb-2">
-                    <label className="form-label-compact mb-0">{t('tasks.formRequirementsLabel')}</label>
-                    <Button
-                      type="button"
-                      variant="outline-primary"
-                      size="sm"
-                      onClick={addRequirementField}
-                      className="btn-xs"
-                    >
-                      <PlusCircle size={14} className="me-1" /> {t('tasks.addRequirement')}
-                    </Button>
+                    <label className="form-label small fw-bold mb-0">
+                      <span 
+                        className="px-2 py-1 rounded"
+                        style={{ backgroundColor: '#1976d2', color: 'white', fontSize: '0.75rem' }}
+                      >
+                        إضافة مهمة فرعية
+                      </span>
+                    </label>
                   </div>
 
-                  {localRequirements.length === 0 ? (
-                    <div className="empty-requirements">
-                      <p className="text-muted mb-0 small">{t('tasks.noRequirements')}</p>
-                    </div>
-                  ) : (
-                    <div className="requirements-list-compact">
-                      {localRequirements.map((req, index) => (
-                        <div key={req.temp_id || String(req.id)} className="requirement-item-compact">
-                          <div className="d-flex align-items-center gap-2">
-                            <div className="form-check form-check-sm">
-                              <input
-                                type="checkbox"
-                                className="form-check-input form-check-input-sm"
-                                id={`req-${req.temp_id || req.id}`}
-                                checked={req.is_provided}
-                                onChange={() => toggleRequirementProvided(req.temp_id || req.id)}
-                              />
-                            </div>
-                            <div className="flex-grow-1">
-                              <input
-                                type="text"
-                                className="form-control form-control-sm"
-                                value={req.requirement_text}
-                                onChange={(e) => updateRequirementText(req.temp_id || req.id, e.target.value)}
-                                placeholder={`${t('tasks.requirementPlaceholder')} ${index + 1}`}
-                              />
-                            </div>
-                            <Button
+                  {/* Subtasks Header */}
+                  <div 
+                    className="row py-2 fw-bold text-center"
+                    style={{ 
+                      backgroundColor: '#1976d2', 
+                      color: 'white',
+                      margin: '0',
+                      borderRadius: '4px 4px 0 0'
+                    }}
+                  >
+                    <div className="col-6">البيان</div>
+                    <div className="col-3">المبلغ</div>
+                    <div className="col-3">الإجراءات</div>
+                  </div>
+
+                  {/* Subtasks List */}
+                  <div style={{ border: '1px solid #1976d2', borderTop: 'none', borderRadius: '0 0 4px 4px' }}>
+                    {localSubtasks.map((subtask, index) => (
+                      <div 
+                        key={index} 
+                        className={`row py-2 align-items-center ${index % 2 === 0 ? 'bg-light' : 'bg-white'}`}
+                        style={{ margin: '0', borderBottom: index === localSubtasks.length - 1 ? 'none' : '1px solid #e9ecef' }}
+                      >
+                        <div className="col-6">
+                          <input
+                            type="text"
+                            className="form-control form-control-sm"
+                            value={subtask.description || ''}
+                            onChange={(e) => handleSubtaskChange(index, 'description', e.target.value)}
+                            placeholder="وصف المهمة الفرعية..."
+                          />
+                        </div>
+                        <div className="col-3">
+                          <input
+                            type="number"
+                            className="form-control form-control-sm"
+                            value={subtask.amount || ''}
+                            onChange={(e) => handleSubtaskChange(index, 'amount', Number(e.target.value))}
+                            placeholder="1500"
+                          />
+                        </div>
+                        <div className="col-3 text-center">
+                          <div className="d-flex justify-content-center gap-1">
+                            <button
                               type="button"
-                              variant="danger"
-                              size="sm"
-                              onClick={() => removeRequirementField(req.temp_id || req.id)}
-                              className="btn-xs"
-                              title="حذف المتطلب"
+                              className={`btn btn-sm ${subtask.is_completed ? 'btn-success' : 'btn-outline-success'}`}
+                              onClick={() => handleSubtaskChange(index, 'is_completed', !subtask.is_completed)}
+                              title={subtask.is_completed ? 'مكتملة' : 'غير مكتملة'}
                             >
-                              <XCircle size={14} />
-                            </Button>
+                              <CheckCircle size={14} />
+                            </button>
+                            <button
+                              type="button"
+                              className="btn btn-sm btn-outline-danger"
+                              onClick={() => removeSubtask(index)}
+                              title="حذف"
+                            >
+                              <Trash2 size={14} />
+                            </button>
                           </div>
                         </div>
-                      ))}
+                      </div>
+                    ))}
+
+                    {/* Add New Subtask Row */}
+                    <div 
+                      className="row py-2 text-center"
+                      style={{ 
+                        margin: '0',
+                        backgroundColor: '#f8f9fa',
+                        borderTop: localSubtasks.length > 0 ? '1px solid #e9ecef' : 'none'
+                      }}
+                    >
+                      <div className="col-12">
+                        <button
+                          type="button"
+                          className="btn btn-sm btn-outline-primary"
+                          onClick={addSubtask}
+                        >
+                          <Plus size={14} className="me-1" />
+                          إضافة مهمة فرعية جديدة
+                        </button>
+                      </div>
                     </div>
-                  )}
+
+                    {/* Total Row */}
+                    {localSubtasks.length > 0 && (
+                      <div 
+                        className="row py-2 fw-bold text-center"
+                        style={{ 
+                          backgroundColor: '#1976d2', 
+                          color: 'white',
+                          margin: '0'
+                        }}
+                      >
+                        <div className="col-6">الإجمالي</div>
+                        <div className="col-3">{calculateTotal()}</div>
+                        <div className="col-3">-</div>
+                      </div>
+                    )}
+                  </div>
                 </div>
+
+                {/* بيانات أخرى Accordion */}
+                <Accordion className="mb-3">
+                  <Accordion.Item eventKey="0">
+                    <Accordion.Header>بيانات أخرى</Accordion.Header>
+                    <Accordion.Body>
+                      {/* Prepaid Amount */}
+                      <div className="row g-2 mb-3">
+                        <div className="col-12">
+                          <label className="form-label small fw-bold mb-1">المدفوع مقدماً</label>
+                          <input
+                            className={`form-control form-control-sm ${errors.prepaid_amount ? 'is-invalid' : ''}`}
+                            type="number"
+                            step="1"
+                            placeholder="المبلغ المقدم"
+                            {...register('prepaid_amount', { 
+                              validate: value => {
+                                const amount = calculateTotal() || 0;
+                                return !value || value <= amount || 'المبلغ المقدم لا يمكن أن يتجاوز مبلغ المهمة';
+                              }
+                            })}
+                          />
+                          {errors.prepaid_amount && <div className="invalid-feedback">{errors.prepaid_amount.message}</div>}
+                        </div>
+                      </div>
+
+                      {/* End Date (moved here) */}
+                      <div className="row g-2 mb-3">
+                        <div className="col-12">
+                          <label className="form-label small fw-bold mb-1">تاريخ الانتهاء</label>
+                          <input
+                            className="form-control form-control-sm"
+                            type="date"
+                            {...register('end_date')}
+                          />
+                        </div>
+                      </div>
+
+                      {/* Notes */}
+                      <div className="row g-2 mb-3">
+                        <div className="col-12">
+                          <label className="form-label small fw-bold mb-1">ملاحظات</label>
+                          <textarea
+                            className="form-control form-control-sm"
+                            {...register('notes')}
+                            rows={3}
+                            placeholder="أدخل ملاحظات إضافية..."
+                          />
+                        </div>
+                      </div>
+
+                      {/* Requirements Section */}
+                      <div className="requirements-section">
+                        <div className="d-flex justify-content-between align-items-center mb-2">
+                          <label className="form-label small fw-bold mb-0">المتطلبات</label>
+                          <Button
+                            type="button"
+                            variant="outline-primary"
+                            size="sm"
+                            onClick={addRequirementField}
+                            className="btn-xs"
+                          >
+                            <PlusCircle size={14} className="me-1" /> إضافة متطلب
+                          </Button>
+                        </div>
+
+                        {localRequirements.length === 0 ? (
+                          <div className="text-muted text-center py-3">
+                            <p className="mb-0 small">لا توجد متطلبات</p>
+                          </div>
+                        ) : (
+                          <div className="requirements-list">
+                            {localRequirements.map((req, index) => (
+                              <div key={req.temp_id || String(req.id)} className="requirement-item mb-2">
+                                <div className="d-flex align-items-center gap-2">
+                                  <div className="form-check">
+                                    <input
+                                      type="checkbox"
+                                      className="form-check-input"
+                                      id={`req-${req.temp_id || req.id}`}
+                                      checked={req.is_provided}
+                                      onChange={() => toggleRequirementProvided(req.temp_id || req.id)}
+                                    />
+                                  </div>
+                                  <div className="flex-grow-1">
+                                    <input
+                                      type="text"
+                                      className="form-control form-control-sm"
+                                      value={req.requirement_text}
+                                      onChange={(e) => updateRequirementText(req.temp_id || req.id, e.target.value)}
+                                      placeholder={`متطلب ${index + 1}`}
+                                    />
+                                  </div>
+                                  <Button
+                                    type="button"
+                                    variant="danger"
+                                    size="sm"
+                                    onClick={() => removeRequirementField(req.temp_id || req.id)}
+                                    className="btn-xs"
+                                    title="حذف المتطلب"
+                                  >
+                                    <XCircle size={14} />
+                                  </Button>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    </Accordion.Body>
+                  </Accordion.Item>
+                </Accordion>
               </div>
             )}
 
@@ -970,26 +1113,6 @@ const TaskModal = () => {
         clientName={currentClientDisplay?.name || ''}
         clientId={currentClientDisplay?.id || 0}
       />
-
-      {/* Subtasks Modal */}
-      {showSubtasksModal && (
-        <SubtasksModal
-          subtasks={localSubtasks}
-          onSave={(updatedSubtasks) => {
-            setLocalSubtasks(updatedSubtasks);
-            setValue('subtasks', updatedSubtasks);
-            
-            // Calculate and update amount from subtasks
-            if (updatedSubtasks.length > 0) {
-              const calculatedAmount = updatedSubtasks.reduce((sum, subtask) => sum + (subtask.amount || 0), 0);
-              setValue('amount', calculatedAmount);
-            }
-            
-            setShowSubtasksModal(false);
-          }}
-          onClose={() => setShowSubtasksModal(false)}
-        />
-      )}
     </>
   );
 };
