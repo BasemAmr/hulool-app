@@ -169,7 +169,7 @@ const RecentClientsReceivablesPanel: React.FC<RecentClientsReceivablesPanelProps
                     fontSize: 'var(--font-size-xs)',
                     padding: '8px',
                     borderBottom: '2px solid var(--color-gray-100)',
-                    textAlign: 'center',
+                    textAlign: 'end',
                     minWidth: '80px'
                   }}>إجراءات</th>
                 </tr>
@@ -191,7 +191,7 @@ const RecentClientsReceivablesPanel: React.FC<RecentClientsReceivablesPanelProps
                       backgroundColor: index % 2 === 0 ? '#fff8e1' : '#ffecb3'
                     }}>
                       <span 
-                        className="text-truncate fw-medium" 
+                        className="fw-medium" 
                         style={{ 
                           maxWidth: '100px', 
                           display: 'inline-block',
@@ -207,7 +207,7 @@ const RecentClientsReceivablesPanel: React.FC<RecentClientsReceivablesPanelProps
                     <td style={{
                       fontSize: 'var(--font-size-xs)',
                       padding: '6px',
-                      textAlign: 'center',
+                      textAlign: 'start',
                       borderBottom: '1px solid var(--color-gray-100)',
                       backgroundColor: index % 2 === 0 ? '#fff8e1' : '#ffecb3'
                     }}>
@@ -228,7 +228,7 @@ const RecentClientsReceivablesPanel: React.FC<RecentClientsReceivablesPanelProps
                     </td>
                     <td style={{
                       padding: '6px',
-                      textAlign: 'center',
+                      textAlign: 'end',
                       borderBottom: '1px solid var(--color-gray-100)',
                       minWidth: '80px',
                       backgroundColor: index % 2 === 0 ? '#fff8e1' : '#ffecb3'
