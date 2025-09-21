@@ -164,7 +164,7 @@ const TaskModal = () => {
   useEffect(() => {
     if (localSubtasks.length > 0) {
       const validSubtasks = localSubtasks.filter(subtask => 
-        subtask.description && subtask.description.trim() && subtask.amount > 0
+        subtask.description && subtask.description.trim() && subtask.amount >= 0
       );
       if (validSubtasks.length > 0) {
         const total = calculateTotal();
@@ -275,7 +275,7 @@ const TaskModal = () => {
 
     // Filter valid subtasks and calculate final amount
     const validSubtasks = localSubtasks.filter(subtask => 
-      subtask.description && subtask.description.trim() && subtask.amount > 0
+      subtask.description && subtask.description.trim() && subtask.amount >= 0
     );
     const finalAmount = validSubtasks.length > 0 ? calculateTotal() : Number(data.amount);
     
@@ -465,7 +465,7 @@ const TaskModal = () => {
 
   const calculateProgress = () => {
     const validSubtasks = localSubtasks.filter(subtask => 
-      subtask.description && subtask.description.trim() && subtask.amount > 0
+      subtask.description && subtask.description.trim() && subtask.amount >= 0
     );
     
     if (validSubtasks.length === 0) return { completed: 0, total: 0, percentage: 0 };
@@ -724,7 +724,7 @@ const TaskModal = () => {
                             className="form-control form-control-sm"
                             value={subtask.amount || ''}
                             onChange={(e) => handleSubtaskChange(index, 'amount', Number(e.target.value))}
-                            placeholder="1500"
+                            placeholder="0.00"
                           />
                         </div>
                         <div className="col-3 text-center">

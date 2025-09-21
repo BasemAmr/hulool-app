@@ -1,14 +1,14 @@
 import { useEffect } from 'react';
 import { useParams, useSearchParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { useMutation } from '@tanstack/react-query';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useModalStore } from '../stores/modalStore';
 import { applyPageBackground } from '../utils/backgroundUtils';
 import { useToast } from '../hooks/useToast';
 
 // Import all necessary query hooks
 import { useGetClient } from '../queries/clientQueries';
-import { useDeleteTask, useGetTasks } from '../queries/taskQueries';
+import { useCancelTask, useGetTasks } from '../queries/taskQueries';
 import { useGetClientReceivables } from '../queries/receivableQueries';
 import { useGetClientCredits } from '../queries/clientCreditQueries';
 
@@ -53,7 +53,7 @@ const ClientProfilePage = () => {
     const { success, error: showError } = useToast();
 
     // Mutation hooks
-    const deleteTaskMutation = useDeleteTask();
+  const cancelTaskMutation = useCancelTask();
 
     // Export mutations
     const exportStatementMutation = useMutation({
@@ -95,6 +95,9 @@ const ClientProfilePage = () => {
         },
     });
 
+  const queryClient = useQueryClient();
+
+
     // --- Handlers ---
     const handleAddTask = () => {
         if (client) openModal('taskForm', { client });
@@ -110,15 +113,22 @@ const ClientProfilePage = () => {
 
     const handleEditTask = (task: Task) => openModal('taskForm', { taskToEdit: task });
     
-    const handleDeleteTask = (task: Task) => {
-        openModal('confirmDelete', {
-            title: t('common.confirm'),
-            message: t('clients.deleteConfirmMessage', { clientName: task.client.name }) + ` - Task: ${task.task_name || t(`type.${task.type}`)}`,
-            onConfirm: () => {
-                deleteTaskMutation.mutate(Number(task.id));
-            },
-        });
-    };
+   const handleCancelTask = (task: Task) => {
+    cancelTaskMutation.mutate({
+      id: task.id,
+      decisions: {
+        task_action: 'cancel'
+      }
+    }, {
+      onSuccess: () => {
+        success('تم الإلغاء', 'تم إلغاء المهمة بنجاح');
+        queryClient.invalidateQueries({ queryKey: ['dashboard', 'clientsWithActiveTasks'] });
+      },
+      onError: (err: any) => {
+        showError('خطأ', err.message || 'حدث خطأ أثناء إلغاء المهمة');
+      }
+    });
+  };
 
     const handleShowRequirements = (task: Task) => openModal('requirements', { task });
     const handleCompleteTask = (task: Task) => openModal('taskCompletion', { task });
@@ -301,7 +311,7 @@ const ClientProfilePage = () => {
                             tasks={tasksData?.tasks || []}
                             isLoading={isLoadingTasks}
                             onEdit={handleEditTask}
-                            onDelete={handleDeleteTask}
+                            onDelete={handleCancelTask}
                             onShowRequirements={handleShowRequirements}
                             onComplete={handleCompleteTask}
                             onAssign={handleAssignTask}
