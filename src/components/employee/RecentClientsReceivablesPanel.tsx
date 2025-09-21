@@ -1,18 +1,22 @@
 // src/components/employee/RecentClientsReceivablesPanel.tsx
 import React from 'react';
-import { Edit3, MoreHorizontal } from 'lucide-react';
+import { Edit3, MoreHorizontal, RotateCcw } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useModalStore } from '../../stores/modalStore';
 import WhatsAppIcon from '../ui/WhatsAppIcon';
 import { sendPaymentReminder } from '../../utils/whatsappUtils';
 import apiClient from '../../api/apiClient';
 import { useQuery } from '@tanstack/react-query';
+import { useRestoreTask } from '../../queries/taskQueries';
+import { useToast } from '../../hooks/useToast';
 
 interface RecentClientsReceivablesPanelProps {}
 
 const RecentClientsReceivablesPanel: React.FC<RecentClientsReceivablesPanelProps> = () => {
   const navigate = useNavigate();
   const { openModal } = useModalStore();
+  const restoreTaskMutation = useRestoreTask();
+  const { success, error } = useToast();
 
 
   // Fetch recent receivables with pagination
@@ -44,6 +48,23 @@ const RecentClientsReceivablesPanel: React.FC<RecentClientsReceivablesPanelProps
   const handleWhatsAppPaymentReminder = (phone: string, clientName: string, remainingAmount: number) => {
     const formattedAmount = formatCurrency(remainingAmount);
     sendPaymentReminder(phone, clientName, formattedAmount);
+  };
+
+  const handleRestore = async (receivable: any) => {
+    if (!receivable.task_id) {
+      error('فشل في الاستعادة', 'لا يمكن استرداد هذا المستحق - لا توجد مهمة مرتبطة به');
+      return;
+    }
+
+    try {
+      await restoreTaskMutation.mutateAsync({
+        id: receivable.task_id
+      });
+      success('تمت الاستعادة', 'تم استرداد المهمة بنجاح');
+    } catch (err) {
+      console.error('Restore task error:', err);
+      error('فشل في الاستعادة', 'فشل في استرداد المهمة');
+    }
   };
 
   const formatCurrency = (amount: number) => {
@@ -252,6 +273,19 @@ const RecentClientsReceivablesPanel: React.FC<RecentClientsReceivablesPanelProps
                         >
                           <WhatsAppIcon size={10} />
                         </button>
+
+                        {/* Restore Button - Only show for completed tasks */}
+                        {receivable.task_id && receivable.task_status === 'Completed' && (
+                          <button
+                            className="btn btn-outline-warning btn-sm p-1"
+                            onClick={() => handleRestore(receivable)}
+                            disabled={restoreTaskMutation.isPending}
+                            title="استرداد المهمة إلى حالة جديدة"
+                            style={{ fontSize: '10px', lineHeight: 1 }}
+                          >
+                            <RotateCcw size={10} />
+                          </button>
+                        )}
 
                         {/* <button
                           className="btn btn-primary btn-sm p-1"

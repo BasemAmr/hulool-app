@@ -3,14 +3,13 @@ import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
 import Button from '../ui/Button';
 import WhatsAppIcon from '../ui/WhatsAppIcon';
-import { Edit, Pause, Play, CheckCircle, ExternalLink, DollarSign, X, FileText, AlertTriangle, MessageSquare, UserPlus, ClipboardCheck, RotateCcw } from 'lucide-react';
-import { useDeferTask, useResumeTask, useUpdateTask, useRestoreTask } from '../../queries/taskQueries';
+import { Edit, Pause, Play, CheckCircle, ExternalLink, DollarSign, X, FileText, MessageSquare, UserPlus, ClipboardCheck, RotateCcw } from 'lucide-react';
+import { useDeferTask, useResumeTask, useRestoreTask } from '../../queries/taskQueries';
 import { useGetEmployeesForSelection } from '../../queries/employeeQueries';
 import { useToast } from '../../hooks/useToast';
 import { useModalStore } from '../../stores/modalStore';
 import {useCurrentUserCapabilities } from '../../queries/userQueries';
 import { useDrawerStore } from '../../stores/drawerStore';
-import { useQueryClient } from '@tanstack/react-query';
 import { useStickyHeader } from '../../hooks/useStickyHeader';
 
 interface AllTasksTableProps {
@@ -28,13 +27,11 @@ const AllTasksTable = ({ tasks, isLoading, onEdit, onComplete, onViewAmountDetai
   const { t } = useTranslation();
   const deferTaskMutation = useDeferTask();
   const resumeTaskMutation = useResumeTask();
-  const updateTaskMutation = useUpdateTask();
   const restoreTaskMutation = useRestoreTask();
   const { data: currentCapabilities } = useCurrentUserCapabilities();
   const { success, error } = useToast();
   const { openDrawer } = useDrawerStore();
   const { openModal } = useModalStore();
-  const queryClient = useQueryClient();
   const { sentinelRef, isSticky } = useStickyHeader();
   
   // Get employees for assignment
@@ -177,54 +174,6 @@ const AllTasksTable = ({ tasks, isLoading, onEdit, onComplete, onViewAmountDetai
     return `https://wa.me/${formattedPhone}`;
   };
 
-  // Handle urgent tag toggle
-  const handleToggleUrgentTag = (task: Task) => {
-    const isUrgent = task.tags?.some(tag => tag.name === 'قصوى');
-    const urgentTagId = 1;
-
-    const currentTags = Array.isArray(task.tags)
-      ? task.tags.map((tag: any) => typeof tag === 'object' ? tag.id.toString() : tag.toString())
-      : [];
-
-    let updatedTags: string[];
-
-    if (isUrgent) {
-      updatedTags = currentTags.filter(id => id !== urgentTagId.toString());
-    } else {
-      updatedTags = [...currentTags, urgentTagId.toString()];
-    }
-
-    updateTaskMutation.mutate({
-      id: task.id,
-      taskData: {
-        task_name: task.task_name || '',
-        type: task.type,
-        amount: task.amount,
-        start_date: task.start_date,
-        end_date: task.end_date || undefined,
-        prepaid_amount: task.prepaid_amount,
-        notes: task.notes || '',
-        tags: updatedTags,
-        requirements: task.requirements?.map((req: any) => ({
-          id: req.id,
-          requirement_text: req.requirement_text,
-          is_provided: req.is_provided
-        })) || []
-      }
-    }, {
-      onSuccess: () => {
-        success(
-          isUrgent ? 'تم إزالة العلامة' : 'تمت الإضافة',
-          isUrgent ? 'تم إزالة علامة العاجل من المهمة' : 'تم إضافة علامة العاجل للمهمة'
-        );
-        queryClient.invalidateQueries({ queryKey: ['tasks'] });
-        queryClient.invalidateQueries({ queryKey: ['dashboard'] });
-      },
-      onError: (err: any) => {
-        error('خطأ', err.message || 'حدث خطأ أثناء تحديث علامة العاجل');
-      }
-    });
-  };
 
   return (
     <div className="table-responsive">
@@ -499,20 +448,6 @@ const AllTasksTable = ({ tasks, isLoading, onEdit, onComplete, onViewAmountDetai
                       <Edit size={16} />
                     </Button>
 
-                    {/* Urgent Alert Action */}
-                    <Button 
-                      variant="secondary" 
-                      size="sm" 
-                      onClick={() => handleToggleUrgentTag(task)} 
-                      title={task.tags?.some(tag => tag.name === 'قصوى') ? 'إلغاء العاجل' : 'تعليم عاجل'}
-                      style={{ 
-                        borderColor: task.tags?.some(tag => tag.name === 'قصوى') ? '#dc3545' : '#ffc107', 
-                        color: task.tags?.some(tag => tag.name === 'قصوى') ? '#dc3545' : '#856404',
-                        backgroundColor: task.tags?.some(tag => tag.name === 'قصوى') ? '#f8d7da' : '#fff3cd'
-                      }}
-                    >
-                      <AlertTriangle size={16} />
-                    </Button>
 
                     {/* Requirements Action */}
                     {onShowRequirements && (
