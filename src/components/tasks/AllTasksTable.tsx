@@ -3,8 +3,8 @@ import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
 import Button from '../ui/Button';
 import WhatsAppIcon from '../ui/WhatsAppIcon';
-import { Edit, Pause, Play, CheckCircle, ExternalLink, DollarSign, X, FileText, AlertTriangle, MessageSquare, UserPlus, ClipboardCheck } from 'lucide-react';
-import { useDeferTask, useResumeTask, useUpdateTask } from '../../queries/taskQueries';
+import { Edit, Pause, Play, CheckCircle, ExternalLink, DollarSign, X, FileText, AlertTriangle, MessageSquare, UserPlus, ClipboardCheck, RotateCcw } from 'lucide-react';
+import { useDeferTask, useResumeTask, useUpdateTask, useRestoreTask } from '../../queries/taskQueries';
 import { useGetEmployeesForSelection } from '../../queries/employeeQueries';
 import { useToast } from '../../hooks/useToast';
 import { useModalStore } from '../../stores/modalStore';
@@ -29,6 +29,7 @@ const AllTasksTable = ({ tasks, isLoading, onEdit, onComplete, onViewAmountDetai
   const deferTaskMutation = useDeferTask();
   const resumeTaskMutation = useResumeTask();
   const updateTaskMutation = useUpdateTask();
+  const restoreTaskMutation = useRestoreTask();
   const { data: currentCapabilities } = useCurrentUserCapabilities();
   const { success, error } = useToast();
   const { openDrawer } = useDrawerStore();
@@ -59,7 +60,7 @@ const AllTasksTable = ({ tasks, isLoading, onEdit, onComplete, onViewAmountDetai
       return false;
     }
     // Check if task is assigned to an employee
-    return task.assigned_to_id !== null;
+    return task.assigned_to_id == null;
   };
 
 
@@ -125,6 +126,18 @@ const AllTasksTable = ({ tasks, isLoading, onEdit, onComplete, onViewAmountDetai
       },
       onError: (err: any) => {
         error(t('common.error'), err.message || t('tasks.resumeError'));
+      }
+    });
+  };
+
+  // Handle restore completed task
+  const handleRestore = (task: Task) => {
+    restoreTaskMutation.mutate({ id: task.id }, {
+      onSuccess: () => {
+        success('تمت الاستعادة', `تم استعادة المهمة "${task.task_name || t(`type.${task.type}`)}" إلى حالة جديدة`);
+      },
+      onError: (err: any) => {
+        error(t('common.error'), err.message || 'حدث خطأ أثناء استعادة المهمة');
       }
     });
   };
@@ -455,6 +468,24 @@ const AllTasksTable = ({ tasks, isLoading, onEdit, onComplete, onViewAmountDetai
                         }}
                       >
                         <ClipboardCheck size={16} />
+                      </Button>
+                    )}
+
+                    {/* Restore Action for Completed tasks */}
+                    {task.status === 'Completed' && (
+                      <Button 
+                        variant="primary" 
+                        size="sm" 
+                        onClick={() => handleRestore(task)} 
+                        title="استعادة المهمة إلى حالة جديدة"
+                        style={{ 
+                          backgroundColor: 'rgba(25, 135, 84, 0.9)', 
+                          borderColor: 'rgba(25, 135, 84, 0.9)',
+                          color: '#fff',
+                          fontWeight: 'bold'
+                        }}
+                      >
+                        <RotateCcw size={16} />
                       </Button>
                     )}
 

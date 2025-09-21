@@ -5,7 +5,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import { useModalStore } from '../../stores/modalStore';
 import { useDrawerStore } from '../../stores/drawerStore';
 import { useToast } from '../../hooks/useToast';
-import { useDeferTask, useResumeTask, useUpdateTask, useCancelTask } from '../../queries/taskQueries';
+import { useDeferTask, useResumeTask, useUpdateTask, useCancelTask, useRestoreTask } from '../../queries/taskQueries';
 import { useGetEmployeesForSelection } from '../../queries/employeeQueries';
 import type { Task } from '../../api/types';
 import { formatDate } from '../../utils/dateUtils';
@@ -21,7 +21,8 @@ import {
   Eye,
   MessageSquare,
   UserPlus,
-  X
+  X,
+  RotateCcw
 } from 'lucide-react';
 import WhatsAppIcon from '../../assets/images/whats.svg';
 import GoogleDriveIcon from '../../assets/images/googe_drive.svg';
@@ -75,6 +76,7 @@ const DashboardClientCard = ({ data, index = 0, alternatingColors, onAssign, onW
   const resumeTaskMutation = useResumeTask();
   const updateTaskMutation = useUpdateTask();
   const cancelTaskMutation = useCancelTask();
+  const restoreTaskMutation = useRestoreTask();
   const cardRef = useRef<HTMLDivElement>(null);
   const taskRowRefs = useRef<(HTMLTableRowElement | null)[]>([]);
   const cardBodyRef = useRef<HTMLDivElement>(null);
@@ -153,6 +155,17 @@ const DashboardClientCard = ({ data, index = 0, alternatingColors, onAssign, onW
 
   const handleDefer = (task: Task) => handleAction(deferTaskMutation, task, 'tasks.deferSuccess', 'tasks.deferSuccessMessage', 'tasks.deferError');
   const handleResume = (task: Task) => handleAction(resumeTaskMutation, task, 'tasks.resumeSuccess', 'tasks.resumeSuccessMessage', 'tasks.resumeError');
+  const handleRestore = (task: Task) => {
+    restoreTaskMutation.mutate({ id: task.id }, {
+      onSuccess: () => {
+        success('تمت الاستعادة', `تم استعادة المهمة "${task.task_name || t(`type.${task.type}`)}" إلى حالة جديدة`);
+        queryClient.invalidateQueries({ queryKey: ['dashboard', 'clientsWithActiveTasks'] });
+      },
+      onError: (err: any) => {
+        error('خطأ', err.message || 'حدث خطأ أثناء استعادة المهمة');
+      }
+    });
+  };
   const handleComplete = (task: Task) => openModal('taskCompletion', { task });
   const handleShowRequirements = (task: Task) => openModal('requirements', { task });
   const handleCancelTask = (task: Task) => {
@@ -675,25 +688,32 @@ const DashboardClientCard = ({ data, index = 0, alternatingColors, onAssign, onW
                 }}
               >
                 {/* Section 1: Task Status Actions */}
-                <Dropdown.Item 
-                  onClick={() => handleComplete(task)} 
-                  className="text-end"
-                  disabled={Boolean(task.assigned_to_id) && Boolean(isUserEmployee(task.assigned_to_id))}
-                >
-                  <Check size={11} className="ms-2" />
-                  {task.assigned_to_id && isUserEmployee(task.assigned_to_id) ? 'موظف مكلف' : 'إكمال'}
-                </Dropdown.Item>
+                {task.status === 'Completed' ? (
+                  <Dropdown.Item onClick={() => handleRestore(task)} className="text-end">
+                    <RotateCcw size={11} className="ms-2" />
+                    استعادة إلى جديد
+                  </Dropdown.Item>
+                ) : (
+                  <Dropdown.Item 
+                    onClick={() => handleComplete(task)} 
+                    className="text-end"
+                    disabled={Boolean(task.assigned_to_id) && Boolean(isUserEmployee(task.assigned_to_id))}
+                  >
+                    <Check size={11} className="ms-2" />
+                    {task.assigned_to_id && isUserEmployee(task.assigned_to_id) ? 'موظف مكلف' : 'إكمال'}
+                  </Dropdown.Item>
+                )}
                 {task.status === 'New' ? (
                   <Dropdown.Item onClick={() => handleDefer(task)} className="text-end">
                     <Pause size={11} className="ms-2" />
                     تأجيل
                   </Dropdown.Item>
-                ) : (
+                ) : task.status === 'Deferred' ? (
                   <Dropdown.Item onClick={() => handleResume(task)} className="text-end">
                     <Play size={11} className="ms-2" />
                     استئناف
                   </Dropdown.Item>
-                )}
+                ) : null}
                 {/* Cancel Task - only for non-completed tasks */}
                 {task.status !== 'Completed' && task.status !== 'Cancelled' && (
                   <Dropdown.Item onClick={() => handleCancelTask(task)} className="text-end text-danger">
