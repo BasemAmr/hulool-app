@@ -275,7 +275,7 @@ const RecentClientsReceivablesPanel: React.FC<RecentClientsReceivablesPanelProps
                         </button>
 
                         {/* Restore Button - Only show for completed tasks */}
-                        {receivable.task_id && receivable.task_status === 'Completed' && (
+                        {receivable.task_id && (
                           <button
                             className="btn btn-outline-warning btn-sm p-1"
                             onClick={() => handleRestore(receivable)}
