@@ -16,7 +16,7 @@ import { useGetClientCredits } from '../queries/clientCreditQueries';
 import ClientProfileHeader from '../components/clients/ClientProfileHeader';
 import AllTasksTable from '../components/tasks/AllTasksTable';
 import ClientReceivablesTable from '../components/receivables/ClientReceivablesTable';
-import type {  Task, StatementItem } from '../api/types';
+import type {  Task, StatementItem, TaskCancellationConflictData } from '../api/types';
 import { useReceivablesPermissions } from '../hooks/useReceivablesPermissions';
 import ClientCreditsHistoryTable from '../components/clients/ClientCreditsHistoryTable';
 
@@ -120,7 +120,28 @@ const ClientProfilePage = () => {
         task_action: 'cancel'
       }
     }, {
-      onSuccess: () => {
+      onSuccess: (result) => {
+        // Check if it's a conflict response
+        if ('success' in result && result.success === false && result.code === 'task_cancellation_conflict') {
+          const conflictData = result.data as TaskCancellationConflictData;
+          // Open the task cancellation modal with conflict data
+          openModal('taskCancellation', {
+            taskId: task.id,
+            analysisData: {
+              task_id: conflictData.task_id,
+              prepaid_receivable: conflictData.prepaid_receivable,
+              main_receivable: conflictData.main_receivable,
+              total_funds_involved: conflictData.total_funds_involved
+            },
+            onResolved: () => {
+              success('تم حل التعارض وإلغاء المهمة', 'تم إلغاء المهمة بنجاح بعد حل التعارضات المالية');
+              queryClient.invalidateQueries({ queryKey: ['dashboard', 'clientsWithActiveTasks'] });
+            }
+          });
+          return;
+        }
+
+        // It's a successful cancellation
         success('تم الإلغاء', 'تم إلغاء المهمة بنجاح');
         queryClient.invalidateQueries({ queryKey: ['dashboard', 'clientsWithActiveTasks'] });
       },

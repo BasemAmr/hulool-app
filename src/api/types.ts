@@ -607,6 +607,15 @@ export interface TaskAmountConflictData {
   };
 }
 
+// Task Cancellation Conflict Data
+export interface TaskCancellationConflictData {
+  conflict_type: 'task_cancellation_conflict';
+  task_id: number;
+  prepaid_receivable: ReceivableFinancialState | null;
+  main_receivable: ReceivableFinancialState | null;
+  total_funds_involved: number;
+}
+
 // Task Cancellation Analysis
 export interface TaskCancellationAnalysis {
   task_id: number;

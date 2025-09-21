@@ -12,6 +12,7 @@ import type {
   ConflictResponse,
   PrepaidConflictData,
   TaskAmountConflictData,
+  TaskCancellationConflictData,
   PrepaidResolutionDecisions,
   MainReceivableDecisions,
   TaskCancellationDecisions,
@@ -158,11 +159,19 @@ const cancelTask = async ({
 }: { 
   id: number; 
   decisions?: TaskCancellationDecisions 
-}): Promise<ResolutionSummary> => {
-  const payload = decisions || {};
-  const { data } = await apiClient.post<ApiResponse<ResolutionSummary>>(`/tasks/${id}/cancel`, payload);
-  if (!data.success) throw new Error(data.message || 'Failed to cancel task');
-  return data.data;
+}): Promise<ResolutionSummary | ConflictResponse<TaskCancellationConflictData>> => {
+  try {
+    const payload = decisions || {};
+    const { data } = await apiClient.post<ApiResponse<ResolutionSummary>>(`/tasks/${id}/cancel`, payload);
+    if (!data.success) throw new Error(data.message || 'Failed to cancel task');
+    return data.data;
+  } catch (error: any) {
+    // Handle 409 Conflict responses for task cancellation conflicts
+    if (error.response?.status === 409 && error.response?.data?.code === 'task_cancellation_conflict') {
+      return error.response.data as ConflictResponse<TaskCancellationConflictData>;
+    }
+    throw error;
+  }
 };
 
 // NEW API FUNCTIONS FOR APPROVAL WORKFLOW
@@ -593,16 +602,21 @@ export const useCancelTask = () => {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: cancelTask,
-    onSuccess: (result: ResolutionSummary) => {
-      queryClient.invalidateQueries({ queryKey: ['tasks'] });
-      if (result.task?.id) {
-        queryClient.invalidateQueries({ queryKey: ['task', result.task.id] });
-        queryClient.invalidateQueries({ queryKey: ['receivables', 'client', result.task.client_id] });
+    onSuccess: (result: ResolutionSummary | ConflictResponse<TaskCancellationConflictData>) => {
+      // Only invalidate if it's a successful resolution (not a conflict response)
+      if ('resolution_summary' in result) {
+        const resolutionResult = result as ResolutionSummary;
+        queryClient.invalidateQueries({ queryKey: ['tasks'] });
+        if (resolutionResult.task?.id) {
+          queryClient.invalidateQueries({ queryKey: ['task', resolutionResult.task.id] });
+          queryClient.invalidateQueries({ queryKey: ['receivables', 'client', resolutionResult.task.client_id] });
+        }
+        queryClient.invalidateQueries({ queryKey: ['clients'] });
+        queryClient.invalidateQueries({ queryKey: ['dashboard'] });
+        queryClient.invalidateQueries({ queryKey: ['receivables'] });
+        queryClient.invalidateQueries({ queryKey: ['client-credits'] });
       }
-      queryClient.invalidateQueries({ queryKey: ['clients'] });
-      queryClient.invalidateQueries({ queryKey: ['dashboard'] });
-      queryClient.invalidateQueries({ queryKey: ['receivables'] });
-      queryClient.invalidateQueries({ queryKey: ['client-credits'] });
+      // If it's a conflict response, we don't invalidate queries yet
     },
   });
 };

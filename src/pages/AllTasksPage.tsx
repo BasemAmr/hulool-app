@@ -5,7 +5,7 @@ import { useGetTasksInfinite, useCancelTask } from '../queries/taskQueries';
 import { useModalStore } from '../stores/modalStore';
 import { useDrawerStore } from '../stores/drawerStore';
 import { applyPageBackground } from '../utils/backgroundUtils';
-import type { Task } from '../api/types';
+import type { Task, TaskCancellationConflictData } from '../api/types';
 import AllTasksTable from '../components/tasks/AllTasksTable';
 import TaskFilter from '../components/tasks/TaskFilter';
 import Button from '../components/ui/Button';
@@ -165,28 +165,39 @@ const AllTasksPage = () => {
     openModal('amountDetails', { task });
   };
 
-  const handleDeleteTask = (task: Task) => {
-    openModal('confirmDelete', {
-      title: t('common.confirm'),
-      message: t('tasks.cancelConfirmMessage', { 
-        taskName: task.task_name || t(`type.${task.type}`) 
-      }),
-      onConfirm: () => {
-        cancelTaskMutation.mutate({
-          id: task.id,
-          decisions: {
-            task_action: 'cancel'
-          }
-        }, {
-          onSuccess: () => {
-            success(t('tasks.cancelSuccess'), t('tasks.cancelSuccessMessage'));
-            // The useCancelTask hook automatically invalidates queries
-          },
-          onError: (err: any) => {
-            error(t('common.error'), err.message || t('tasks.cancelError'));
-          }
-        });
+  const handleCancelTask = (task: Task) => {
+    cancelTaskMutation.mutate({
+      id: task.id,
+      decisions: {
+        task_action: 'cancel'
+      }
+    }, {
+      onSuccess: (result) => {
+        // Check if it's a conflict response
+        if ('success' in result && result.success === false && result.code === 'task_cancellation_conflict') {
+          const conflictData = result.data as TaskCancellationConflictData;
+          // Open the task cancellation modal with conflict data
+          openModal('taskCancellation', {
+            taskId: task.id,
+            analysisData: {
+              task_id: conflictData.task_id,
+              prepaid_receivable: conflictData.prepaid_receivable,
+              main_receivable: conflictData.main_receivable,
+              total_funds_involved: conflictData.total_funds_involved
+            },
+            onResolved: () => {
+              success('تم حل التعارض وإلغاء المهمة', 'تم إلغاء المهمة بنجاح بعد حل التعارضات المالية');
+            }
+          });
+          return;
+        }
+
+        // It's a successful cancellation
+        success('تم الإلغاء', 'تم إلغاء المهمة بنجاح');
       },
+      onError: (err: any) => {
+        error('خطأ', err.message || 'حدث خطأ أثناء إلغاء المهمة');
+      }
     });
   };
 
@@ -292,7 +303,7 @@ const AllTasksPage = () => {
             onEdit={handleEditTask}
             onComplete={handleCompleteTask}
             onViewAmountDetails={handleViewAmountDetails}
-            onDelete={handleDeleteTask}
+            onDelete={handleCancelTask}
             onShowRequirements={handleShowRequirements}
             onAssign={handleAssignTask}
           />
