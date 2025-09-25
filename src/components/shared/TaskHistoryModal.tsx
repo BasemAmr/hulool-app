@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { History } from 'lucide-react';
 import Button from '../ui/Button';
 import { useGetTasks } from '../../queries/taskQueries';
@@ -14,6 +14,20 @@ interface TaskHistoryModalProps {
 
 const TaskHistoryModal = ({ isOpen, onClose, clientName, clientId }: TaskHistoryModalProps) => {
   const [filter, setFilter] = useState<string>('all');
+
+  // Handle Escape key
+  useEffect(() => {
+    const handleEscape = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        onClose();
+      }
+    };
+
+    if (isOpen) {
+      document.addEventListener('keydown', handleEscape);
+      return () => document.removeEventListener('keydown', handleEscape);
+    }
+  }, [isOpen, onClose]);
 
   // Fetch real tasks data for this client
   const { data: tasksData, isLoading, error } = useGetTasks({
@@ -36,7 +50,7 @@ const TaskHistoryModal = ({ isOpen, onClose, clientName, clientId }: TaskHistory
 
   return (
     <>
-      <div className="modal-backdrop fade show" onClick={onClose} />
+      <div className="modal-backdrop fade show" />
       <div className="modal fade show d-block" style={{ zIndex: 1070 }}>
         <div className="modal-dialog modal-lg modal-dialog-centered">
           <div className="modal-content border-0 shadow-lg">

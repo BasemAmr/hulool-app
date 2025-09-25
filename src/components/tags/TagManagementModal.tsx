@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import { Plus, Edit, Trash2 } from 'lucide-react';
 import { useModalStore } from '../../stores/modalStore';
 import { useGetTags, useDeleteTag } from '../../queries/tagQueries';
@@ -17,6 +18,20 @@ const TagManagementModal = () => {
     const deleteTagMutation = useDeleteTag();
 
     const isActive = isOpen && modalType === 'tagManagement';
+
+    // Handle Escape key
+    useEffect(() => {
+        const handleEscape = (event: KeyboardEvent) => {
+            if (event.key === 'Escape') {
+                closeModal();
+            }
+        };
+
+        if (isActive) {
+            document.addEventListener('keydown', handleEscape);
+            return () => document.removeEventListener('keydown', handleEscape);
+        }
+    }, [isActive, closeModal]);
 
     const handleAddTag = () => openModal('tagForm', {});
     const handleEditTag = (tag: Tag) => openModal('tagForm', { tagToEdit: tag });
@@ -42,7 +57,7 @@ const TagManagementModal = () => {
 
     return (
         <div className="modal show d-block" style={{ backgroundColor: 'rgba(0,0,0,0.5)' }}>
-            <div className="modal-dialog modal-lg modal-dialog-centered">
+            <div className="modal-dialog modal-lg modal-dialog-centered" onClick={(e) => e.stopPropagation()}>
                 <div className="modal-content">
                     <div className="modal-header">
                         <h5 className="modal-title">إدارة العلامات</h5>

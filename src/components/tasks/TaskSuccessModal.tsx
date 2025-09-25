@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import { CheckCircle } from 'lucide-react';
 import Button from '../ui/Button';
 
@@ -9,13 +10,26 @@ interface TaskSuccessModalProps {
 }
 
 const TaskSuccessModal = ({ isOpen, onClose, onViewAllTasks, onAddNewTask }: TaskSuccessModalProps) => {
+  // Handle Escape key
+  useEffect(() => {
+    const handleEscape = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        onClose();
+      }
+    };
+
+    if (isOpen) {
+      document.addEventListener('keydown', handleEscape);
+      return () => document.removeEventListener('keydown', handleEscape);
+    }
+  }, [isOpen, onClose]);
 
   if (!isOpen) return null;
 
   return (
     <>
-      {/* Backdrop */}
-      <div className="modal-backdrop fade show" onClick={onClose} />
+      {/* Backdrop - no onClick handler to prevent closing on outside click */}
+      <div className="modal-backdrop fade show" />
       
       {/* Modal */}
       <div className="modal fade show d-block" style={{ zIndex: 1060 }}>

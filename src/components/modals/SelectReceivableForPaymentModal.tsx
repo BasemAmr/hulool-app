@@ -15,6 +15,20 @@ const SelectReceivableForPaymentModal = ({ isOpen, onClose, clientId }: SelectRe
   const openModal = useModalStore((state) => state.openModal);
   const [selectedReceivableId, setSelectedReceivableId] = useState<number | null>(null);
   
+  // Handle Escape key
+  useEffect(() => {
+    const handleEscape = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        onClose();
+      }
+    };
+
+    if (isOpen) {
+      document.addEventListener('keydown', handleEscape);
+      return () => document.removeEventListener('keydown', handleEscape);
+    }
+  }, [isOpen, onClose]);
+  
   const { data: payableData, isLoading } = useGetPayableReceivables(clientId);
 
   const receivables = payableData?.receivables || [];
@@ -50,7 +64,7 @@ const SelectReceivableForPaymentModal = ({ isOpen, onClose, clientId }: SelectRe
 
   return (
     <div className="modal fade show d-block" tabIndex={-1} style={{ backgroundColor: 'rgba(0,0,0,0.5)' }}>
-      <div className="modal-dialog modal-lg">
+      <div className="modal-dialog modal-lg" onClick={(e) => e.stopPropagation()}>
         <div className="modal-content" dir="rtl">
           <div className="modal-header">
             <h5 className="modal-title">اختيار المستحق للسداد</h5>

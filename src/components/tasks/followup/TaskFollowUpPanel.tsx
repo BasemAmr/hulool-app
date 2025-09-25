@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { MessageSquare, User } from 'lucide-react';
 import { useDrawerStore } from '../../../stores/drawerStore';
 import { useTaskMessages } from '../../../queries/taskMessageQueries';
@@ -9,6 +9,20 @@ const TaskFollowUpPanel: React.FC = () => {
   const { isOpen, drawerType, props, closeDrawer } = useDrawerStore();
   
   const { taskId, taskName, clientName, highlightMessage } = props || {};
+
+  // Handle Escape key
+  useEffect(() => {
+    const handleEscape = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        closeDrawer();
+      }
+    };
+
+    if (isOpen && drawerType === 'taskFollowUp') {
+      document.addEventListener('keydown', handleEscape);
+      return () => document.removeEventListener('keydown', handleEscape);
+    }
+  }, [isOpen, drawerType, closeDrawer]);
 
   const {
     data: messagesData,
@@ -27,11 +41,7 @@ const TaskFollowUpPanel: React.FC = () => {
     closeDrawer();
   };
 
-  const handleBackdropClick = (e: React.MouseEvent) => {
-    if (e.target === e.currentTarget) {
-      handleClose();
-    }
-  };
+
 
   // Use props data first, then fallback to API data
   const taskInfo = {
@@ -46,7 +56,6 @@ const TaskFollowUpPanel: React.FC = () => {
       {/* Backdrop */}
       <div 
         className="modal-backdrop fade show"
-        onClick={handleBackdropClick}
         style={{ 
           zIndex: 1040,
           transition: 'opacity 0.3s ease-in-out'

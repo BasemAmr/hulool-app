@@ -16,13 +16,23 @@ const ClientSearchModal = () => {
 
   const { data: clients, isLoading } = useSearchClients(debouncedSearchTerm);
 
-  // Auto-focus search input when modal opens
+  // Auto-focus search input when modal opens and handle Escape key
   useEffect(() => {
     const searchInput = document.getElementById('client-search-input');
     if (searchInput) {
       searchInput.focus();
     }
-  }, []);
+
+    // Handle Escape key
+    const handleEscape = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        closeModal();
+      }
+    };
+
+    document.addEventListener('keydown', handleEscape);
+    return () => document.removeEventListener('keydown', handleEscape);
+  }, [closeModal]);
 
   const handleSelectClient = (clientId: number) => {
     navigate(`/clients/${clientId}`);
@@ -48,14 +58,12 @@ const ClientSearchModal = () => {
       <div 
         className="modal-backdrop fade show" 
         style={{ zIndex: 1040 }}
-        onClick={closeModal}
       />
       
       {/* Modal */}
       <div 
         className={`modal fade show d-block ${styles.searchModal}`}
         style={{ zIndex: 1050 }}
-        onClick={closeModal}
       >
         <div 
           className="modal-dialog modal-lg modal-dialog-centered"

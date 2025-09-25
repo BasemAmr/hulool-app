@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { CreditCard } from 'lucide-react';
 import Button from '../ui/Button';
 import { useGetClientReceivables } from '../../queries/receivableQueries';
@@ -15,6 +15,20 @@ interface PaymentHistoryModalProps {
 const PaymentHistoryModal = ({ isOpen, onClose, clientName, clientId }: PaymentHistoryModalProps) => {
   const [viewMode, setViewMode] = useState<'receivables' | 'payments'>('receivables');
   const { t } = useTranslation();
+
+  // Handle Escape key
+  useEffect(() => {
+    const handleEscape = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        onClose();
+      }
+    };
+
+    if (isOpen) {
+      document.addEventListener('keydown', handleEscape);
+      return () => document.removeEventListener('keydown', handleEscape);
+    }
+  }, [isOpen, onClose]);
 
   // Fetch real receivables data for this client
   const { data: receivablesData, isLoading, error } = useGetClientReceivables(clientId);
@@ -41,7 +55,7 @@ const PaymentHistoryModal = ({ isOpen, onClose, clientName, clientId }: PaymentH
 
   return (
     <>
-      <div className="modal-backdrop fade show" onClick={onClose} />
+      <div className="modal-backdrop fade show" />
       <div className="modal fade show d-block" style={{ zIndex: 1070 }}>
         <div className="modal-dialog modal-xl modal-dialog-centered">
           <div className="modal-content border-0 shadow-lg">
