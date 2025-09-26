@@ -683,7 +683,8 @@ const DashboardClientCard = ({ data, index = 0, alternatingColors, onAssign, onW
                   fontSize: '0.85em',
                   position: 'absolute',
                   top: dropdownPosition.top,
-                  left: dropdownPosition.left,
+                  // calculate add more 50px to left
+                  left: `calc(${dropdownPosition.left}px + 50px)`,
                   marginTop: '2px'
                 }}
               >
