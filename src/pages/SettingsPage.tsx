@@ -5,6 +5,9 @@ import styles from './SettingsPage.module.scss';
 import { useToast } from '../hooks/useToast';
 import { setPageBackground, removePageBackground, getPageBackground } from '../utils/backgroundUtils';
 import UserManagement from '../components/shared/UserManagement';
+import PasswordResetForm from '../components/settings/PasswordResetForm';
+import { useSetMyPassword, /*useSetEmployeePassword, useUsers*/ } from '../queries/userQueries';
+// import { useAuthStore } from '../stores/authStore';
 
 interface BackgroundSettings {
   dashboard: string;
@@ -18,6 +21,12 @@ const SettingsPage: React.FC = () => {
   const { t } = useTranslation();
   const { showToast } = useToast();
   const [uploading, setUploading] = useState<string | null>(null);
+  
+  // NEW: Auth and password management
+  // const { user, isAdmin } = useAuthStore();
+  const setMyPasswordMutation = useSetMyPassword();
+  // const setEmployeePasswordMutation = useSetEmployeePassword();
+  // const { data: users = [] } = useUsers();
   
   // Background settings state
   const [backgrounds, setBackgrounds] = useState<BackgroundSettings>({
@@ -127,6 +136,17 @@ const SettingsPage: React.FC = () => {
     { key: 'clientProfile' as const, label: t('settings.clientProfileBackground') || 'خلفية ملف العميل' },
   ];
 
+  // NEW: Password management handlers
+  const handleSetMyPassword = async (password: string) => {
+    await setMyPasswordMutation.mutateAsync({ new_password: password });
+    showToast({ type: 'success', title: 'Password Updated' });
+  };
+
+  // const handleSetEmployeePassword = async (userId: number, password: string) => {
+  //   await setEmployeePasswordMutation.mutateAsync({ userId, new_password: password });
+  //   showToast({ type: 'success', title: 'Employee Password Updated' });
+  // };
+
   return (
     <div className={styles.settingsPage}>
       <div className={styles.header}>
@@ -142,6 +162,37 @@ const SettingsPage: React.FC = () => {
         {/* User Management Section */}
         <div className={styles.section}>
           <UserManagement />
+        </div>
+
+        {/* NEW: Password Management Section */}
+        <div className={styles.section}>
+          <h2 className={styles.sectionTitle}>Password Management</h2>
+          
+          {/* Change Own Password */}
+          <div className="mb-4">
+            <h3 className="h5">Change My Password</h3>
+            <p className="text-muted small">Update your short password for logging into this application.</p>
+            <PasswordResetForm
+              onSubmit={handleSetMyPassword}
+              isLoading={setMyPasswordMutation.isPending}
+            />
+          </div>
+          
+          {/* Admin: Reset Employee Passwords
+          {isAdmin() && (
+            <div className="mt-4 pt-4 border-top">
+              <h3 className="h5">Reset Employee Passwords</h3>
+              {users.filter(u => u.id !== user?.id && u.employee_id).map(employee => (
+                <div key={employee.id} className="mb-3 p-3 border rounded">
+                  <p className="fw-bold mb-1">{employee.display_name}</p>
+                  <PasswordResetForm
+                    onSubmit={(password) => handleSetEmployeePassword(employee.id, password)}
+                    isLoading={setEmployeePasswordMutation.isPending && setEmployeePasswordMutation.variables?.userId === employee.id}
+                  />
+                </div>
+              ))}
+            </div>
+          )} */}
         </div>
 
         {/* Page Backgrounds Section */}

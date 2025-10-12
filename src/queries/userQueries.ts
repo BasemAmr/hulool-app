@@ -77,3 +77,45 @@ export const useCurrentUserCapabilities = () => {
     refetchOnMount: false, // Don't refetch on mount either
   });
 };
+
+/**
+ * NEW: For admin to reset another user's password
+ */
+const setEmployeePassword = async ({ userId, new_password }: { userId: number; new_password: string }) => {
+  const { data } = await apiClient.post(`/users/${userId}/set-password`, { new_password });
+  return data;
+};
+
+/**
+ * NEW: For an employee to change their own password
+ */
+const setMyPassword = async ({ new_password }: { new_password: string }) => {
+  const { data } = await apiClient.post(`/users/me/set-password`, { new_password });
+  return data;
+};
+
+/**
+ * NEW: Forgot password - reset password without authentication
+ */
+const resetPasswordForgot = async ({ username, new_password }: { username: string; new_password: string }) => {
+  const { data } = await apiClient.post(`/auth/reset-password`, { username, new_password });
+  return data;
+};
+
+export const useSetEmployeePassword = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: setEmployeePassword,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['users'] });
+    },
+  });
+};
+
+export const useSetMyPassword = () => {
+  return useMutation({ mutationFn: setMyPassword });
+};
+
+export const useResetPasswordForgot = () => {
+  return useMutation({ mutationFn: resetPasswordForgot });
+};

@@ -27,7 +27,7 @@ interface AuthState {
 }
 
 interface AuthActions {
-  login: (token: string, user: User, nonce: string) => void;
+  login: (username: string, appPassword: string, user: User) => void;
   logout: () => void;
   setNonce: (nonce: string) => void;
   // Helper methods for role checking
@@ -49,14 +49,16 @@ export const useAuthStore = create<AuthState & AuthActions>()(
   persist(
     (set, get) => ({
       ...initialState,
-      login: (token, user, nonce) => {
+      login: (username, appPassword, user) => {
         const userRole = computeUserRole(user);
+        // The token stored is now base64(username:app_password)
+        const token = btoa(`${username}:${appPassword}`);
         set({ 
           status: 'authenticated', 
           user, 
           token, 
-          nonce, 
-          lastNonceRefresh: Date.now(),
+          nonce: null, // Nonce is not needed for Application Password auth
+          lastNonceRefresh: null,
           userRole 
         });
       },

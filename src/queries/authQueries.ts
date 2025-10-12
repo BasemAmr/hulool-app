@@ -2,6 +2,21 @@ import apiClient from '../api/apiClient';
 import type{ ApiResponse, NonceData, User } from '../api/types';
 
 /**
+ * Login with short password and receive application password.
+ * This is a NEW function for the custom authentication flow.
+ */
+export const loginWithShortPassword = async (username: string, password: string): Promise<{ app_password: string; user: User }> => {
+  const { data } = await apiClient.post<ApiResponse<{ app_password: string; user: User }>>(
+    '/auth/token',
+    { username, password }
+  );
+  if (!data.success) {
+    throw new Error(data.message || 'Login failed.');
+  }
+  return data.data;
+};
+
+/**
  * Fetches a fresh nonce from the server.
  * Requires a temporary Authorization header for the request itself.
  */
