@@ -1,8 +1,10 @@
 ﻿import axios from 'axios';
 import { useAuthStore } from '../stores/authStore';
 
+const baseURL = import.meta.env.VITE_API_BASE_URL || '/wp-json/tm/v1';
+
 const apiClient = axios.create({
-  baseURL: import.meta.env.VITE_API_BASE_URL || '/wp-json/tm/v1',
+  baseURL,
 });
 
 let isRefreshingNonce = false;
@@ -27,10 +29,12 @@ apiClient.interceptors.request.use(
     }
     if (nonce) {
       config.headers['X-WP-Nonce'] = nonce;
+      console.log('Added nonce from useAuthStore:', nonce);
     }
     return config;
   },
   (error) => {
+    console.error('Request error:', error);
     return Promise.reject(error);
   }
 );
@@ -55,7 +59,7 @@ apiClient.interceptors.response.use(
         try {
           const { token } = useAuthStore.getState();
           if (!token) throw new Error('No authentication token available');
-          const { data } = await axios.post(`/auth/nonce`, {}, {
+          const { data } = await axios.post(`${baseURL}/auth/nonce`, {}, {
             headers: { 'Authorization': `Basic ${token}` }
           });
           if (data.success && data.data.nonce) {

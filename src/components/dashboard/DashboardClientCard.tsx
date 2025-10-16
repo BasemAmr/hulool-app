@@ -134,13 +134,6 @@ const DashboardClientCard = ({ data, index = 0, alternatingColors, onAssign, onW
   const { data: employees = [] } = useGetEmployeesForSelection();
   // Add this right after the employees query
   // Add this to see the structure of the first employee
-  if (employees.length > 0) {
-    console.log('First employee structure:', employees[0]);
-    console.log('Employee properties:', Object.keys(employees[0]));
-  }
-  console.log('Employees array:', employees);
-  console.log('Employees length:', employees.length);
-  console.log('Employee with user_id 2:', employees.find(emp => emp.user_id === 2));
   const handleAction = (mutation: any, task: Task, successKey: string, successMessageKey: string, errorKey: string) => {
     mutation.mutate({ id: task.id }, {
       onSuccess: () => {
@@ -512,7 +505,7 @@ const DashboardClientCard = ({ data, index = 0, alternatingColors, onAssign, onW
                   ? `${employeeFirstName}: ${task.task_name || t(`type.${task.type}`)}`
                   : (task.task_name || t(`type.${task.type}`));
 
-                console.log('Task:', task.id, 'assigned_to_id:', task.assigned_to_id, 'isEmployeeTask:', isEmployeeTask, 'assignedEmployee:', assignedEmployee);
+                // console.log('Task:', task.id, 'assigned_to_id:', task.assigned_to_id, 'isEmployeeTask:', isEmployeeTask, 'assignedEmployee:', assignedEmployee);
 
                 return (
                   <tr
