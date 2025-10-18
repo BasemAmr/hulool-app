@@ -10,8 +10,9 @@ import EmployeeTransactionsTable from '../components/employees/EmployeeTransacti
 import EmployeeTasksTable from '../components/employees/EmployeeTasksTable';
 import EmployeeClientsTable from '../components/employees/EmployeeClientsTable';
 import EmployeeReceivablesTable from '../components/employees/EmployeeReceivablesTable';
+import EmployeeManagementPage from '../employee_management_temp_page/EmployeeManagementPage';
 
-type ViewMode = 'transactions' | 'tasks' | 'clients' | 'receivables';
+type ViewMode = 'transactions' | 'tasks' | 'clients' | 'receivables' | 'management';
 
 interface EmployeePageHeader {
   employee: any;
@@ -69,7 +70,7 @@ const EmployeeProfilePage = () => {
   const { id } = useParams<{ id: string }>();
   const { openModal } = useModalStore();
   
-  const [activeMode, setActiveMode] = useState<ViewMode>('transactions');
+  const [activeMode, setActiveMode] = useState<ViewMode>('management');
   const [currentPage, setCurrentPage] = useState(1);
   const perPage = 20;
 
@@ -123,6 +124,7 @@ const EmployeeProfilePage = () => {
   }
 
   const modeOptions = [
+    { key: 'management', label: 'إدارة المهام', icon: Activity },
     { key: 'transactions', label: 'المعاملات', icon: Activity },
     { key: 'tasks', label: 'المهام', icon: FileText },
     { key: 'clients', label: 'العملاء', icon: UsersIcon },
@@ -142,6 +144,10 @@ const EmployeeProfilePage = () => {
 
       <div className="card">
         <div className="card-body p-0">
+          {activeMode === 'management' && (
+            <EmployeeManagementPage />
+          )}
+
           {activeMode === 'transactions' && (
             <EmployeeTransactionsTable
               employeeId={employeeTableId}
