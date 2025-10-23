@@ -26,7 +26,7 @@ import {
 } from '@dnd-kit/core';
 import { arrayMove, sortableKeyboardCoordinates, SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable';
 
-import TaskStatusCards from '../components/dashboard/TaskStatusCards';
+import CollapsibleTaskStatusCards from '../components/dashboard/CollapsibleTaskStatusCards';
 import DashboardClientCard from '../components/dashboard/DashboardClientCard';
 import SortableClientCard from '../components/dashboard/SortableClientCard';
 import DashboardTaskTypeFilter from '../components/dashboard/DashboardTaskTypeFilter';
@@ -223,27 +223,26 @@ const DashboardPage = () => {
     }
 
     return (
-        <div className="dashboard-page" style={{ position: 'relative' }}>
+        <div className="dashboard-page" style={{ position: 'relative', paddingBottom: '200px' }}>
             {/* Task Type Filter - Floating Component */}
             <DashboardTaskTypeFilter 
                 value={taskTypeFilter}
                 onChange={setTaskTypeFilter}
             />
 
-            <div className="task-status-cards mb-4">
-                <TaskStatusCards
-                    stats={stats || {
-                        new_tasks: 0,
-                        deferred_tasks: 0,
-                        completed_tasks: 0,
-                        late_tasks: 0,
-                        late_receivables: 0,
-                        total_unpaid_amount: 0
-                    }}
-                    totalPaidAmount={stats?.total_paid_amount || 0}
-                    isLoading={isLoadingStats}
-                />
-            </div>
+            {/* Collapsible Task Status Cards - Fixed at Bottom */}
+            <CollapsibleTaskStatusCards
+                stats={stats || {
+                    new_tasks: 0,
+                    deferred_tasks: 0,
+                    completed_tasks: 0,
+                    late_tasks: 0,
+                    late_receivables: 0,
+                    total_unpaid_amount: 0
+                }}
+                totalPaidAmount={stats?.total_paid_amount || 0}
+                isLoading={isLoadingStats}
+            />
 
             {isLoadingClients && (
                 <div className="d-flex justify-content-center py-5">
@@ -405,9 +404,10 @@ const DashboardPage = () => {
                                 overflow: 'visible', 
                                 position: 'relative', 
                                 zIndex: 1,
-                                justifyContent: employeeTasksGrouped.length < 5 ? 'center' : 'flex-start',
+                                justifyContent: 'flex-start',
                                 width: '100%',
                                 margin: 0,
+                                padding: 0,
                                 flex: 1,
                                 display: 'flex',
                                 alignItems: 'flex-start',
