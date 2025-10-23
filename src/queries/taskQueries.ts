@@ -530,7 +530,9 @@ export const useResumeTask = () => {
     // Always refetch after error or success to ensure data consistency
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ['tasks'] });
-      queryClient.invalidateQueries({ queryKey: ['dashboard', 'clientsWithActiveTasks'] });
+      // Invalidate both admin and employee dashboard queries
+      queryClient.invalidateQueries({ queryKey: ['dashboard', 'clientsWithActiveTasks', 'admin'] });
+      queryClient.invalidateQueries({ queryKey: ['dashboard', 'clientsWithActiveTasks', 'employee'] });
       queryClient.invalidateQueries({ queryKey: ['dashboard', 'stats'] });
       queryClient.invalidateQueries({ queryKey: ['tasks-by-tags'] });
     },
@@ -718,7 +720,9 @@ export const useDeferTask = () => {
     // Always refetch after error or success to ensure data consistency
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ['tasks'] });
-      queryClient.invalidateQueries({ queryKey: ['dashboard', 'clientsWithActiveTasks'] });
+      // Invalidate both admin and employee dashboard queries
+      queryClient.invalidateQueries({ queryKey: ['dashboard', 'clientsWithActiveTasks', 'admin'] });
+      queryClient.invalidateQueries({ queryKey: ['dashboard', 'clientsWithActiveTasks', 'employee'] });
       queryClient.invalidateQueries({ queryKey: ['dashboard', 'stats'] });
     },
     onSuccess: (response: {id: number; status: string; receivable_id?: number}) => {
@@ -837,7 +841,9 @@ export const useSubmitTaskForReview = () => {
     },
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ['tasks'] });
-      queryClient.invalidateQueries({ queryKey: ['dashboard', 'clientsWithActiveTasks'] });
+      // Invalidate both admin and employee dashboard queries
+      queryClient.invalidateQueries({ queryKey: ['dashboard', 'clientsWithActiveTasks', 'admin'] });
+      queryClient.invalidateQueries({ queryKey: ['dashboard', 'clientsWithActiveTasks', 'employee'] });
       queryClient.invalidateQueries({ queryKey: ['dashboard', 'stats'] });
     },
     onSuccess: (updatedTask: Task) => {
@@ -947,7 +953,9 @@ export const useRejectTask = () => {
     },
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ['tasks'] });
-      queryClient.invalidateQueries({ queryKey: ['dashboard', 'clientsWithActiveTasks'] });
+      // Invalidate both admin and employee dashboard queries
+      queryClient.invalidateQueries({ queryKey: ['dashboard', 'clientsWithActiveTasks', 'admin'] });
+      queryClient.invalidateQueries({ queryKey: ['dashboard', 'clientsWithActiveTasks', 'employee'] });
       queryClient.invalidateQueries({ queryKey: ['dashboard', 'stats'] });
     },
     onSuccess: (updatedTask: Task) => {
@@ -1034,7 +1042,9 @@ export const useRestoreTask = () => {
     },
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ['tasks'] });
-      queryClient.invalidateQueries({ queryKey: ['dashboard', 'clientsWithActiveTasks'] });
+      // Invalidate both admin and employee dashboard queries
+      queryClient.invalidateQueries({ queryKey: ['dashboard', 'clientsWithActiveTasks', 'admin'] });
+      queryClient.invalidateQueries({ queryKey: ['dashboard', 'clientsWithActiveTasks', 'employee'] });
       queryClient.invalidateQueries({ queryKey: ['dashboard', 'stats'] });
       queryClient.invalidateQueries({ queryKey: ['tasks-by-tags'] });
     },

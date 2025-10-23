@@ -790,9 +790,16 @@ const EmployeeTasksColumn: React.FC<EmployeeTasksColumnProps> = ({
 
     groupedByEmployee.forEach((employeeGroup) => {
       const clientsData: ClientWithTasksAndStats[] = [];
+      const seenTaskIds = new Set<number>(); // Track seen task IDs to avoid duplicates
 
       Object.entries(employeeGroup.grouped_clients).forEach(([_type, clients]) => {
         clients.forEach((clientRaw: any) => {
+          // Skip if we've already seen this task ID
+          if (seenTaskIds.has(clientRaw.id)) {
+            return;
+          }
+          seenTaskIds.add(clientRaw.id);
+
           const clientId = clientRaw.client.id;
           const existingClient = clientsData.find(c => c.client.id === clientId);
 
