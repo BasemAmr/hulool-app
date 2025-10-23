@@ -380,3 +380,28 @@ export const useAddEmployeeBorrow = () => {
     },
   });
 };
+
+/**
+ * Add manual credit to employee (admin adds credit to employee's account)
+ */
+export const useAddEmployeeManualCredit = () => {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: async ({ 
+      employeeUserId, 
+      creditData 
+    }: { 
+      employeeUserId: number;
+      creditData: { amount: number; reason?: string; notes?: string; }
+    }) => {
+      // The POST API endpoint expects user_id in the URL
+      const response = await apiClient.post(`/employees/${employeeUserId}/manual-credit`, creditData);
+      return response.data;
+    },
+    onSuccess: (_, { employeeUserId }) => {
+      // Invalidate employee transactions query
+      queryClient.invalidateQueries({ queryKey: ['employees', employeeUserId, 'transactions'] });
+    },
+  });
+};

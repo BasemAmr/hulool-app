@@ -1,34 +1,34 @@
-// Admin view of employee dashboard client card
+// Employee view of client dashboard card - grouped by client for employee's own tasks
 import { useTranslation } from 'react-i18next';
-import { createPortal } from 'react-dom';
 import { Link } from 'react-router-dom';
 import { useQueryClient } from '@tanstack/react-query';
-import { useModalStore } from '../stores/modalStore';
-import { useDrawerStore } from '../stores/drawerStore';
-import { useToast } from '../hooks/useToast';
-import { useDeferTask, useResumeTask, useUpdateTask, useCancelTask } from '../queries/taskQueries';
-import { useAdminSubmitTaskForReview } from './employeeManagementQueries';
-import type { Task } from '../api/types';
+import { useModalStore } from '../../stores/modalStore';
+import { useDrawerStore } from '../../stores/drawerStore';
+import { useToast } from '../../hooks/useToast';
+import { useDeferTask, useResumeTask, useUpdateTask, useCancelTask, useRestoreTask } from '../../queries/taskQueries';
+import type { Task } from '../../api/types';
 import { Dropdown } from 'react-bootstrap';
 import {
-  Receipt,
-  MoreVertical,
   AlertTriangle,
   Eye,
   MessageSquare,
   ListChecks,
-  Upload,
   Pause,
   Play,
-  X
+  X,
+  MoreVertical,
+  RotateCcw
 } from 'lucide-react';
-import WhatsAppIcon from '../assets/images/whats.svg';
-import GoogleDriveIcon from '../assets/images/googe_drive.svg';
-import type { ClientWithTasksAndStats } from './employeeManagementQueries';
+import WhatsAppIcon from '../../assets/images/whats.svg';
+import GoogleDriveIcon from '../../assets/images/googe_drive.svg';
 import { useRef, useEffect, useState } from 'react';
 
-interface AdminEmployeeDashboardClientCardProps {
-  data: ClientWithTasksAndStats;
+interface EmployeeClientCardProps {
+  clientName: string;
+  clientPhone: string;
+  clientId: number;
+  googleDriveLink?: string;
+  tasks: Task[];
   index?: number;
   alternatingColors: string[];
   onWidthCalculated?: (width: string) => void;
@@ -54,8 +54,16 @@ const formatDaysElapsed = (dateString: string): string => {
   return `${diffDays} يوم`;
 };
 
-const AdminEmployeeDashboardClientCard = ({ data, index = 0, alternatingColors, onWidthCalculated }: AdminEmployeeDashboardClientCardProps) => {
-  const { client, tasks } = data;
+const EmployeeClientCard = ({
+  clientName,
+  clientPhone,
+  clientId,
+  googleDriveLink,
+  tasks,
+  index = 0,
+  alternatingColors,
+  onWidthCalculated
+}: EmployeeClientCardProps) => {
   const { t } = useTranslation();
   const openModal = useModalStore(state => state.openModal);
   const { openDrawer } = useDrawerStore();
@@ -64,15 +72,11 @@ const AdminEmployeeDashboardClientCard = ({ data, index = 0, alternatingColors, 
   const deferTaskMutation = useDeferTask();
   const resumeTaskMutation = useResumeTask();
   const updateTaskMutation = useUpdateTask();
-  const submitForReviewMutation = useAdminSubmitTaskForReview();
   const cancelTaskMutation = useCancelTask();
+  const restoreTaskMutation = useRestoreTask();
   const cardRef = useRef<HTMLDivElement>(null);
   const taskRowRefs = useRef<(HTMLTableRowElement | null)[]>([]);
-  const cardBodyRef = useRef<HTMLDivElement>(null);
-  const dropdownMenuRef = useRef<HTMLDivElement>(null);
   const [isHovered, setIsHovered] = useState(false);
-  const [activeDropdownTaskId, setActiveDropdownTaskId] = useState<number | null>(null);
-  const [dropdownPosition, setDropdownPosition] = useState<{ top: number; left: number } | null>(null);
 
   useEffect(() => {
     if (isHovered && cardRef.current && taskRowRefs.current.length > 0 && onWidthCalculated) {
@@ -93,36 +97,13 @@ const AdminEmployeeDashboardClientCard = ({ data, index = 0, alternatingColors, 
         onWidthCalculated('100%');
       }
     }
-  }, [isHovered]);
-
-  // Handle click outside to close dropdown
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (activeDropdownTaskId && dropdownPosition) {
-        const dropdownToggle = document.querySelector(`[data-task-id="${activeDropdownTaskId}"] .dropdown-toggle`);
-        if (dropdownMenuRef.current && dropdownToggle &&
-            !dropdownMenuRef.current.contains(event.target as Node) &&
-            !dropdownToggle.contains(event.target as Node)) {
-          setActiveDropdownTaskId(null);
-          setDropdownPosition(null);
-        }
-      }
-    };
-
-    if (activeDropdownTaskId) {
-      document.addEventListener('mousedown', handleClickOutside);
-    }
-
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
-    };
-  }, [activeDropdownTaskId, dropdownPosition]);
+  }, [isHovered, onWidthCalculated]);
 
   const handleAction = (mutation: any, task: Task, successKey: string, successMessageKey: string, errorKey: string) => {
     mutation.mutate({ id: task.id }, {
       onSuccess: () => {
         success(t(successKey), t(successMessageKey, { taskName: task.task_name || t(`type.${task.type}`) }));
-        queryClient.invalidateQueries({ queryKey: ['dashboard'] });
+        queryClient.invalidateQueries({ queryKey: ['dashboard', 'clientsWithActiveTasks'] });
       },
       onError: (err: any) => {
         error(t('common.error'), err.message || t(errorKey));
@@ -133,34 +114,20 @@ const AdminEmployeeDashboardClientCard = ({ data, index = 0, alternatingColors, 
   const handleDefer = (task: Task) => handleAction(deferTaskMutation, task, 'tasks.deferSuccess', 'tasks.deferSuccessMessage', 'tasks.deferError');
   const handleResume = (task: Task) => handleAction(resumeTaskMutation, task, 'tasks.resumeSuccess', 'tasks.resumeSuccessMessage', 'tasks.resumeError');
   
-  const handleSubmitForReview = (task: Task) => {
-    submitForReviewMutation.mutate(task.id, {
-      onSuccess: async (response) => {
-        success('تم الإرسال', `تم إرسال المهمة "${task.task_name || 'مهمة'}" للمراجعة بنجاح`);
-        
-        // Invalidate queries and wait for them to settle
-        await queryClient.invalidateQueries({ queryKey: ['dashboard'] });
-        await queryClient.invalidateQueries({ queryKey: ['tasks'] });
-        
-        // Small delay to ensure database commit is complete
-        await new Promise(resolve => setTimeout(resolve, 100));
-        
-        // Use response data with updated status for approval modal
-        const updatedTask = {
-          ...task,
-          status: 'Pending Review' as const,
-          id: response?.data?.id || task.id
-        };
-        
-        // Open approval modal with updated task
-        openModal('approval', { task: updatedTask });
+  const handleRestore = (task: Task) => {
+    restoreTaskMutation.mutate({ id: task.id }, {
+      onSuccess: () => {
+        success('تمت الاستعادة', `تم استعادة المهمة "${task.task_name || t(`type.${task.type}`)}" إلى حالة جديدة`);
+        queryClient.invalidateQueries({ queryKey: ['dashboard', 'clientsWithActiveTasks'] });
       },
       onError: (err: any) => {
-        error('خطأ', err.message || 'حدث خطأ أثناء إرسال المهمة للمراجعة');
+        error('خطأ', err.message || 'حدث خطأ أثناء استعادة المهمة');
       }
     });
   };
 
+  const handleComplete = (task: Task) => openModal('taskCompletion', { task });
+  const handleShowRequirements = (task: Task) => openModal('requirements', { task });
   const handleCancelTask = (task: Task) => {
     cancelTaskMutation.mutate({
       id: task.id,
@@ -170,7 +137,7 @@ const AdminEmployeeDashboardClientCard = ({ data, index = 0, alternatingColors, 
     }, {
       onSuccess: () => {
         success('تم الإلغاء', 'تم إلغاء المهمة بنجاح');
-        queryClient.invalidateQueries({ queryKey: ['dashboard'] });
+        queryClient.invalidateQueries({ queryKey: ['dashboard', 'clientsWithActiveTasks'] });
       },
       onError: (err: any) => {
         error('خطأ', err.message || 'حدث خطأ أثناء إلغاء المهمة');
@@ -178,11 +145,7 @@ const AdminEmployeeDashboardClientCard = ({ data, index = 0, alternatingColors, 
     });
   };
 
-  const handleShowRequirements = (task: Task) => openModal('requirements', { task });
-
-  const handleAddTask = () => openModal('taskForm', { client });
-  const handleAddReceivable = () => openModal('manualReceivable', { client_id: client.id });
-  const handleRecordCredit = () => openModal('recordCreditModal', { client });
+  const handleViewSubtasks = (task: Task) => openModal('taskForm', { taskToEdit: task, client: { id: clientId, name: clientName } });
 
   const handleToggleUrgentTag = (task: Task) => {
     const isUrgent = task.tags?.some(tag => tag.name === 'قصوى');
@@ -223,15 +186,13 @@ const AdminEmployeeDashboardClientCard = ({ data, index = 0, alternatingColors, 
           isUrgent ? 'تم إزالة العلامة' : 'تمت الإضافة',
           isUrgent ? 'تم إزالة علامة العاجل من المهمة' : 'تم إضافة علامة العاجل للمهمة'
         );
-        queryClient.invalidateQueries({ queryKey: ['dashboard'] });
+        queryClient.invalidateQueries({ queryKey: ['dashboard', 'clientsWithActiveTasks'] });
       },
       onError: (err: any) => {
         error('خطأ', err.message || 'حدث خطأ أثناء تحديث علامة العاجل');
       }
     });
   };
-
-  const handleViewSubtasks = (task: Task) => openModal('taskForm', { taskToEdit: task, client: task.client });
 
   const isClientUrgent = tasks.some(task => task.tags?.some(tag => tag.name === 'قصوى'));
 
@@ -261,75 +222,21 @@ const AdminEmployeeDashboardClientCard = ({ data, index = 0, alternatingColors, 
   }
 
   const openGoogleDrive = () => {
-    if (client.google_drive_link) {
-      window.open(client.google_drive_link, '_blank');
+    if (googleDriveLink) {
+      window.open(googleDriveLink, '_blank');
     }
   };
 
   const openWhatsApp = () => {
-    const phoneNumber = client.phone.replace(/[^0-9]/g, '');
+    const phoneNumber = clientPhone.replace(/[^0-9]/g, '');
     const whatsappUrl = `https://wa.me/+966${phoneNumber}`;
     window.open(whatsappUrl, '_blank');
-  };
-
-  const HeaderDropdownSection = ({
-    handleAddTask,
-    handleAddReceivable,
-    handleRecordCredit
-  }: {
-    handleAddTask: () => void;
-    handleAddReceivable: () => void;
-    handleRecordCredit: () => void;
-  }) => {
-    return (
-      <Dropdown align="end">
-        <Dropdown.Toggle
-          as="button"
-          className="btn btn-outline-light btn-sm p-1 border-0 text-black"
-          style={{ background: 'none' }}
-        >
-          <MoreVertical size={14} />
-        </Dropdown.Toggle>
-
-        <Dropdown.Menu
-          style={{
-            fontSize: '0.85em',
-            direction: 'rtl',
-            textAlign: 'right',
-            zIndex: 1060,
-            position: 'absolute'
-          }}
-        >
-          <Dropdown.Item
-            onClick={() => handleAddTask()}
-            className="text-end"
-          >
-            <Receipt size={14} className="ms-2" />
-            إضافة مهمة
-          </Dropdown.Item>
-          <Dropdown.Item
-            onClick={() => handleAddReceivable()}
-            className="text-end"
-          >
-            <Receipt size={14} className="ms-2" />
-            إضافة مستحق
-          </Dropdown.Item>
-          <Dropdown.Item
-            onClick={() => handleRecordCredit()}
-            className="text-end"
-          >
-            <Receipt size={14} className="ms-2" />
-            إضافة دفعة
-          </Dropdown.Item>
-        </Dropdown.Menu>
-      </Dropdown>
-    );
   };
 
   return (
     <div
       ref={cardRef}
-      className="card h-100 shadow-sm dashboard-client-card"
+      className="card h-100 shadow-sm employee-client-card"
       style={{
         borderRadius: '0px',
         border: `3px solid ${borderColor}`,
@@ -369,22 +276,22 @@ const AdminEmployeeDashboardClientCard = ({ data, index = 0, alternatingColors, 
               <img src={WhatsAppIcon} alt="WhatsApp" width="16" height="16" />
             </button>
             <span style={{ fontSize: '0.85em' }}>
-              {client.phone}
+              {clientPhone}
             </span>
           </div>
 
           <div className="d-flex align-items-center justify-content-center gap-2">
             <Link
-              to={`/employee/clients/${client.id}`}
+              to={`/clients/${clientId}`}
               className="text-decoration-none fw-bold text-black"
               style={{ fontSize: '0.95em' }}
             >
-              {client.name}
+              {clientName}
             </Link>
             {isClientUrgent && (
               <AlertTriangle size={12} className="text-warning" />
             )}
-            {client.google_drive_link && (
+            {googleDriveLink && (
               <button
                 onClick={openGoogleDrive}
                 className="btn btn-sm btn-outline-light p-1 text-black border-0"
@@ -395,17 +302,12 @@ const AdminEmployeeDashboardClientCard = ({ data, index = 0, alternatingColors, 
             )}
           </div>
 
-          <HeaderDropdownSection
-            handleAddTask={handleAddTask}
-            handleAddReceivable={handleAddReceivable}
-            handleRecordCredit={handleRecordCredit}
-          />
+          <div style={{ width: 30 }} />
         </div>
       </div>
 
       {/* Body - Tasks Table */}
       <div
-        ref={cardBodyRef}
         className="card-body p-0"
         style={{
           position: 'relative',
@@ -567,34 +469,106 @@ const AdminEmployeeDashboardClientCard = ({ data, index = 0, alternatingColors, 
                         minWidth: '50px',
                         whiteSpace: 'nowrap'
                       }}
-                      data-task-id={task.id}
                     >
-                      <Dropdown show={activeDropdownTaskId === task.id} onToggle={(isOpen) => {
-                        if (isOpen) {
-                          setActiveDropdownTaskId(task.id);
-                          // Calculate position relative to trigger button
-                          const triggerElement = document.querySelector(`[data-task-id="${task.id}"] .dropdown-toggle`) as HTMLElement;
-                          if (triggerElement && cardBodyRef.current) {
-                            const triggerRect = triggerElement.getBoundingClientRect();
-                            const cardBodyRect = cardBodyRef.current.getBoundingClientRect();
-                            setDropdownPosition({
-                              top: triggerRect.bottom - cardBodyRect.top + 2,
-                              left: triggerRect.right - cardBodyRect.left - 120
-                            });
-                          }
-                        } else {
-                          setActiveDropdownTaskId(null);
-                          setDropdownPosition(null);
-                        }
-                      }}>
+                      <Dropdown align="end">
                         <Dropdown.Toggle
                           as="button"
                           className="btn btn-sm btn-outline-secondary p-1"
                           style={{ fontSize: '10px', lineHeight: 1 }}
-                          data-task-id={task.id}
                         >
                           <MoreVertical size={12} />
                         </Dropdown.Toggle>
+
+                        <Dropdown.Menu style={{ fontSize: '0.85em', direction: 'rtl', textAlign: 'right', zIndex: 1060 }}>
+                          {task.status === 'Completed' ? (
+                            <Dropdown.Item onClick={() => handleRestore(task)} className="text-end">
+                              <RotateCcw size={11} className="ms-2" />
+                              استعادة إلى جديد
+                            </Dropdown.Item>
+                          ) : (
+                            <Dropdown.Item 
+                              onClick={() => handleComplete(task)} 
+                              className="text-end"
+                            >
+                              <MessageSquare size={11} className="ms-2" />
+                              إكمال
+                            </Dropdown.Item>
+                          )}
+
+                          {/* Follow-up */}
+                          <Dropdown.Item
+                            onClick={() => openDrawer('taskFollowUp', { 
+                              taskId: task.id,
+                              taskName: task.task_name || undefined,
+                              clientName: clientName
+                            })}
+                            className="text-end"
+                          >
+                            <MessageSquare size={14} className="ms-2" />
+                            المراسلات والمتابعة
+                          </Dropdown.Item>
+
+                          {/* Requirements */}
+                          {task.requirements && task.requirements.length > 0 && (
+                            <Dropdown.Item
+                              onClick={() => handleShowRequirements(task)}
+                              className="text-end"
+                            >
+                              <ListChecks size={14} className="ms-2" />
+                              عرض المتطلبات
+                            </Dropdown.Item>
+                          )}
+
+                          {/* View Subtasks */}
+                          <Dropdown.Item
+                            onClick={() => handleViewSubtasks(task)}
+                            className="text-end"
+                          >
+                            <Eye size={14} className="ms-2" />
+                            المهام الفرعية
+                          </Dropdown.Item>
+
+                          <Dropdown.Divider />
+
+                          {/* Defer/Resume */}
+                          {!isDeferred ? (
+                            <Dropdown.Item
+                              onClick={() => handleDefer(task)}
+                              className="text-end"
+                            >
+                              <Pause size={14} className="ms-2" />
+                              تأجيل المهمة
+                            </Dropdown.Item>
+                          ) : (
+                            <Dropdown.Item
+                              onClick={() => handleResume(task)}
+                              className="text-end"
+                            >
+                              <Play size={14} className="ms-2" />
+                              استئناف المهمة
+                            </Dropdown.Item>
+                          )}
+
+                          {/* Toggle Urgent */}
+                          <Dropdown.Item
+                            onClick={() => handleToggleUrgentTag(task)}
+                            className="text-end"
+                          >
+                            <AlertTriangle size={14} className="ms-2" />
+                            {isUrgent ? 'إزالة علامة العاجل' : 'وضع علامة عاجل'}
+                          </Dropdown.Item>
+
+                          <Dropdown.Divider />
+
+                          {/* Cancel Task */}
+                          <Dropdown.Item
+                            onClick={() => handleCancelTask(task)}
+                            className="text-end text-danger"
+                          >
+                            <X size={14} className="ms-2" />
+                            إلغاء المهمة
+                          </Dropdown.Item>
+                        </Dropdown.Menu>
                       </Dropdown>
                     </td>
                   </tr>
@@ -603,145 +577,9 @@ const AdminEmployeeDashboardClientCard = ({ data, index = 0, alternatingColors, 
             </tbody>
           </table>
         </div>
-
-        {/* Render active dropdown menu via createPortal */}
-        {(() => {
-          const task = tasks.find(t => t.id === activeDropdownTaskId);
-          if (!task || !dropdownPosition || !cardBodyRef.current) return null;
-
-          return createPortal(
-            <div ref={dropdownMenuRef}>
-              <Dropdown.Menu
-                show
-                align="end"
-                className="text-end"
-                style={{
-                  zIndex: 9999,
-                  minWidth: '200px',
-                  fontSize: '0.85em',
-                  position: 'absolute',
-                  top: dropdownPosition.top,
-                  left: `calc(${dropdownPosition.left}px + 50px)`,
-                  marginTop: '2px',
-                  direction: 'rtl'
-                }}
-              >
-                {/* Follow-up */}
-                <Dropdown.Item
-                  onClick={() => {
-                    openDrawer('taskFollowUp', { 
-                      taskId: task.id,
-                      taskName: task.task_name || undefined,
-                      clientName: task.client?.name || client.name
-                    });
-                    setActiveDropdownTaskId(null);
-                  }}
-                  className="text-end"
-                >
-                  <MessageSquare size={14} className="ms-2" />
-                  المراسلات والمتابعة
-                </Dropdown.Item>
-
-                {/* Requirements */}
-                {task.requirements && task.requirements.length > 0 && (
-                  <Dropdown.Item
-                    onClick={() => {
-                      handleShowRequirements(task);
-                      setActiveDropdownTaskId(null);
-                    }}
-                    className="text-end"
-                  >
-                    <ListChecks size={14} className="ms-2" />
-                    عرض المتطلبات
-                  </Dropdown.Item>
-                )}
-
-                {/* Submit for Review */}
-                {task.status === 'New' && (
-                  <Dropdown.Item
-                    onClick={() => {
-                      handleSubmitForReview(task);
-                      setActiveDropdownTaskId(null);
-                    }}
-                    className="text-end"
-                  >
-                    <Upload size={14} className="ms-2" />
-                    إرسال للمراجعة
-                  </Dropdown.Item>
-                )}
-
-                {/* View Subtasks */}
-                <Dropdown.Item
-                  onClick={() => {
-                    handleViewSubtasks(task);
-                    setActiveDropdownTaskId(null);
-                  }}
-                  className="text-end"
-                >
-                  <Eye size={14} className="ms-2" />
-                  المهام الفرعية
-                </Dropdown.Item>
-
-                <Dropdown.Divider />
-
-                {/* Defer/Resume */}
-                {task.status !== 'Deferred' ? (
-                  <Dropdown.Item
-                    onClick={() => {
-                      handleDefer(task);
-                      setActiveDropdownTaskId(null);
-                    }}
-                    className="text-end"
-                  >
-                    <Pause size={14} className="ms-2" />
-                    تأجيل المهمة
-                  </Dropdown.Item>
-                ) : (
-                  <Dropdown.Item
-                    onClick={() => {
-                      handleResume(task);
-                      setActiveDropdownTaskId(null);
-                    }}
-                    className="text-end"
-                  >
-                    <Play size={14} className="ms-2" />
-                    استئناف المهمة
-                  </Dropdown.Item>
-                )}
-
-                {/* Toggle Urgent */}
-                <Dropdown.Item
-                  onClick={() => {
-                    handleToggleUrgentTag(task);
-                    setActiveDropdownTaskId(null);
-                  }}
-                  className="text-end"
-                >
-                  <AlertTriangle size={14} className="ms-2" />
-                  {task.tags?.some(tag => tag.name === 'قصوى') ? 'إزالة علامة العاجل' : 'وضع علامة عاجل'}
-                </Dropdown.Item>
-
-                <Dropdown.Divider />
-
-                {/* Cancel Task */}
-                <Dropdown.Item
-                  onClick={() => {
-                    handleCancelTask(task);
-                    setActiveDropdownTaskId(null);
-                  }}
-                  className="text-end text-danger"
-                >
-                  <X size={14} className="ms-2" />
-                  إلغاء المهمة
-                </Dropdown.Item>
-              </Dropdown.Menu>
-            </div>,
-            cardBodyRef.current
-          );
-        })()}
       </div>
     </div>
   );
 };
 
-export default AdminEmployeeDashboardClientCard;
+export default EmployeeClientCard;

@@ -1,37 +1,67 @@
-// Admin view of employee dashboard client card
-import { useTranslation } from 'react-i18next';
+// Admin view: Groups tasks by employee, then by client within each employee
+import { useState, useRef, useMemo, useEffect } from 'react';
 import { createPortal } from 'react-dom';
-import { Link } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
+import type { Task, Client } from '../../api/types';
+import { useModalStore } from '../../stores/modalStore';
 import { useQueryClient } from '@tanstack/react-query';
-import { useModalStore } from '../stores/modalStore';
-import { useDrawerStore } from '../stores/drawerStore';
-import { useToast } from '../hooks/useToast';
-import { useDeferTask, useResumeTask, useUpdateTask, useCancelTask } from '../queries/taskQueries';
-import { useAdminSubmitTaskForReview } from './employeeManagementQueries';
-import type { Task } from '../api/types';
+import { MoreVertical, Pause, Play, X, ListChecks, MessageSquare, AlertTriangle, Eye, Upload, Receipt } from 'lucide-react';
 import { Dropdown } from 'react-bootstrap';
-import {
-  Receipt,
-  MoreVertical,
-  AlertTriangle,
-  Eye,
-  MessageSquare,
-  ListChecks,
-  Upload,
-  Pause,
-  Play,
-  X
-} from 'lucide-react';
-import WhatsAppIcon from '../assets/images/whats.svg';
-import GoogleDriveIcon from '../assets/images/googe_drive.svg';
-import type { ClientWithTasksAndStats } from './employeeManagementQueries';
-import { useRef, useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
+import { useToast } from '../../hooks/useToast';
+import { useDeferTask, useResumeTask, useCancelTask, useUpdateTask } from '../../queries/taskQueries';
+import { useDrawerStore } from '../../stores/drawerStore';
+import { useAdminSubmitTaskForReview } from '../../employee_management_temp_page/employeeManagementQueries';
+import { 
+  DndContext, 
+  PointerSensor, 
+  KeyboardSensor, 
+  useSensor, 
+  useSensors, 
+  closestCenter, 
+  type DragEndEvent
+} from '@dnd-kit/core';
+import { arrayMove, sortableKeyboardCoordinates, SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable';
+import { useSortable } from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
+import { FloatingCardWrapper } from '../common/FloatingCardWrapper';
 
-interface AdminEmployeeDashboardClientCardProps {
-  data: ClientWithTasksAndStats;
-  index?: number;
-  alternatingColors: string[];
-  onWidthCalculated?: (width: string) => void;
+export interface GroupedClientsByType {
+  [key: string]: Array<{
+    client_id: number;
+    task_name: string;
+    type: string;
+    status: string;
+    amount: number;
+    expense_amount: number;
+    net_earning: number;
+    start_date: string;
+    end_date: string;
+    client: {
+      id: string | number;
+      name: string;
+      phone: string;
+    };
+    id: number;
+    subtasks: Array<{
+      id: number;
+      description: string;
+      amount: number;
+      is_completed: boolean;
+    }>;
+    tags?: Array<{ name: string }>;
+  }>;
+}
+
+export interface EmployeeTasksGrouped {
+  employee_id: number | string;
+  employee_name: string;
+  grouped_clients: GroupedClientsByType;
+}
+
+export interface ClientWithTasksAndStats {
+  client: Client;
+  tasks: Task[];
 }
 
 const hexToRgba = (hex: string, opacity: number): string => {
@@ -54,7 +84,86 @@ const formatDaysElapsed = (dateString: string): string => {
   return `${diffDays} يوم`;
 };
 
-const AdminEmployeeDashboardClientCard = ({ data, index = 0, alternatingColors, onWidthCalculated }: AdminEmployeeDashboardClientCardProps) => {
+// Sortable Client Card for drag-and-drop
+interface SortableAdminEmployeeClientCardProps {
+  clientData: ClientWithTasksAndStats;
+  containerType: string;
+  alternatingColors: string[];
+  index: number;
+  onAssign?: (task: Task) => void;
+}
+
+const SortableAdminEmployeeClientCard = ({
+  clientData,
+  containerType,
+  alternatingColors,
+  index,
+  onAssign
+}: SortableAdminEmployeeClientCardProps) => {
+  const [dynamicWidth, setDynamicWidth] = useState<string | undefined>(undefined);
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: `${containerType}-${clientData.client.id}` });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1,
+  };
+
+  return (
+    <div ref={setNodeRef} style={style} {...attributes}>
+      {/* Drag Handle */}
+      <div
+        {...listeners}
+        style={{
+          cursor: 'grab',
+          padding: '6px 8px',
+          backgroundColor: '#6c757d',
+          borderBottom: '1px solid rgba(0,0,0,0.1)',
+          fontSize: '10px',
+          color: '#fff',
+          textAlign: 'center',
+          userSelect: 'none'
+        }}
+      >
+        ⋮⋮ اسحب لإعادة الترتيب
+      </div>
+      
+      {/* WRAP with FloatingCardWrapper */}
+      <FloatingCardWrapper dynamicWidth={dynamicWidth}>
+        <AdminEmployeeClientCard
+          data={clientData}
+          alternatingColors={alternatingColors}
+          index={index}
+          onAssign={onAssign}
+          onWidthCalculated={setDynamicWidth} // Pass callback
+        />
+      </FloatingCardWrapper>
+    </div>
+  );
+};
+
+// Admin Employee Client Card
+interface AdminEmployeeClientCardProps {
+  data: ClientWithTasksAndStats;
+  alternatingColors: string[];
+  index: number;
+  onAssign?: (task: Task) => void;
+  onWidthCalculated?: (width: string) => void;
+}
+
+const AdminEmployeeClientCard = ({
+  data,
+  alternatingColors,
+  index,
+  onWidthCalculated
+}: AdminEmployeeClientCardProps) => {
   const { client, tasks } = data;
   const { t } = useTranslation();
   const openModal = useModalStore(state => state.openModal);
@@ -63,9 +172,9 @@ const AdminEmployeeDashboardClientCard = ({ data, index = 0, alternatingColors, 
   const queryClient = useQueryClient();
   const deferTaskMutation = useDeferTask();
   const resumeTaskMutation = useResumeTask();
+  const cancelTaskMutation = useCancelTask();
   const updateTaskMutation = useUpdateTask();
   const submitForReviewMutation = useAdminSubmitTaskForReview();
-  const cancelTaskMutation = useCancelTask();
   const cardRef = useRef<HTMLDivElement>(null);
   const taskRowRefs = useRef<(HTMLTableRowElement | null)[]>([]);
   const cardBodyRef = useRef<HTMLDivElement>(null);
@@ -122,7 +231,7 @@ const AdminEmployeeDashboardClientCard = ({ data, index = 0, alternatingColors, 
     mutation.mutate({ id: task.id }, {
       onSuccess: () => {
         success(t(successKey), t(successMessageKey, { taskName: task.task_name || t(`type.${task.type}`) }));
-        queryClient.invalidateQueries({ queryKey: ['dashboard'] });
+        queryClient.invalidateQueries({ queryKey: ['dashboard', 'clientsWithActiveTasks'] });
       },
       onError: (err: any) => {
         error(t('common.error'), err.message || t(errorKey));
@@ -137,22 +246,16 @@ const AdminEmployeeDashboardClientCard = ({ data, index = 0, alternatingColors, 
     submitForReviewMutation.mutate(task.id, {
       onSuccess: async (response) => {
         success('تم الإرسال', `تم إرسال المهمة "${task.task_name || 'مهمة'}" للمراجعة بنجاح`);
-        
-        // Invalidate queries and wait for them to settle
-        await queryClient.invalidateQueries({ queryKey: ['dashboard'] });
+        await queryClient.invalidateQueries({ queryKey: ['dashboard', 'clientsWithActiveTasks'] });
         await queryClient.invalidateQueries({ queryKey: ['tasks'] });
-        
-        // Small delay to ensure database commit is complete
         await new Promise(resolve => setTimeout(resolve, 100));
         
-        // Use response data with updated status for approval modal
         const updatedTask = {
           ...task,
           status: 'Pending Review' as const,
           id: response?.data?.id || task.id
         };
         
-        // Open approval modal with updated task
         openModal('approval', { task: updatedTask });
       },
       onError: (err: any) => {
@@ -170,7 +273,7 @@ const AdminEmployeeDashboardClientCard = ({ data, index = 0, alternatingColors, 
     }, {
       onSuccess: () => {
         success('تم الإلغاء', 'تم إلغاء المهمة بنجاح');
-        queryClient.invalidateQueries({ queryKey: ['dashboard'] });
+        queryClient.invalidateQueries({ queryKey: ['dashboard', 'clientsWithActiveTasks'] });
       },
       onError: (err: any) => {
         error('خطأ', err.message || 'حدث خطأ أثناء إلغاء المهمة');
@@ -179,10 +282,7 @@ const AdminEmployeeDashboardClientCard = ({ data, index = 0, alternatingColors, 
   };
 
   const handleShowRequirements = (task: Task) => openModal('requirements', { task });
-
-  const handleAddTask = () => openModal('taskForm', { client });
-  const handleAddReceivable = () => openModal('manualReceivable', { client_id: client.id });
-  const handleRecordCredit = () => openModal('recordCreditModal', { client });
+  const handleViewSubtasks = (task: Task) => openModal('taskForm', { taskToEdit: task, client: task.client });
 
   const handleToggleUrgentTag = (task: Task) => {
     const isUrgent = task.tags?.some(tag => tag.name === 'قصوى');
@@ -223,15 +323,13 @@ const AdminEmployeeDashboardClientCard = ({ data, index = 0, alternatingColors, 
           isUrgent ? 'تم إزالة العلامة' : 'تمت الإضافة',
           isUrgent ? 'تم إزالة علامة العاجل من المهمة' : 'تم إضافة علامة العاجل للمهمة'
         );
-        queryClient.invalidateQueries({ queryKey: ['dashboard'] });
+        queryClient.invalidateQueries({ queryKey: ['dashboard', 'clientsWithActiveTasks'] });
       },
       onError: (err: any) => {
         error('خطأ', err.message || 'حدث خطأ أثناء تحديث علامة العاجل');
       }
     });
   };
-
-  const handleViewSubtasks = (task: Task) => openModal('taskForm', { taskToEdit: task, client: task.client });
 
   const isClientUrgent = tasks.some(task => task.tags?.some(tag => tag.name === 'قصوى'));
 
@@ -260,96 +358,21 @@ const AdminEmployeeDashboardClientCard = ({ data, index = 0, alternatingColors, 
     row2Color = hexToRgba(alternatingColors[1], 1);
   }
 
-  const openGoogleDrive = () => {
-    if (client.google_drive_link) {
-      window.open(client.google_drive_link, '_blank');
-    }
-  };
-
-  const openWhatsApp = () => {
-    const phoneNumber = client.phone.replace(/[^0-9]/g, '');
-    const whatsappUrl = `https://wa.me/+966${phoneNumber}`;
-    window.open(whatsappUrl, '_blank');
-  };
-
-  const HeaderDropdownSection = ({
-    handleAddTask,
-    handleAddReceivable,
-    handleRecordCredit
-  }: {
-    handleAddTask: () => void;
-    handleAddReceivable: () => void;
-    handleRecordCredit: () => void;
-  }) => {
-    return (
-      <Dropdown align="end">
-        <Dropdown.Toggle
-          as="button"
-          className="btn btn-outline-light btn-sm p-1 border-0 text-black"
-          style={{ background: 'none' }}
-        >
-          <MoreVertical size={14} />
-        </Dropdown.Toggle>
-
-        <Dropdown.Menu
-          style={{
-            fontSize: '0.85em',
-            direction: 'rtl',
-            textAlign: 'right',
-            zIndex: 1060,
-            position: 'absolute'
-          }}
-        >
-          <Dropdown.Item
-            onClick={() => handleAddTask()}
-            className="text-end"
-          >
-            <Receipt size={14} className="ms-2" />
-            إضافة مهمة
-          </Dropdown.Item>
-          <Dropdown.Item
-            onClick={() => handleAddReceivable()}
-            className="text-end"
-          >
-            <Receipt size={14} className="ms-2" />
-            إضافة مستحق
-          </Dropdown.Item>
-          <Dropdown.Item
-            onClick={() => handleRecordCredit()}
-            className="text-end"
-          >
-            <Receipt size={14} className="ms-2" />
-            إضافة دفعة
-          </Dropdown.Item>
-        </Dropdown.Menu>
-      </Dropdown>
-    );
-  };
-
   return (
     <div
       ref={cardRef}
-      className="card h-100 shadow-sm dashboard-client-card"
+      className="card h-100 shadow-sm admin-employee-client-card"
       style={{
         borderRadius: '0px',
         border: `3px solid ${borderColor}`,
         overflow: 'visible',
         position: 'relative',
         transition: 'all 0.3s ease-in-out',
-        transform: 'scale(1)',
+        display: 'flex',
+        flexDirection: 'column'
       }}
-      onMouseEnter={(e) => {
-        setIsHovered(true);
-        e.currentTarget.style.transform = 'scale(1.02)';
-        e.currentTarget.style.zIndex = '10';
-        e.currentTarget.style.boxShadow = '0 8px 25px rgba(0,0,0,0.15)';
-      }}
-      onMouseLeave={(e) => {
-        setIsHovered(false);
-        e.currentTarget.style.transform = 'scale(1)';
-        e.currentTarget.style.zIndex = '1';
-        e.currentTarget.style.boxShadow = '';
-      }}
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
     >
       {/* Header */}
       <div
@@ -361,13 +384,6 @@ const AdminEmployeeDashboardClientCard = ({ data, index = 0, alternatingColors, 
       >
         <div className="d-flex justify-content-between align-items-center">
           <div className="d-flex align-items-center gap-2">
-            <button
-              onClick={openWhatsApp}
-              className="btn btn-sm btn-outline-light p-1 border-0"
-              title="واتساب"
-            >
-              <img src={WhatsAppIcon} alt="WhatsApp" width="16" height="16" />
-            </button>
             <span style={{ fontSize: '0.85em' }}>
               {client.phone}
             </span>
@@ -375,7 +391,7 @@ const AdminEmployeeDashboardClientCard = ({ data, index = 0, alternatingColors, 
 
           <div className="d-flex align-items-center justify-content-center gap-2">
             <Link
-              to={`/employee/clients/${client.id}`}
+              to={`/clients/${client.id}`}
               className="text-decoration-none fw-bold text-black"
               style={{ fontSize: '0.95em' }}
             >
@@ -384,22 +400,32 @@ const AdminEmployeeDashboardClientCard = ({ data, index = 0, alternatingColors, 
             {isClientUrgent && (
               <AlertTriangle size={12} className="text-warning" />
             )}
-            {client.google_drive_link && (
-              <button
-                onClick={openGoogleDrive}
-                className="btn btn-sm btn-outline-light p-1 text-black border-0"
-                title="Google Drive"
-              >
-                <img src={GoogleDriveIcon} alt="Google Drive" width="16" height="16" />
-              </button>
-            )}
           </div>
 
-          <HeaderDropdownSection
-            handleAddTask={handleAddTask}
-            handleAddReceivable={handleAddReceivable}
-            handleRecordCredit={handleRecordCredit}
-          />
+          <Dropdown align="end">
+            <Dropdown.Toggle
+              as="button"
+              className="btn btn-outline-light btn-sm p-1 border-0 text-black"
+              style={{ background: 'none' }}
+            >
+              <MoreVertical size={14} />
+            </Dropdown.Toggle>
+
+            <Dropdown.Menu
+              style={{
+                fontSize: '0.85em',
+                direction: 'rtl',
+                textAlign: 'right',
+                zIndex: 1060,
+                position: 'absolute'
+              }}
+            >
+              <Dropdown.Item onClick={() => openModal('taskForm', { client })} className="text-end">
+                <Receipt size={14} className="ms-2" />
+                إضافة مهمة
+              </Dropdown.Item>
+            </Dropdown.Menu>
+          </Dropdown>
         </div>
       </div>
 
@@ -411,14 +437,15 @@ const AdminEmployeeDashboardClientCard = ({ data, index = 0, alternatingColors, 
           position: 'relative',
           backgroundColor: row1Color,
           overflow: 'visible',
+          display: 'flex',
+          flexDirection: 'column'
         }}
       >
         <div
           className="table-responsive"
           style={{
-            overflow: 'visible',
-            position: 'relative',
-            fontSize: '1.5em'
+            overflow: 'auto',
+            position: 'relative'
           }}
         >
           <table className="table table-sm mb-0">
@@ -591,7 +618,7 @@ const AdminEmployeeDashboardClientCard = ({ data, index = 0, alternatingColors, 
                           as="button"
                           className="btn btn-sm btn-outline-secondary p-1"
                           style={{ fontSize: '10px', lineHeight: 1 }}
-                          data-task-id={task.id}
+                        //   data-task-id={task.id}
                         >
                           <MoreVertical size={12} />
                         </Dropdown.Toggle>
@@ -744,4 +771,178 @@ const AdminEmployeeDashboardClientCard = ({ data, index = 0, alternatingColors, 
   );
 };
 
-export default AdminEmployeeDashboardClientCard;
+interface EmployeeTasksColumnProps {
+  groupedByEmployee: EmployeeTasksGrouped[];
+  onAssign?: (task: Task) => void;
+  alternatingColors?: string[];
+}
+
+const EmployeeTasksColumn: React.FC<EmployeeTasksColumnProps> = ({
+  groupedByEmployee,
+  onAssign,
+  alternatingColors: propAlternatingColors
+}) => {
+  const [clientTasksMap, setClientTasksMap] = useState<Map<number | string, ClientWithTasksAndStats[]>>(new Map());
+
+  // Group employees and their clients
+  useMemo(() => {
+    const newMap = new Map<number | string, ClientWithTasksAndStats[]>();
+
+    groupedByEmployee.forEach((employeeGroup) => {
+      const clientsData: ClientWithTasksAndStats[] = [];
+
+      Object.entries(employeeGroup.grouped_clients).forEach(([_type, clients]) => {
+        clients.forEach((clientRaw: any) => {
+          const clientId = clientRaw.client.id;
+          const existingClient = clientsData.find(c => c.client.id === clientId);
+
+          if (existingClient) {
+            existingClient.tasks.push(clientRaw as unknown as Task);
+          } else {
+            clientsData.push({
+              client: clientRaw.client,
+              tasks: [clientRaw as unknown as Task]
+            });
+          }
+        });
+      });
+
+      if (clientsData.length > 0) {
+        newMap.set(employeeGroup.employee_id, clientsData);
+      }
+    });
+
+    setClientTasksMap(newMap);
+  }, [groupedByEmployee]);
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, {
+      activationConstraint: {
+        distance: 8,
+      },
+    }),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates
+    })
+  );
+
+  const handleDragEnd = (event: DragEndEvent, employeeId: number | string) => {
+    const { active, over } = event;
+
+    if (!active || !over || active.id === over.id) {
+      return;
+    }
+
+    const clients = clientTasksMap.get(employeeId);
+    if (!clients) return;
+
+    const [activePrefix, activeClientId] = active.id.toString().split('-');
+    const [overPrefix, overClientId] = over.id.toString().split('-');
+
+    if (activePrefix !== 'employee' || overPrefix !== 'employee') {
+      return;
+    }
+
+    const oldIndex = clients.findIndex(c => c.client.id.toString() === activeClientId);
+    const newIndex = clients.findIndex(c => c.client.id.toString() === overClientId);
+
+    if (oldIndex !== -1 && newIndex !== -1 && oldIndex !== newIndex) {
+      const reorderedItems = arrayMove(clients, oldIndex, newIndex);
+      setClientTasksMap(new Map(clientTasksMap.set(employeeId, reorderedItems)));
+    }
+  };
+
+  if (!groupedByEmployee || groupedByEmployee.length === 0) {
+    return (
+      <div className="empty-state py-5 text-center">
+        <div className="empty-icon mb-3">
+          <i className="fas fa-clipboard-list fa-3x text-gray-400"></i>
+        </div>
+        <p className="empty-description text-muted mb-0">
+          لا توجد مهام موظفين
+        </p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="employee-tasks-column-container" style={{ 
+        display: 'flex', 
+        flexDirection: 'column', 
+        gap: '0.75rem', 
+        width: '100%',
+        overflow: 'visible',
+        position: 'relative',
+        zIndex: 1
+    }}>
+      {Array.from(clientTasksMap.entries()).map(([employeeId, clients]) => {
+        const employeeGroup = groupedByEmployee.find(eg => eg.employee_id === employeeId);
+        if (!employeeGroup) return null;
+
+        const alternatingColors = propAlternatingColors || ['#e3f2fd', '#bbdefb'];
+
+        return (
+          <div key={employeeId} className="employee-section" style={{ 
+              display: 'flex', 
+              flexDirection: 'column', 
+              gap: '0.75rem',
+              overflow: 'visible'
+          }}>
+            <DndContext
+              sensors={sensors}
+              collisionDetection={closestCenter}
+              onDragEnd={(event) => handleDragEnd(event, employeeId)}
+            >
+              <div style={{ 
+                  display: 'flex', 
+                  flexDirection: 'column', 
+                  gap: '0.75rem', 
+                  overflow: 'visible', 
+                  position: 'relative', 
+                  zIndex: 1
+              }}>
+                {clients.length === 0 ? (
+                  <div className="empty-state py-5 text-center">
+                    <div className="empty-icon mb-3">
+                      <i className="fas fa-clipboard-list fa-3x text-gray-400"></i>
+                    </div>
+                    <p className="empty-description text-muted mb-0">
+                      لا توجد مهام نشطة
+                    </p>
+                  </div>
+                ) : (
+                  <>
+                    <SortableContext
+                      items={clients.map(c => `employee-${c.client.id}`)}
+                      strategy={verticalListSortingStrategy}
+                    >
+                      {clients.map((clientData, index) => (
+                        <div key={`${employeeId}-client-${clientData.client.id}`} style={{
+                          overflow: 'visible',
+                          position: 'relative',
+                          zIndex: 50 - index,
+                          isolation: 'auto',
+                          flexShrink: 0
+                        }}>
+                          <SortableAdminEmployeeClientCard
+                            clientData={clientData}
+                            containerType="employee"
+                            alternatingColors={alternatingColors}
+                            index={index}
+                            onAssign={onAssign}
+                          />
+                        </div>
+                      ))}
+                    </SortableContext>
+                  </>
+                )}
+              </div>
+            </DndContext>
+          </div>
+        );
+      })}
+    </div>
+  );
+};
+
+export default EmployeeTasksColumn;

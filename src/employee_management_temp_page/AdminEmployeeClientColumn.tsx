@@ -1,6 +1,8 @@
 // Admin view of employee client column
+import { useState, useCallback } from 'react';
 import AdminEmployeeDashboardClientCard from './AdminEmployeeDashboardClientCard';
 import { useGetAdminEmployeeDashboardClients } from './employeeManagementQueries';
+import { FloatingCardWrapper } from '../components/common/FloatingCardWrapper';
 
 interface AdminEmployeeClientColumnProps {
   employeeId: number;
@@ -9,6 +11,7 @@ interface AdminEmployeeClientColumnProps {
 const AdminEmployeeClientColumn = ({ employeeId }: AdminEmployeeClientColumnProps) => {
   // Fetch clients with active tasks for this employee
   const { data: clients = [], isLoading, error } = useGetAdminEmployeeDashboardClients(employeeId);
+  const [dynamicWidths, setDynamicWidths] = useState<Record<string | number, string>>({});
 
   // Color palette for alternating backgrounds
   const alternatingColors = [
@@ -21,6 +24,16 @@ const AdminEmployeeClientColumn = ({ employeeId }: AdminEmployeeClientColumnProp
     '#f8f9fa', // Light gray
     '#e9ecef', // Slightly darker light gray
   ];
+
+  const handleWidthCalculated = useCallback((clientId: string | number, width: string) => {
+    setDynamicWidths(prev => {
+      // Only update if the width actually changed for this client
+      if (prev[clientId] === width) {
+        return prev;
+      }
+      return { ...prev, [clientId]: width };
+    });
+  }, []);
 
   if (isLoading) {
     return (
@@ -51,12 +64,17 @@ const AdminEmployeeClientColumn = ({ employeeId }: AdminEmployeeClientColumnProp
   return (
     <div className="d-flex flex-column gap-3 p-3">
       {clients.map((clientData, index) => (
-        <AdminEmployeeDashboardClientCard
+        <FloatingCardWrapper 
           key={clientData.client.id}
-          data={clientData}
-          index={index}
-          alternatingColors={alternatingColors}
-        />
+          dynamicWidth={dynamicWidths[clientData.client.id]}
+        >
+          <AdminEmployeeDashboardClientCard
+            data={clientData}
+            index={index}
+            alternatingColors={alternatingColors}
+            onWidthCalculated={(width) => handleWidthCalculated(clientData.client.id, width)}
+          />
+        </FloatingCardWrapper>
       ))}
     </div>
   );

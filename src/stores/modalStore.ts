@@ -14,7 +14,7 @@ import type {
 
 // Define all possible modals in the app.
 // We will add more types like 'task' in later phases.
-export type ModalType = 'clientForm' | 'confirmDelete' | 'taskForm' | 'requirements' | 'manualReceivable' | 'clientReceivables' | 'paymentForm' | 'paymentHistory' | 'clientSearch' | 'tagForm' | 'tagManagement' | 'selectReceivableForPayment' | 'taskCompletion' | 'amountDetails' | 'subtasksModal' | 'taskSelection' | 'taskDetails' | 'taskSubtasks' | 'recordCreditModal' | 'applyCreditModal' | 'clientCreditHistory' | 'creditEdit' | 'creditDelete' | 'allocationEdit' | 'allocationDelete' | 'paymentEdit' | 'paymentDelete' | 'editReceivable' | 'deleteReceivable' | 'clientReceivablesEdit' | 'urgentAlert' | 'prepaidConflict' | 'taskAmountConflict' | 'taskCancellation' | 'concurrentModification' | 'assignTask' | 'approval' | 'employeePayout' | 'editEmployeePayout' | 'editTaskExpense' | 'submitForReview' | 'employeeBorrow'
+export type ModalType = 'clientForm' | 'confirmDelete' | 'taskForm' | 'requirements' | 'manualReceivable' | 'clientReceivables' | 'paymentForm' | 'paymentHistory' | 'clientSearch' | 'tagForm' | 'tagManagement' | 'selectReceivableForPayment' | 'taskCompletion' | 'amountDetails' | 'subtasksModal' | 'taskSelection' | 'taskDetails' | 'taskSubtasks' | 'recordCreditModal' | 'applyCreditModal' | 'clientCreditHistory' | 'creditEdit' | 'creditDelete' | 'allocationEdit' | 'allocationDelete' | 'paymentEdit' | 'paymentDelete' | 'editReceivable' | 'deleteReceivable' | 'clientReceivablesEdit' | 'urgentAlert' | 'prepaidConflict' | 'taskAmountConflict' | 'taskCancellation' | 'concurrentModification' | 'assignTask' | 'approval' | 'employeePayout' | 'editEmployeePayout' | 'editTaskExpense' | 'submitForReview' | 'employeeBorrow' | 'employeeManualCredit'
 
 // Define the props each modal type can receive.
 interface ModalProps {
@@ -97,6 +97,7 @@ interface ModalProps {
   editTaskExpense: { task: Task; transaction?: any };
   submitForReview: { task: Task };
   employeeBorrow: { employee: Employee; onSuccess?: () => void };
+  employeeManualCredit: { employee: Employee; onSuccess?: () => void };
 }
 
 interface ModalState {

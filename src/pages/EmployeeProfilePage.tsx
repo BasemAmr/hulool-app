@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useParams } from 'react-router-dom';
-import { User, DollarSign, FileText, Users as UsersIcon, CreditCard, Activity, HandCoins } from 'lucide-react';
+import { User, DollarSign, FileText, Users as UsersIcon, CreditCard, Activity, HandCoins, Plus } from 'lucide-react';
 import Button from '../components/ui/Button';
 import { useModalStore } from '../stores/modalStore';
 import { useGetEmployee } from '../queries/employeeQueries';
@@ -18,12 +18,13 @@ interface EmployeePageHeader {
   employee: any;
   onAddPayout: () => void;
   onAddBorrow: () => void;
+  onAddManualCredit: () => void;
   activeMode: ViewMode;
   onModeChange: (mode: ViewMode) => void;
   modeOptions: ReadonlyArray<{key: ViewMode; label: string; icon: any}>;
 }
 
-const EmployeeHeader: React.FC<EmployeePageHeader> = ({ employee, onAddPayout, onAddBorrow, activeMode, onModeChange, modeOptions }) => {
+const EmployeeHeader: React.FC<EmployeePageHeader> = ({ employee, onAddPayout, onAddBorrow, onAddManualCredit, activeMode, onModeChange, modeOptions }) => {
   return (
     <div className="d-flex justify-content-between align-items-center mb-4">
       <div className="d-flex align-items-center">
@@ -45,6 +46,15 @@ const EmployeeHeader: React.FC<EmployeePageHeader> = ({ employee, onAddPayout, o
             <option key={key} value={key}>{label}</option>
           ))}
         </select>
+        <Button
+          variant="outline-success"
+          size="sm"
+          onClick={onAddManualCredit}
+          title="تسجيل رصيد للموظف"
+        >
+          <Plus size={16} className="me-1" />
+          تسجيل رصيد
+        </Button>
         <Button
           variant="outline-primary"
           size="sm"
@@ -105,6 +115,20 @@ const EmployeeProfilePage = () => {
     });
   };
 
+  const handleAddManualCredit = () => {
+    if (!employee) return;
+    openModal('employeeManualCredit', { 
+      employee: { 
+        ...employee, 
+        id: employeeTableId // Ensure the table ID is included
+      },
+      onSuccess: () => {
+        // Refresh transactions data when credit is successfully added
+        window.location.reload();
+      }
+    });
+  };
+
   const handleModeChange = (mode: ViewMode) => {
     setActiveMode(mode);
     setCurrentPage(1); // Reset to first page when changing modes
@@ -137,6 +161,7 @@ const EmployeeProfilePage = () => {
         employee={employee} 
         onAddPayout={handleAddPayout}
         onAddBorrow={handleAddBorrow}
+        onAddManualCredit={handleAddManualCredit}
         activeMode={activeMode}
         onModeChange={handleModeChange}
         modeOptions={modeOptions}

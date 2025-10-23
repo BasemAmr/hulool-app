@@ -134,7 +134,7 @@ const RecentTransactionsPanel: React.FC<RecentTransactionsPanelProps> = ({ trans
                         )}
                         {!transaction.client_name && !transaction.task_name && (
                           <span style={{ fontSize: '10px' }}>
-                            معاملة عامة
+                              {transaction.notes} --- {transaction.transaction_name}
                           </span>
                         )}
                       </div>
@@ -147,7 +147,7 @@ const RecentTransactionsPanel: React.FC<RecentTransactionsPanelProps> = ({ trans
                       backgroundColor: index % 2 === 0 ? '#e8f5e8' : '#c8e6c9'
                     }}>
                       <span className="text-success">
-                        {transaction.related_task_id && transaction.amount ? (
+                        {transaction.direction === 'CREDIT' && transaction.amount ? (
                           <>
                             {formatCurrency(transaction.amount)} ر.س
                           </>
@@ -164,7 +164,7 @@ const RecentTransactionsPanel: React.FC<RecentTransactionsPanelProps> = ({ trans
                       backgroundColor: index % 2 === 0 ? '#e8f5e8' : '#c8e6c9'
                     }}>
                       <span className="text-danger">
-                        {!transaction.related_task_id && transaction.amount ? (
+                        {transaction.direction === 'DEBIT' && transaction.amount ? (
                           <>
                             {formatCurrency(transaction.amount)} ر.س
                           </>

@@ -35,6 +35,39 @@ export interface GroupedClientsResponse {
   Other: ClientWithTasksAndStats[];
 }
 
+export interface EmployeeTasksGrouped {
+  employee_id: number | string;
+  employee_name: string;
+  grouped_clients: {
+    [key: string]: Array<{
+      client_id: number;
+      task_name: string;
+      type: string;
+      status: string;
+      amount: number;
+      expense_amount: number;
+      net_earning: number;
+      start_date: string;
+      end_date: string;
+      client: {
+        id: string | number;
+        name: string;
+        phone: string;
+      };
+      id: number;
+      subtasks: Array<{
+        id: number;
+        description: string;
+        amount: number;
+        is_completed: boolean;
+      }>;
+      tags?: Array<{ name: string }>;
+    }>;
+  };
+}
+
+export type DashboardResponse = GroupedClientsResponse | EmployeeTasksGrouped[];
+
 // --- API Functions ---
 const fetchDashboardStats = async (): Promise<DashboardStats> => {
   // This endpoint aggregates stats from clients and tasks
@@ -58,9 +91,9 @@ const fetchTotalPaidAmount = async (): Promise<number> => {
 }
 
 
-const fetchClientsWithActiveTasks = async (taskType: 'all' | 'employee' | 'admin' = 'admin'): Promise<GroupedClientsResponse> => {
+const fetchClientsWithActiveTasks = async (taskType: 'employee' | 'admin' = 'admin'): Promise<DashboardResponse> => {
     // Note: The endpoint is under /clients, not /tasks
-    const { data } = await apiClient.get<ApiResponse<GroupedClientsResponse>>('/dashboard/clients-with-active-tasks', { 
+    const { data } = await apiClient.get<ApiResponse<DashboardResponse>>('/dashboard/clients-with-active-tasks', { 
         params: { taskType } 
     });
     if (!data.success) throw new Error(data.message || 'Failed to fetch dashboard client tasks.');
@@ -107,11 +140,11 @@ export const useGetTotalPaidAmount = () => {
 };
 
 // Add this new hook
-export const useGetClientsWithActiveTasks = (taskType: 'all' | 'employee' | 'admin' = 'admin') => {
+export const useGetClientsWithActiveTasks = (taskType: 'employee' | 'admin' = 'admin') => {
   const queryClient = useQueryClient();
-  const previousDataRef = useRef<GroupedClientsResponse | undefined>(undefined);
+  const previousDataRef = useRef<DashboardResponse | undefined>(undefined);
 
-  const query = useQuery<GroupedClientsResponse, Error>({
+  const query = useQuery<DashboardResponse, Error>({
     queryKey: ['dashboard', 'clientsWithActiveTasks', taskType],
     queryFn: () => fetchClientsWithActiveTasks(taskType),
     staleTime: 30 * 1000, // Keep fresh for 30 seconds

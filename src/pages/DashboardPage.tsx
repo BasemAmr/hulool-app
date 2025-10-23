@@ -1,7 +1,13 @@
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
-import { useGetDashboardStats, useGetClientsWithActiveTasks, type GroupedClientsResponse, type ClientWithTasksAndStats } from '../queries/dashboardQueries';
+import { 
+  useGetDashboardStats, 
+  useGetClientsWithActiveTasks, 
+  type GroupedClientsResponse, 
+  type ClientWithTasksAndStats, 
+  type EmployeeTasksGrouped 
+} from '../queries/dashboardQueries';
 import { useModalStore } from '../stores/modalStore';
 import type { Task } from '../api/types';
 import { FileText, BookOpen, Home, Briefcase } from 'lucide-react';
@@ -24,6 +30,7 @@ import TaskStatusCards from '../components/dashboard/TaskStatusCards';
 import DashboardClientCard from '../components/dashboard/DashboardClientCard';
 import SortableClientCard from '../components/dashboard/SortableClientCard';
 import DashboardTaskTypeFilter from '../components/dashboard/DashboardTaskTypeFilter';
+import EmployeeTasksColumn from '../components/dashboard/EmployeeTasksColumn';
 import { useUpdateClientSortOrder } from '../queries/clientQueries';
 
 const DashboardPage = () => {
@@ -31,27 +38,35 @@ const DashboardPage = () => {
     const openModal = useModalStore(state => state.openModal);
     const { data: stats, isLoading: isLoadingStats } = useGetDashboardStats();
     const [groupedClients, setGroupedClients] = useState<GroupedClientsResponse | null>(null);
+    const [employeeTasksGrouped, setEmployeeTasksGrouped] = useState<EmployeeTasksGrouped[] | null>(null);
     const [activeDragItem, setActiveDragItem] = useState<ClientWithTasksAndStats | null>(null);
     const [activeContainer, setActiveContainer] = useState<keyof GroupedClientsResponse | null>(null);
-    const [taskTypeFilter, setTaskTypeFilter] = useState<'all' | 'employee' | 'admin'>('admin');
+    const [taskTypeFilter, setTaskTypeFilter] = useState<'employee' | 'admin'>('admin');
 
     const updateSortOrderMutation = useUpdateClientSortOrder();
 
-    const handleAssignTask = (task: Task) => {
+    const handleAssignTask = (task: Task): void => {
         openModal('assignTask', { task });
     };
 
-    const { data: initialGroupedClients, isLoading: isLoadingClients } = useGetClientsWithActiveTasks(taskTypeFilter);
+    const { data: initialData, isLoading: isLoadingClients } = useGetClientsWithActiveTasks(taskTypeFilter);
 
     useEffect(() => {
         applyPageBackground('dashboard');
     }, []);
 
-    useEffect(() => {
-        if (initialGroupedClients) {
-            setGroupedClients(initialGroupedClients);
+    useEffect((): void => {
+        if (initialData) {
+            // Check if it's employee data (array) or admin data (object with keys)
+            if (Array.isArray(initialData)) {
+                setEmployeeTasksGrouped(initialData as EmployeeTasksGrouped[]);
+                setGroupedClients(null);
+            } else {
+                setGroupedClients(initialData as GroupedClientsResponse);
+                setEmployeeTasksGrouped(null);
+            }
         }
-    }, [initialGroupedClients]);
+    }, [initialData]);
 
     const sensors = useSensors(
         useSensor(PointerSensor, {
@@ -107,7 +122,7 @@ const DashboardPage = () => {
     //     return null;
     // };
 
-    function handleDragStart(event: DragStartEvent) {
+    function handleDragStart(event: DragStartEvent): void {
         const { active } = event;
         // console.log('Drag started for:', active.id);
         
@@ -127,7 +142,7 @@ const DashboardPage = () => {
         }
     }
 
-    function handleDragEnd(event: DragEndEvent) {
+    function handleDragEnd(event: DragEndEvent): void {
         // console.log('Drag ended');
         
         const { active, over } = event;
@@ -181,7 +196,7 @@ const DashboardPage = () => {
             // Persist to backend
             const clientIds = reorderedItems.map(c => {
                 const id = c.client.id;
-                return typeof id === 'string' ? parseInt(id) : id;
+                return typeof id === 'string' ? parseInt(id, 10) : id;
             });
             const typeForApi = activeContainer === 'Real Estate' ? 'RealEstate' : activeContainer;
             
@@ -195,10 +210,8 @@ const DashboardPage = () => {
                     },
                     onError: (error) => {
                         console.error('Failed to update sort order:', error);
-                        // Revert optimistic update
-                        if (initialGroupedClients) {
-                            setGroupedClients(initialGroupedClients);
-                        }
+                        // Revert optimistic update - refresh data from server
+                        // Handled by React Query's automatic refetch
                     }
                 }
             );
@@ -244,8 +257,8 @@ const DashboardPage = () => {
                 onDragStart={handleDragStart}
                 onDragEnd={handleDragEnd}
             >
-                {!isLoadingClients && groupedClients && (
-                    // *** NEW WRAPPER DIV ***
+                {!isLoadingClients && taskTypeFilter === 'admin' && groupedClients && (
+                    // *** ADMIN VIEW - Task Type Columns ***
                     <div className="dashboard-columns-container" style={{ minHeight: 'calc(100vh - 200px)', overflow: 'visible', position: 'relative', zIndex: 1 }}>
                         <div className="recent-tasks-section" style={{ overflow: 'visible', position: 'relative', zIndex: 1 }}>
                             <div className="row g-0" style={{ overflow: 'visible', position: 'relative', zIndex: 1 }}>
@@ -370,6 +383,153 @@ const DashboardPage = () => {
                                 })}
                             </div>
                         </div>
+                    </div>
+                )}
+
+                {!isLoadingClients && taskTypeFilter === 'employee' && employeeTasksGrouped && (
+                    // *** EMPLOYEE VIEW - Employee Task Columns ***
+                    <div className="employee-dashboard-container" style={{ 
+                        overflow: 'visible', 
+                        position: 'relative', 
+                        zIndex: 1,
+                        display: 'flex',
+                        flexDirection: 'column'
+                    }}>
+                        <div className="employee-tasks-section" style={{ 
+                            overflow: 'visible', 
+                            position: 'relative', 
+                            zIndex: 1,
+                            display: 'flex'
+                        }}>
+                            <div className="row g-3" style={{ 
+                                overflow: 'visible', 
+                                position: 'relative', 
+                                zIndex: 1,
+                                justifyContent: employeeTasksGrouped.length < 5 ? 'center' : 'flex-start',
+                                width: '100%',
+                                margin: 0,
+                                flex: 1,
+                                display: 'flex',
+                                alignItems: 'flex-start',
+                                perspective: '1000px'
+                            }}>
+                                {employeeTasksGrouped.map((employeeGroup, index) => {
+                                    // Color rotation for different employees
+                                    const colorIndex = index % Object.values(taskTypeConfig).length;
+                                    const configArray = Object.values(taskTypeConfig);
+                                    const currentConfig = configArray[colorIndex];
+
+                                    // Count total clients for this employee
+                                    const totalClients = Object.values(employeeGroup.grouped_clients).reduce(
+                                        (sum, clients) => sum + clients.length, 
+                                        0
+                                    );
+
+                                    // Calculate responsive width based on number of employees
+                                    const getColumnWidth = () => {
+                                        const count = employeeTasksGrouped.length;
+                                        if (count === 1) return 'calc(60% - 0.72rem)';
+                                        if (count === 2) return 'calc(45% - 0.72rem)';
+                                        if (count === 3) return 'calc(30% - 0.72rem)';
+                                        if (count === 4) return 'calc(23% - 0.72rem)';
+                                        return 'calc(20% - 0.72rem)';
+                                    };
+
+                                    return (
+                                        <div 
+                                            className="col-lg-2-4" 
+                                            key={`employee-${employeeGroup.employee_id}`} 
+                                            style={{
+                                                overflow: 'visible',
+                                                position: 'relative',
+                                                zIndex: 10 - index,
+                                                isolation: 'auto',
+                                                // Responsive columns layout
+                                                flex: `0 0 ${getColumnWidth()}`,
+                                                minWidth: 0,
+                                                display: 'flex',
+                                                perspective: '1000px'
+                                            }}
+                                        >
+                                            <div
+                                                className="card h-100 shadow-sm"
+                                                style={{
+                                                    borderRadius: '0px',
+                                                    border: `3px solid ${currentConfig.color}`,
+                                                    overflow: 'visible',
+                                                    position: 'relative',
+                                                    display: 'flex',
+                                                    flexDirection: 'column',
+                                                    transition: 'all 0.3s ease-in-out',
+                                                    width: '100%'
+                                                }}
+                                            >
+                                                {/* Header */}
+                                                <div
+                                                    className="card-header text-white d-flex justify-content-between align-items-center py-3 border-0"
+                                                    style={{
+                                                        backgroundColor: currentConfig.color,
+                                                        borderRadius: 0,
+                                                        flexShrink: 0
+                                                    }}
+                                                >
+                                                    <div className="d-flex align-items-center gap-2" style={{ width: '100%', justifyContent: 'center' }}>
+                                                        <Link
+                                                            to={`/employees/${employeeGroup.employee_id}`}
+                                                            className="text-decoration-none"
+                                                            style={{ color: 'inherit' }}
+                                                            title="عرض ملف الموظف"
+                                                        >
+                                                            <h6 className="mb-0 fw-bold text-white">
+                                                                المهام - {employeeGroup.employee_name}
+                                                            </h6>
+                                                        </Link>
+                                                        <span className="badge bg-white rounded-pill px-2 py-1" style={{ 
+                                                            color: currentConfig.color,
+                                                            fontWeight: 'bold',
+                                                            fontSize: '0.85em'
+                                                        }}>
+                                                            {totalClients}
+                                                        </span>
+                                                    </div>
+                                                </div>
+
+                                                {/* Body - Scrollable */}
+                                                <div
+                                                    className="card-body p-0"
+                                                    style={{
+                                                        overflow: 'visible',
+                                                        backgroundColor: 'transparent',
+                                                        zIndex: 0,
+                                                        minHeight: 0,
+                                                        display: 'flex',
+                                                        flexDirection: 'column',
+                                                        isolation: 'auto'
+                                                    }}
+                                                >
+                                                    <EmployeeTasksColumn
+                                                        groupedByEmployee={[employeeGroup]}
+                                                        onAssign={handleAssignTask}
+                                                        alternatingColors={currentConfig.alternatingColors}
+                                                    />
+                                                </div>
+                                            </div>
+                                        </div>
+                                    );
+                                })}
+                            </div>
+                        </div>
+                    </div>
+                )}
+
+                {!isLoadingClients && !groupedClients && !employeeTasksGrouped && (
+                    <div className="empty-state py-5 text-center">
+                        <div className="empty-icon mb-3">
+                            <i className="fas fa-clipboard-list fa-3x text-gray-400"></i>
+                        </div>
+                        <p className="empty-description text-muted mb-0">
+                            {t('common.noResults')}
+                        </p>
                     </div>
                 )}
 

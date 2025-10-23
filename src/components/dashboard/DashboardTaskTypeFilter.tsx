@@ -3,12 +3,12 @@ import { ChevronDown } from 'lucide-react';
 import './DashboardTaskTypeFilter.scss';
 
 interface DashboardTaskTypeFilterProps {
-  value: 'all' | 'employee' | 'admin';
-  onChange: (value: 'all' | 'employee' | 'admin') => void;
+  value: 'employee' | 'admin';
+  onChange: (value: 'employee' | 'admin') => void;
 }
 
 type TaskTypeOption = {
-  value: 'all' | 'employee' | 'admin';
+  value: 'employee' | 'admin';
   label: string;
   descriptionArabic: string;
 };
@@ -17,14 +17,13 @@ const DashboardTaskTypeFilter: React.FC<DashboardTaskTypeFilterProps> = ({ value
   const [isOpen, setIsOpen] = useState(false);
 
   const options: TaskTypeOption[] = [
-    { value: 'all', label: 'All', descriptionArabic: 'الكل' },
     { value: 'employee', label: 'Employee', descriptionArabic: 'موظف' },
     { value: 'admin', label: 'Admin', descriptionArabic: 'إداري' },
   ];
 
   const selectedOption = options.find(opt => opt.value === value);
 
-  const handleSelect = (selectedValue: 'all' | 'employee' | 'admin') => {
+  const handleSelect = (selectedValue: 'employee' | 'admin') => {
     onChange(selectedValue);
     setIsOpen(false);
   };
