@@ -145,7 +145,7 @@ const EmployeeClientCard = ({
     });
   };
 
-  const handleViewSubtasks = (task: Task) => openModal('taskForm', { taskToEdit: task, client: { id: clientId, name: clientName } });
+  const handleViewSubtasks = (task: Task) => openModal('taskForm', { taskToEdit: task, client: { id: clientId, name: clientName, phone: clientPhone, region_id: 0, google_drive_link: googleDriveLink || '', created_at: '', updated_at: '' } });
 
   const handleToggleUrgentTag = (task: Task) => {
     const isUrgent = task.tags?.some(tag => tag.name === 'قصوى');
