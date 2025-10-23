@@ -1,0 +1,4489 @@
+WORKTREE EXPORT
+==================================================
+
+Source Directory: C:/xampp/htdocs/wordpress/wp-content/plugins/tmplugin/react-src/src/queries
+Total Files: 22
+Export Date: 2025-10-18 14:23:49
+
+FILE STRUCTURE:
+------------------------------
+  allocationQueries.ts
+  authQueries.ts
+  clientCreditQueries.ts
+  clientQueries.ts
+  dashboardQueries.ts
+  employeeClientsQueries.ts
+  employeeDashboardMutations.ts
+  employeeDashboardQueries.ts
+  employeeFinancialQueries.ts
+  employeeNotificationQueries.ts
+  employeeQueries.ts
+  employeeTasksQueries.ts
+  notificationQueries.ts
+  paymentQueries.ts
+  receivableQueries.ts
+  regionQueries.ts
+  tagCollectionQueries.ts
+  tagQueries.ts
+  tagTaskQueries.ts
+  taskMessageQueries.ts
+  taskQueries.ts
+  userQueries.ts
+
+==================================================
+FILE CONTENTS:
+==================================================
+
+[1/22] allocationQueries.ts
+---------------------------
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import apiClient from '../api/apiClient';
+import type { ApiResponse } from '../api/types';
+import type { CreditAllocation } from '../api/types';
+
+const deleteAllocation = async (id: number): Promise<null> => {
+    const { data } = await apiClient.delete<ApiResponse<null>>(`/allocations/${id}`);
+    return data.data;
+};
+
+export const useDeleteAllocation = () => {
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: deleteAllocation,
+        onSuccess: (_) => {
+            // Invalidate relevant queries
+            queryClient.invalidateQueries({ queryKey: ['receivables'] });
+            queryClient.invalidateQueries({ queryKey: ['clientCredits'] });
+            queryClient.invalidateQueries({ queryKey: ['clients'] });
+            
+            // Employee-related invalidations
+            queryClient.invalidateQueries({ queryKey: ['employee'] });
+            queryClient.invalidateQueries({ queryKey: ['employees'] });
+        },
+    });
+};
+
+const updateAllocation = async ({
+  allocationId,
+  amount,
+  description
+}: {
+  allocationId: number;
+  amount: number;
+  description: string;
+}): Promise<CreditAllocation> => {
+  const { data } = await apiClient.put<ApiResponse<CreditAllocation>>(`/allocations/${allocationId}`, {
+    amount,
+    description
+  });
+  return data.data;
+};
+
+export const useUpdateAllocation = () => {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: updateAllocation,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['receivables'] });
+      queryClient.invalidateQueries({ queryKey: ['clientCredits'] });
+      queryClient.invalidateQueries({ queryKey: ['clients'] });
+      
+      // Employee-related invalidations
+      queryClient.invalidateQueries({ queryKey: ['employee'] });
+      queryClient.invalidateQueries({ queryKey: ['employees'] });
+    },
+  });
+};
+
+==================================================
+
+[2/22] authQueries.ts
+---------------------
+import apiClient from '../api/apiClient';
+import type{ ApiResponse, NonceData, User } from '../api/types';
+
+/**
+ * Login with short password and receive application password.
+ * This is a NEW function for the custom authentication flow.
+ */
+export const loginWithShortPassword = async (username: string, password: string): Promise<{ app_password: string; user: User }> => {
+  const { data } = await apiClient.post<ApiResponse<{ app_password: string; user: User }>>(
+    '/auth/token',
+    { username, password }
+  );
+  if (!data.success) {
+    throw new Error(data.message || 'Login failed.');
+  }
+  return data.data;
+};
+
+/**
+ * Fetches a fresh nonce from the server.
+ * Requires a temporary Authorization header for the request itself.
+ */
+export const fetchNonce = async (token: string): Promise<NonceData> => {
+  const { data } = await apiClient.post<ApiResponse<NonceData>>(
+    '/auth/nonce',
+    {},
+    {
+      headers: { 'Authorization': `Basic ${token}` },
+    }
+  );
+  if (!data.success) {
+    throw new Error(data.message || 'Failed to fetch nonce.');
+  }
+  return data.data;
+};
+
+/**
+ * Fetches the current user's data.
+ * ACCEPTS token and nonce as arguments for the initial login flow.
+ */
+export const fetchUser = async (token: string, nonce: string): Promise<User> => {
+    const { data } = await apiClient.get<ApiResponse<User>>('/auth/user', {
+        // Pass headers directly for this specific call to ensure they are present.
+        headers: {
+            'Authorization': `Basic ${token}`,
+            'X-WP-Nonce': nonce
+        }
+    });
+    if (!data.success) {
+        throw new Error(data.message || 'Failed to fetch user data.');
+    }
+    return data.data;
+};
+
+==================================================
+
+[3/22] clientCreditQueries.ts
+-----------------------------
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import apiClient from '../api/apiClient';
+import type { 
+    ApiResponse, 
+    ClientCredit, 
+    RecordCreditPayload, 
+    ApplyCreditPayload,
+
+    AllocationAdjustment,
+    AllocationResolution
+} from '../api/types';
+
+const fetchClientCredits = async (clientId: number): Promise<{ balance: number; credits: ClientCredit[] }> => {
+    const { data } = await apiClient.get<ApiResponse<{ balance: number; credits: ClientCredit[] }>>(`/clients/${clientId}/credits`);
+    return data.data;
+};
+
+const recordClientCredit = async (payload: RecordCreditPayload): Promise<ClientCredit> => {
+    const { client_id, ...rest } = payload;
+    const { data } = await apiClient.post<ApiResponse<ClientCredit>>(`/clients/${client_id}/credits`, rest);
+    return data.data;
+};
+
+const updateClientCredit = async ({ id, amount }: { id: number; amount: number }): Promise<ClientCredit> => {
+    const { data } = await apiClient.put<ApiResponse<ClientCredit>>(`/credits/${id}`, { amount });
+    return data.data;
+};
+
+const deleteClientCredit = async (id: number): Promise<null> => {
+    const { data } = await apiClient.delete<ApiResponse<null>>(`/credits/${id}`);
+    return data.data;
+};
+
+const resolveCreditReduction = async ({ 
+    id, 
+    new_amount, 
+    allocation_adjustments 
+}: { 
+    id: number; 
+    new_amount: number; 
+    allocation_adjustments: AllocationAdjustment[];
+}): Promise<ClientCredit> => {
+    const { data } = await apiClient.post<ApiResponse<ClientCredit>>(`/credits/${id}/resolve-reduction`, {
+        new_amount,
+        allocation_adjustments
+    });
+    return data.data;
+};
+
+const resolveCreditDeletion = async ({ 
+    id, 
+    allocation_resolutions 
+}: { 
+    id: number; 
+    allocation_resolutions: AllocationResolution[];
+}): Promise<null> => {
+    const { data } = await apiClient.post<ApiResponse<null>>(`/credits/${id}/resolve-deletion`, {
+        allocation_resolutions
+    });
+    return data.data;
+};
+
+const applyCreditToReceivable = async (payload: ApplyCreditPayload) => {
+    const { data } = await apiClient.post<ApiResponse<any>>(`/receivables/${payload.receivableId}/apply-credit`, { amount: payload.amount });
+    return data.data;
+};
+
+const replacePaymentWithCredit = async (paymentId: number): Promise<any> => {
+    const { data } = await apiClient.post<ApiResponse<any>>(`/payments/${paymentId}/replace-with-credit`);
+    return data.data;
+};
+
+export const useGetClientCredits = (clientId: number) => useQuery({
+    queryKey: ['clientCredits', clientId],
+    queryFn: () => fetchClientCredits(clientId),
+    enabled: !!clientId,
+});
+
+export const useRecordClientCredit = () => {
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: recordClientCredit,
+        onSuccess: (newCredit) => {
+            queryClient.invalidateQueries({ queryKey: ['clientCredits', newCredit.client_id] });
+            queryClient.invalidateQueries({ queryKey: ['clients'] });
+            
+            // Employee-related invalidations
+            queryClient.invalidateQueries({ queryKey: ['employee'] });
+            queryClient.invalidateQueries({ queryKey: ['employees'] });
+        },
+    });
+};
+
+export const useUpdateClientCredit = () => {
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: updateClientCredit,
+        onSuccess: (updatedCredit) => {
+            queryClient.invalidateQueries({ queryKey: ['clientCredits', updatedCredit.client_id] });
+            queryClient.invalidateQueries({ queryKey: ['clients'] });
+            
+            // Employee-related invalidations
+            queryClient.invalidateQueries({ queryKey: ['employee'] });
+            queryClient.invalidateQueries({ queryKey: ['employees'] });
+        },
+    });
+};
+
+export const useDeleteClientCredit = () => {
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: deleteClientCredit,
+        onSuccess: (_) => {
+            // Since we don't have client_id in variables, we'll invalidate all client credits
+            queryClient.invalidateQueries({ queryKey: ['clientCredits'] });
+            queryClient.invalidateQueries({ queryKey: ['clients'] });
+            
+            // Employee-related invalidations
+            queryClient.invalidateQueries({ queryKey: ['employee'] });
+            queryClient.invalidateQueries({ queryKey: ['employees'] });
+        },
+    });
+};
+
+export const useResolveCreditReduction = () => {
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: resolveCreditReduction,
+        onSuccess: (updatedCredit) => {
+            queryClient.invalidateQueries({ queryKey: ['clientCredits', updatedCredit.client_id] });
+            queryClient.invalidateQueries({ queryKey: ['clients'] });
+            queryClient.invalidateQueries({ queryKey: ['receivables'] });
+            
+            // Employee-related invalidations
+            queryClient.invalidateQueries({ queryKey: ['employee'] });
+            queryClient.invalidateQueries({ queryKey: ['employees'] });
+        },
+    });
+};
+
+export const useResolveCreditDeletion = () => {
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: resolveCreditDeletion,
+        onSuccess: (_) => {
+            queryClient.invalidateQueries({ queryKey: ['clientCredits'] });
+            queryClient.invalidateQueries({ queryKey: ['clients'] });
+            queryClient.invalidateQueries({ queryKey: ['receivables'] });
+            
+            // Employee-related invalidations
+            queryClient.invalidateQueries({ queryKey: ['employee'] });
+            queryClient.invalidateQueries({ queryKey: ['employees'] });
+        },
+    });
+};
+
+export const useApplyCreditToReceivable = () => {
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: applyCreditToReceivable,
+        onSuccess: (_) => {
+            queryClient.invalidateQueries({ queryKey: ['receivables'] });
+            queryClient.invalidateQueries({ queryKey: ['clients'] });
+            queryClient.invalidateQueries({ queryKey: ['clientCredits'] });
+            
+            // Employee-related invalidations
+            queryClient.invalidateQueries({ queryKey: ['employee'] });
+            queryClient.invalidateQueries({ queryKey: ['employees'] });
+        },
+    });
+};
+
+export const useReplacePaymentWithCredit = () => {
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: replacePaymentWithCredit,
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['receivables'] });
+            queryClient.invalidateQueries({ queryKey: ['clients'] });
+            queryClient.invalidateQueries({ queryKey: ['clientCredits'] });
+            queryClient.invalidateQueries({ queryKey: ['payments'] });
+            
+            // Employee-related invalidations
+            queryClient.invalidateQueries({ queryKey: ['employee'] });
+            queryClient.invalidateQueries({ queryKey: ['employees'] });
+        },
+    });
+};
+
+==================================================
+
+[4/22] clientQueries.ts
+-----------------------
+import { useQuery, useMutation, useQueryClient, useInfiniteQuery } from '@tanstack/react-query';
+import apiClient from '../api/apiClient';
+import type { ApiResponse, Client, ClientPayload, ClientPaginatedData, ClientUnpaidAmounts, ClientCountsByType } from '../api/types';
+
+// --- Query Functions ---
+const CLIENTS_PER_PAGE = 20; // Define a constant for page size
+
+// Fetch paginated clients (normal list)
+const fetchClients = async (search: string, regionFilter?: number | null): Promise<ClientPaginatedData> => {
+    try {
+        // If search is present, use the dedicated search endpoint
+        if (search && search.trim().length > 0) {
+            const { data } = await apiClient.get<ApiResponse<ClientPaginatedData>>('/clients/search', {
+                params: { term: search, limit: 1000 },
+            });
+            
+            let clients = data.data?.clients || [];
+            
+            // Apply region filter client-side if specified
+            if (regionFilter) {
+                clients = clients.filter(client => client.region_id === regionFilter);
+            }
+            
+            return {
+                clients: clients,
+                pagination: {
+                    total: clients.length,
+                    per_page: 1000,
+                    current_page: 1,
+                    total_pages: 1,
+                    has_next: false,
+                    has_prev: false
+                }
+            };
+        }
+        
+        // Otherwise, fetch all clients with stats for unpaid amounts
+        const params: any = { page: 1, per_page: 1000, include_stats: true };
+        if (regionFilter) {
+            params.region_id = regionFilter;
+        }
+        const { data } = await apiClient.get<ApiResponse<ClientPaginatedData>>('/clients', {
+            params,
+        });
+        return data.data;
+    } catch (error) {
+        console.error('Error fetching clients:', error);
+        return {
+            clients: [],
+            pagination: {
+                total: 0,
+                per_page: 1000,
+                current_page: 1,
+                total_pages: 0,
+                has_next: false,
+                has_prev: false
+            }
+        };
+    }
+};
+
+// New paginated fetch function for infinite queries
+export const fetchPaginatedClients = async ({ pageParam = 1, queryKey }: { pageParam?: number; queryKey: any }): Promise<ClientPaginatedData> => {
+  const [_key, search, regionFilter] = queryKey;
+  
+  try {
+    // If both search and region filter are present, we need to handle them differently
+    // since the search endpoint doesn't support region filtering
+    if (search && search.trim().length > 0) {
+      // Use search endpoint first
+      const { data } = await apiClient.get<ApiResponse<ClientPaginatedData>>('/clients/search', {
+        params: { term: search, limit: 1000 }, // Get more results to filter client-side
+      });
+      
+      let clients = data.data?.clients || [];
+      
+      // Apply region filter client-side if specified
+      if (regionFilter) {
+        clients = clients.filter(client => client.region_id === regionFilter);
+      }
+      
+      // Calculate pagination for filtered results
+      const total = clients.length;
+      const startIndex = (pageParam - 1) * CLIENTS_PER_PAGE;
+      const endIndex = startIndex + CLIENTS_PER_PAGE;
+      const paginatedClients = clients.slice(startIndex, endIndex);
+      const totalPages = Math.ceil(total / CLIENTS_PER_PAGE);
+      
+      return {
+        clients: paginatedClients,
+        pagination: {
+          total: total,
+          per_page: CLIENTS_PER_PAGE,
+          current_page: pageParam,
+          total_pages: totalPages,
+          has_next: pageParam < totalPages,
+          has_prev: pageParam > 1
+        }
+      };
+    }
+    
+    // Otherwise, fetch clients with pagination and stats (no search, just region filter)
+    const params: any = { page: pageParam, per_page: CLIENTS_PER_PAGE, include_stats: true };
+    if (regionFilter) {
+      params.region_id = regionFilter;
+    }
+    const { data } = await apiClient.get<ApiResponse<ClientPaginatedData>>('/clients', {
+      params,
+    });
+    
+    // Ensure the response has the expected structure
+    if (!data.data || !data.data.pagination) {
+      return {
+        clients: data.data?.clients || [],
+        pagination: {
+          total: data.data?.clients?.length || 0,
+          per_page: CLIENTS_PER_PAGE,
+          current_page: pageParam,
+          total_pages: 1,
+          has_next: false,
+          has_prev: pageParam > 1
+        }
+      };
+    }
+    
+    return data.data;
+  } catch (error) {
+    // Return a safe fallback structure on error
+    console.error('Error fetching paginated clients:', error);
+    return {
+      clients: [],
+      pagination: {
+        total: 0,
+        per_page: CLIENTS_PER_PAGE,
+        current_page: pageParam,
+        total_pages: 0,
+        has_next: false,
+        has_prev: false
+      }
+    };
+  }
+};
+
+const createClient = async (clientData: ClientPayload): Promise<Client> => {
+  const { data } = await apiClient.post<ApiResponse<Client>>('/clients', clientData);
+  return data.data;
+};
+
+const updateClient = async ({ id, clientData }: { id: number; clientData: Partial<ClientPayload> }): Promise<Client> => {
+  const { data } = await apiClient.put<ApiResponse<Client>>(`/clients/${id}`, clientData);
+  return data.data;
+};
+
+const deleteClient = async (id: number): Promise<void> => {
+  await apiClient.delete<ApiResponse<null>>(`/clients/${id}`);
+};
+const fetchClientById = async (id: number): Promise<Client> => {
+    const { data } = await apiClient.get<ApiResponse<Client>>(`/clients/${id}`);
+    if (!data.success) throw new Error(data.message || 'Failed to fetch client.');
+    return data.data;
+};
+
+const searchClients = async (term: string): Promise<Client[]> => {
+    if (term.length < 2) return []; // Don't search for less than 2 characters
+    const { data } = await apiClient.get<ApiResponse<{clients: Client[]}>>('/clients/search', {
+        params: { term, limit: 1000 }
+    });
+    return data.data.clients;
+};
+
+const fetchClientUnpaidAmounts = async (clientId: number): Promise<ClientUnpaidAmounts> => {
+    const { data } = await apiClient.get<ApiResponse<ClientUnpaidAmounts>>(`/clients/${clientId}/unpaid-amounts`);
+    return data.data;
+};
+
+const fetchClientCountsByType = async (): Promise<ClientCountsByType> => {
+    const { data } = await apiClient.get<ApiResponse<ClientCountsByType>>('/clients/counts/types');
+    return data.data;
+};
+
+const exportClients = async (regionId?: number): Promise<{ clients: Client[]; region_id?: number; count: number }> => {
+    const params: any = {};
+    if (regionId) {
+        params.region_id = regionId;
+    }
+    const { data } = await apiClient.get<ApiResponse<{ clients: Client[]; region_id?: number; count: number }>>('/clients/export', {
+        params,
+    });
+    return data.data;
+};
+
+// --- React Query Hooks ---
+export const useGetClients = (search: string, regionFilter?: number | null) => {
+  return useQuery({
+    queryKey: ['clients', search, regionFilter],
+    queryFn: () => fetchClients(search, regionFilter),
+    placeholderData: (previousData) => previousData,
+    staleTime: 60 * 1000, // Keep fresh for 1 minute
+    // refetchOnWindowFocus: false (inherited from global default)
+  });
+};
+
+// New infinite query hook for paginated clients
+export const useGetClientsInfinite = (search: string, regionFilter?: number | null) => {
+  return useInfiniteQuery({
+    queryKey: ['clients', search, regionFilter],
+    queryFn: fetchPaginatedClients,
+    initialPageParam: 1,
+    getNextPageParam: (lastPage) => {
+      // Check if lastPage and pagination exist to prevent errors
+      if (!lastPage || !lastPage.pagination) {
+        return undefined;
+      }
+      
+      // If the current page is less than the total pages, return the next page number
+      if (lastPage.pagination.current_page < lastPage.pagination.total_pages) {
+        return lastPage.pagination.current_page + 1;
+      }
+      // Otherwise, return undefined to signify there are no more pages
+      return undefined;
+    },
+    placeholderData: (previousData) => previousData,
+    staleTime: 60 * 1000, // Keep fresh for 1 minute
+  });
+};
+
+export const useCreateClient = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: createClient,
+    onSuccess: (newClient) => {
+      queryClient.invalidateQueries({ queryKey: ['clients'] }); // Invalidate all clients lists
+      queryClient.invalidateQueries({ queryKey: ['dashboard'] }); // Dashboard stats for total clients
+      queryClient.invalidateQueries({ queryKey: ['clientCountsByType'] }); // Client counts by type
+      // If creating from a specific client profile context, consider invalidating that client:
+      queryClient.invalidateQueries({ queryKey: ['client', newClient.id] });
+      
+      // Employee-related invalidations
+      queryClient.invalidateQueries({ queryKey: ['employee'] });
+      queryClient.invalidateQueries({ queryKey: ['employees'] });
+    },
+  });
+};
+
+export const useUpdateClient = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: updateClient,
+    onSuccess: (updatedClient) => {
+      queryClient.invalidateQueries({ queryKey: ['clients'] }); // Invalidate all clients lists
+      queryClient.invalidateQueries({ queryKey: ['client', updatedClient.id] }); // Invalidate specific client profile
+      // If client type changed, counts might need updating:
+      queryClient.invalidateQueries({ queryKey: ['clientCountsByType'] });
+      
+      // Employee-related invalidations
+      queryClient.invalidateQueries({ queryKey: ['employee'] });
+      queryClient.invalidateQueries({ queryKey: ['employees'] });
+    },
+  });
+};
+
+export const useDeleteClient = () => {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: deleteClient,
+    // --- START: OPTIMISTIC UPDATE LOGIC ---
+    onMutate: async (id) => {
+      // 1. Cancel any outgoing refetches so they don't overwrite our optimistic update
+      await queryClient.cancelQueries({ queryKey: ['clients'] });
+
+      // 2. Snapshot the previous state of clients queries
+      const previousClientsData: any = queryClient.getQueryData(['clients']);
+
+      // 3. Optimistically remove the client from the list
+      if (previousClientsData) {
+        // Handle infinite query data structure
+        if (previousClientsData.pages) {
+          queryClient.setQueryData(['clients'], (oldData: any) => {
+            return {
+              ...oldData,
+              pages: oldData.pages.map((page: any) => ({
+                ...page,
+                clients: page.clients.filter((client: Client) => client.id !== id),
+                pagination: {
+                  ...page.pagination,
+                  total: page.pagination.total - 1
+                }
+              })),
+            };
+          });
+        } else {
+          // Handle regular query data structure
+          queryClient.setQueryData(['clients'], (oldData: any) => {
+            return {
+              ...oldData,
+              clients: oldData.clients.filter((client: Client) => client.id !== id),
+              pagination: {
+                ...oldData.pagination,
+                total: oldData.pagination.total - 1
+              }
+            };
+          });
+        }
+      }
+
+      // 4. Return a context object with the snapshotted values
+      return { previousClientsData };
+    },
+    // --- END: OPTIMISTIC UPDATE LOGIC ---
+    
+    // If the mutation fails, use the context returned from onMutate to roll back
+    onError: (_err, _variables, context) => {
+      if (context?.previousClientsData) {
+        queryClient.setQueryData(['clients'], context.previousClientsData);
+      }
+      // Note: We'll handle toast notifications in the UI components
+    },
+    // Always refetch after error or success to ensure data consistency
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ['clients'] }); // Invalidate all clients lists
+      queryClient.invalidateQueries({ queryKey: ['dashboard'] }); // Dashboard stats for total clients
+      queryClient.invalidateQueries({ queryKey: ['clientCountsByType'] }); // Client counts by type
+      
+      // Employee-related invalidations
+      queryClient.invalidateQueries({ queryKey: ['employee'] });
+      queryClient.invalidateQueries({ queryKey: ['employees'] });
+    },
+    onSuccess: () => {
+      // The UI has already updated optimistically
+      // Just ensure we invalidate related data
+    }
+  });
+};
+
+export const useGetClient = (clientId: number) => {
+    return useQuery({
+        queryKey: ['client', clientId],
+        queryFn: () => fetchClientById(clientId),
+        enabled: !!clientId,
+        staleTime: 30 * 1000, // Keep fresh for 30 seconds
+        // refetchOnWindowFocus: false (inherited)
+    });
+};
+
+export const useSearchClients = (term: string) => {
+    return useQuery({
+        queryKey: ['clientSearch', term],
+        queryFn: () => searchClients(term),
+        enabled: term.length >= 2,
+        staleTime: 0, // Always refetch on new search term
+        // refetchOnWindowFocus: false (inherited, makes sense for search)
+    });
+};
+
+export const useGetClientUnpaidAmounts = (clientId: number) => {
+    return useQuery({
+        queryKey: ['clientUnpaidAmounts', clientId],
+        queryFn: () => fetchClientUnpaidAmounts(clientId),
+        enabled: !!clientId,
+        staleTime: 30 * 1000, // Keep fresh for 30 seconds
+        // refetchOnWindowFocus: false (inherited)
+    });
+};
+
+export const useGetClientCountsByType = () => {
+    return useQuery({
+        queryKey: ['clientCountsByType'],
+        queryFn: fetchClientCountsByType,
+        staleTime: 5 * 60 * 1000, // Keep fresh for 5 minutes
+        // refetchOnWindowFocus: false (inherited)
+    });
+};
+
+export const useExportClients = () => {
+    // const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: exportClients,
+        // No specific invalidation needed here as it's an export, not a data change.
+        // If the export relies on "fresh" data, ensure the underlying query is invalidated beforehand.
+    });
+};
+
+
+const updateClientSortOrder = async ({ taskType, clientIds }: { taskType: string; clientIds: number[] }) => {
+    const { data } = await apiClient.post<ApiResponse<any>>('/clients/sort-order', {
+        task_type: taskType,
+        client_ids: clientIds,
+    });
+    return data;
+};
+
+export const useUpdateClientSortOrder = () => {
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: updateClientSortOrder,
+        onSuccess: () => {
+            // Invalidate to get the latest server-confirmed order
+            queryClient.invalidateQueries({ queryKey: ['dashboard', 'clientsWithActiveTasks'] });
+        },
+    });
+};
+
+==================================================
+
+[5/22] dashboardQueries.ts
+--------------------------
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useEffect, useRef } from 'react';
+import apiClient from '../api/apiClient';
+import type { ApiResponse, Task,Client } from '../api/types';
+
+// --- Types for dashboard-specific data ---
+interface DashboardStats {
+  total_clients: number;
+  total_tasks: number;
+  new_tasks: number;
+  deferred_tasks: number;
+  completed_tasks: number;
+  late_tasks: number; // New field for late tasks (30+ days)
+  late_receivables: number; // New field for late receivables (30+ days)
+  total_unpaid_amount: number; // Total unpaid amount across all clients
+  total_paid_amount: number; // Total paid amount across all clients
+  total_amount: number; // Total amount across all clients
+}
+
+export interface ClientWithTasksAndStats {
+  client: Client;
+  tasks: Task[];
+  stats: {
+    new_tasks_count: number;
+    deferred_tasks_count: number;
+    completed_tasks_count: number;
+    total_outstanding: number;
+  };
+}
+
+export interface GroupedClientsResponse {
+  Government: ClientWithTasksAndStats[];
+  Accounting: ClientWithTasksAndStats[];
+  'Real Estate': ClientWithTasksAndStats[];
+  Other: ClientWithTasksAndStats[];
+}
+
+// --- API Functions ---
+const fetchDashboardStats = async (): Promise<DashboardStats> => {
+  // This endpoint aggregates stats from clients and tasks
+  const { data } = await apiClient.get<ApiResponse<DashboardStats>>('/clients/stats');
+  if (!data.success) throw new Error(data.message || 'Failed to fetch dashboard stats.');
+  return data.data;
+};
+
+const fetchRecentTasks = async (): Promise<Task[]> => {
+    // This endpoint gets the latest tasks across all types
+    const { data } = await apiClient.get<ApiResponse<Task[]>>('/tasks/recent', { params: { limit: 10 } });
+    if (!data.success) throw new Error(data.message || 'Failed to fetch recent tasks.');
+    return data.data;
+}
+
+const fetchTotalPaidAmount = async (): Promise<number> => {
+    // This endpoint gets the total paid amount across all payments
+    const { data } = await apiClient.get<ApiResponse<{ total_paid: number }>>('/payments/total-paid');
+    if (!data.success) throw new Error(data.message || 'Failed to fetch total paid amount.');
+    return data.data.total_paid;
+}
+
+
+const fetchClientsWithActiveTasks = async (): Promise<GroupedClientsResponse> => {
+    // Note: The endpoint is under /clients, not /tasks
+    const { data } = await apiClient.get<ApiResponse<GroupedClientsResponse>>('/dashboard/clients-with-active-tasks');
+    if (!data.success) throw new Error(data.message || 'Failed to fetch dashboard client tasks.');
+    return data.data;
+}
+
+const fetchEmployeeClientsWithActiveTasks = async (): Promise<ClientWithTasksAndStats[]> => {
+    // Employee dashboard endpoint returns flat array, not grouped by type
+    const { data } = await apiClient.get<ApiResponse<ClientWithTasksAndStats[]>>('/dashboard/employee/clients-with-active-tasks');
+    if (!data.success) throw new Error(data.message || 'Failed to fetch employee dashboard client tasks.');
+    return data.data;
+}
+
+// --- React Query Hooks ---
+
+export const useGetDashboardStats = () => {
+  return useQuery({
+    queryKey: ['dashboard', 'stats'],
+    queryFn: fetchDashboardStats,
+    staleTime: 30 * 1000, // Keep fresh for 30 seconds
+    refetchInterval: 20 * 1000, // Refetch every 20 seconds
+    // refetchOnWindowFocus: false (inherited)
+  });
+};
+
+export const useGetRecentTasks = () => {
+    return useQuery({
+        queryKey: ['dashboard', 'recentTasks'],
+        queryFn: fetchRecentTasks,
+        staleTime: 30 * 1000, // Keep fresh for 30 seconds
+        refetchInterval: 20 * 1000, // Refetch every 20 seconds
+        // refetchOnWindowFocus: false (inherited)
+    });
+};
+
+export const useGetTotalPaidAmount = () => {
+    return useQuery({
+        queryKey: ['dashboard', 'totalPaidAmount'],
+        queryFn: fetchTotalPaidAmount,
+        staleTime: 30 * 1000, // Keep fresh for 30 seconds
+        refetchInterval: 20 * 1000, // Refetch every 20 seconds
+        // refetchOnWindowFocus: false (inherited)
+    });
+};
+
+// Add this new hook
+export const useGetClientsWithActiveTasks = () => {
+  const queryClient = useQueryClient();
+  const previousDataRef = useRef<GroupedClientsResponse | undefined>(undefined);
+
+  const query = useQuery<GroupedClientsResponse, Error>({
+    queryKey: ['dashboard', 'clientsWithActiveTasks'],
+    queryFn: fetchClientsWithActiveTasks,
+    staleTime: 30 * 1000, // Keep fresh for 30 seconds
+    refetchInterval: 20 * 1000, // Refetch every 20 seconds
+  });
+
+  useEffect(() => {
+    if (query.data && JSON.stringify(query.data) !== JSON.stringify(previousDataRef.current)) {
+      // Data has changed, invalidate receivables queries
+      queryClient.invalidateQueries({ queryKey: ['receivables'] });
+      previousDataRef.current = query.data;
+    }
+  }, [query.data, queryClient]);
+
+  return query;
+};
+
+// Employee dashboard hook
+export const useGetEmployeeClientsWithActiveTasks = () => {
+  const queryClient = useQueryClient();
+  const previousDataRef = useRef<ClientWithTasksAndStats[] | undefined>(undefined);
+
+  const query = useQuery<ClientWithTasksAndStats[], Error>({
+    queryKey: ['dashboard', 'employee', 'clientsWithActiveTasks'],
+    queryFn: fetchEmployeeClientsWithActiveTasks,
+    staleTime: 30 * 1000, // Keep fresh for 30 seconds
+    refetchInterval: 20 * 1000, // Refetch every 20 seconds
+  });
+
+  useEffect(() => {
+    if (query.data && JSON.stringify(query.data) !== JSON.stringify(previousDataRef.current)) {
+      // Data has changed, invalidate receivables queries
+      queryClient.invalidateQueries({ queryKey: ['receivables'] });
+      previousDataRef.current = query.data;
+    }
+  }, [query.data, queryClient]);
+
+  return query;
+};
+
+==================================================
+
+[6/22] employeeClientsQueries.ts
+--------------------------------
+import { useQuery, useInfiniteQuery } from '@tanstack/react-query';
+import apiClient from '../api/apiClient';
+import type { ApiResponse, Client } from '../api/types';
+
+// Interface for employee clients pagination response
+export interface EmployeeClientsResponse {
+  clients: Client[];
+  pagination: {
+    total: number;
+    per_page: number;
+    current_page: number;
+    total_pages: number;
+    has_next: boolean;
+    has_prev: boolean;
+  };
+}
+
+// Interface for query parameters
+export interface EmployeeClientsParams {
+  page?: number;
+  per_page?: number;
+  search?: string;
+}
+
+/**
+ * Fetch employee's accessible clients with pagination
+ * Uses the /clients/employee/all endpoint
+ */
+export const useGetEmployeeClients = (params: EmployeeClientsParams = {}) => {
+  const { page = 1, per_page = 20, search } = params;
+  
+  return useQuery({
+    queryKey: ['employee', 'clients', { page, per_page, search }],
+    queryFn: async (): Promise<EmployeeClientsResponse> => {
+      const queryParams = new URLSearchParams();
+      queryParams.append('page', page.toString());
+      queryParams.append('per_page', per_page.toString());
+      
+      if (search) queryParams.append('search', search);
+
+      const response = await apiClient.get<ApiResponse<EmployeeClientsResponse>>(
+        `/clients/employee/all?${queryParams.toString()}`
+      );
+      
+      if (!response.data.success) {
+        throw new Error(response.data.message || 'Failed to fetch employee clients');
+      }
+      
+      return response.data.data;
+    },
+    staleTime: 2 * 60 * 1000, // Keep fresh for 2 minutes
+    refetchInterval: 5 * 60 * 1000, // Auto-refetch every 5 minutes
+  });
+};
+
+/**
+ * Fetch employee's accessible clients with infinite scroll
+ */
+export const useGetEmployeeClientsInfinite = (filters: Omit<EmployeeClientsParams, 'page'> = {}) => {
+  const { per_page = 20, search } = filters;
+  
+  return useInfiniteQuery({
+    queryKey: ['employee', 'clients', 'infinite', { per_page, search }],
+    queryFn: async ({ pageParam }: { pageParam: number }): Promise<EmployeeClientsResponse> => {
+      const queryParams = new URLSearchParams();
+      queryParams.append('page', pageParam.toString());
+      queryParams.append('per_page', per_page.toString());
+      
+      if (search) queryParams.append('search', search);
+
+      const response = await apiClient.get<ApiResponse<EmployeeClientsResponse>>(
+        `/clients/employee/all?${queryParams.toString()}`
+      );
+      
+      if (!response.data.success) {
+        throw new Error(response.data.message || 'Failed to fetch employee clients');
+      }
+      
+      return response.data.data;
+    },
+    initialPageParam: 1,
+    getNextPageParam: (lastPage: EmployeeClientsResponse) => {
+      const { current_page, total_pages } = lastPage.pagination;
+      return current_page < total_pages ? current_page + 1 : undefined;
+    },
+    staleTime: 2 * 60 * 1000, // Keep fresh for 2 minutes
+    refetchInterval: 5 * 60 * 1000, // Auto-refetch every 5 minutes
+  });
+};
+
+==================================================
+
+[7/22] employeeDashboardMutations.ts
+------------------------------------
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import apiClient from '../api/apiClient';
+import type { ApiResponse } from '../api/types';
+
+// Employee sort order mutation
+interface UpdateEmployeeSortOrderRequest {
+  client_ids: number[];
+}
+
+const updateEmployeeSortOrder = async (request: UpdateEmployeeSortOrderRequest): Promise<void> => {
+  const { data } = await apiClient.post<ApiResponse<any>>('/clients/employee/sort-order', request);
+  if (!data.success) throw new Error(data.message || 'Failed to update employee sort order.');
+};
+
+export const useUpdateEmployeeSortOrder = () => {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: updateEmployeeSortOrder,
+    onSuccess: () => {
+      // Invalidate the employee dashboard query to refetch with new order
+      queryClient.invalidateQueries({ queryKey: ['dashboard', 'employee', 'clientsWithActiveTasks'] });
+    },
+  });
+};
+
+==================================================
+
+[8/22] employeeDashboardQueries.ts
+----------------------------------
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import apiClient from '../api/apiClient';
+import type { ApiResponse, TaskType } from '../api/types';
+
+// Employee dashboard data types
+export interface EmployeeTransaction {
+  id: string;
+  employee_user_id: string;
+  transaction_name: string;
+  direction: 'CREDIT' | 'DEBIT';
+  amount: string | null;
+  related_task_id: string;
+  task_amount: string;
+  notes: string;
+  transaction_date: string;
+  created_at: string;
+  task_name: string;
+  client_id: string;
+  client_name: string;
+}
+
+export interface FinancialSummary {
+  total_earned: number;
+  total_paid_out: number;
+  balance_due: number;
+  total_transactions: number;
+  pending_transactions: number;
+  last_payout_date: string | null;
+}
+
+export interface TaskStats {
+  total_assigned: number;
+  new_tasks: number;
+  deferred_tasks: number;
+  pending_review: number;
+  completed_tasks: number;
+  completed_this_month: number;
+}
+
+export interface EmployeeDashboardTask {
+  client_id: number;
+  assigned_to_id: number | null;
+  task_name: string;
+  type: TaskType;
+  status: string;
+  amount: number;
+  expense_amount: number;
+  net_earning: number;
+  amount_details: any[];
+  start_date: string;
+  end_date: string;
+  prepaid_amount: number;
+  prepaid_receivable_id: number | null;
+  notes: string;
+  id: number;
+  created_at: string;
+  updated_at: string;
+  client: {
+    id: string;
+    name: string;
+    phone: string;
+  };
+  requirements: any[];
+  receivable: any;
+  prepaid_receivable: any;
+  tags?: Array<{
+    id: number;
+    name: string;
+  }>;
+}
+
+export interface EmployeeDashboardData {
+  recent_transactions: EmployeeTransaction[];
+  financial_summary: FinancialSummary;
+  pending_commissions_count: number;
+  pending_commission_total: number;
+  task_stats: TaskStats;
+  recent_tasks: EmployeeDashboardTask[];
+}
+
+/**
+ * Fetch employee dashboard data
+ * Uses the /employees/me/dashboard endpoint
+ */
+export const useEmployeeDashboard = () => {
+  return useQuery({
+    queryKey: ['employee', 'dashboard'],
+    queryFn: async (): Promise<EmployeeDashboardData> => {
+      const response = await apiClient.get<ApiResponse<EmployeeDashboardData>>('/employees/me/dashboard');
+      if (!response.data.success) {
+        throw new Error(response.data.message || 'Failed to fetch employee dashboard data');
+      }
+      return response.data.data;
+    },
+    staleTime: 1 * 60 * 1000, // Keep fresh for 1 minute
+    refetchInterval: 20 * 1000, // Auto-refetch every 20 seconds
+  });
+};
+
+/**
+ * Update employee sort order for clients
+ */
+const updateEmployeeSortOrder = async ({ clientIds }: { clientIds: number[] }) => {
+  const { data } = await apiClient.post<ApiResponse<any>>('/clients/employee/sort-order', {
+    client_ids: clientIds,
+  });
+  return data;
+};
+
+/**
+ * Hook to update employee sort order
+ */
+export const useUpdateEmployeeSortOrder = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: updateEmployeeSortOrder,
+    onSuccess: () => {
+      // Invalidate to get the latest server-confirmed order
+      queryClient.invalidateQueries({ queryKey: ['employee', 'dashboard'] });
+    },
+  });
+};
+
+==================================================
+
+[9/22] employeeFinancialQueries.ts
+----------------------------------
+import { useQuery, useInfiniteQuery } from '@tanstack/react-query';
+import apiClient from '../api/apiClient';
+
+// Type definitions
+export interface EmployeeTransaction {
+  id: string;
+  employee_user_id: string;
+  transaction_name: string;
+  direction: 'CREDIT' | 'DEBIT';
+  amount: string;
+  related_task_id: string | null;
+  task_amount: string | null;
+  notes: string;
+  transaction_date: string;
+  created_at: string;
+  task_name: string | null;
+  client_id: string | null;
+  client_name: string | null;
+}
+
+export interface EmployeeTransactionsResponse {
+  success: boolean;
+  data: {
+    pending_commissions: any[];
+    transactions: EmployeeTransaction[];
+  };
+}
+
+export interface EmployeeCredit {
+  id: string;
+  client_id: string;
+  amount: string;
+  received_at: string;
+  allocation_method: string;
+  created_by: string;
+  created_at: string;
+  updated_at: string;
+  client_name: string;
+  client_phone: string;
+  allocated_amount: string;
+  remaining_amount: string;
+  description?: string; // Add optional description field
+}
+
+export interface EmployeeCreditsResponse {
+  success: boolean;
+  data: {
+    credits: EmployeeCredit[];
+    pagination: {
+      current_page: number;
+      per_page: number;
+      total_count: number;
+      total_pages: number;
+    };
+  };
+}
+
+/**
+ * Get current employee's transactions (for employee user)
+ */
+export const useGetMyTransactions = () => {
+  return useQuery({
+    queryKey: ['employee', 'transactions', 'me'],
+    queryFn: async (): Promise<EmployeeTransactionsResponse> => {
+      const response = await apiClient.get('/employees/me/transactions');
+      return response.data;
+    },
+    staleTime: 30 * 1000, // Keep fresh for 30 seconds
+    refetchInterval: 60 * 1000, // Auto-refetch every minute
+  });
+};
+
+/**
+ * Get current employee's credits with infinite scroll
+ */
+export const useGetMyCreditsInfinite = () => {
+  return useInfiniteQuery({
+    queryKey: ['employee', 'credits', 'me', 'infinite'],
+    queryFn: async ({ pageParam = 1 }): Promise<EmployeeCreditsResponse> => {
+      const response = await apiClient.get('/clients/employee/credits', {
+        params: { page: pageParam, per_page: 20 }
+      });
+      return response.data;
+    },
+    initialPageParam: 1,
+    getNextPageParam: (lastPage) => {
+      const { current_page, total_pages } = lastPage.data.pagination;
+      return current_page < total_pages ? current_page + 1 : undefined;
+    },
+    staleTime: 2 * 60 * 1000, // Keep fresh for 2 minutes
+  });
+};
+
+/**
+ * Get clients receivables summary for current employee with infinite scroll
+ */
+export const useGetMyClientsReceivablesSummaryInfinite = () => {
+  return useInfiniteQuery({
+    queryKey: ['employee', 'receivables', 'clients-summary', 'infinite'],
+    queryFn: async ({ pageParam = 1 }) => {
+      const response = await apiClient.get('/receivables/clients-summary', {
+        params: { page: pageParam, per_page: 20 }
+      });
+      return response.data;
+    },
+    initialPageParam: 1,
+    getNextPageParam: (lastPage) => {
+      const { pagination } = lastPage.data;
+      return pagination.current_page < pagination.total_pages ? 
+        pagination.current_page + 1 : undefined;
+    },
+    staleTime: 1 * 60 * 1000, // Keep fresh for 1 minute
+  });
+};
+
+/**
+ * Get clients receivables totals for current employee
+ */
+export const useGetMyClientsReceivablesTotals = () => {
+  return useQuery({
+    queryKey: ['employee', 'receivables', 'totals'],
+    queryFn: async () => {
+      const response = await apiClient.get('/receivables/clients-summary/totals');
+      return response.data;
+    },
+    staleTime: 2 * 60 * 1000, // Keep fresh for 2 minutes
+  });
+};
+
+// New types for employee dashboard
+export interface EmployeeReceivableDashboardItem {
+  id: string;
+  client_id: string;
+  task_id: string;
+  created_by: string | null;
+  type: string;
+  description: string;
+  amount: string;
+  amount_details: string;
+  notes: string;
+  due_date: string;
+  created_at: string;
+  updated_at: string;
+  client_name: string;
+  client_phone: string;
+  task_name: string;
+  task_type: string;
+  task_assigned_to_id: string | null;
+  task_created_by: string;
+  total_paid: number;
+  total_allocated: number;
+  remaining_amount: number;
+  payments: any[];
+  credit_allocations: any[];
+  payment_status: string;
+  employee_relationship: string[];
+  receivables_details: any[];
+}
+
+export interface EmployeeReceivableDashboardResponse {
+  success: boolean;
+  data: {
+    receivables: EmployeeReceivableDashboardItem[];
+    pagination: {
+      total: number;
+      per_page: number;
+      current_page: number;
+      total_pages: number;
+      has_next: boolean;
+      has_prev: boolean;
+    };
+  };
+}
+
+/**
+ * Get employee receivables dashboard with infinite scroll
+ */
+export const useGetMyReceivablesDashboardInfinite = (params?: {
+  payment_status?: 'unpaid' | 'paid';
+  client_id?: string;
+  search?: string;
+}) => {
+  return useInfiniteQuery({
+    queryKey: ['employee', 'receivables', 'dashboard', 'infinite', params],
+    queryFn: async ({ pageParam = 1 }): Promise<EmployeeReceivableDashboardResponse> => {
+      const response = await apiClient.get('/receivables/employee/me/dashboard', {
+        params: { 
+          page: pageParam, 
+          per_page: 20,
+          ...params
+        }
+      });
+      return response.data;
+    },
+    initialPageParam: 1,
+    getNextPageParam: (lastPage) => {
+      const { pagination } = lastPage.data;
+      return pagination.has_next ? pagination.current_page + 1 : undefined;
+    },
+    staleTime: 1 * 60 * 1000, // Keep fresh for 1 minute
+  });
+};
+
+==================================================
+
+[10/22] employeeNotificationQueries.ts
+--------------------------------------
+import { useInfiniteQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import apiClient from '../api/apiClient';
+
+// Type definitions
+export interface EmployeeNotification {
+  id: number;
+  task_id: number;
+  task_name: string;
+  client_name: string;
+  content: string;
+  event_type: string;
+  event_id: number | null;
+  is_read: boolean;
+  created_at: string;
+  read_at: string | null;
+}
+
+export interface EmployeeNotificationsResponse {
+  success: boolean;
+  data: {
+    notifications: EmployeeNotification[];
+    pagination: {
+      current_page: number;
+      per_page: number;
+      total_items: number;
+      total_pages: number;
+      has_more: boolean;
+    };
+  };
+}
+
+// Queries
+export const useGetEmployeeNotificationsInfinite = () => {
+  return useInfiniteQuery({
+    queryKey: ['employee-notifications'],
+    queryFn: async ({ pageParam = 1 }) => {
+      const response = await apiClient.get<EmployeeNotificationsResponse>(
+        `/notifications?page=${pageParam}&per_page=20`
+      );
+      return response.data;
+    },
+    getNextPageParam: (lastPage) => {
+      if (lastPage.data.pagination.has_more) {
+        return lastPage.data.pagination.current_page + 1;
+      }
+      return undefined;
+    },
+    initialPageParam: 1,
+  });
+};
+
+// Mark notification as read mutation
+export const useMarkNotificationAsRead = () => {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: async (notificationId: number) => {
+      const response = await apiClient.patch(`/employees/me/notifications/${notificationId}/read`);
+      return response.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['employee-notifications'] });
+    },
+  });
+};
+
+// Mark all notifications as read mutation
+export const useMarkAllNotificationsAsRead = () => {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: async () => {
+      const response = await apiClient.patch('/employees/me/notifications/read-all');
+      return response.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['employee-notifications'] });
+    },
+  });
+};
+
+==================================================
+
+[11/22] employeeQueries.ts
+--------------------------
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import apiClient from '../api/apiClient';
+import type {
+  Employee,
+  EmployeePaginatedData,
+  EmployeeStats,
+  CreateEmployeeRequest,
+  UpdateEmployeeRequest,
+  EmployeeReceivablesData,
+  ApiResponse,
+} from '../api/types';
+
+/**
+ * Fetch all employees with pagination and filtering
+ */
+export const useGetEmployees = (params?: {
+  page?: number;
+  per_page?: number;
+  search?: string;
+}) => {
+  return useQuery({
+    queryKey: ['employees', params],
+    queryFn: async (): Promise<EmployeePaginatedData> => {
+      const response = await apiClient.get('/employees', { params });
+      return response.data;
+    },
+    staleTime: 2 * 60 * 1000, // Keep fresh for 2 minutes
+  });
+};
+
+/**
+ * Fetch active employees for selection dropdown
+ */
+export const useGetEmployeesForSelection = () => {
+  return useQuery({
+    queryKey: ['employees', 'selection'],
+    queryFn: async (): Promise<Employee[]> => {
+      const response = await apiClient.get('/employees/selection');
+      return response.data.data;
+    },
+    staleTime: 5 * 60 * 1000, // Keep fresh for 5 minutes - employees don't change often
+  });
+};
+
+/**
+ * Fetch specific employee by ID
+ */
+export const useGetEmployee = (id: number) => {
+  return useQuery({
+    queryKey: ['employees', id],
+    queryFn: async (): Promise<Employee> => {
+      const response = await apiClient.get(`/employees/${id}`);
+      return response.data.data;
+    },
+    enabled: !!id,
+  });
+};
+
+/**
+ * Fetch employee statistics
+ */
+export const useGetEmployeeStats = () => {
+  return useQuery({
+    queryKey: ['employees', 'stats'],
+    queryFn: async (): Promise<EmployeeStats> => {
+      const response = await apiClient.get('/employees/stats');
+      return response.data.data;
+    },
+    staleTime: 5 * 60 * 1000,
+  });
+};
+
+/**
+ * Create new employee
+ */
+export const useCreateEmployee = () => {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: async (employeeData: CreateEmployeeRequest): Promise<Employee> => {
+      const response = await apiClient.post('/employees', employeeData);
+      return response.data.data;
+    },
+    onSuccess: () => {
+      // Invalidate the unified users query that now includes employee status
+      queryClient.invalidateQueries({ queryKey: ['users'] });
+      queryClient.invalidateQueries({ queryKey: ['employees'] });
+      queryClient.invalidateQueries({ queryKey: ['employees', 'selection'] });
+    },
+  });
+};
+
+/**
+ * Update employee
+ */
+export const useUpdateEmployee = () => {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: async ({ id, data }: { id: number; data: UpdateEmployeeRequest }): Promise<Employee> => {
+      const response = await apiClient.put(`/employees/${id}`, data);
+      return response.data.data;
+    },
+    onSuccess: (_, { id }) => {
+      queryClient.invalidateQueries({ queryKey: ['employees'] });
+      queryClient.invalidateQueries({ queryKey: ['employees', id] });
+    },
+  });
+};
+
+/**
+ * Delete employee (soft delete)
+ */
+export const useDeleteEmployee = () => {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: async (id: number): Promise<void> => {
+      await apiClient.delete(`/employees/${id}`);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['employees'] });
+    },
+  });
+};
+
+/**
+ * Remove employee status (hard delete from tm_employees table)
+ */
+export const useRemoveEmployeeStatus = () => {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: async (userId: number): Promise<void> => {
+      await apiClient.delete(`/employees/user/${userId}`);
+    },
+    onSuccess: () => {
+      // Invalidate the unified users query that now includes employee status
+      queryClient.invalidateQueries({ queryKey: ['users'] });
+      queryClient.invalidateQueries({ queryKey: ['employees'] });
+      queryClient.invalidateQueries({ queryKey: ['employees', 'selection'] });
+    },
+  });
+};
+
+/**
+ * Assign task to employee
+ */
+export const useAssignTask = () => {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: async ({ taskId, assignedToId }: { taskId: number; assignedToId: number | null }) => {
+      const response = await apiClient.put(`/tasks/${taskId}/assign`, {
+        assigned_to_id: assignedToId,
+      });
+      return response.data;
+    },
+    onSuccess: (_, { taskId }) => {
+      // Invalidate task queries to refresh the assignment
+      queryClient.invalidateQueries({ queryKey: ['tasks'] });
+      queryClient.invalidateQueries({ queryKey: ['tasks', taskId] });
+      
+      // Also invalidate recent tasks in case they're displayed
+      queryClient.invalidateQueries({ queryKey: ['tasks', 'recent'] });
+    },
+  });
+};
+
+/**
+ * Get employee transactions (payouts and commissions)
+ */
+export const useGetEmployeeTransactions = (
+  employeeId: number,
+  params?: { page?: number; per_page?: number }
+) => {
+  return useQuery({
+    queryKey: ['employees', employeeId, 'transactions', params],
+    queryFn: async () => {
+      const response = await apiClient.get(`/employees/${employeeId}/payouts`, { params });
+      return response.data;
+    },
+    enabled: !!employeeId,
+    staleTime: 30 * 1000, // Keep fresh for 30 seconds
+  });
+};
+
+/**
+ * Delete employee transaction (payout only)
+ */
+export const useDeleteEmployeeTransaction = () => {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: async ({ 
+      employeeUserId, 
+      transactionId 
+    }: { 
+      employeeTableId: number; 
+      employeeUserId: number; 
+      transactionId: number 
+    }) => {
+      // The DELETE API endpoint expects user_id in the URL
+      const response = await apiClient.delete(`/employees/${employeeUserId}/transactions/${transactionId}`);
+      return response.data;
+    },
+    onSuccess: (_, { employeeTableId }) => {
+      // Invalidate query using the employee table ID
+      queryClient.invalidateQueries({ queryKey: ['employees', employeeTableId, 'transactions'] });
+    },
+  });
+};
+
+/**
+ * Update employee transaction (edit payout amount/notes)
+ */
+export const useUpdateEmployeeTransaction = () => {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: async ({ 
+      employeeUserId, 
+      transactionId, 
+      data 
+    }: { 
+      employeeTableId: number;
+      employeeUserId: number; 
+      transactionId: number; 
+      data: { amount?: number; notes?: string; }
+    }) => {
+      // The PUT API endpoint expects user_id in the URL
+      const response = await apiClient.put(`/employees/${employeeUserId}/transactions/${transactionId}`, data);
+      return response.data;
+    },
+    onSuccess: (_, { employeeTableId }) => {
+      // Invalidate query using the employee table ID
+      queryClient.invalidateQueries({ queryKey: ['employees', employeeTableId, 'transactions'] });
+    },
+  });
+};
+
+/**
+ * Get tasks assigned to/created by employee
+ */
+export const useGetEmployeeTasks = (
+  employeeId: number,
+  params?: { page?: number; per_page?: number }
+) => {
+  return useQuery({
+    queryKey: ['employees', employeeId, 'tasks', params],
+    queryFn: async () => {
+      // We need to get employee details first to get the user_id
+      const employeeResponse = await apiClient.get(`/employees/${employeeId}`);
+      const employee = employeeResponse.data.data;
+      const response = await apiClient.get(`/tasks/employee/${employee.user_id}`, { params });
+      return response.data;
+    },
+    enabled: !!employeeId,
+    staleTime: 1 * 60 * 1000, // Keep fresh for 1 minute
+  });
+};
+
+/**
+ * Get clients related to employee
+ */
+export const useGetEmployeeClients = (
+  employeeId: number,
+  params?: { page?: number; per_page?: number }
+) => {
+  return useQuery({
+    queryKey: ['employees', employeeId, 'clients', params],
+    queryFn: async () => {
+      // We need to get employee details first to get the user_id
+      const employeeResponse = await apiClient.get(`/employees/${employeeId}`);
+      const employee = employeeResponse.data.data;
+      
+      // Get clients associated with this employee's tasks
+      const response = await apiClient.get(`/clients/admin/employee/${employee.user_id}`, { params });
+      return response.data;
+    },
+    enabled: !!employeeId,
+    staleTime: 2 * 60 * 1000, // Keep fresh for 2 minutes
+  });
+};
+
+/**
+ * Get receivables summary for employee's clients
+ */
+export const useGetEmployeeReceivablesSummary = (
+  employeeId: number,
+  params?: { page?: number; per_page?: number }
+) => {
+  return useQuery({
+    queryKey: ['employees', employeeId, 'receivables', params],
+    queryFn: async (): Promise<ApiResponse<EmployeeReceivablesData>> => {
+      // We need to get employee details first to get the user_id
+      const employeeResponse = await apiClient.get<ApiResponse<Employee>>(`/employees/${employeeId}`);
+      const employee = employeeResponse.data.data;
+      const response = await apiClient.get<ApiResponse<EmployeeReceivablesData>>(`/receivables/clients-summary`, { 
+        params: { 
+          employee_user_id: employee.user_id,
+          ...params 
+        }
+      });
+      return response.data;
+    },
+    enabled: !!employeeId,
+    staleTime: 1 * 60 * 1000, // Keep fresh for 1 minute
+  });
+};
+
+/**
+ * Get receivables totals for employee's clients
+ */
+export const useGetEmployeeReceivablesTotals = (employeeId: number) => {
+  return useQuery({
+    queryKey: ['employees', employeeId, 'receivables-totals'],
+    queryFn: async () => {
+      // We need to get employee details first to get the user_id
+      const employeeResponse = await apiClient.get<ApiResponse<Employee>>(`/employees/${employeeId}`);
+      const employee = employeeResponse.data.data;
+      const response = await apiClient.get('/receivables/clients-summary/totals', { 
+        params: { 
+          employee_user_id: employee.user_id
+        }
+      });
+      return response.data;
+    },
+    enabled: !!employeeId,
+    staleTime: 2 * 60 * 1000, // Keep fresh for 2 minutes
+  });
+};
+
+/**
+ * Add payout to employee
+ */
+export const useAddEmployeePayout = () => {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: async ({ 
+      employeeUserId, 
+      payoutData 
+    }: { 
+      employeeUserId: number;
+      payoutData: { amount: number; notes?: string; type?: string; }
+    }) => {
+      // The POST API endpoint expects user_id in the URL
+      const response = await apiClient.post(`/employees/${employeeUserId}/payouts`, payoutData);
+      return response.data;
+    },
+    onSuccess: (_, { employeeUserId }) => {
+      // Invalidate query using the employee table ID
+      queryClient.invalidateQueries({ queryKey: ['employees', employeeUserId, 'transactions'] });
+    },
+  });
+};
+
+/**
+ * Add borrow to employee
+ */
+export const useAddEmployeeBorrow = () => {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: async ({ 
+      employeeUserId, 
+      borrowData 
+    }: { 
+      employeeUserId: number;
+      borrowData: { amount: number; notes?: string; }
+    }) => {
+      // The POST API endpoint expects user_id in the URL
+      const response = await apiClient.post(`/employees/${employeeUserId}/borrow`, borrowData);
+      return response.data;
+    },
+    onSuccess: (_, { employeeUserId }) => {
+      // Invalidate query using the employee table ID
+      queryClient.invalidateQueries({ queryKey: ['employees', employeeUserId, 'transactions'] });
+    },
+  });
+};
+
+==================================================
+
+[12/22] employeeTasksQueries.ts
+-------------------------------
+import { useQuery, useMutation, useQueryClient, useInfiniteQuery } from '@tanstack/react-query';
+import apiClient from '../api/apiClient';
+import type { ApiResponse, Task } from '../api/types';
+
+// Interface for employee tasks pagination response
+export interface EmployeeTasksResponse {
+  tasks: Task[];
+  pagination: {
+    total: number;
+    per_page: number;
+    current_page: number;
+    total_pages: number;
+    has_next: boolean;
+    has_prev: boolean;
+  };
+}
+
+// Interface for query parameters
+export interface EmployeeTasksParams {
+  page?: number;
+  per_page?: number;
+  status?: string;
+  search?: string;
+  client_id?: number; // NEW: Optional client filter
+}
+
+/**
+ * Fetch employee's own tasks
+ * Uses the /tasks/employee/me endpoint
+ */
+export const useGetEmployeeOwnTasks = (params: EmployeeTasksParams = {}) => {
+  const { page = 1, per_page = 20, status, search, client_id } = params;
+  
+  return useQuery({
+    queryKey: ['employee', 'tasks', 'own', { page, per_page, status, search, client_id }],
+    queryFn: async (): Promise<EmployeeTasksResponse> => {
+      const queryParams = new URLSearchParams();
+      queryParams.append('page', page.toString());
+      queryParams.append('per_page', per_page.toString());
+      
+      if (status) queryParams.append('status', status);
+      if (search) queryParams.append('search', search);
+      if (client_id) queryParams.append('client_id', client_id.toString());
+
+      const response = await apiClient.get<ApiResponse<EmployeeTasksResponse>>(
+        `/tasks/employee/me?${queryParams.toString()}`
+      );
+      
+      if (!response.data.success) {
+        throw new Error(response.data.message || 'Failed to fetch employee tasks');
+      }
+      
+      return response.data.data;
+    },
+    staleTime: 2 * 60 * 1000, // Keep fresh for 2 minutes
+    refetchInterval: 5 * 60 * 1000, // Auto-refetch every 5 minutes
+  });
+};
+
+/**
+ * Fetch employee's own tasks with infinite scroll
+ */
+export const useGetEmployeeOwnTasksInfinite = (filters: Omit<EmployeeTasksParams, 'page'> = {}) => {
+  const { per_page = 20, status, search, client_id } = filters;
+  
+  return useInfiniteQuery({
+    queryKey: ['employee', 'tasks', 'own', 'infinite', { per_page, status, search, client_id }],
+    queryFn: async ({ pageParam }: { pageParam: number }): Promise<EmployeeTasksResponse> => {
+      const queryParams = new URLSearchParams();
+      queryParams.append('page', pageParam.toString());
+      queryParams.append('per_page', per_page.toString());
+      
+      if (status) queryParams.append('status', status);
+      if (search) queryParams.append('search', search);
+      if (client_id) queryParams.append('client_id', client_id.toString());
+
+      const response = await apiClient.get<ApiResponse<EmployeeTasksResponse>>(
+        `/tasks/employee/me?${queryParams.toString()}`
+      );
+      
+      if (!response.data.success) {
+        throw new Error(response.data.message || 'Failed to fetch employee tasks');
+      }
+      
+      return response.data.data;
+    },
+    initialPageParam: 1,
+    getNextPageParam: (lastPage: EmployeeTasksResponse) => {
+      const { current_page, total_pages } = lastPage.pagination;
+      return current_page < total_pages ? current_page + 1 : undefined;
+    },
+    staleTime: 2 * 60 * 1000, // Keep fresh for 2 minutes
+    refetchInterval: 5 * 60 * 1000, // Auto-refetch every 5 minutes
+  });
+};
+
+/**
+ * Submit task for review mutation
+ */
+export const useSubmitTaskForReview = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (taskId: number) => {
+      const response = await apiClient.post<ApiResponse<Task & { receivable_id?: number }>>(
+        `/tasks/${taskId}/submit-for-review`
+      );
+
+      if (!response.data.success) {
+        throw new Error(response.data.message || 'Failed to submit task for review');
+      }
+
+      return response.data.data;
+    },
+    onSuccess: () => {
+      // Invalidate and refetch employee tasks
+      queryClient.invalidateQueries({ queryKey: ['employee', 'tasks', 'own'] });
+      queryClient.invalidateQueries({ queryKey: ['employee', 'dashboard'] });
+      queryClient.invalidateQueries({ queryKey: ['dashboard'] });
+      queryClient.invalidateQueries({ queryKey: ['tasks'] });
+      queryClient.invalidateQueries({ queryKey: ['receivables'] });
+    },
+  });
+};
+
+==================================================
+
+[13/22] notificationQueries.ts
+------------------------------
+import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import  apiClient  from '../api/apiClient';
+
+// Types
+export interface Notification {
+  id: number;
+  task_id: number;
+  task_name: string;
+  client_name: string;
+  content: string;
+  event_type: string;
+  event_id: number | null;
+  is_read: boolean;
+  created_at: string;
+  read_at: string | null;
+}
+
+export interface NotificationPaginatedData {
+  notifications: Notification[];
+  pagination: {
+    current_page: number;
+    per_page: number;
+    total_items: number;
+    total_pages: number;
+    has_more: boolean;
+  };
+}
+
+export interface NotificationCountData {
+  count: number;
+}
+
+// API Functions
+export const getUnreadNotificationCount = async (): Promise<NotificationCountData> => {
+  const response = await apiClient.get('/notifications/unread-count');
+  return response.data.data; // Strip the wrapper like other API calls
+};
+
+export const getNotifications = async ({ pageParam = 1 }): Promise<NotificationPaginatedData> => {
+  const response = await apiClient.get(`/notifications?page=${pageParam}&per_page=20`);
+  return response.data.data;
+};
+
+export const markNotificationAsRead = async (notificationId: number): Promise<{ message: string }> => {
+  const response = await apiClient.post(`/notifications/${notificationId}/mark-read`);
+  return response.data.data;
+};
+
+export const markAllNotificationsAsRead = async (): Promise<{ message: string }> => {
+  const response = await apiClient.post('/notifications/mark-all-read');
+  return response.data.data;
+};
+
+// React Query Hooks
+
+/**
+ * Hook to get unread notification count with polling
+ * Polls every 20 seconds with exponential backoff on errors
+ */
+export const useGetUnreadNotificationCount = () => {
+  return useQuery({
+    queryKey: ['notificationCount'],
+    queryFn: getUnreadNotificationCount,
+    refetchInterval: (query) => {
+      // Exponential backoff on error: 20s -> 40s -> 60s -> 60s...
+      if (query.state.error) {
+        const failureCount = query.state.fetchFailureCount || 0;
+        return Math.min(20000 * Math.pow(2, failureCount), 60000);
+      }
+      return 20000; // 20 seconds
+    },
+    refetchOnWindowFocus: false,
+    refetchOnMount: true,
+    staleTime: 15000, // Consider data stale after 15 seconds
+    retry: (failureCount, error: any) => {
+      // Stop retrying after 3 attempts or on 4xx errors
+      if (failureCount >= 3) return false;
+      if (error?.response?.status >= 400 && error?.response?.status < 500) return false;
+      return true;
+    },
+  });
+};
+
+/**
+ * Hook to get paginated notifications with infinite scroll
+ */
+export const useGetNotifications = () => {
+  return useInfiniteQuery({
+    queryKey: ['notifications'],
+    queryFn: getNotifications,
+    initialPageParam: 1,
+    getNextPageParam: (lastPage) => {
+      if (!lastPage?.pagination) {
+        return undefined;
+      }
+      const { current_page, has_more } = lastPage.pagination;
+      return has_more ? current_page + 1 : undefined;
+    },
+    staleTime: 30000, // Consider data stale after 30 seconds
+    refetchOnWindowFocus: false,
+  });
+};
+
+/**
+ * Hook to mark a single notification as read
+ */
+export const useMarkNotificationAsRead = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: markNotificationAsRead,
+    onMutate: async (notificationId: number) => {
+      // Cancel any outgoing refetches for notifications
+      await queryClient.cancelQueries({ queryKey: ['notifications'] });
+      await queryClient.cancelQueries({ queryKey: ['notificationCount'] });
+
+      // Snapshot the previous values
+      const previousNotifications = queryClient.getQueryData(['notifications']);
+      const previousCount = queryClient.getQueryData(['notificationCount']);
+
+      // Optimistically update notifications
+      queryClient.setQueryData(['notifications'], (old: any) => {
+        if (!old) return old;
+
+        return {
+          ...old,
+          pages: old.pages.map((page: NotificationPaginatedData) => ({
+            ...page,
+            notifications: page.notifications.map((notification: Notification) =>
+              notification.id === notificationId
+                ? { ...notification, is_read: true, read_at: new Date().toISOString() }
+                : notification
+            ),
+          })),
+        };
+      });
+
+      // Optimistically update count
+      queryClient.setQueryData(['notificationCount'], (old: NotificationCountData | undefined) => {
+        if (!old) return old;
+        return { count: Math.max(0, old.count - 1) };
+      });
+
+      return { previousNotifications, previousCount };
+    },
+    onError: (_err, _notificationId, context) => {
+      // If the mutation fails, use the context returned from onMutate to roll back
+      if (context?.previousNotifications) {
+        queryClient.setQueryData(['notifications'], context.previousNotifications);
+      }
+      if (context?.previousCount) {
+        queryClient.setQueryData(['notificationCount'], context.previousCount);
+      }
+    },
+    onSettled: () => {
+      // Always refetch after error or success to ensure we have correct data
+      queryClient.invalidateQueries({ queryKey: ['notifications'] });
+      queryClient.invalidateQueries({ queryKey: ['notificationCount'] });
+    },
+  });
+};
+
+/**
+ * Hook to mark all notifications as read
+ */
+export const useMarkAllNotificationsAsRead = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: markAllNotificationsAsRead,
+    onMutate: async () => {
+      // Cancel any outgoing refetches
+      await queryClient.cancelQueries({ queryKey: ['notifications'] });
+      await queryClient.cancelQueries({ queryKey: ['notificationCount'] });
+
+      // Snapshot the previous values
+      const previousNotifications = queryClient.getQueryData(['notifications']);
+      const previousCount = queryClient.getQueryData(['notificationCount']);
+
+      // Optimistically update all notifications as read
+      queryClient.setQueryData(['notifications'], (old: any) => {
+        if (!old) return old;
+
+        return {
+          ...old,
+          pages: old.pages.map((page: NotificationPaginatedData) => ({
+            ...page,
+            notifications: page.notifications.map((notification: Notification) => ({
+              ...notification,
+              is_read: true,
+              read_at: notification.read_at || new Date().toISOString(),
+            })),
+          })),
+        };
+      });
+
+      // Optimistically update count to 0
+      queryClient.setQueryData(['notificationCount'], { count: 0 });
+
+      return { previousNotifications, previousCount };
+    },
+    onError: (_err, _variables, context) => {
+      // If the mutation fails, use the context returned from onMutate to roll back
+      if (context?.previousNotifications) {
+        queryClient.setQueryData(['notifications'], context.previousNotifications);
+      }
+      if (context?.previousCount) {
+        queryClient.setQueryData(['notificationCount'], context.previousCount);
+      }
+    },
+    onSettled: () => {
+      // Always refetch after error or success
+      queryClient.invalidateQueries({ queryKey: ['notifications'] });
+      queryClient.invalidateQueries({ queryKey: ['notificationCount'] });
+    },
+  });
+};
+
+==================================================
+
+[14/22] paymentQueries.ts
+-------------------------
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import apiClient from '../api/apiClient';
+import type { ApiResponse, Payment, PaymentPayload, PaymentMethod } from '../api/types';
+
+// --- API Functions ---
+const fetchPayment = async (id: number): Promise<Payment> => {
+  const { data } = await apiClient.get<ApiResponse<Payment>>(`/payments/${id}`);
+  if (!data.success) throw new Error(data.message || 'Failed to fetch payment.');
+  return data.data;
+};
+const fetchPaymentMethods = async (): Promise<PaymentMethod[]> => {
+  const { data } = await apiClient.get<ApiResponse<PaymentMethod[]>>('/payments/methods', {
+    params: { language: 'ar' },
+  });
+  if (!data.success) throw new Error(data.message || 'Failed to fetch payment methods.');
+  return data.data;
+};
+
+const createPayment = async (payload: PaymentPayload): Promise<Payment> => {
+  const { data } = await apiClient.post<ApiResponse<Payment>>('/payments', payload);
+  if (!data.success) throw new Error(data.message || 'Failed to create payment.');
+  return data.data;
+};
+
+const updatePayment = async ({ id, ...payload }: { id: number } & Partial<PaymentPayload>): Promise<Payment> => {
+  const { data } = await apiClient.put<ApiResponse<Payment>>(`/payments/${id}`, payload);
+  if (!data.success) throw new Error(data.message || 'Failed to update payment.');
+  return data.data;
+};
+
+const deletePayment = async (id: number): Promise<void> => {
+  const { data } = await apiClient.delete<ApiResponse<null>>(`/payments/${id}`);
+  if (!data.success) throw new Error(data.message || 'Failed to delete payment.');
+};
+
+// --- CORRECTED FUNCTION ---
+// This function now correctly expects and returns a direct array of Payment objects.
+const fetchReceivablePayments = async (receivableId: number): Promise<Payment[]> => {
+  const { data } = await apiClient.get<ApiResponse<Payment[]>>(`/payments/receivable/${receivableId}`);
+  if (!data.success) throw new Error(data.message || 'Failed to fetch payments for receivable.');
+  return data.data; // The API returns the array directly in the `data` property.
+};
+// --- END CORRECTION ---
+
+// --- React Query Hooks ---
+export const useGetPayment = (id: number) => {
+  return useQuery({
+    queryKey: ['payment', id],
+    queryFn: () => fetchPayment(id),
+    enabled: !!id,
+  });
+};
+export const useGetPaymentMethods = () => {
+  return useQuery({
+    queryKey: ['paymentMethods'],
+    queryFn: fetchPaymentMethods,
+    staleTime: Infinity, // Payment methods are static, no need to refetch
+    refetchOnWindowFocus: false, // Definitely don't refetch on focus for static data
+    refetchOnMount: false, // Don't refetch on mount either
+  });
+};
+
+export const useCreatePayment = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: createPayment,
+    onSuccess: (newPayment) => {
+      // Invalidate broader data sets that might include payment summaries or lists
+      queryClient.invalidateQueries({ queryKey: ['receivables'] }); // Affects receivables lists and summaries
+      queryClient.invalidateQueries({ queryKey: ['clients'] }); // Affects client totals (total_outstanding)
+      queryClient.invalidateQueries({ queryKey: ['tasks'] }); // If payment relates to a task, task status might implicitly rely on it
+      queryClient.invalidateQueries({ queryKey: ['dashboard'] }); // Dashboard stats (total paid amount)
+
+      // Invalidate the specific receivable's payments for its history modal
+      queryClient.invalidateQueries({ queryKey: ['payments', newPayment.receivable_id] });
+      queryClient.invalidateQueries({ queryKey: ['receivables', 'client', newPayment.client_id] }); // Invalidate client statement
+      
+      // Employee-related invalidations
+      queryClient.invalidateQueries({ queryKey: ['employee'] });
+      queryClient.invalidateQueries({ queryKey: ['employees'] });
+    },
+  });
+};
+
+export const useUpdatePayment = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: updatePayment,
+    onSuccess: (updatedPayment) => {
+      // Invalidate broader data sets that might include payment summaries or lists
+      queryClient.invalidateQueries({ queryKey: ['receivables'] });
+      queryClient.invalidateQueries({ queryKey: ['clients'] });
+      queryClient.invalidateQueries({ queryKey: ['tasks'] });
+      queryClient.invalidateQueries({ queryKey: ['dashboard'] });
+
+      // Invalidate the specific receivable's payments
+      queryClient.invalidateQueries({ queryKey: ['payments', updatedPayment.receivable_id] });
+      queryClient.invalidateQueries({ queryKey: ['receivables', 'client', updatedPayment.client_id] });
+      
+      // Employee-related invalidations
+      queryClient.invalidateQueries({ queryKey: ['employee'] });
+      queryClient.invalidateQueries({ queryKey: ['employees'] });
+    },
+  });
+};
+
+export const useDeletePayment = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: deletePayment,
+    onSuccess: (_) => {
+      // Invalidate broader data sets
+      queryClient.invalidateQueries({ queryKey: ['receivables'] });
+      queryClient.invalidateQueries({ queryKey: ['clients'] });
+      queryClient.invalidateQueries({ queryKey: ['tasks'] });
+      queryClient.invalidateQueries({ queryKey: ['dashboard'] });
+
+      // We need to get the receivable_id from somewhere - it won't be available here
+      // So we'll invalidate all payment-related queries
+      queryClient.invalidateQueries({ queryKey: ['payments'] });
+      queryClient.invalidateQueries({ queryKey: ['receivables', 'client'] });
+      
+      // Employee-related invalidations
+      queryClient.invalidateQueries({ queryKey: ['employee'] });
+      queryClient.invalidateQueries({ queryKey: ['employees'] });
+    },
+  });
+};
+
+export const useGetReceivablePayments = (receivableId: number, initialData?: Payment[]) => {
+    return useQuery({
+        queryKey: ['payments', receivableId],
+        queryFn: () => fetchReceivablePayments(receivableId),
+        enabled: !!receivableId,
+        staleTime: 0, // Always refetch when this hook is active (e.g., modal opens)
+        // refetchOnWindowFocus: false (inherited, but staleTime 0 makes it refetch on mount anyway)
+        initialData: initialData, // Use initialData for immediate display
+    });
+};
+
+==================================================
+
+[15/22] receivableQueries.ts
+----------------------------
+import { useQuery, useMutation, useQueryClient, useInfiniteQuery } from '@tanstack/react-query';
+import apiClient from '../api/apiClient';
+import type { ApiResponse, Receivable, ManualReceivablePayload, UpdateReceivablePayload, ReceivablePaginatedData, ClientStatementPaginatedData, ClientSummary, TaskType, PaymentDecision, AllocationDecision } from '../api/types';
+
+// --- API Functions ---
+const RECEIVABLES_PER_PAGE = 20; // Define a constant for page size
+const CLIENTS_SUMMARY_PER_PAGE = 20; // Define a constant for clients summary page size
+
+const fetchReceivables = async (): Promise<ReceivablePaginatedData> => {
+  const { data } = await apiClient.get<ApiResponse<ReceivablePaginatedData>>('/receivables');
+  return data.data;
+};
+
+const createManualReceivable = async (payload: ManualReceivablePayload): Promise<Receivable> => {
+    const { data } = await apiClient.post<ApiResponse<Receivable>>('/receivables', payload);
+    if (!data.success) throw new Error(data.message || 'Failed to create receivable');
+    return data.data;
+};
+
+const updateReceivable = async ({ id, payload }: { id: number; payload: UpdateReceivablePayload }): Promise<Receivable> => {
+    const { data } = await apiClient.put<ApiResponse<Receivable>>(`/receivables/${id}`, payload);
+    if (!data.success) throw new Error(data.message || 'Failed to update receivable');
+    return data.data;
+};
+
+const deleteReceivable = async (id: number): Promise<void> => {
+    const { data } = await apiClient.delete<ApiResponse<null>>(`/receivables/${id}`);
+    if (!data.success) throw new Error(data.message || 'Failed to delete receivable');
+};
+
+const resolveReceivableOverpayment = async ({ id, resolution }: { id: number; resolution: { new_amount: number; payment_decisions?: PaymentDecision[]; allocation_decisions?: AllocationDecision[] } }): Promise<Receivable> => {
+    const { data } = await apiClient.post<ApiResponse<Receivable>>(`/receivables/${id}/resolve-overpayment`, resolution);
+    if (!data.success) throw new Error(data.message || 'Failed to resolve overpayment');
+    return data.data;
+};
+
+const autoResolveReceivableOverpayment = async ({ id, new_amount, resolution_type }: { id: number; new_amount: number; resolution_type: 'auto_reduce_payments' | 'auto_reduce_latest' | 'convert_surplus_to_credit' }): Promise<Receivable> => {
+    const { data } = await apiClient.post<ApiResponse<Receivable>>(`/receivables/${id}/auto-resolve-overpayment`, { new_amount, resolution_type });
+    if (!data.success) throw new Error(data.message || 'Failed to auto-resolve overpayment');
+    return data.data;
+};
+
+const deleteReceivableWithResolution = async ({ id, resolution }: { id: number; resolution: { payment_decisions?: PaymentDecision[]; allocation_decisions?: AllocationDecision[] } }): Promise<{ summary: object }> => {
+    const { data } = await apiClient.post<ApiResponse<{ summary: object }>>(`/receivables/${id}/delete-with-resolution`, resolution);
+    if (!data.success) throw new Error(data.message || 'Failed to delete receivable with resolution');
+    return data.data;
+};
+
+// Fetch Single Client Receivables (now fetches the statement)
+const fetchClientReceivables = async (clientId: number): Promise<ClientStatementPaginatedData> => {
+  const { data } = await apiClient.get<ApiResponse<ClientStatementPaginatedData>>(`/receivables/client/${clientId}`);
+  if (!data.success) {
+    throw new Error(data.message || 'Failed to fetch client statement.');
+  }
+  
+  // Ensure data structure is properly formatted
+  const responseData = data.data;
+  
+  // Transform statement items to ensure all required fields are present
+  const statementItems = (responseData.statementItems || []).map(item => ({
+    ...item,
+    // Ensure required fields are populated with defaults if missing
+    remaining_amount: Number(item.remaining_amount ?? (Number(item.debit) - Number(item.credit))),
+    receivable_id: item.receivable_id,
+    payments: item.payments || [],
+    type: item.type || 'Other',
+    task_id: item.task_id || null,
+    // Ensure date fields are properly formatted
+    date: item.date || new Date().toISOString(),
+    description: item.description || 'N/A',
+    // Convert string amounts to numbers
+    debit: Number(item.debit || 0),
+    credit: Number(item.credit || 0)
+  }));
+  
+  return {
+    statementItems,
+    totals: responseData.totals || { totalDebit: 0, totalCredit: 0, balance: 0 }
+  };
+};
+
+// NEW: Fetch ALL raw receivables for a client (for export)
+const fetchAllClientReceivables = async (clientId: number): Promise<{ receivables: Receivable[] }> => {
+    const { data } = await apiClient.get<ApiResponse<{ receivables: any[] }>>(`/receivables/client/${clientId}/all`);
+    if (!data.success) {
+        throw new Error(data.message || 'Failed to fetch all client receivables.');
+    }
+    
+    // Transform API response to match Receivable interface
+    const transformedReceivables: Receivable[] = data.data.receivables.map(receivable => ({
+        id: Number(receivable.id),
+        client_id: Number(receivable.client_id),
+        task_id: receivable.task_id ? Number(receivable.task_id) : null,
+        reference_receivable_id: receivable.reference_receivable_id ? Number(receivable.reference_receivable_id) : null,
+        created_by: Number(receivable.created_by),
+        type: receivable.type as TaskType,
+        description: receivable.description,
+        amount: Number(receivable.amount),
+        original_amount: receivable.original_amount ? Number(receivable.original_amount) : null,
+        amount_details: typeof receivable.amount_details === 'string' 
+            ? JSON.parse(receivable.amount_details || '[]') 
+            : receivable.amount_details,
+        adjustment_reason: receivable.adjustment_reason,
+        notes: receivable.notes,
+        due_date: receivable.due_date,
+        created_at: receivable.created_at,
+        updated_at: receivable.updated_at,
+        client_name: receivable.client_name,
+        client_phone: receivable.client_phone,
+        task_name: receivable.task_name,
+        task_type: receivable.task_type,
+        total_paid: Number(receivable.total_paid || 0),
+        remaining_amount: Number(receivable.remaining_amount || 0),
+        payments: receivable.payments || [],
+        allocations: receivable.allocations || [],
+        client: {},
+        task: receivable.task_id ? { id: Number(receivable.task_id) } : undefined
+    }));
+    
+    return { receivables: transformedReceivables };
+};
+
+// Fetch Clients Receivables Summary
+
+// UPDATE THIS FUNCTION
+const fetchClientsReceivablesSummary = async (): Promise<{ clients: ClientSummary[] }> => {
+  const { data } = await apiClient.get<ApiResponse<{ clients: any[] }>>('/receivables/clients-summary');
+  if (!data.success) {
+    throw new Error(data.message || 'Failed to fetch clients receivables summary.');
+  }
+  
+  // Transform API response fields to match ClientSummary interface
+  const transformedClients: ClientSummary[] = data.data.clients.map(client => ({
+    client_id: Number(client.client_id || 0),
+    client_name: client.client_name || '',
+    client_phone: client.client_phone || '',
+    total_amount: Number(client.total_receivables || 0),
+    paid_amount: Number(client.total_paid || 0),
+    remaining_amount: Number(client.total_outstanding || 0),
+    receivables_count: Number(client.receivables_count || 0)
+  }));
+  
+  return { clients: transformedClients };
+};
+
+// New paginated fetch function for clients receivables summary (infinite queries)
+export const fetchPaginatedClientsReceivablesSummary = async ({ pageParam = 1, search = '' }: { pageParam?: number; search?: string }): Promise<{ clients: ClientSummary[]; pagination: any }> => {
+  const params: any = { page: pageParam, per_page: CLIENTS_SUMMARY_PER_PAGE };
+  if (search) {
+    params.search = search;
+  }
+  
+  const { data } = await apiClient.get<ApiResponse<{ clients: any[]; pagination: any }>>('/receivables/clients-summary', {
+    params
+  });
+  if (!data.success) {
+    throw new Error(data.message || 'Failed to fetch clients receivables summary.');
+  }
+  
+  // Transform API response fields to match ClientSummary interface
+  const transformedClients: ClientSummary[] = data.data.clients.map(client => ({
+    client_id: Number(client.client_id || 0),
+    client_name: client.client_name || '',
+    client_phone: client.client_phone || '',
+    total_amount: Number(client.total_receivables || 0),
+    paid_amount: Number(client.total_paid || 0),
+    remaining_amount: Number(client.total_outstanding || 0),
+    receivables_count: Number(client.receivables_count || 0)
+  }));
+  
+  return { clients: transformedClients, pagination: data.data.pagination };
+};
+
+// New function to fetch totals only
+const fetchClientsReceivablesTotals = async (): Promise<{
+  total_amount: number;
+  total_paid: number;
+  total_unpaid: number;
+  clients_count: number;
+  clients_with_debt: number;
+  clients_with_credit: number;
+  balanced_clients: number;
+}> => {
+  const { data } = await apiClient.get<ApiResponse<any>>('/receivables/clients-summary/totals');
+  if (!data.success) {
+    throw new Error(data.message || 'Failed to fetch clients receivables totals.');
+  }
+  
+  return {
+    total_amount: Number(data.data.total_amount || 0),
+    total_paid: Number(data.data.total_paid || 0),
+    total_unpaid: Number(data.data.total_unpaid || 0),
+    clients_count: Number(data.data.clients_count || 0),
+    clients_with_debt: Number(data.data.clients_with_debt || 0),
+    clients_with_credit: Number(data.data.clients_with_credit || 0),
+    balanced_clients: Number(data.data.balanced_clients || 0)
+  };
+};
+
+
+// Fetch Payable Receivables
+const fetchPayableReceivables = async (clientId?: number | null): Promise<ReceivablePaginatedData> => {
+  const url = clientId ? `/receivables/payable?client_id=${clientId}` : '/receivables/payable';
+  const { data } = await apiClient.get<ApiResponse<ReceivablePaginatedData>>(url);
+  if (!data.success) {
+    throw new Error(data.message || 'Failed to fetch payable receivables.');
+  }
+  return data.data;
+};
+
+// Fetch Filtered Receivables (paid or overdue)
+const fetchFilteredReceivables = async (filter: 'paid' | 'overdue'): Promise<ReceivablePaginatedData> => {
+  const { data } = await apiClient.get<ApiResponse<ReceivablePaginatedData>>(`/receivables/filtered?filter=${filter}&per_page=1000`);
+  if (!data.success) {
+    throw new Error(data.message || `Failed to fetch ${filter} receivables.`);
+  }
+  return data.data;
+};
+
+// New paginated fetch function for filtered receivables (infinite queries)
+export const fetchPaginatedFilteredReceivables = async ({ pageParam = 1, queryKey }: { pageParam?: number; queryKey: any }): Promise<ReceivablePaginatedData> => {
+  const [_key, _filtered, filter] = queryKey;
+  const { data } = await apiClient.get<ApiResponse<ReceivablePaginatedData>>(`/receivables/filtered?filter=${filter}&page=${pageParam}&per_page=${RECEIVABLES_PER_PAGE}`);
+  if (!data.success) {
+    throw new Error(data.message || `Failed to fetch ${filter} receivables.`);
+  }
+  return data.data;
+};
+
+
+// --- React Query Hooks ---
+
+export const useGetReceivables = () => {
+  return useQuery({
+    queryKey: ['receivables'], // This key refers to the *summary* list of clients with receivables
+    queryFn: fetchReceivables, // This fetches client summaries by default in your ClientRepository
+    staleTime: 30 * 1000, // Keep fresh for 30 seconds
+    // refetchOnWindowFocus: false (inherited)
+  });
+};
+
+export const useCreateManualReceivable = () => {
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: createManualReceivable,
+        onSuccess: (newReceivable) => {
+            queryClient.invalidateQueries({ queryKey: ['receivables'] }); // Invalidate all receivables summaries
+            queryClient.invalidateQueries({ queryKey: ['clients'] }); // Invalidate clients to update overall totals
+            queryClient.invalidateQueries({ queryKey: ['dashboard'] }); // Invalidate dashboard stats
+            queryClient.invalidateQueries({ queryKey: ['receivables', 'client', newReceivable.client_id] }); // Invalidate specific client statement
+            queryClient.invalidateQueries({ queryKey: ['receivables', 'payable', newReceivable.client_id] }); // Invalidate payable list for that client
+            queryClient.invalidateQueries({ queryKey: ['receivables', 'filtered', 'paid'] }); // Might affect paid list
+            queryClient.invalidateQueries({ queryKey: ['receivables', 'filtered', 'overdue'] }); // Might affect overdue list
+            
+            // Employee-related invalidations
+            queryClient.invalidateQueries({ queryKey: ['employee'] });
+            queryClient.invalidateQueries({ queryKey: ['employees'] });
+        },
+    });
+};
+
+// UPDATE THIS HOOK's RETURN TYPE
+export const useGetClientReceivables = (clientId: number, enabled: boolean = true) => {
+  return useQuery({
+    queryKey: ['receivables', 'client', clientId],
+    // The query function is already correct, just ensure the return type matches
+    queryFn: () => fetchClientReceivables(clientId),
+    enabled: !!clientId && enabled,
+    staleTime: 10 * 1000,
+  });
+};
+
+export const useGetAllClientReceivables = (clientId: number, enabled: boolean = true) => {
+    return useQuery({
+        queryKey: ['receivables', 'client', clientId, 'all'], // Specific key for export data
+        queryFn: () => fetchAllClientReceivables(clientId),
+        enabled: !!clientId && enabled,
+        staleTime: 5 * 60 * 1000, // Data for export doesn't need to be minute-by-minute fresh
+        // refetchOnWindowFocus: false (inherited)
+    });
+};
+
+// UPDATE THIS HOOK's RETURN TYPE
+export const useGetClientsReceivablesSummary = (enabled: boolean = true) => {
+  return useQuery({
+    queryKey: ['receivables', 'clients-summary'],
+    queryFn: fetchClientsReceivablesSummary,
+    enabled,
+    staleTime: 30 * 1000,
+  });
+};
+
+// New infinite query hook for paginated clients receivables summary
+export const useGetClientsReceivablesSummaryInfinite = (enabled: boolean = true, search: string = '') => {
+  return useInfiniteQuery({
+    queryKey: ['receivables', 'clients-summary', search],
+    queryFn: ({ pageParam }) => fetchPaginatedClientsReceivablesSummary({ pageParam, search }),
+    initialPageParam: 1,
+    getNextPageParam: (lastPage) => {
+      // If the current page is less than the total pages, return the next page number
+      if (lastPage.pagination.current_page < lastPage.pagination.total_pages) {
+        return lastPage.pagination.current_page + 1;
+      }
+      // Otherwise, return undefined to signify there are no more pages
+      return undefined;
+    },
+    enabled,
+    staleTime: 30 * 1000, // Keep fresh for 30 seconds
+  });
+};
+
+// New hook to fetch totals only
+export const useGetClientsReceivablesTotals = (enabled: boolean = true) => {
+  return useQuery({
+    queryKey: ['receivables', 'clients-summary', 'totals'],
+    queryFn: fetchClientsReceivablesTotals,
+    enabled,
+    staleTime: 60 * 1000, // Keep totals fresh for 1 minute
+  });
+};
+
+export const useGetPayableReceivables = (clientId?: number | null) => {
+  return useQuery({
+    queryKey: ['receivables', 'payable', clientId],
+    queryFn: () => fetchPayableReceivables(clientId),
+    enabled: clientId !== undefined,
+    staleTime: 0, // Always get freshest data when user is selecting a receivable to pay
+    // refetchOnWindowFocus: false (inherited)
+  });
+}
+
+export const useGetFilteredReceivables = (filter: 'paid' | 'overdue', enabled: boolean = true) => {
+  return useQuery({
+    queryKey: ['receivables', 'filtered', filter],
+    queryFn: () => fetchFilteredReceivables(filter),
+    enabled,
+    staleTime: 30 * 1000, // Keep fresh for 30 seconds
+    // refetchOnWindowFocus: false (inherited)
+  });
+};
+
+// New infinite query hook for paginated filtered receivables
+export const useGetFilteredReceivablesInfinite = (filter: 'paid' | 'overdue', enabled: boolean = true) => {
+  return useInfiniteQuery({
+    queryKey: ['receivables', 'filtered', filter],
+    queryFn: fetchPaginatedFilteredReceivables,
+    initialPageParam: 1,
+    getNextPageParam: (lastPage) => {
+      // If the current page is less than the total pages, return the next page number
+      if (lastPage.pagination.current_page < lastPage.pagination.total_pages) {
+        return lastPage.pagination.current_page + 1;
+      }
+      // Otherwise, return undefined to signify there are no more pages
+      return undefined;
+    },
+    enabled,
+    staleTime: 30 * 1000, // Keep fresh for 30 seconds
+  });
+};
+
+// --- Mutation Hooks for CRUD Operations ---
+
+export const useUpdateReceivable = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: updateReceivable,
+    onSuccess: (updatedReceivable) => {
+      // Invalidate related queries to refresh data
+      queryClient.invalidateQueries({ queryKey: ['receivables'] });
+      queryClient.invalidateQueries({ queryKey: ['clients'] });
+      queryClient.invalidateQueries({ queryKey: ['dashboard'] });
+      queryClient.invalidateQueries({ queryKey: ['receivables', 'client', updatedReceivable.client_id] });
+      queryClient.invalidateQueries({ queryKey: ['receivables', 'payable', updatedReceivable.client_id] });
+      queryClient.invalidateQueries({ queryKey: ['receivables', 'filtered', 'paid'] });
+      queryClient.invalidateQueries({ queryKey: ['receivables', 'filtered', 'overdue'] });
+      
+      // Employee-related invalidations
+      queryClient.invalidateQueries({ queryKey: ['employee'] });
+      queryClient.invalidateQueries({ queryKey: ['employees'] });
+    },
+  });
+};
+
+export const useDeleteReceivable = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: deleteReceivable,
+    onSuccess: () => {
+      // Invalidate related queries to refresh data
+      queryClient.invalidateQueries({ queryKey: ['receivables'] });
+      queryClient.invalidateQueries({ queryKey: ['clients'] });
+      queryClient.invalidateQueries({ queryKey: ['dashboard'] });
+      // Note: We can't invalidate specific client queries without knowing the client_id
+      // This will be handled by the calling component
+      
+      // Employee-related invalidations
+      queryClient.invalidateQueries({ queryKey: ['employee'] });
+      queryClient.invalidateQueries({ queryKey: ['employees'] });
+    },
+  });
+};
+
+export const useResolveReceivableOverpayment = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: resolveReceivableOverpayment,
+    onSuccess: (updatedReceivable) => {
+      // Invalidate related queries to refresh data
+      queryClient.invalidateQueries({ queryKey: ['receivables'] });
+      queryClient.invalidateQueries({ queryKey: ['clients'] });
+      queryClient.invalidateQueries({ queryKey: ['dashboard'] });
+      queryClient.invalidateQueries({ queryKey: ['receivables', 'client', updatedReceivable.client_id] });
+      queryClient.invalidateQueries({ queryKey: ['receivables', 'payable', updatedReceivable.client_id] });
+      queryClient.invalidateQueries({ queryKey: ['receivables', 'filtered', 'paid'] });
+      queryClient.invalidateQueries({ queryKey: ['receivables', 'filtered', 'overdue'] });
+      
+      // Employee-related invalidations
+      queryClient.invalidateQueries({ queryKey: ['employee'] });
+      queryClient.invalidateQueries({ queryKey: ['employees'] });
+    },
+  });
+};
+
+export const useAutoResolveReceivableOverpayment = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: autoResolveReceivableOverpayment,
+    onSuccess: (updatedReceivable) => {
+      // Invalidate related queries to refresh data
+      queryClient.invalidateQueries({ queryKey: ['receivables'] });
+      queryClient.invalidateQueries({ queryKey: ['clients'] });
+      queryClient.invalidateQueries({ queryKey: ['dashboard'] });
+      queryClient.invalidateQueries({ queryKey: ['receivables', 'client', updatedReceivable.client_id] });
+      queryClient.invalidateQueries({ queryKey: ['receivables', 'payable', updatedReceivable.client_id] });
+      queryClient.invalidateQueries({ queryKey: ['receivables', 'filtered', 'paid'] });
+      queryClient.invalidateQueries({ queryKey: ['receivables', 'filtered', 'overdue'] });
+      
+      // Employee-related invalidations
+      queryClient.invalidateQueries({ queryKey: ['employee'] });
+      queryClient.invalidateQueries({ queryKey: ['employees'] });
+    },
+  });
+};
+
+export const useDeleteReceivableWithResolution = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: deleteReceivableWithResolution,
+    onSuccess: () => {
+      // Invalidate related queries to refresh data
+      queryClient.invalidateQueries({ queryKey: ['receivables'] });
+      queryClient.invalidateQueries({ queryKey: ['clients'] });
+      queryClient.invalidateQueries({ queryKey: ['dashboard'] });
+      // Note: We can't invalidate specific client queries without knowing the client_id
+      // This will be handled by the calling component
+      
+      // Employee-related invalidations
+      queryClient.invalidateQueries({ queryKey: ['employee'] });
+      queryClient.invalidateQueries({ queryKey: ['employees'] });
+    },
+  });
+}
+
+==================================================
+
+[16/22] regionQueries.ts
+------------------------
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import apiClient from '../api/apiClient';
+import type { ApiResponse, Region, RegionPayload } from '../api/types';
+
+// --- Query Functions ---
+const fetchRegions = async (): Promise<Region[]> => {
+  const { data } = await apiClient.get<ApiResponse<Region[]>>('/regions');
+  return data.data;
+};
+
+const fetchRegionsWithStats = async (): Promise<Region[]> => {
+  const { data } = await apiClient.get<ApiResponse<Region[]>>('/regions/stats');
+  return data.data;
+};
+
+const createRegion = async (regionData: RegionPayload): Promise<Region> => {
+  const { data } = await apiClient.post<ApiResponse<Region>>('/regions', regionData);
+  return data.data;
+};
+
+const updateRegion = async ({ id, regionData }: { id: number; regionData: RegionPayload }): Promise<Region> => {
+  const { data } = await apiClient.put<ApiResponse<Region>>(`/regions/${id}`, regionData);
+  return data.data;
+};
+
+const deleteRegion = async (id: number): Promise<void> => {
+  await apiClient.delete<ApiResponse<null>>(`/regions/${id}`);
+};
+
+const fetchRegionById = async (id: number): Promise<Region> => {
+  const { data } = await apiClient.get<ApiResponse<Region>>(`/regions/${id}`);
+  return data.data;
+};
+
+// --- React Query Hooks ---
+export const useGetRegions = () => {
+  return useQuery({
+    queryKey: ['regions'],
+    queryFn: fetchRegions,
+    staleTime: 5 * 60 * 1000, // Keep fresh for 5 minutes
+  });
+};
+
+export const useGetRegionsWithStats = () => {
+  return useQuery({
+    queryKey: ['regions', 'stats'],
+    queryFn: fetchRegionsWithStats,
+    staleTime: 2 * 60 * 1000, // Keep fresh for 2 minutes
+  });
+};
+
+export const useGetRegion = (regionId: number) => {
+  return useQuery({
+    queryKey: ['region', regionId],
+    queryFn: () => fetchRegionById(regionId),
+    enabled: !!regionId,
+    staleTime: 5 * 60 * 1000,
+  });
+};
+
+export const useCreateRegion = () => {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: createRegion,
+    onMutate: async (newRegion) => {
+      // Cancel any outgoing refetches
+      await queryClient.cancelQueries({ queryKey: ['regions'] });
+
+      // Snapshot the previous regions
+      const previousRegions = queryClient.getQueryData<Region[]>(['regions']);
+
+      // Optimistically update the cache
+      if (previousRegions) {
+        const optimisticRegion: Region = {
+          id: Date.now(), // Temporary ID
+          name: newRegion.name,
+          created_at: new Date().toISOString(),
+          client_count: 0
+        };
+
+        queryClient.setQueryData<Region[]>(['regions'], 
+          [...previousRegions, optimisticRegion]
+        );
+      }
+
+      return { previousRegions };
+    },
+    onError: (_err, _variables, context) => {
+      // Rollback on error
+      if (context?.previousRegions) {
+        queryClient.setQueryData(['regions'], context.previousRegions);
+      }
+    },
+    onSuccess: (_) => {
+      // Invalidate and refetch to get the real data from server
+      queryClient.invalidateQueries({ queryKey: ['regions'] });
+      queryClient.invalidateQueries({ queryKey: ['clients'] }); // Client lists might need region names
+    }
+  });
+};
+
+export const useUpdateRegion = () => {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: updateRegion,
+    onSuccess: (updatedRegion) => {
+      queryClient.invalidateQueries({ queryKey: ['regions'] });
+      queryClient.invalidateQueries({ queryKey: ['region', updatedRegion.id] });
+      queryClient.invalidateQueries({ queryKey: ['clients'] }); // Client lists might need updated region names
+    },
+  });
+};
+
+export const useDeleteRegion = () => {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: deleteRegion,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['regions'] });
+      queryClient.invalidateQueries({ queryKey: ['clients'] }); // Client lists might be affected
+    },
+  });
+};
+
+==================================================
+
+[17/22] tagCollectionQueries.ts
+-------------------------------
+[Empty file]
+
+==================================================
+
+[18/22] tagQueries.ts
+---------------------
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import apiClient from '../api/apiClient';
+import type { ApiResponse, Tag } from '../api/types';
+
+interface TagPayload {
+    name: string;
+    color: string;
+    is_system?: boolean;
+}
+
+// API Functions
+const fetchTags = async (): Promise<Tag[]> => {
+    const { data } = await apiClient.get<ApiResponse<Tag[]>>('/tags');
+    if (!data.success) throw new Error(data.message || 'Failed to fetch tags.');
+    return data.data;
+};
+
+const createTag = async (payload: TagPayload): Promise<Tag> => {
+    const { data } = await apiClient.post<ApiResponse<Tag>>('/tags', payload);
+    if (!data.success) throw new Error(data.message || 'Failed to create tag.');
+    return data.data;
+};
+
+const updateTag = async ({ id, payload }: { id: number; payload: TagPayload }): Promise<Tag> => {
+    const { data } = await apiClient.put<ApiResponse<Tag>>(`/tags/${id}`, payload);
+    if (!data.success) throw new Error(data.message || 'Failed to update tag.');
+    return data.data;
+};
+
+const deleteTag = async (id: number): Promise<void> => {
+    const { data } = await apiClient.delete<ApiResponse<null>>(`/tags/${id}`);
+    if (!data.success) throw new Error(data.message || 'Failed to delete tag.');
+};
+
+// React Query Hooks
+export const useGetTags = () => useQuery({
+    queryKey: ['tags'],
+    queryFn: fetchTags,
+    staleTime: 5 * 60 * 1000, // Keep fresh for 5 minutes
+    // refetchOnWindowFocus: false (inherited)
+});
+
+export const useCreateTag = () => {
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: createTag,
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['tags'] }); // Invalidate all tags
+            queryClient.invalidateQueries({ queryKey: ['tasks-by-tags'] }); // Invalidate tag columns view
+        },
+    });
+};
+
+export const useUpdateTag = () => {
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: updateTag,
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['tags'] }); // Invalidate all tags
+            queryClient.invalidateQueries({ queryKey: ['tasks-by-tags'] }); // Invalidate tag columns view
+        },
+    });
+};
+
+export const useDeleteTag = () => {
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: deleteTag,
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['tags'] }); // Invalidate all tags
+            queryClient.invalidateQueries({ queryKey: ['tasks-by-tags'] }); // Invalidate tag columns view
+        },
+    });
+};
+
+==================================================
+
+[19/22] tagTaskQueries.ts
+-------------------------
+import { useQuery } from '@tanstack/react-query';
+import apiClient from '../api/apiClient';
+import type { ApiResponse } from '../api/types';
+import type { TagCollection } from '../types/tagTypes';
+
+// Optimized function to get tags with their associated tasks using the new backend endpoint
+const fetchTasksByTags = async (status: string = 'New'): Promise<TagCollection[]> => {
+    // Use the optimized endpoint that does the heavy lifting on the backend
+    const { data: response } = await apiClient.get<ApiResponse<TagCollection[]>>('/tags/with-tasks', {
+        params: { 
+            status: status
+        },
+    });
+
+    if (!response.success) {
+        throw new Error(response.message || 'Failed to fetch tag collections');
+    }
+
+    // The backend already returns the data in the correct format with sorting
+    return response.data || [];
+};
+
+// React Query Hook with optimized caching and performance
+export const useGetTasksByTags = (status: string = 'New') => {
+    return useQuery({
+        queryKey: ['tasks-by-tags', status],
+        queryFn: () => fetchTasksByTags(status),
+        staleTime: 5 * 60 * 1000, // Keep fresh for 5 minutes (longer since it's optimized)
+        gcTime: 10 * 60 * 1000, // Keep in cache for 10 minutes
+        refetchOnWindowFocus: false, // Prevent unnecessary refetches
+        refetchOnReconnect: false, // Prevent unnecessary refetches on reconnect
+        retry: 2, // Only retry twice on failure
+        retryDelay: attemptIndex => Math.min(1000 * 2 ** attemptIndex, 30000), // Exponential backoff
+    });
+};
+
+==================================================
+
+[20/22] taskMessageQueries.ts
+-----------------------------
+import { useQuery, useMutation, useQueryClient, useInfiniteQuery } from '@tanstack/react-query';
+import apiClient from '../api/apiClient';
+import type { ApiResponse } from '../api/types';
+
+// Types for task messages
+export interface TaskMessage {
+  id: number;
+  task_id: number;
+  employee_id: number;
+  employee_name: string;
+  employee_email: string;
+  message_content: string;
+  message_type: 'comment';
+  created_at: string;
+  created_at_formatted: string;
+  is_system_message: boolean;
+  task_name?: string;
+  client_name?: string;
+}
+
+export interface TaskMessagePaginatedData {
+  messages: TaskMessage[];
+  pagination: {
+    current_page: number;
+    per_page: number;
+    total_messages: number;
+    total_pages: number;
+    has_next_page: boolean;
+    has_prev_page: boolean;
+  };
+  task_info: {
+    id: number;
+    task_name: string;
+    client_name: string;
+  };
+}
+
+export interface CreateTaskMessagePayload {
+  message_content: string;
+}
+
+export interface TaskMessageStats {
+  total_messages: number;
+  comment_count: number;
+  system_log_count: number;
+  client_update_count: number;
+  last_message_at: string | null;
+}
+
+// --- API Functions ---
+
+const fetchTaskMessages = async ({ 
+  pageParam = 1, 
+  queryKey 
+}: { 
+  pageParam?: number; 
+  queryKey: any 
+}): Promise<TaskMessagePaginatedData> => {
+  const [_key, taskId, per_page = 20] = queryKey;
+  const { data } = await apiClient.get<ApiResponse<TaskMessagePaginatedData>>(
+    `/tasks/${taskId}/messages`,
+    {
+      params: { page: pageParam, per_page },
+    }
+  );
+  return data.data;
+};
+
+const createTaskMessage = async ({
+  taskId,
+  payload,
+}: {
+  taskId: number;
+  payload: CreateTaskMessagePayload;
+}): Promise<TaskMessage> => {
+  const { data } = await apiClient.post<ApiResponse<{ message: TaskMessage }>>(
+    `/tasks/${taskId}/messages`,
+    payload
+  );
+  return data.data.message;
+};
+
+const fetchTaskMessageStats = async (taskId: number): Promise<TaskMessageStats> => {
+  const { data } = await apiClient.get<ApiResponse<TaskMessageStats>>(
+    `/tasks/${taskId}/messages/stats`
+  );
+  return data.data;
+};
+
+const fetchRecentMessages = async (limit: number = 10): Promise<TaskMessage[]> => {
+  const { data } = await apiClient.get<ApiResponse<{ messages: TaskMessage[] }>>(
+    '/messages/recent',
+    { params: { limit } }
+  );
+  return data.data.messages;
+};
+
+// --- React Query Hooks ---
+
+/**
+ * Hook to fetch task messages with infinite scroll pagination
+ */
+export const useTaskMessages = (taskId: number, per_page: number = 20) => {
+  return useInfiniteQuery({
+    queryKey: ['taskMessages', taskId, per_page],
+    queryFn: fetchTaskMessages,
+    initialPageParam: 1,
+    getNextPageParam: (lastPage) => {
+      return lastPage.pagination.has_next_page 
+        ? lastPage.pagination.current_page + 1 
+        : undefined;
+    },
+    getPreviousPageParam: (firstPage) => {
+      return firstPage.pagination.has_prev_page 
+        ? firstPage.pagination.current_page - 1 
+        : undefined;
+    },
+    enabled: !!taskId && taskId > 0,
+    staleTime: 1000 * 60 * 2, // 2 minutes
+    refetchOnWindowFocus: false,
+  });
+};
+
+/**
+ * Hook to create a new task message
+ */
+export const useCreateTaskMessage = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: createTaskMessage,
+    onMutate: async ({ taskId, payload }) => {
+      // Cancel any outgoing refetches
+      await queryClient.cancelQueries({ queryKey: ['taskMessages', taskId] });
+
+      // Snapshot the previous value
+      const previousMessages = queryClient.getQueryData(['taskMessages', taskId]);
+
+      // Optimistically update to the new value
+      queryClient.setQueryData(['taskMessages', taskId], (old: any) => {
+        if (!old) return old;
+
+        const optimisticMessage: TaskMessage = {
+          id: Date.now(), // Temporary ID
+          task_id: taskId,
+          employee_id: 0, // Will be filled by server
+          employee_name: 'أنت', // Placeholder
+          employee_email: '',
+          message_content: payload.message_content,
+          message_type: 'comment',
+          created_at: new Date().toISOString(),
+          created_at_formatted: 'الآن',
+          is_system_message: false,
+        };
+
+        return {
+          ...old,
+          pages: old.pages.map((page: TaskMessagePaginatedData, index: number) => {
+            if (index === 0) {
+              // Add to first page (newest messages)
+              return {
+                ...page,
+                messages: [optimisticMessage, ...page.messages],
+                pagination: {
+                  ...page.pagination,
+                  total_messages: page.pagination.total_messages + 1,
+                },
+              };
+            }
+            return page;
+          }),
+        };
+      });
+
+      // Return a context object with the snapshotted value
+      return { previousMessages, taskId };
+    },
+    onError: (_err, _variables, context) => {
+      // If the mutation fails, use the context returned from onMutate to roll back
+      if (context) {
+        queryClient.setQueryData(['taskMessages', context.taskId], context.previousMessages);
+      }
+    },
+    onSettled: (_data, _error, variables) => {
+      // Always refetch after error or success to ensure server state
+      queryClient.invalidateQueries({ queryKey: ['taskMessages', variables.taskId] });
+      queryClient.invalidateQueries({ queryKey: ['taskMessageStats', variables.taskId] });
+      queryClient.invalidateQueries({ queryKey: ['recentMessages'] });
+      
+      // Employee-related invalidations
+      queryClient.invalidateQueries({ queryKey: ['employee'] });
+      queryClient.invalidateQueries({ queryKey: ['employees'] });
+    },
+  });
+};
+
+/**
+ * Hook to fetch task message statistics
+ */
+export const useTaskMessageStats = (taskId: number) => {
+  return useQuery({
+    queryKey: ['taskMessageStats', taskId],
+    queryFn: () => fetchTaskMessageStats(taskId),
+    enabled: !!taskId && taskId > 0,
+    staleTime: 1000 * 60 * 5, // 5 minutes
+  });
+};
+
+/**
+ * Hook to fetch recent messages across all tasks (for dashboard)
+ */
+export const useRecentMessages = (limit: number = 10) => {
+  return useQuery({
+    queryKey: ['recentMessages', limit],
+    queryFn: () => fetchRecentMessages(limit),
+    staleTime: 1000 * 60 * 2, // 2 minutes
+    refetchInterval: 1000 * 60 * 5, // Auto-refresh every 5 minutes
+  });
+};
+
+// --- Utility functions ---
+
+/**
+ * Invalidate task message queries for a specific task
+ */
+export const invalidateTaskMessages = (queryClient: any, taskId: number) => {
+  queryClient.invalidateQueries({ queryKey: ['taskMessages', taskId] });
+  queryClient.invalidateQueries({ queryKey: ['taskMessageStats', taskId] });
+  queryClient.invalidateQueries({ queryKey: ['recentMessages'] });
+};
+
+/**
+ * Prefetch task messages for a task
+ */
+export const prefetchTaskMessages = async (queryClient: any, taskId: number) => {
+  await queryClient.prefetchInfiniteQuery({
+    queryKey: ['taskMessages', taskId, 20],
+    queryFn: fetchTaskMessages,
+    pages: 1,
+  });
+};
+
+==================================================
+
+[21/22] taskQueries.ts
+----------------------
+import { useQuery, useMutation, useQueryClient, useInfiniteQuery } from '@tanstack/react-query';
+import apiClient from '../api/apiClient';
+import type { 
+  ApiResponse, 
+  Task, 
+  TaskPayload, 
+  TaskPaginatedData, 
+  UpdateTaskPayload, 
+  UpdateRequirementsPayload, 
+  CompleteTaskPayload, 
+  CompleteTaskResponse,
+  ConflictResponse,
+  PrepaidConflictData,
+  TaskAmountConflictData,
+  TaskCancellationConflictData,
+  PrepaidResolutionDecisions,
+  MainReceivableDecisions,
+  TaskCancellationDecisions,
+  ResolutionSummary,
+  ConcurrentModificationData
+} from '../api/types';
+
+export interface TaskFilters {
+  page?: number;
+  status?: string;
+  type?: string;
+  search?: string;
+  client_id?: number;
+}
+
+// --- API Functions (Private to this file) ---
+const TASKS_PER_PAGE = 20; // Define a constant for page size
+
+const fetchTasks = async (filters: TaskFilters): Promise<TaskPaginatedData> => {
+  const { data } = await apiClient.get<ApiResponse<TaskPaginatedData>>('/tasks', {
+    params: { ...filters, page: 1, per_page: 1000 },
+  });
+  return data.data;
+};
+
+// New paginated fetch function for infinite queries
+export const fetchPaginatedTasks = async ({ pageParam = 1, queryKey }: { pageParam?: number; queryKey: any }): Promise<TaskPaginatedData> => {
+  const [_key, filters] = queryKey;
+  const { data } = await apiClient.get<ApiResponse<TaskPaginatedData>>('/tasks', {
+    params: { ...filters, page: pageParam, per_page: TASKS_PER_PAGE },
+  });
+  return data.data;
+};
+
+const fetchTaskById = async (taskId: number): Promise<Task> => {
+    const { data } = await apiClient.get<ApiResponse<Task>>(`/tasks/${taskId}`);
+    if (!data.success) {
+        throw new Error(data.message || 'Failed to fetch task.');
+    }
+    return data.data;
+};
+
+const createTask = async (taskData: TaskPayload): Promise<Task> => {
+  const { data } = await apiClient.post<ApiResponse<Task>>('/tasks', taskData);
+  if (!data.success) {
+      throw new Error(data.message || 'Failed to create task.');
+  }
+  return data.data;
+};
+
+const updateTask = async ({ id, taskData }: { id: number; taskData: UpdateTaskPayload }): Promise<Task> => {
+  const { data } = await apiClient.put<ApiResponse<Task>>(`/tasks/${id}`, taskData);
+  if (!data.success) {
+      throw new Error(data.message || 'Failed to update task.');
+  }
+  return data.data;
+};
+
+const deleteTask = async (id: number): Promise<void> => {
+  const { data } = await apiClient.delete<ApiResponse<null>>(`/tasks/${id}`);
+  if (!data.success) {
+      throw new Error(data.message || 'Failed to delete task.');
+  }
+};
+
+const updateRequirements = async (payload: UpdateRequirementsPayload): Promise<Task> => {
+    const { data } = await apiClient.put<ApiResponse<Task>>(`/tasks/${payload.task_id}/requirements`, { requirements: payload.requirements });
+    if (!data.success) {
+        throw new Error(data.message || 'Failed to update requirements.');
+    }
+    return data.data;
+};
+
+const createRequirements = async (payload: UpdateRequirementsPayload): Promise<Task> => {
+    const { data } = await apiClient.post<ApiResponse<Task>>(`/tasks/${payload.task_id}/requirements`, { requirements: payload.requirements });
+    if (!data.success) {
+        throw new Error(data.message || 'Failed to create requirements.');
+    }
+    return data.data;
+};
+
+// --- Update Task Completed Workflow API Functions ---
+// Moved these declarations up so they are defined before being used in useMutation hooks
+
+// API function to complete a task
+const completeTask = async ({ id, payload }: { id: number; payload: CompleteTaskPayload }): Promise<CompleteTaskResponse> => {
+    const { data } = await apiClient.post<ApiResponse<CompleteTaskResponse>>(`/tasks/${id}/complete`, payload);
+    if (!data.success) throw new Error(data.message || 'Failed to complete task');
+    return data.data;
+};
+
+// API function to defer a task
+const deferTask = async ({ id }: { id: number }): Promise<Task> => {
+  const { data } = await apiClient.put<ApiResponse<Task>>(`/tasks/${id}/status`, { status: 'Deferred' });
+  if (!data.success) throw new Error(data.message || 'Failed to defer task');
+  return data.data;
+};
+
+// API function to resume a task
+const resumeTask = async ({ id }: { id: number }): Promise<Task> => {
+  const { data } = await apiClient.put<ApiResponse<Task>>(`/tasks/${id}/status`, { status: 'New' });
+  if (!data.success) throw new Error(data.message || 'Failed to resume task');
+  return data.data;
+};
+
+// API function to restore a completed task to new status
+const restoreTask = async ({ id }: { id: number }): Promise<Task> => {
+  const { data } = await apiClient.put<ApiResponse<Task>>(`/tasks/${id}/status`, { status: 'New' });
+  if (!data.success) throw new Error(data.message || 'Failed to restore task');
+  return data.data;
+};
+
+// API function to resolve prepaid change conflicts
+const resolvePrepaidChange = async ({ id, new_prepaid_amount, decisions }: { 
+  id: number; 
+  new_prepaid_amount: number; 
+  decisions: PrepaidResolutionDecisions 
+}): Promise<ResolutionSummary> => {
+  const { data } = await apiClient.post<ApiResponse<ResolutionSummary>>(`/tasks/${id}/resolve-prepaid-change`, {
+    new_prepaid_amount,
+    decisions
+  });
+  if (!data.success) throw new Error(data.message || 'Failed to resolve prepaid change');
+  return data.data;
+};
+
+// NEW API FUNCTIONS FOR CONFLICT RESOLUTION
+
+// API function to resolve task amount change conflicts
+const resolveTaskAmountChange = async ({ 
+  id, 
+  new_task_amount, 
+  main_receivable_decisions 
+}: { 
+  id: number; 
+  new_task_amount: number; 
+  main_receivable_decisions: MainReceivableDecisions 
+}): Promise<ResolutionSummary> => {
+  const { data } = await apiClient.post<ApiResponse<ResolutionSummary>>(`/tasks/${id}/resolve-amount-change`, {
+    new_task_amount,
+    main_receivable_decisions
+  });
+  if (!data.success) throw new Error(data.message || 'Failed to resolve amount change');
+  return data.data;
+};
+
+// API function to cancel task with conflict resolution
+const cancelTask = async ({ 
+  id, 
+  decisions 
+}: { 
+  id: number; 
+  decisions?: TaskCancellationDecisions 
+}): Promise<ResolutionSummary | ConflictResponse<TaskCancellationConflictData>> => {
+  try {
+    const payload = decisions || {};
+    const { data } = await apiClient.post<ApiResponse<ResolutionSummary>>(`/tasks/${id}/cancel`, payload);
+    if (!data.success) throw new Error(data.message || 'Failed to cancel task');
+    return data.data;
+  } catch (error: any) {
+    // Handle 409 Conflict responses for task cancellation conflicts
+    if (error.response?.status === 409 && error.response?.data?.code === 'task_cancellation_conflict') {
+      return error.response.data as ConflictResponse<TaskCancellationConflictData>;
+    }
+    throw error;
+  }
+};
+
+// NEW API FUNCTIONS FOR APPROVAL WORKFLOW
+
+// API function to submit task for review
+const submitTaskForReview = async ({ id }: { id: number }): Promise<Task> => {
+  const { data } = await apiClient.post<ApiResponse<Task>>(`/tasks/${id}/submit-for-review`);
+  if (!data.success) throw new Error(data.message || 'Failed to submit task for review');
+  return data.data;
+};
+
+// API function to approve task with financial data
+const approveTask = async ({ id, expense_amount, notes }: { 
+  id: number; 
+  expense_amount: number; 
+  notes?: string 
+}): Promise<Task> => {
+  const { data } = await apiClient.post<ApiResponse<Task>>(`/tasks/${id}/approve`, {
+    expense_amount,
+    notes
+  });
+  if (!data.success) throw new Error(data.message || 'Failed to approve task');
+  return data.data;
+};
+
+// API function to reject task
+const rejectTask = async ({ id, rejection_reason }: { 
+  id: number; 
+  rejection_reason?: string 
+}): Promise<Task> => {
+  const { data } = await apiClient.post<ApiResponse<Task>>(`/tasks/${id}/reject`, {
+    rejection_reason
+  });
+  if (!data.success) throw new Error(data.message || 'Failed to reject task');
+  return data.data;
+};
+
+// Enhanced updateTask function that handles conflicts
+const updateTaskWithConflictHandling = async ({ 
+  id, 
+  taskData 
+}: { 
+  id: number; 
+  taskData: UpdateTaskPayload 
+}): Promise<Task | ConflictResponse<PrepaidConflictData | TaskAmountConflictData | ConcurrentModificationData>> => {
+  try {
+    const { data } = await apiClient.put<ApiResponse<Task>>(`/tasks/${id}`, taskData);
+    if (!data.success) {
+      throw new Error(data.message || 'Failed to update task.');
+    }
+    return data.data;
+  } catch (error: any) {
+    // Handle 409 Conflict responses
+    if (error.response?.status === 409) {
+      return error.response.data as ConflictResponse<PrepaidConflictData | TaskAmountConflictData | ConcurrentModificationData>;
+    }
+    throw error;
+  }
+};
+
+
+// --- React Query Hooks ---
+export const useGetTasks = (filters: TaskFilters) => {
+  return useQuery({
+    queryKey: ['tasks', filters],
+    queryFn: () => fetchTasks(filters),
+    placeholderData: (previousData) => previousData, // Keep previous data while fetching new
+    staleTime: 30 * 1000, // Keep data fresh for 30 seconds
+    refetchInterval: 20 * 1000, // Refetch every 20 seconds
+  });
+};
+
+// New infinite query hook for paginated tasks
+export const useGetTasksInfinite = (filters: Omit<TaskFilters, 'page'>) => {
+  return useInfiniteQuery({
+    queryKey: ['tasks', filters],
+    queryFn: fetchPaginatedTasks,
+    initialPageParam: 1,
+    getNextPageParam: (lastPage) => {
+      // If the current page is less than the total pages, return the next page number
+      if (lastPage.pagination.current_page < lastPage.pagination.total_pages) {
+        return lastPage.pagination.current_page + 1;
+      }
+      // Otherwise, return undefined to signify there are no more pages
+      return undefined;
+    },
+    placeholderData: (previousData) => previousData,
+    staleTime: 30 * 1000, // Keep data fresh for 30 seconds
+    refetchInterval: 20 * 1000, // Refetch every 20 seconds
+  });
+};
+
+export const useGetTask = (taskId: number) => {
+    return useQuery({
+        queryKey: ['task', taskId],
+        queryFn: () => fetchTaskById(taskId),
+        enabled: !!taskId, // Only fetch if taskId is provided
+        staleTime: 30 * 1000, // Keep data fresh for 30 seconds
+    });
+};
+
+export const useCreateTask = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: createTask,
+    onSuccess: (createdTask: Task) => { // Type 'createdTask'
+      queryClient.invalidateQueries({ queryKey: ['tasks'] }); // Invalidate all tasks
+      queryClient.invalidateQueries({ queryKey: ['clients'] }); // Invalidate clients to update task counts
+      queryClient.invalidateQueries({ queryKey: ['dashboard'] }); // Invalidate dashboard stats
+      queryClient.invalidateQueries({ queryKey: ['tasks-by-tags'] }); // Invalidate tags columns view
+      // Specific client tasks in case task was added from client profile
+      queryClient.invalidateQueries({ queryKey: ['client', createdTask.client.id] }); // Correct client_id access
+      queryClient.invalidateQueries({ queryKey: ['receivables', 'client', createdTask.client.id] }); // Invalidate receivables of the client
+      // Employee-related invalidations
+      queryClient.invalidateQueries({ queryKey: ['employee'] }); // Invalidate all employee queries
+      queryClient.invalidateQueries({ queryKey: ['employees'] }); // Invalidate employees list
+    },
+  });
+};
+
+export const useUpdateTask = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: updateTask,
+    onSuccess: (updatedTask: Task) => { // Type 'updatedTask'
+      queryClient.invalidateQueries({ queryKey: ['tasks'] }); // Invalidate all tasks
+      queryClient.invalidateQueries({ queryKey: ['task', updatedTask.id] }); // Invalidate specific task
+      queryClient.invalidateQueries({ queryKey: ['clients'] }); // Invalidate clients to update task counts
+      queryClient.invalidateQueries({ queryKey: ['dashboard'] }); // Invalidate dashboard stats
+      queryClient.invalidateQueries({ queryKey: ['tasks-by-tags'] }); // Invalidate tags columns view
+      // Invalidate receivables for the client if task is updated
+      queryClient.invalidateQueries({ queryKey: ['receivables', 'client', updatedTask.client.id] });
+      // Employee-related invalidations
+      queryClient.invalidateQueries({ queryKey: ['employee'] }); // Invalidate all employee queries
+      queryClient.invalidateQueries({ queryKey: ['employees'] }); // Invalidate employees list
+    },
+  });
+};
+
+export const useDeleteTask = () => {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: deleteTask,
+    // --- START: OPTIMISTIC UPDATE LOGIC ---
+    onMutate: async (id) => {
+      // 1. Cancel any outgoing refetches so they don't overwrite our optimistic update
+      await queryClient.cancelQueries({ queryKey: ['tasks'] });
+      await queryClient.cancelQueries({ queryKey: ['dashboard', 'clientsWithActiveTasks'] });
+
+      // 2. Snapshot the previous state of both queries
+      const previousTasksData: any = queryClient.getQueryData(['tasks']);
+      const previousDashboardData: any = queryClient.getQueryData(['dashboard', 'clientsWithActiveTasks']);
+
+      // 3. Optimistically remove the task from the list
+      if (previousTasksData) {
+        // Handle infinite query data structure
+        if (previousTasksData.pages) {
+          queryClient.setQueryData(['tasks'], (oldData: any) => {
+            return {
+              ...oldData,
+              pages: oldData.pages.map((page: any) => ({
+                ...page,
+                tasks: page.tasks.filter((task: Task) => task.id !== id),
+                pagination: {
+                  ...page.pagination,
+                  total: page.pagination.total - 1
+                }
+              })),
+            };
+          });
+        } else {
+          // Handle regular query data structure
+          queryClient.setQueryData(['tasks'], (oldData: any) => {
+            return {
+              ...oldData,
+              tasks: oldData.tasks.filter((task: Task) => task.id !== id),
+              pagination: {
+                ...oldData.pagination,
+                total: oldData.pagination.total - 1
+              }
+            };
+          });
+        }
+      }
+      
+      // Update the dashboard view by removing the task
+      if (previousDashboardData) {
+        queryClient.setQueryData(['dashboard', 'clientsWithActiveTasks'], (oldData: any) => {
+          const newData = { ...oldData };
+
+          // Iterate over each task type group
+          for (const type in newData) {
+            if (newData.hasOwnProperty(type)) {
+              // Remove the task from any client group
+              newData[type] = newData[type].map((clientGroup: any) => {
+                return {
+                  ...clientGroup,
+                  tasks: clientGroup.tasks.filter((t: Task) => t.id !== id)
+                };
+              }).filter((clientGroup: any) => clientGroup.tasks.length > 0); // Remove empty client groups
+            }
+          }
+          return newData;
+        });
+      }
+
+      // 4. Return a context object with the snapshotted values
+      return { previousTasksData, previousDashboardData };
+    },
+    // --- END: OPTIMISTIC UPDATE LOGIC ---
+    
+    // If the mutation fails, use the context returned from onMutate to roll back
+    onError: (_err, _variables, context) => {
+      if (context?.previousTasksData) {
+        queryClient.setQueryData(['tasks'], context.previousTasksData);
+      }
+      if (context?.previousDashboardData) {
+        queryClient.setQueryData(['dashboard', 'clientsWithActiveTasks'], context.previousDashboardData);
+      }
+      // Note: We'll handle toast notifications in the UI components
+    },
+    // Always refetch after error or success to ensure data consistency
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ['tasks'] });
+      queryClient.invalidateQueries({ queryKey: ['clients'] });
+      queryClient.invalidateQueries({ queryKey: ['dashboard'] });
+      queryClient.invalidateQueries({ queryKey: ['tasks-by-tags'] });
+      queryClient.invalidateQueries({ queryKey: ['receivables'] });
+    },
+    onSuccess: () => {
+      // The UI has already updated optimistically
+      // Just ensure we invalidate related data
+    }
+  });
+};
+
+export const useUpdateRequirements = () => {
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: updateRequirements,
+        onSuccess: (updatedTask: Task) => { // Type 'updatedTask'
+            queryClient.invalidateQueries({ queryKey: ['task', updatedTask.id] }); // Invalidate specific task
+            queryClient.invalidateQueries({ queryKey: ['tasks'] }); // Invalidate all tasks to reflect changes
+            queryClient.invalidateQueries({ queryKey: ['dashboard'] }); // Could affect dashboard if requirements are used there
+        },
+    });
+};
+
+export const useCreateRequirements = () => {
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: createRequirements,
+        onSuccess: (updatedTask: Task) => { // Type 'updatedTask'
+            queryClient.invalidateQueries({ queryKey: ['task', updatedTask.id] }); // Invalidate specific task
+            queryClient.invalidateQueries({ queryKey: ['tasks'] }); // Invalidate all tasks to reflect changes
+            queryClient.invalidateQueries({ queryKey: ['dashboard'] }); // Could affect dashboard
+        },
+    });
+};
+
+export const useResumeTask = () => {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: resumeTask,
+    // --- START: OPTIMISTIC UPDATE LOGIC ---
+    onMutate: async ({ id }) => {
+      // 1. Cancel any outgoing refetches so they don't overwrite our optimistic update
+      await queryClient.cancelQueries({ queryKey: ['tasks'] });
+      await queryClient.cancelQueries({ queryKey: ['dashboard', 'clientsWithActiveTasks'] });
+
+      // 2. Snapshot the previous state of both queries
+      const previousTasksData: any = queryClient.getQueryData(['tasks']);
+      const previousDashboardData: any = queryClient.getQueryData(['dashboard', 'clientsWithActiveTasks']);
+
+      // 3. Optimistically update to the new value
+      // Update the main tasks list (both regular and infinite queries)
+      if (previousTasksData) {
+        // Handle infinite query data structure
+        if (previousTasksData.pages) {
+          queryClient.setQueryData(['tasks'], (oldData: any) => {
+            return {
+              ...oldData,
+              pages: oldData.pages.map((page: any) => ({
+                ...page,
+                tasks: page.tasks.map((task: Task) =>
+                  task.id === id ? { ...task, status: 'New' } : task
+                ),
+              })),
+            };
+          });
+        } else {
+          // Handle regular query data structure
+          queryClient.setQueryData(['tasks'], (oldData: any) => {
+            return {
+              ...oldData,
+              tasks: oldData.tasks.map((task: Task) =>
+                task.id === id ? { ...task, status: 'New' } : task
+              ),
+            };
+          });
+        }
+      }
+      
+      // Update the dashboard view
+      if (previousDashboardData) {
+        queryClient.setQueryData(['dashboard', 'clientsWithActiveTasks'], (oldData: any) => {
+          const newData = { ...oldData };
+
+          // Iterate over each task type group
+          for (const type in newData) {
+            if (newData.hasOwnProperty(type)) {
+              // Find the client containing the task
+              newData[type] = newData[type].map((clientGroup: any) => {
+                // Check if this client has the task
+                const taskIndex = clientGroup.tasks.findIndex((t: Task) => t.id === id);
+                if (taskIndex > -1) {
+                  // Create a new array of tasks with the updated status
+                  const updatedTasks = clientGroup.tasks.map((t: Task, index: number) =>
+                    index === taskIndex ? { ...t, status: 'New' } : t
+                  );
+                  // Return the modified client group
+                  return { ...clientGroup, tasks: updatedTasks };
+                }
+                return clientGroup;
+              });
+            }
+          }
+          return newData;
+        });
+      }
+
+      // 4. Return a context object with the snapshotted values
+      return { previousTasksData, previousDashboardData };
+    },
+    // --- END: OPTIMISTIC UPDATE LOGIC ---
+    
+    // If the mutation fails, use the context returned from onMutate to roll back
+    onError: (_err, _variables, context) => {
+      if (context?.previousTasksData) {
+        queryClient.setQueryData(['tasks'], context.previousTasksData);
+      }
+      if (context?.previousDashboardData) {
+        queryClient.setQueryData(['dashboard', 'clientsWithActiveTasks'], context.previousDashboardData);
+      }
+      // Note: We'll handle toast notifications in the UI components
+    },
+    // Always refetch after error or success to ensure data consistency
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ['tasks'] });
+      queryClient.invalidateQueries({ queryKey: ['dashboard', 'clientsWithActiveTasks'] });
+      queryClient.invalidateQueries({ queryKey: ['dashboard', 'stats'] });
+      queryClient.invalidateQueries({ queryKey: ['tasks-by-tags'] });
+    },
+    onSuccess: (response: {id: number; status: string; receivable_id?: number}) => {
+      // The UI has already updated optimistically
+      queryClient.invalidateQueries({ queryKey: ['task', response.id] });
+      queryClient.invalidateQueries({ queryKey: ['clients'] });
+      // Employee-related invalidations
+      queryClient.invalidateQueries({ queryKey: ['employee'] });
+      queryClient.invalidateQueries({ queryKey: ['employees'] });
+    }
+  });
+};
+
+export const useResolvePrepaidChange = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: resolvePrepaidChange,
+    onSuccess: (result: ResolutionSummary) => {
+      queryClient.invalidateQueries({ queryKey: ['tasks'] });
+      if (result.task?.id) {
+        queryClient.invalidateQueries({ queryKey: ['task', result.task.id] });
+        queryClient.invalidateQueries({ queryKey: ['receivables', 'client', result.task.client_id] });
+      }
+      queryClient.invalidateQueries({ queryKey: ['clients'] });
+      queryClient.invalidateQueries({ queryKey: ['dashboard'] });
+      queryClient.invalidateQueries({ queryKey: ['receivables'] });
+      queryClient.invalidateQueries({ queryKey: ['client-credits'] });
+      // Employee-related invalidations
+      queryClient.invalidateQueries({ queryKey: ['employee'] }); 
+      queryClient.invalidateQueries({ queryKey: ['employees'] });
+    },
+  });
+};
+
+// NEW REACT QUERY HOOKS FOR CONFLICT RESOLUTION
+
+export const useUpdateTaskWithConflicts = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: updateTaskWithConflictHandling,
+    onSuccess: (result) => {
+      // Only invalidate if it's a successful update (not a conflict response)
+      if ('id' in result) {
+        const updatedTask = result as Task;
+        queryClient.invalidateQueries({ queryKey: ['tasks'] });
+        queryClient.invalidateQueries({ queryKey: ['task', updatedTask.id] });
+        queryClient.invalidateQueries({ queryKey: ['clients'] });
+        queryClient.invalidateQueries({ queryKey: ['dashboard'] });
+        queryClient.invalidateQueries({ queryKey: ['receivables', 'client', updatedTask.client_id] });
+      }
+      // If it's a conflict response, we don't invalidate queries yet
+    },
+  });
+};
+
+export const useResolveTaskAmountChange = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: resolveTaskAmountChange,
+    onSuccess: (result: ResolutionSummary) => {
+      queryClient.invalidateQueries({ queryKey: ['tasks'] });
+      if (result.task?.id) {
+        queryClient.invalidateQueries({ queryKey: ['task', result.task.id] });
+        queryClient.invalidateQueries({ queryKey: ['receivables', 'client', result.task.client_id] });
+      }
+      queryClient.invalidateQueries({ queryKey: ['clients'] });
+      queryClient.invalidateQueries({ queryKey: ['dashboard'] });
+      queryClient.invalidateQueries({ queryKey: ['receivables'] });
+      queryClient.invalidateQueries({ queryKey: ['client-credits'] });
+    },
+  });
+};
+
+export const useCancelTask = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: cancelTask,
+    onSuccess: (result: ResolutionSummary | ConflictResponse<TaskCancellationConflictData>) => {
+      // Only invalidate if it's a successful resolution (not a conflict response)
+      if ('resolution_summary' in result) {
+        const resolutionResult = result as ResolutionSummary;
+        queryClient.invalidateQueries({ queryKey: ['tasks'] });
+        if (resolutionResult.task?.id) {
+          queryClient.invalidateQueries({ queryKey: ['task', resolutionResult.task.id] });
+          queryClient.invalidateQueries({ queryKey: ['receivables', 'client', resolutionResult.task.client_id] });
+        }
+        queryClient.invalidateQueries({ queryKey: ['clients'] });
+        queryClient.invalidateQueries({ queryKey: ['dashboard'] });
+        queryClient.invalidateQueries({ queryKey: ['receivables'] });
+        queryClient.invalidateQueries({ queryKey: ['client-credits'] });
+      }
+      // If it's a conflict response, we don't invalidate queries yet
+    },
+  });
+};
+
+export const useDeferTask = () => {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: deferTask,
+    // --- START: OPTIMISTIC UPDATE LOGIC ---
+    onMutate: async ({ id }) => {
+      // 1. Cancel any outgoing refetches so they don't overwrite our optimistic update
+      await queryClient.cancelQueries({ queryKey: ['tasks'] });
+      await queryClient.cancelQueries({ queryKey: ['dashboard', 'clientsWithActiveTasks'] });
+
+      // 2. Snapshot the previous state of both queries
+      const previousTasksData: any = queryClient.getQueryData(['tasks']);
+      const previousDashboardData: any = queryClient.getQueryData(['dashboard', 'clientsWithActiveTasks']);
+
+      // 3. Optimistically update to the new value
+      // Update the main tasks list (both regular and infinite queries)
+      if (previousTasksData) {
+        // Handle infinite query data structure
+        if (previousTasksData.pages) {
+          queryClient.setQueryData(['tasks'], (oldData: any) => {
+            return {
+              ...oldData,
+              pages: oldData.pages.map((page: any) => ({
+                ...page,
+                tasks: page.tasks.map((task: Task) =>
+                  task.id === id ? { ...task, status: 'Deferred' } : task
+                ),
+              })),
+            };
+          });
+        } else {
+          // Handle regular query data structure
+          queryClient.setQueryData(['tasks'], (oldData: any) => {
+            return {
+              ...oldData,
+              tasks: oldData.tasks.map((task: Task) =>
+                task.id === id ? { ...task, status: 'Deferred' } : task
+              ),
+            };
+          });
+        }
+      }
+      
+      // Update the dashboard view
+      if (previousDashboardData) {
+        queryClient.setQueryData(['dashboard', 'clientsWithActiveTasks'], (oldData: any) => {
+          const newData = { ...oldData };
+
+          // Iterate over each task type group
+          for (const type in newData) {
+            if (newData.hasOwnProperty(type)) {
+              // Find the client containing the task
+              newData[type] = newData[type].map((clientGroup: any) => {
+                // Check if this client has the task
+                const taskIndex = clientGroup.tasks.findIndex((t: Task) => t.id === id);
+                if (taskIndex > -1) {
+                  // Create a new array of tasks with the updated status
+                  const updatedTasks = clientGroup.tasks.map((t: Task, index: number) =>
+                    index === taskIndex ? { ...t, status: 'Deferred' } : t
+                  );
+                  // Return the modified client group
+                  return { ...clientGroup, tasks: updatedTasks };
+                }
+                return clientGroup;
+              });
+            }
+          }
+          return newData;
+        });
+      }
+
+      // 4. Return a context object with the snapshotted values
+      return { previousTasksData, previousDashboardData };
+    },
+    // --- END: OPTIMISTIC UPDATE LOGIC ---
+    
+    // If the mutation fails, use the context returned from onMutate to roll back
+    onError: (_err, _variables, context) => {
+      if (context?.previousTasksData) {
+        queryClient.setQueryData(['tasks'], context.previousTasksData);
+      }
+      if (context?.previousDashboardData) {
+        queryClient.setQueryData(['dashboard', 'clientsWithActiveTasks'], context.previousDashboardData);
+      }
+      // Note: We'll handle toast notifications in the UI components
+    },
+    // Always refetch after error or success to ensure data consistency
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ['tasks'] });
+      queryClient.invalidateQueries({ queryKey: ['dashboard', 'clientsWithActiveTasks'] });
+      queryClient.invalidateQueries({ queryKey: ['dashboard', 'stats'] });
+    },
+    onSuccess: (response: {id: number; status: string; receivable_id?: number}) => {
+      // The UI has already updated optimistically
+      queryClient.invalidateQueries({ queryKey: ['task', response.id] });
+      queryClient.invalidateQueries({ queryKey: ['clients'] });
+      queryClient.invalidateQueries({ queryKey: ['receivables'] });
+      // Don't try to access client.id since it's not in the response
+    }
+  });
+};
+
+
+export const useCompleteTask = () => {
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: completeTask,
+        onSuccess: (result: CompleteTaskResponse) => { // Type 'result'
+            // Invalidate everything that could be affected by task completion
+            queryClient.invalidateQueries({ queryKey: ['tasks'] });
+            queryClient.invalidateQueries({ queryKey: ['task', result.id] });
+            queryClient.invalidateQueries({ queryKey: ['clients'] });
+            queryClient.invalidateQueries({ queryKey: ['receivables'] }); // General receivables summaries/lists
+            queryClient.invalidateQueries({ queryKey: ['dashboard'] }); // Dashboard stats
+            queryClient.invalidateQueries({ queryKey: ['tasks-by-tags'] }); // Invalidate tags columns view
+
+            // Invalidate specific client statement and payable lists if relevant
+            // This now correctly checks if result.task exists before accessing client_id
+            if (result.task?.client_id) {
+                 queryClient.invalidateQueries({ queryKey: ['receivables', 'client', result.task.client_id] });
+                 queryClient.invalidateQueries({ queryKey: ['receivables', 'payable', result.task.client_id] });
+            }
+            // Invalidate filtered receivables if task completion affects them (e.g., if a new receivable is created that is overdue/paid)
+            queryClient.invalidateQueries({ queryKey: ['receivables', 'filtered', 'paid'] });
+            queryClient.invalidateQueries({ queryKey: ['receivables', 'filtered', 'overdue'] });
+        },
+    });
+};
+
+// NEW REACT QUERY HOOKS FOR APPROVAL WORKFLOW
+
+export const useSubmitTaskForReview = () => {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: submitTaskForReview,
+    // --- START: OPTIMISTIC UPDATE LOGIC ---
+    onMutate: async ({ id }) => {
+      // Cancel any outgoing refetches so they don't overwrite our optimistic update
+      await queryClient.cancelQueries({ queryKey: ['tasks'] });
+      await queryClient.cancelQueries({ queryKey: ['dashboard', 'clientsWithActiveTasks'] });
+
+      // Snapshot the previous state
+      const previousTasksData: any = queryClient.getQueryData(['tasks']);
+      const previousDashboardData: any = queryClient.getQueryData(['dashboard', 'clientsWithActiveTasks']);
+
+      // Optimistically update to Pending Review status
+      if (previousTasksData) {
+        if (previousTasksData.pages) {
+          queryClient.setQueryData(['tasks'], (oldData: any) => {
+            return {
+              ...oldData,
+              pages: oldData.pages.map((page: any) => ({
+                ...page,
+                tasks: page.tasks.map((task: Task) =>
+                  task.id === id ? { ...task, status: 'Pending Review' } : task
+                ),
+              })),
+            };
+          });
+        } else {
+          queryClient.setQueryData(['tasks'], (oldData: any) => {
+            return {
+              ...oldData,
+              tasks: oldData.tasks.map((task: Task) =>
+                task.id === id ? { ...task, status: 'Pending Review' } : task
+              ),
+            };
+          });
+        }
+      }
+
+      // Update dashboard view
+      if (previousDashboardData) {
+        queryClient.setQueryData(['dashboard', 'clientsWithActiveTasks'], (oldData: any) => {
+          const newData = { ...oldData };
+          for (const type in newData) {
+            if (newData.hasOwnProperty(type)) {
+              newData[type] = newData[type].map((clientGroup: any) => {
+                const taskIndex = clientGroup.tasks.findIndex((t: Task) => t.id === id);
+                if (taskIndex > -1) {
+                  const updatedTasks = clientGroup.tasks.map((t: Task, index: number) =>
+                    index === taskIndex ? { ...t, status: 'Pending Review' } : t
+                  );
+                  return { ...clientGroup, tasks: updatedTasks };
+                }
+                return clientGroup;
+              });
+            }
+          }
+          return newData;
+        });
+      }
+
+      return { previousTasksData, previousDashboardData };
+    },
+    // --- END: OPTIMISTIC UPDATE LOGIC ---
+    
+    onError: (_err, _variables, context) => {
+      if (context?.previousTasksData) {
+        queryClient.setQueryData(['tasks'], context.previousTasksData);
+      }
+      if (context?.previousDashboardData) {
+        queryClient.setQueryData(['dashboard', 'clientsWithActiveTasks'], context.previousDashboardData);
+      }
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ['tasks'] });
+      queryClient.invalidateQueries({ queryKey: ['dashboard', 'clientsWithActiveTasks'] });
+      queryClient.invalidateQueries({ queryKey: ['dashboard', 'stats'] });
+    },
+    onSuccess: (updatedTask: Task) => {
+      queryClient.invalidateQueries({ queryKey: ['task', updatedTask.id] });
+      queryClient.invalidateQueries({ queryKey: ['clients'] });
+    }
+  });
+};
+
+export const useApproveTask = () => {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: approveTask,
+    onSuccess: (updatedTask: Task) => {
+      // Invalidate all relevant queries since task completion affects many areas
+      queryClient.invalidateQueries({ queryKey: ['tasks'] });
+      queryClient.invalidateQueries({ queryKey: ['task', updatedTask.id] });
+      queryClient.invalidateQueries({ queryKey: ['clients'] });
+      queryClient.invalidateQueries({ queryKey: ['dashboard'] });
+      queryClient.invalidateQueries({ queryKey: ['tasks-by-tags'] });
+      queryClient.invalidateQueries({ queryKey: ['receivables'] });
+      
+      // Invalidate client-specific data
+      if (updatedTask.client?.id) {
+        queryClient.invalidateQueries({ queryKey: ['receivables', 'client', updatedTask.client.id] });
+        queryClient.invalidateQueries({ queryKey: ['client', updatedTask.client.id] });
+      }
+    }
+  });
+};
+
+export const useRejectTask = () => {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: rejectTask,
+    // --- START: OPTIMISTIC UPDATE LOGIC ---
+    onMutate: async ({ id }) => {
+      // Cancel any outgoing refetches so they don't overwrite our optimistic update
+      await queryClient.cancelQueries({ queryKey: ['tasks'] });
+      await queryClient.cancelQueries({ queryKey: ['dashboard', 'clientsWithActiveTasks'] });
+
+      // Snapshot the previous state
+      const previousTasksData: any = queryClient.getQueryData(['tasks']);
+      const previousDashboardData: any = queryClient.getQueryData(['dashboard', 'clientsWithActiveTasks']);
+
+      // Optimistically update to New status
+      if (previousTasksData) {
+        if (previousTasksData.pages) {
+          queryClient.setQueryData(['tasks'], (oldData: any) => {
+            return {
+              ...oldData,
+              pages: oldData.pages.map((page: any) => ({
+                ...page,
+                tasks: page.tasks.map((task: Task) =>
+                  task.id === id ? { ...task, status: 'New' } : task
+                ),
+              })),
+            };
+          });
+        } else {
+          queryClient.setQueryData(['tasks'], (oldData: any) => {
+            return {
+              ...oldData,
+              tasks: oldData.tasks.map((task: Task) =>
+                task.id === id ? { ...task, status: 'New' } : task
+              ),
+            };
+          });
+        }
+      }
+
+      // Update dashboard view
+      if (previousDashboardData) {
+        queryClient.setQueryData(['dashboard', 'clientsWithActiveTasks'], (oldData: any) => {
+          const newData = { ...oldData };
+          for (const type in newData) {
+            if (newData.hasOwnProperty(type)) {
+              newData[type] = newData[type].map((clientGroup: any) => {
+                const taskIndex = clientGroup.tasks.findIndex((t: Task) => t.id === id);
+                if (taskIndex > -1) {
+                  const updatedTasks = clientGroup.tasks.map((t: Task, index: number) =>
+                    index === taskIndex ? { ...t, status: 'New' } : t
+                  );
+                  return { ...clientGroup, tasks: updatedTasks };
+                }
+                return clientGroup;
+              });
+            }
+          }
+          return newData;
+        });
+      }
+
+      return { previousTasksData, previousDashboardData };
+    },
+    // --- END: OPTIMISTIC UPDATE LOGIC ---
+    
+    onError: (_err, _variables, context) => {
+      if (context?.previousTasksData) {
+        queryClient.setQueryData(['tasks'], context.previousTasksData);
+      }
+      if (context?.previousDashboardData) {
+        queryClient.setQueryData(['dashboard', 'clientsWithActiveTasks'], context.previousDashboardData);
+      }
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ['tasks'] });
+      queryClient.invalidateQueries({ queryKey: ['dashboard', 'clientsWithActiveTasks'] });
+      queryClient.invalidateQueries({ queryKey: ['dashboard', 'stats'] });
+    },
+    onSuccess: (updatedTask: Task) => {
+      queryClient.invalidateQueries({ queryKey: ['task', updatedTask.id] });
+      queryClient.invalidateQueries({ queryKey: ['clients'] });
+    }
+  });
+};
+
+export const useRestoreTask = () => {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: restoreTask,
+    // --- START: OPTIMISTIC UPDATE LOGIC ---
+    onMutate: async ({ id }) => {
+      // Cancel any outgoing refetches so they don't overwrite our optimistic update
+      await queryClient.cancelQueries({ queryKey: ['tasks'] });
+      await queryClient.cancelQueries({ queryKey: ['dashboard', 'clientsWithActiveTasks'] });
+
+      // Snapshot the previous state
+      const previousTasksData: any = queryClient.getQueryData(['tasks']);
+      const previousDashboardData: any = queryClient.getQueryData(['dashboard', 'clientsWithActiveTasks']);
+
+      // Optimistically update to New status
+      if (previousTasksData) {
+        if (previousTasksData.pages) {
+          queryClient.setQueryData(['tasks'], (oldData: any) => {
+            return {
+              ...oldData,
+              pages: oldData.pages.map((page: any) => ({
+                ...page,
+                tasks: page.tasks.map((task: Task) =>
+                  task.id === id ? { ...task, status: 'New' } : task
+                ),
+              })),
+            };
+          });
+        } else {
+          queryClient.setQueryData(['tasks'], (oldData: any) => {
+            return {
+              ...oldData,
+              tasks: oldData.tasks.map((task: Task) =>
+                task.id === id ? { ...task, status: 'New' } : task
+              ),
+            };
+          });
+        }
+      }
+
+      // Update dashboard view - restore completed task to active tasks
+      if (previousDashboardData) {
+        queryClient.setQueryData(['dashboard', 'clientsWithActiveTasks'], (oldData: any) => {
+          const newData = { ...oldData };
+          for (const type in newData) {
+            if (newData.hasOwnProperty(type)) {
+              newData[type] = newData[type].map((clientGroup: any) => {
+                const taskIndex = clientGroup.tasks.findIndex((t: Task) => t.id === id);
+                if (taskIndex > -1) {
+                  const updatedTasks = clientGroup.tasks.map((t: Task, index: number) =>
+                    index === taskIndex ? { ...t, status: 'New' } : t
+                  );
+                  return { ...clientGroup, tasks: updatedTasks };
+                }
+                return clientGroup;
+              });
+            }
+          }
+          return newData;
+        });
+      }
+
+      return { previousTasksData, previousDashboardData };
+    },
+    // --- END: OPTIMISTIC UPDATE LOGIC ---
+    
+    onError: (_err, _variables, context) => {
+      if (context?.previousTasksData) {
+        queryClient.setQueryData(['tasks'], context.previousTasksData);
+      }
+      if (context?.previousDashboardData) {
+        queryClient.setQueryData(['dashboard', 'clientsWithActiveTasks'], context.previousDashboardData);
+      }
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ['tasks'] });
+      queryClient.invalidateQueries({ queryKey: ['dashboard', 'clientsWithActiveTasks'] });
+      queryClient.invalidateQueries({ queryKey: ['dashboard', 'stats'] });
+      queryClient.invalidateQueries({ queryKey: ['tasks-by-tags'] });
+    },
+    onSuccess: (updatedTask: Task) => {
+      queryClient.invalidateQueries({ queryKey: ['task', updatedTask.id] });
+      queryClient.invalidateQueries({ queryKey: ['clients'] });
+      queryClient.invalidateQueries({ queryKey: ['receivables'] });
+      // Employee-related invalidations
+      queryClient.invalidateQueries({ queryKey: ['employee'] });
+      queryClient.invalidateQueries({ queryKey: ['employees'] });
+    }
+  });
+};
+
+==================================================
+
+[22/22] userQueries.ts
+----------------------
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import  apiClient  from '../api/apiClient';
+import type { User, CreateUserRequest, UpdateUserCapabilitiesRequest } from '../api/types';
+
+/**
+ * Fetch all users
+ */
+export const useUsers = () => {
+  return useQuery({
+    queryKey: ['users'],
+    queryFn: async (): Promise<User[]> => {
+      const response = await apiClient.get('/users');
+      return response.data.data;
+    },
+    staleTime: 5 * 60 * 1000, // Keep fresh for 5 minutes
+    // refetchOnWindowFocus: false (inherited)
+  });
+};
+
+export const useCreateUser = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (userData: CreateUserRequest): Promise<User> => {
+      const response = await apiClient.post('/users', userData);
+      return response.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['users'] }); // Invalidate all users lists
+      
+      // Employee-related invalidations
+      queryClient.invalidateQueries({ queryKey: ['employee'] });
+      queryClient.invalidateQueries({ queryKey: ['employees'] });
+    },
+  });
+};
+
+export const useUpdateUserCapabilities = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (data: UpdateUserCapabilitiesRequest): Promise<User> => {
+      const { userId, capabilities } = data;
+      const response = await apiClient.put(`/users/${userId}/capabilities`, { capabilities });
+      return response.data.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['users'] }); // Invalidate all users lists
+      // If the current user's capabilities changed, invalidate their own capabilities too
+      queryClient.invalidateQueries({ queryKey: ['current-user-capabilities'] });
+      
+      // Employee-related invalidations
+      queryClient.invalidateQueries({ queryKey: ['employee'] });
+      queryClient.invalidateQueries({ queryKey: ['employees'] });
+    },
+  });
+};
+
+export const useCurrentUserCapabilities = () => {
+  return useQuery({
+    queryKey: ['current-user-capabilities'],
+    queryFn: async (): Promise<{
+      manage_options: boolean;
+      tm_manage_users: boolean;
+      tm_delete_any_task: boolean;
+      tm_delete_any_receivable: boolean;
+      tm_delete_any_payment: boolean;
+      tm_view_receivables_amounts: boolean;
+      tm_view_paid_receivables: boolean;
+      tm_view_overdue_receivables: boolean;
+      tm_view_all_receivables: boolean;
+    }> => {
+      const response = await apiClient.get('/users/current/capabilities');
+      return response.data.data;
+    },
+    staleTime: Infinity, // Capabilities are session-bound, no need to refetch unless logout/login or manual invalidate
+    refetchOnWindowFocus: false, // Don't refetch on focus
+    refetchOnMount: false, // Don't refetch on mount either
+  });
+};
+
+/**
+ * NEW: For admin to reset another user's password
+ */
+const setEmployeePassword = async ({ userId, new_password }: { userId: number; new_password: string }) => {
+  const { data } = await apiClient.post(`/users/${userId}/set-password`, { new_password });
+  return data;
+};
+
+/**
+ * NEW: For an employee to change their own password
+ */
+const setMyPassword = async ({ new_password }: { new_password: string }) => {
+  const { data } = await apiClient.post(`/users/me/set-password`, { new_password });
+  return data;
+};
+
+/**
+ * NEW: Forgot password - reset password without authentication
+ */
+const resetPasswordForgot = async ({ username, new_password }: { username: string; new_password: string }) => {
+  const { data } = await apiClient.post(`/auth/reset-password`, { username, new_password });
+  return data;
+};
+
+export const useSetEmployeePassword = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: setEmployeePassword,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['users'] });
+    },
+  });
+};
+
+export const useSetMyPassword = () => {
+  return useMutation({ mutationFn: setMyPassword });
+};
+
+export const useResetPasswordForgot = () => {
+  return useMutation({ mutationFn: resetPasswordForgot });
+};
+
+==================================================
+

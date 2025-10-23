@@ -23,6 +23,7 @@ import { arrayMove, sortableKeyboardCoordinates, SortableContext, verticalListSo
 import TaskStatusCards from '../components/dashboard/TaskStatusCards';
 import DashboardClientCard from '../components/dashboard/DashboardClientCard';
 import SortableClientCard from '../components/dashboard/SortableClientCard';
+import DashboardTaskTypeFilter from '../components/dashboard/DashboardTaskTypeFilter';
 import { useUpdateClientSortOrder } from '../queries/clientQueries';
 
 const DashboardPage = () => {
@@ -32,6 +33,7 @@ const DashboardPage = () => {
     const [groupedClients, setGroupedClients] = useState<GroupedClientsResponse | null>(null);
     const [activeDragItem, setActiveDragItem] = useState<ClientWithTasksAndStats | null>(null);
     const [activeContainer, setActiveContainer] = useState<keyof GroupedClientsResponse | null>(null);
+    const [taskTypeFilter, setTaskTypeFilter] = useState<'all' | 'employee' | 'admin'>('admin');
 
     const updateSortOrderMutation = useUpdateClientSortOrder();
 
@@ -39,7 +41,7 @@ const DashboardPage = () => {
         openModal('assignTask', { task });
     };
 
-    const { data: initialGroupedClients, isLoading: isLoadingClients } = useGetClientsWithActiveTasks();
+    const { data: initialGroupedClients, isLoading: isLoadingClients } = useGetClientsWithActiveTasks(taskTypeFilter);
 
     useEffect(() => {
         applyPageBackground('dashboard');
@@ -208,7 +210,13 @@ const DashboardPage = () => {
     }
 
     return (
-        <div className="dashboard-page">
+        <div className="dashboard-page" style={{ position: 'relative' }}>
+            {/* Task Type Filter - Floating Component */}
+            <DashboardTaskTypeFilter 
+                value={taskTypeFilter}
+                onChange={setTaskTypeFilter}
+            />
+
             <div className="task-status-cards mb-4">
                 <TaskStatusCards
                     stats={stats || {

@@ -58,9 +58,11 @@ const fetchTotalPaidAmount = async (): Promise<number> => {
 }
 
 
-const fetchClientsWithActiveTasks = async (): Promise<GroupedClientsResponse> => {
+const fetchClientsWithActiveTasks = async (taskType: 'all' | 'employee' | 'admin' = 'admin'): Promise<GroupedClientsResponse> => {
     // Note: The endpoint is under /clients, not /tasks
-    const { data } = await apiClient.get<ApiResponse<GroupedClientsResponse>>('/dashboard/clients-with-active-tasks');
+    const { data } = await apiClient.get<ApiResponse<GroupedClientsResponse>>('/dashboard/clients-with-active-tasks', { 
+        params: { taskType } 
+    });
     if (!data.success) throw new Error(data.message || 'Failed to fetch dashboard client tasks.');
     return data.data;
 }
@@ -105,13 +107,13 @@ export const useGetTotalPaidAmount = () => {
 };
 
 // Add this new hook
-export const useGetClientsWithActiveTasks = () => {
+export const useGetClientsWithActiveTasks = (taskType: 'all' | 'employee' | 'admin' = 'admin') => {
   const queryClient = useQueryClient();
   const previousDataRef = useRef<GroupedClientsResponse | undefined>(undefined);
 
   const query = useQuery<GroupedClientsResponse, Error>({
-    queryKey: ['dashboard', 'clientsWithActiveTasks'],
-    queryFn: fetchClientsWithActiveTasks,
+    queryKey: ['dashboard', 'clientsWithActiveTasks', taskType],
+    queryFn: () => fetchClientsWithActiveTasks(taskType),
     staleTime: 30 * 1000, // Keep fresh for 30 seconds
     refetchInterval: 20 * 1000, // Refetch every 20 seconds
   });
