@@ -150,7 +150,7 @@ const TaskStatusCards = ({ stats, totalPaidAmount = 0, isLoading }: TaskStatusCa
     }
 
     return (
-        <div className="d-flex gap-2 mb-4 flex-wrap">
+        <div className="d-flex gap-2 flex-wrap">
             {cardData.map(card => {
                 const CardContent = (
                     <div 

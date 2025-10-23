@@ -38,7 +38,7 @@ const CollapsibleTaskStatusCards: React.FC<CollapsibleTaskStatusCardsProps> = ({
         boxShadow: isCollapsed
           ? '0 -4px 12px rgba(0, 0, 0, 0.08)'
           : '0 -8px 24px rgba(0, 0, 0, 0.12)',
-        padding: isCollapsed ? '0' : '3rem 1rem 1rem 1rem',
+        padding: isCollapsed ? '0' : '0.25rem 1rem',
         borderRadius: isCollapsed ? '24px 24px 0 0' : '0 0 24px 24px',
         overflow: isCollapsed ? 'visible' : 'hidden'
       }}
