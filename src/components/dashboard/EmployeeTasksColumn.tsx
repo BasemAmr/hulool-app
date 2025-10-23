@@ -123,11 +123,11 @@ const SortableAdminEmployeeClientCard = ({
         {...listeners}
         style={{
           cursor: 'grab',
-          padding: '6px 8px',
-          backgroundColor: '#6c757d',
+          padding: '3px 8px',
+          backgroundColor: '#e8e8e8ff',
           borderBottom: '1px solid rgba(0,0,0,0.1)',
           fontSize: '10px',
-          color: '#fff',
+          color: '#585858ff',
           textAlign: 'center',
           userSelect: 'none'
         }}
