@@ -234,3 +234,7 @@ html[dir="rtl"],
 .card-hover-shadow:hover {
   box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
 }
+
+:root {
+  font-size: 75%; /* Scales everything using rem units */
+}
