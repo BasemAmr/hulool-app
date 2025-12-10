@@ -10,6 +10,7 @@
  */
 
 import { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { applyPageBackground } from '../../utils/backgroundUtils';
 import { useGetUnifiedAccounts } from '../../queries/financialCenterQueries';
 import { useModalStore } from '../../stores/modalStore';
@@ -26,6 +27,7 @@ import { formatDistanceToNow } from 'date-fns';
 import { ar } from 'date-fns/locale';
 
 const AccountsOverviewPage = () => {
+  const navigate = useNavigate();
   const [search, setSearch] = useState('');
   const [filterType, setFilterType] = useState<string>('');
   const [selectedAccount, setSelectedAccount] = useState<UnifiedAccount | undefined>(undefined);
@@ -349,13 +351,13 @@ const AccountsOverviewPage = () => {
                                 size="sm"
                                 onClick={(e) => {
                                   e.stopPropagation();
-                                  // Navigate to account details
+                                  // Navigate to account details using React Router
                                   if (account.type === 'employee') {
-                                    window.location.href = `/employees/${account.id}`;
+                                    navigate(`/employees/${account.id}`);
                                   } else if (account.type === 'client') {
-                                    window.location.href = `/clients/${account.id}`;
+                                    navigate(`/clients/${account.id}`);
                                   } else if (account.type === 'company') {
-                                    window.location.href = `/company/${account.id}`;
+                                    navigate(`/company/${account.id}`);
                                   }
                                 }}
                               >
