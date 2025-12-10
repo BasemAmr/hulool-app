@@ -74,6 +74,21 @@ export default {
         "accordion-down": "accordion-down 0.2s ease-out",
         "accordion-up": "accordion-up 0.2s ease-out",
       },
+      fontSize: {
+        'xs': '0.6rem',      // 0.75rem * 0.8
+        'sm': '0.7rem',      // 0.875rem * 0.8
+        'base': '0.8rem',    // 1rem * 0.8
+        'lg': '0.9rem',      // 1.125rem * 0.8
+        'xl': '1rem',        // 1.25rem * 0.8
+        '2xl': '1.2rem',     // 1.5rem * 0.8
+        '3xl': '1.44rem',    // 1.875rem * 0.8
+        '4xl': '1.8rem',     // 2.25rem * 0.8
+        '5xl': '2.4rem',     // 3rem * 0.8
+        '6xl': '3rem',       // 3.75rem * 0.8
+        '7xl': '3.6rem',     // 4.5rem * 0.8
+        '8xl': '4.8rem',     // 6rem * 0.8
+        '9xl': '6.4rem',     // 8rem * 0.8
+      }
     },
   },
   plugins: [],
