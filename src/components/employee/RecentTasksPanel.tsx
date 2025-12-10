@@ -116,10 +116,8 @@ const RecentTasksPanel = ({ tasks }: RecentTasksPanelProps) => {
 
   return (
     <div
-      className="card h-100 shadow-sm"
+      className="rounded-lg border border-border bg-card shadow-sm h-full"
       style={{
-        borderRadius: 'var(--border-radius)',
-        border: '1px solid var(--color-gray-100)',
         overflow: 'visible',
         position: 'relative',
         display: 'flex',
@@ -129,22 +127,22 @@ const RecentTasksPanel = ({ tasks }: RecentTasksPanelProps) => {
     >
       {/* Header */}
       <div
-        className="card-header border-0 py-2"
+        className="px-4 py-2 border-b border-border"
         style={{
           backgroundColor: '#007bff',
           color: '#fff',
           flexShrink: 0
         }}
       >
-        <div className="d-flex justify-content-center align-items-center">
-          <h6 className="mb-0 fw-bold text-white" style={{ fontSize: 'var(--font-size-base)' }}>
+        <div className="flex justify-center items-center">
+          <h6 className="mb-0 font-bold text-white text-base">
             المهام قيد التنفيذ
           </h6>
         </div>
       </div>
 
       {/* Body - Client Cards */}
-      <div className="card-body p-0" style={{
+      <div className="p-0" style={{
         flex: 1,
         position: 'relative',
         overflow: 'visible'
@@ -162,13 +160,12 @@ const RecentTasksPanel = ({ tasks }: RecentTasksPanelProps) => {
 
       {/* Footer - Show More Button */}
       <div
-        className="card-footer bg-light border-0 py-2"
-        style={{ flexShrink: 0, textAlign: 'center' }}
+        className="px-4 py-2 bg-muted/30 border-t border-border text-center"
+        style={{ flexShrink: 0 }}
       >
         <button
           onClick={() => navigate('/employee/tasks')}
-          className="btn btn-link text-primary p-0 d-flex align-items-center justify-content-center gap-1 w-100"
-          style={{ fontSize: 'var(--font-size-sm)' }}
+          className="text-primary p-0 flex items-center justify-center gap-1 w-full hover:text-primary/80 transition-colors text-sm"
         >
           <MoreHorizontal size={16} />
           <span>عرض جميع المهام</span>

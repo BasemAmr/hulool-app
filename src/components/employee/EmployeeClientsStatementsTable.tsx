@@ -1,13 +1,20 @@
-import React, { useState } from 'react';
-import type { Payment, CreditAllocation } from '../../api/types';
+/**
+ * EmployeeClientsStatementsTable - Rewritten with HuloolDataGrid
+ * 
+ * Displays employee's client receivables with payments and allocations
+ * Using HuloolDataGrid for consistent RTL-friendly display
+ */
+
+import React, { useMemo } from 'react';
+import type { CreditAllocation } from '../../api/types';
 import type { EmployeeReceivableDashboardItem } from '../../queries/employeeFinancialQueries';
-import Button from '../ui/Button';
-import { ChevronRight, ChevronDown, FileText, Edit3, Trash2 } from 'lucide-react';
+import { FileText, Edit3, Trash2, MessageSquare } from 'lucide-react';
 import { formatDate } from '../../utils/dateUtils';
 import { useModalStore } from '../../stores/modalStore';
-import { useStickyHeader } from '../../hooks/useStickyHeader';
-import WhatsAppIcon from '../ui/WhatsAppIcon';
 import { sendPaymentReminder } from '../../utils/whatsappUtils';
+import HuloolDataGrid from '../grid/HuloolDataGrid';
+import type { HuloolGridColumn } from '../grid/HuloolDataGrid';
+import type { CellProps } from 'react-datasheet-grid';
 
 interface EmployeeClientsStatementsTableProps {
     receivables: EmployeeReceivableDashboardItem[];
@@ -16,19 +23,403 @@ interface EmployeeClientsStatementsTableProps {
     hideAmounts?: boolean;
 }
 
+// ================================
+// HELPER FUNCTIONS
+// ================================
+
+const formatCurrency = (amount: number) => new Intl.NumberFormat('en-US', {
+    style: 'currency', currency: 'SAR', minimumFractionDigits: 2
+}).format(amount);
+
+const getTypeColor = (type: string): { bg: string; text: string; label: string } => {
+    const types: Record<string, { bg: string; text: string; label: string }> = {
+        'Accounting': { bg: '#fef9c3', text: '#a16207', label: 'محاسبة' },
+        'RealEstate': { bg: '#dcfce7', text: '#15803d', label: 'عقاري' },
+        'Government': { bg: '#dbeafe', text: '#1d4ed8', label: 'حكومي' },
+        'Other': { bg: '#e5e7eb', text: '#4b5563', label: 'أخرى' }
+    };
+    return types[type] || types.Other;
+};
+
+// ================================
+// CUSTOM CELL COMPONENTS
+// ================================
+
+// Client Name and Phone Cell
+const ClientNameCell = React.memo(({ rowData }: CellProps<EmployeeReceivableDashboardItem>) => {
+  return (
+    <div>
+      <div style={{ fontWeight: 600, color: '#000000' }}>
+        {rowData.client_name}
+      </div>
+      <div style={{ fontSize: '0.875rem', color: '#666666' }}>
+        {rowData.client_phone}
+      </div>
+    </div>
+  );
+});
+ClientNameCell.displayName = 'ClientNameCell';
+
+// Description Cell
+const DescriptionCell = React.memo(({ rowData }: CellProps<EmployeeReceivableDashboardItem>) => {
+  return (
+    <div>
+      <div style={{ fontWeight: 500, color: '#000000' }}>
+        {rowData.description || rowData.task_name || '—'}
+      </div>
+      {rowData.task_name && (
+        <div style={{ fontSize: '0.875rem', color: '#666666' }}>
+          مهمة: {rowData.task_name}
+        </div>
+      )}
+    </div>
+  );
+});
+DescriptionCell.displayName = 'DescriptionCell';
+
+// Debit (Amount) Cell
+const DebitCell = React.memo(({ rowData, columnData }: CellProps<EmployeeReceivableDashboardItem, { hideAmounts: boolean }>) => {
+  return (
+    <div style={{ textAlign: 'center', fontWeight: 600, color: '#000000' }}>
+      {columnData?.hideAmounts ? '***' : formatCurrency(Number(rowData.amount))}
+    </div>
+  );
+});
+DebitCell.displayName = 'DebitCell';
+
+// Credit (Paid + Allocated) Cell
+const CreditCell = React.memo(({ rowData, columnData }: CellProps<EmployeeReceivableDashboardItem, { hideAmounts: boolean }>) => {
+  const paid = rowData.total_paid + rowData.total_allocated;
+  return (
+    <div style={{ textAlign: 'center', fontWeight: 600, color: '#16a34a' }}>
+      {columnData?.hideAmounts ? '***' : formatCurrency(paid)}
+    </div>
+  );
+});
+CreditCell.displayName = 'CreditCell';
+
+// Due Amount Cell
+const DueCell = React.memo(({ rowData, columnData }: CellProps<EmployeeReceivableDashboardItem, { hideAmounts: boolean }>) => {
+  const color = rowData.remaining_amount > 0 ? '#dc2626' : '#16a34a';
+  return (
+    <div style={{ textAlign: 'center', fontWeight: 700, color }}>
+      {columnData?.hideAmounts ? '***' : formatCurrency(rowData.remaining_amount)}
+    </div>
+  );
+});
+DueCell.displayName = 'DueCell';
+
+// Due Date Cell
+const DateCell = React.memo(({ rowData }: CellProps<EmployeeReceivableDashboardItem>) => {
+  return (
+    <div style={{ textAlign: 'center', fontSize: '0.875rem', color: '#000000' }}>
+      {formatDate(rowData.due_date)}
+    </div>
+  );
+});
+DateCell.displayName = 'DateCell';
+
+// Type Badge Cell
+const TypeBadgeCell = React.memo(({ rowData }: CellProps<EmployeeReceivableDashboardItem>) => {
+  const typeColor = getTypeColor(rowData.type);
+  return (
+    <div style={{ display: 'flex', justifyContent: 'center' }}>
+      <span style={{
+        backgroundColor: typeColor.bg,
+        color: typeColor.text,
+        padding: '4px 10px',
+        borderRadius: '9999px',
+        fontSize: '0.875rem',
+        fontWeight: 600,
+      }}>
+        {typeColor.label}
+      </span>
+    </div>
+  );
+});
+TypeBadgeCell.displayName = 'TypeBadgeCell';
+
+// Actions Cell
+interface ActionsColumnData {
+  openModal: (modal: string, data: any) => void;
+  handleWhatsAppReminder: (phone: string, name: string, amount: number) => void;
+}
+
+const ActionsCell = React.memo(({ rowData, columnData }: CellProps<EmployeeReceivableDashboardItem, ActionsColumnData>) => {
+  const { openModal, handleWhatsAppReminder } = columnData || {};
+
+  if (!columnData) return null;
+
+  const isManualReceivable = !rowData.task_id;
+  const isPaid = rowData.remaining_amount <= 0 && Number(rowData.amount) > 0;
+  const isUnpaid = rowData.remaining_amount > 0;
+
+  const buildReceivableObject = () => ({
+    id: rowData.receivables_details?.[0]?.id || rowData.id,
+    client_id: Number(rowData.client_id),
+    task_id: rowData.task_id ? Number(rowData.task_id) : null,
+    reference_receivable_id: null,
+    prepaid_receivable_id: null,
+    created_by: Number(rowData.client_id),
+    type: rowData.type,
+    description: rowData.description,
+    amount: Number(rowData.amount),
+    original_amount: null,
+    amount_details: [],
+    adjustment_reason: null,
+    notes: rowData.notes || '',
+    due_date: rowData.due_date,
+    created_at: rowData.created_at,
+    updated_at: rowData.updated_at,
+    client_name: rowData.client_name,
+    client_phone: rowData.client_phone,
+    task_name: rowData.task_name,
+    task_type: rowData.task_type,
+    total_paid: rowData.total_paid,
+    remaining_amount: rowData.remaining_amount,
+    payments: rowData.payments || [],
+    allocations: [] as CreditAllocation[],
+    client: {
+      id: Number(rowData.client_id),
+      name: rowData.client_name,
+      phone: rowData.client_phone
+    }
+  });
+
+  return (
+    <div 
+      style={{ 
+        display: 'flex', 
+        gap: '4px',
+        justifyContent: 'flex-start', 
+        alignItems: 'center', 
+        height: '100%',
+        pointerEvents: 'auto',
+        flexWrap: 'wrap',
+      }}
+      onMouseDown={(e) => e.stopPropagation()}
+      onClick={(e) => e.stopPropagation()}
+    >
+      {isManualReceivable && (
+        <>
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              e.preventDefault();
+              openModal?.('editReceivable', { receivable: buildReceivableObject() });
+            }}
+            onMouseDown={(e) => e.stopPropagation()}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '2px',
+              padding: '4px 8px',
+              backgroundColor: '#3b82f6',
+              color: 'white',
+              border: 'none',
+              borderRadius: '4px',
+              cursor: 'pointer',
+              fontSize: '0.75rem',
+              pointerEvents: 'auto',
+            }}
+            title="تعديل"
+          >
+            <Edit3 size={12} />
+          </button>
+
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              e.preventDefault();
+              openModal?.('deleteReceivable', { receivable: buildReceivableObject() });
+            }}
+            onMouseDown={(e) => e.stopPropagation()}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '2px',
+              padding: '4px 8px',
+              backgroundColor: '#ef4444',
+              color: 'white',
+              border: 'none',
+              borderRadius: '4px',
+              cursor: 'pointer',
+              fontSize: '0.75rem',
+              pointerEvents: 'auto',
+            }}
+            title="حذف"
+          >
+            <Trash2 size={12} />
+          </button>
+        </>
+      )}
+
+      {isUnpaid && (
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            e.preventDefault();
+            handleWhatsAppReminder?.(rowData.client_phone, rowData.client_name, rowData.remaining_amount);
+          }}
+          onMouseDown={(e) => e.stopPropagation()}
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '2px',
+            padding: '4px 8px',
+            backgroundColor: '#25D366',
+            color: 'white',
+            border: 'none',
+            borderRadius: '4px',
+            cursor: 'pointer',
+            fontSize: '0.75rem',
+            pointerEvents: 'auto',
+          }}
+          title="تذكير واتساب"
+        >
+          <MessageSquare size={12} /> تذكير
+        </button>
+      )}
+
+      {isPaid && (
+        <span style={{
+          padding: '4px 8px',
+          backgroundColor: '#22c55e',
+          color: 'white',
+          borderRadius: '4px',
+          fontSize: '0.75rem',
+          fontWeight: 600,
+        }}>
+          مسدد
+        </span>
+      )}
+    </div>
+  );
+});
+ActionsCell.displayName = 'ActionsCell';
+
+// ================================
+// MAIN COMPONENT
+// ================================
+
 const EmployeeClientsStatementsTable: React.FC<EmployeeClientsStatementsTableProps> = ({
     receivables,
     isLoading,
     filter = 'all',
     hideAmounts = false,
 }) => {
-    const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set());
     const openModal = useModalStore(state => state.openModal);
-    const { sentinelRef, isSticky } = useStickyHeader();
+
+    // Filter items based on the filter prop
+    const filteredItems = useMemo(() => {
+      return receivables.filter(item => {
+          switch (filter) {
+              case 'unpaid':
+                  return item.remaining_amount > 0;
+              case 'paid':
+                  return item.remaining_amount <= 0 && Number(item.amount) > 0;
+              default:
+                  return true; // 'all'
+          }
+      });
+    }, [receivables, filter]);
+
+    // Sort by date DESCENDING for newest-first display
+    const sortedItems = useMemo(() => {
+      return [...filteredItems].sort((a, b) => 
+        new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+      );
+    }, [filteredItems]);
+
+    // Calculate totals
+    const totals = useMemo(() => {
+      const totalDebit = filteredItems.reduce((sum, item) => sum + Number(item.amount), 0);
+      const totalCredit = filteredItems.reduce((sum, item) => sum + item.total_paid + item.total_allocated, 0);
+      const totalDue = filteredItems.reduce((sum, item) => sum + item.remaining_amount, 0);
+      return { totalDebit, totalCredit, totalDue };
+    }, [filteredItems]);
+
+    const handleWhatsAppReminder = (phone: string, name: string, amount: number) => {
+      const formattedAmount = formatCurrency(amount);
+      sendPaymentReminder(phone, name, formattedAmount);
+    };
+
+    // Define columns
+    const columns = useMemo((): HuloolGridColumn<EmployeeReceivableDashboardItem>[] => [
+      {
+        id: 'client',
+        key: 'client_name',
+        title: 'العميل',
+        type: 'custom',
+        component: ClientNameCell,
+        grow: 1,
+      },
+      {
+        id: 'description',
+        key: 'description',
+        title: 'الوصف',
+        type: 'custom',
+        component: DescriptionCell,
+        grow: 2,
+      },
+      {
+        id: 'debit',
+        key: 'amount',
+        title: 'المدين',
+        type: 'custom',
+        component: DebitCell,
+        columnData: { hideAmounts },
+        grow: 1,
+      },
+      {
+        id: 'credit',
+        key: 'total_paid',
+        title: 'الدائن',
+        type: 'custom',
+        component: CreditCell,
+        columnData: { hideAmounts },
+        grow: 1,
+      },
+      {
+        id: 'due',
+        key: 'remaining_amount',
+        title: 'المستحق',
+        type: 'custom',
+        component: DueCell,
+        columnData: { hideAmounts },
+        grow: 1,
+      },
+      {
+        id: 'dueDate',
+        key: 'due_date',
+        title: 'تاريخ الاستحقاق',
+        type: 'custom',
+        component: DateCell,
+        grow: 1,
+      },
+      {
+        id: 'type',
+        key: 'type',
+        title: 'النوع',
+        type: 'custom',
+        component: TypeBadgeCell,
+        grow: 1,
+      },
+      {
+        id: 'actions',
+        key: 'id',
+        title: 'الإجراءات',
+        type: 'custom',
+        component: ActionsCell as React.ComponentType<CellProps<EmployeeReceivableDashboardItem>>,
+        columnData: { openModal, handleWhatsAppReminder },
+        width: 160,
+        grow: 0,
+      },
+    ], [hideAmounts, openModal]);
 
     if (isLoading) {
         return (
-            <div className="d-flex justify-content-center align-items-center p-5">
+            <div className="flex justify-center items-center p-5">
                 <div className="spinner-border text-primary" role="status">
                     <span className="visually-hidden">Loading...</span>
                 </div>
@@ -38,412 +429,49 @@ const EmployeeClientsStatementsTable: React.FC<EmployeeClientsStatementsTablePro
 
     if (!receivables.length) {
         return (
-            <div className="text-center p-5 text-muted">
+            <div className="text-center p-5 text-black">
                 <FileText size={48} className="mb-3 opacity-50" />
                 <p className="mb-0">لا توجد مستحقات</p>
             </div>
         );
     }
 
-    const toggleRow = (itemId: string) => {
-        const newExpandedRows = new Set(expandedRows);
-        if (expandedRows.has(itemId)) {
-            newExpandedRows.delete(itemId);
-        } else {
-            newExpandedRows.add(itemId);
-        }
-        setExpandedRows(newExpandedRows);
-    };
-
-    const getTypeBadge = (type: string) => {
-        const badgeClasses = {
-            'Accounting': 'badge bg-warning text-dark fw-semibold',
-            'RealEstate': 'badge bg-success text-white fw-semibold',
-            'Government': 'badge bg-primary text-white fw-semibold',
-            'Other': 'badge bg-secondary text-white fw-semibold'
-        };
-        const badgeText = {
-            'Accounting': 'محاسبة', 'RealEstate': 'عقاري', 'Government': 'حكومي', 'Other': 'أخرى'
-        };
-        return (
-            <span className={badgeClasses[type as keyof typeof badgeClasses] || badgeClasses.Other}>
-                {badgeText[type as keyof typeof badgeText] || badgeText.Other}
-            </span>
-        );
-    };
-
-    const formatCurrency = (amount: number) => new Intl.NumberFormat('en-US', {
-        style: 'currency', currency: 'SAR', minimumFractionDigits: 2
-    }).format(amount);
-
-
-    const handleWhatsAppPaymentReminder = (phone: string, clientName: string, remainingAmount: number) => {
-        const formattedAmount = formatCurrency(remainingAmount);
-        sendPaymentReminder(phone, clientName, formattedAmount);
-    };
-
-
-    // Filter items based on the filter prop
-    const filteredItems = receivables.filter(item => {
-        switch (filter) {
-            case 'unpaid':
-                return item.remaining_amount > 0;
-            case 'paid':
-                return item.remaining_amount <= 0 && Number(item.amount) > 0;
-            default:
-                return true; // 'all'
-        }
-    });
-
-    // Sort by date DESCENDING for newest-first display
-    const sortedItems = [...filteredItems].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
-
-    const totalDebit = filteredItems.reduce((sum, item) => sum + Number(item.amount), 0);
-    const totalCredit = filteredItems.reduce((sum, item) => sum + item.total_paid + item.total_allocated, 0);
-    const totalDue = filteredItems.reduce((sum, item) => sum + item.remaining_amount, 0);
-
-    const totals = {
-        totalDebit,
-        totalCredit,
-        totalDue
-    };
-
     return (
-        <div className="receivables-table-container">
-            <div className="card border-0 shadow-sm">
-                <div className="card-body p-0">
-                    <div className="table-responsive">
-                        {/* Sentinel element for sticky header detection */}
-                        <div ref={sentinelRef} ></div>
-
-                        <table className="table table-hover mb-0 receivables-table">
-                            <thead className={isSticky ? 'is-sticky' : ''}>
-                                <tr style={{ backgroundColor: 'var(--color-primary)', color: 'white' }}>
-                                    <th className="text-center py-3" style={{ width: '40px' }}></th>
-                                    <th className="text-center py-3">العميل</th>
-                                    <th className="text-center py-3">الوصف</th>
-                                    <th className="text-center py-3">المدين</th>
-                                    <th className="text-center py-3">الدائن</th>
-                                    <th className="text-center py-3">المستحق</th>
-                                    <th className="text-center py-3">تاريخ الاستحقاق</th>
-                                    <th className="text-center py-3">النوع</th>
-                                    <th className="text-center py-3">الإجراءات</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {sortedItems.map((item) => (
-                                    <React.Fragment key={item.id}>
-                                        <tr
-                                            className="receivable-row cursor-pointer"
-                                            onClick={() => ((item.payments && item.payments.length > 0) || (item.credit_allocations && item.credit_allocations.length > 0)) && toggleRow(item.id)}
-                                        >
-                                            <td className="text-center align-middle">
-                                                {(item.payments && item.payments.length > 0) || (item.credit_allocations && item.credit_allocations.length > 0) ? (
-                                                    expandedRows.has(item.id) ? <ChevronDown size={16} /> : <ChevronRight size={16} />
-                                                ) : null}
-                                            </td>
-                                            <td className="fw-medium">
-                                                <div>{item.client_name}</div>
-                                                <small className="text-muted">{item.client_phone}</small>
-                                            </td>
-                                            <td className="fw-medium">
-                                                {item.description || item.task_name}
-                                                {item.task_name && <div><small className="text-muted">مهمة: {item.task_name}</small></div>}
-                                            </td>
-                                            <td className="text-center">
-                                                <span className="fw-semibold">
-                                                    {hideAmounts ? '***' : formatCurrency(Number(item.amount))}
-                                                </span>
-                                            </td>
-                                            <td className="text-center">
-                                                <span className="text-success fw-semibold">
-                                                    {hideAmounts ? '***' : formatCurrency(item.total_paid + item.total_allocated)}
-                                                </span>
-                                            </td>
-                                            <td className="text-center">
-                                                <span className={`fw-bold ${item.remaining_amount > 0 ? 'text-danger' : 'text-success'}`}>
-                                                    {hideAmounts ? '***' : formatCurrency(item.remaining_amount)}
-                                                </span>
-                                            </td>
-                                            <td className="text-center small">{formatDate(item.due_date)}</td>
-                                            <td className="text-center">{getTypeBadge(item.type)}</td>
-                                            <td className="text-center">
-                                                <div className="d-flex gap-1 justify-content-center">
-                                                    {/* Edit/Delete buttons for manual receivables (no task_id) */}
-                                                    {!item.task_id && (
-                                                        <>
-                                                            <Button
-                                                                variant="outline-primary"
-                                                                size="sm"
-                                                                onClick={(e) => {
-                                                                    e.stopPropagation();
-                                                                    const receivable = {
-                                                                        id: item.receivables_details?.[0]?.id || item.id,
-                                                                        client_id: Number(item.client_id),
-                                                                        task_id: item.task_id ? Number(item.task_id) : null,
-                                                                        reference_receivable_id: null,
-                                                                        prepaid_receivable_id: null,
-                                                                        created_by: Number(item.client_id),
-                                                                        type: item.type,
-                                                                        description: item.description,
-                                                                        amount: Number(item.amount),
-                                                                        original_amount: null,
-                                                                        amount_details: [],
-                                                                        adjustment_reason: null,
-                                                                        notes: item.notes || '',
-                                                                        due_date: item.due_date,
-                                                                        created_at: item.created_at,
-                                                                        updated_at: item.updated_at,
-                                                                        client_name: item.client_name,
-                                                                        client_phone: item.client_phone,
-                                                                        task_name: item.task_name,
-                                                                        task_type: item.task_type,
-                                                                        total_paid: item.total_paid,
-                                                                        remaining_amount: item.remaining_amount,
-                                                                        payments: item.payments || [],
-                                                                        allocations: [] as CreditAllocation[],
-                                                                        client: {
-                                                                            id: Number(item.client_id),
-                                                                            name: item.client_name,
-                                                                            phone: item.client_phone
-                                                                        }
-                                                                    } as any;
-                                                                    openModal('editReceivable', { receivable });
-                                                                }}
-                                                            >
-                                                                <Edit3 size={12} />
-                                                            </Button>
-                                                            <Button
-                                                                variant="danger"
-                                                                size="sm"
-                                                                onClick={(e) => {
-                                                                    e.stopPropagation();
-                                                                    const receivable = {
-                                                                        id: item.receivables_details?.[0]?.id || item.id,
-                                                                        client_id: Number(item.client_id),
-                                                                        task_id: item.task_id ? Number(item.task_id) : null,
-                                                                        reference_receivable_id: null,
-                                                                        prepaid_receivable_id: null,
-                                                                        created_by: Number(item.client_id),
-                                                                        type: item.type,
-                                                                        description: item.description,
-                                                                        amount: Number(item.amount),
-                                                                        original_amount: null,
-                                                                        amount_details: [],
-                                                                        adjustment_reason: null,
-                                                                        notes: item.notes || '',
-                                                                        due_date: item.due_date,
-                                                                        created_at: item.created_at,
-                                                                        updated_at: item.updated_at,
-                                                                        client_name: item.client_name,
-                                                                        client_phone: item.client_phone,
-                                                                        task_name: item.task_name,
-                                                                        task_type: item.task_type,
-                                                                        total_paid: item.total_paid,
-                                                                        remaining_amount: item.remaining_amount,
-                                                                        payments: item.payments || [],
-                                                                        allocations: [] as CreditAllocation[],
-                                                                        client: {
-                                                                            id: Number(item.client_id),
-                                                                            name: item.client_name,
-                                                                            phone: item.client_phone
-                                                                        }
-                                                                    } as any;
-                                                                    openModal('deleteReceivable', { receivable });
-                                                                }}
-                                                            >
-                                                                <Trash2 size={12} />
-                                                            </Button>
-                                                        </>
-                                                    )}
-
-                                                    {item.remaining_amount > 0 && (
-                                                        <Button
-                                                            variant="outline-success"
-                                                            size="sm"
-                                                            onClick={(e) => {
-                                                                e.stopPropagation();
-                                                                handleWhatsAppPaymentReminder(item.client_phone, item.client_name, item.remaining_amount);
-                                                            }}
-                                                            title="إرسال تذكير دفع عبر واتساب"
-                                                        >
-                                                            <WhatsAppIcon size={12} />
-                                                            تذكير
-                                                        </Button>
-                                                    )}
-
-                                                    {item.remaining_amount <= 0 && Number(item.amount) > 0 && (
-                                                        <span className="badge bg-success text-white small">مسدد</span>
-                                                    )}
-                                                </div>
-                                            </td>
-                                        </tr>
-                                        {(expandedRows.has(item.id) && ((item.payments && item.payments.length > 0) || (item.credit_allocations && item.credit_allocations.length > 0))) && (
-                                            <tr className="payment-details-row">
-                                                <td colSpan={9} className="p-0">
-                                                    <div style={{ backgroundColor: 'var(--color-gray-50)', padding: '1rem' }}>
-                                                        {(item.payments && item.payments.length > 0) || (item.credit_allocations && item.credit_allocations.length > 0) ? (
-                                                            <div>
-                                                                {item.payments && item.payments.length > 0 && (
-                                                                    <div className="mb-3">
-                                                                        <div className="small text-muted mb-2 fw-medium">💳 تفاصيل المدفوعات ({item.payments.length}):</div>
-                                                                        <table className="table table-sm bg-white mb-0">
-                                                                            <thead>
-                                                                                <tr>
-                                                                                    <th className="text-center">المبلغ</th>
-                                                                                    <th className="text-center">التاريخ</th>
-                                                                                    <th className="text-center">طريقة الدفع</th>
-                                                                                    <th className="text-center">الإجراءات</th>
-                                                                                </tr>
-                                                                            </thead>
-                                                                            <tbody>
-                                                                                {item.payments.map((p: Payment) => {
-                                                                                    let methodName = 'غير محدد';
-                                                                                    if (p.payment_method) {
-                                                                                        if (typeof p.payment_method === 'object') {
-                                                                                            methodName = p.payment_method.name_ar || p.payment_method.name_en || 'غير محدد';
-                                                                                        } else if (typeof p.payment_method === 'string') {
-                                                                                            methodName = p.payment_method;
-                                                                                        }
-                                                                                    } else if ((p as any).name_ar) {
-                                                                                        methodName = (p as any).name_ar;
-                                                                                    } else if ((p as any).payment_method_name) {
-                                                                                        methodName = (p as any).payment_method_name;
-                                                                                    } else if ((p as any).method_name) {
-                                                                                        methodName = (p as any).method_name;
-                                                                                    }
-                                                                                    return (
-                                                                                        <tr key={p.id || `${p.receivable_id}-${p.paid_at}`}>
-                                                                                            <td className="text-center text-success fw-bold">{formatCurrency(p.amount)}</td>
-                                                                                            <td className="text-center">{formatDate(p.paid_at)}</td>
-                                                                                            <td className="text-center fw-medium">{methodName}</td>
-                                                                                            <td className="text-center">
-                                                                                                <Button
-                                                                                                    variant="outline-primary"
-                                                                                                    size="sm"
-                                                                                                    className="me-1"
-                                                                                                    onClick={(e) => {
-                                                                                                        e.stopPropagation();
-                                                                                                        openModal('paymentEdit', { payment: p, receivable: { client_id: item.client_id } });
-                                                                                                    }}
-                                                                                                >
-                                                                                                    <Edit3 size={12} />
-                                                                                                </Button>
-                                                                                                <Button
-                                                                                                    variant="danger"
-                                                                                                    size="sm"
-                                                                                                    onClick={(e) => {
-                                                                                                        e.stopPropagation();
-                                                                                                        openModal('paymentDelete', { payment: p });
-                                                                                                    }}
-                                                                                                >
-                                                                                                    <Trash2 size={12} />
-                                                                                                </Button>
-                                                                                            </td>
-                                                                                        </tr>
-                                                                                    );
-                                                                                })
-                                                                                }
-                                                                            </tbody>
-                                                                        </table>
-                                                                    </div>
-                                                                )}
-
-                                                                {item.credit_allocations && item.credit_allocations.length > 0 && (
-                                                                    <div className={item.payments && item.payments.length > 0 ? 'mt-3' : ''}>
-                                                                        <div className="small text-muted mb-2 fw-medium">🔄 تفاصيل التخصيصات ({item.credit_allocations.length}):</div>
-                                                                        <table className="table table-sm bg-white mb-0">
-                                                                            <thead>
-                                                                                <tr>
-                                                                                    <th className="text-center">المبلغ</th>
-                                                                                    <th className="text-center">التاريخ</th>
-                                                                                    <th className="text-center">الوصف</th>
-                                                                                    <th className="text-center">المصدر</th>
-                                                                                    <th className="text-center">الإجراءات</th>
-                                                                                </tr>
-                                                                            </thead>
-                                                                            <tbody>
-                                                                                {item.credit_allocations.map((allocation: CreditAllocation) => (
-                                                                                    <tr key={allocation.id || `${allocation.credit_id}-${allocation.receivable_id}`}>
-                                                                                        <td className="text-center text-info fw-bold">{formatCurrency(allocation.amount)}</td>
-                                                                                        <td className="text-center">{formatDate(allocation.allocated_at)}</td>
-                                                                                        <td className="text-center">{allocation.description ?? 'تخصيص من رصيد العميل'}</td>
-                                                                                        <td className="text-center">
-                                                                                            تخصيص
-                                                                                        </td>
-                                                                                        <td className="text-center">
-                                                                                            <Button
-                                                                                                variant="outline-primary"
-                                                                                                size="sm"
-                                                                                                className="me-1"
-                                                                                                onClick={(e) => {
-                                                                                                    e.stopPropagation();
-                                                                                                    openModal('allocationEdit', { allocation, clientId: Number(item.client_id) });
-                                                                                                }}
-                                                                                            >
-                                                                                                <Edit3 size={12} />
-                                                                                            </Button>
-                                                                                            <Button
-                                                                                                variant="danger"
-                                                                                                size="sm"
-                                                                                                onClick={(e) => {
-                                                                                                    e.stopPropagation();
-                                                                                                    openModal('allocationDelete', { allocation, clientId: Number(item.client_id) });
-                                                                                                }}
-                                                                                            >
-                                                                                                <Trash2 size={12} />
-                                                                                            </Button>
-                                                                                        </td>
-                                                                                    </tr>
-                                                                                ))}
-                                                                            </tbody>
-                                                                        </table>
-                                                                    </div>
-                                                                )}
-                                                            </div>
-                                                        ) : null}
-                                                    </div>
-                                                </td>
-                                            </tr>
-                                        )}
-                                    </React.Fragment>
-                                ))}
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-            </div>
+        <div className="employee-receivables-table-wrapper">
+            {/* Transactions Grid */}
+            <HuloolDataGrid
+                data={sortedItems}
+                columns={columns}
+                isLoading={isLoading}
+                emptyMessage="لا توجد مستحقات"
+                showId={false}
+            />
 
             {/* Summary Totals Row */}
-            <div className="card border-0 shadow-sm mt-2">
-                <div className="card-body p-2">
-                    <div className="row text-center">
-                        <div className="col-md-4">
-                            <div className="d-flex justify-content-between align-items-center p-2 bg-light rounded">
-                                <span className="text-muted small">إجمالي المدين:</span>
-                                <span className="fw-bold text-primary">{formatCurrency(totals.totalDebit)}</span>
-                            </div>
+            <div className="rounded-lg border border-border bg-card shadow-sm mt-2">
+                <div className="p-2">
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-2 text-center">
+                        <div className="flex justify-between items-center p-2 bg-gray-100 rounded">
+                            <span className="text-gray-600 text-sm">إجمالي المدين:</span>
+                            <span className="font-bold text-red-600">
+                                {hideAmounts ? '***' : formatCurrency(totals.totalDebit)}
+                            </span>
                         </div>
-                        <div className="col-md-4">
-                            <div className="d-flex justify-content-between align-items-center p-2 bg-light rounded">
-                                <span className="text-muted small">إجمالي الدائن:</span>
-                                <span className="fw-bold text-success">{formatCurrency(totals.totalCredit)}</span>
-                            </div>
+                        <div className="flex justify-between items-center p-2 bg-gray-100 rounded">
+                            <span className="text-gray-600 text-sm">إجمالي الدائن:</span>
+                            <span className="font-bold text-green-600">
+                                {hideAmounts ? '***' : formatCurrency(totals.totalCredit)}
+                            </span>
                         </div>
-                        <div className="col-md-4">
-                            <div className="d-flex justify-content-between align-items-center p-2 bg-primary text-white rounded">
-                                <span className="small">إجمالي المستحق:</span>
-                                <span className="fw-bold">{formatCurrency(totals.totalDue)}</span>
-                            </div>
+                        <div className="flex justify-between items-center p-2 bg-primary text-white rounded">
+                            <span className="text-sm">إجمالي المستحق:</span>
+                            <span className="font-bold">
+                                {hideAmounts ? '***' : formatCurrency(totals.totalDue)}
+                            </span>
                         </div>
                     </div>
                 </div>
             </div>
-
-            <style>{`
-        .receivable-row:hover { background-color: #f8f9fa ; }
-        .cursor-pointer { cursor: pointer; }
-      `}</style>
         </div>
     );
 };

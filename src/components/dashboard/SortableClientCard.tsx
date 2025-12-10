@@ -39,20 +39,12 @@ const SortableClientCard = ({ clientData, containerType, alternatingColors, onAs
             ref={setNodeRef}
             style={style}
             {...attributes}
-            className="sortable-client-card"
+            className="mb-3"
         >
             {/* Add a drag handle area */}
             <div
                 {...listeners}
-                style={{
-                    cursor: 'grab',
-                    padding: '2px 8px',
-                    backgroundColor: 'rgba(0,0,0,0.05)',
-                    borderBottom: '1px solid rgba(0,0,0,0.1)',
-                    fontSize: '10px',
-                    color: '#666',
-                    textAlign: 'center'
-                }}
+                className="cursor-grab p-1.5 bg-gray-50 border-b border-gray-200 text-xs text-gray-600 text-center hover:bg-gray-100 active:cursor-grabbing"
             >
                 ⋮⋮ اسحب لإعادة الترتيب
             </div>

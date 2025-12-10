@@ -4,7 +4,7 @@ import type { TagColumnsViewProps } from '../../types/tagTypes';
 const TagColumnsView = ({ tagCollections, isLoading = false }: TagColumnsViewProps) => {
     if (isLoading) {
         return (
-            <div className="row g-3">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
                 {[1, 2, 3, 4].map(i => (
                     <TagColumn 
                         key={i} 
@@ -23,15 +23,15 @@ const TagColumnsView = ({ tagCollections, isLoading = false }: TagColumnsViewPro
                 <div className="empty-icon mb-3">
                     <i className="fas fa-tags fa-4x text-gray-400"></i>
                 </div>
-                <h5 className="text-muted mb-2">لا توجد علامات مُضافة</h5>
-                <p className="text-muted">قم بإضافة علامات لتنظيم المهام وعرضها في أعمدة منفصلة</p>
+                <h5 className="text-black mb-2 font-semibold">لا توجد علامات مُضافة</h5>
+                <p className="text-black">قم بإضافة علامات لتنظيم المهام وعرضها في أعمدة منفصلة</p>
             </div>
         );
     }
 
     return (
         <div className="tag-columns-view">
-            <div className="row g-3">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
                 {tagCollections.map(tagCollection => (
                     <TagColumn 
                         key={tagCollection?.tag?.id || Math.random()} 

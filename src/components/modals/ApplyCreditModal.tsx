@@ -41,12 +41,12 @@ const ApplyCreditModal = () => {
 
     return (
         <BaseModal isOpen={true} onClose={closeModal} title="تطبيق رصيد العميل">
-            <div className="alert alert-info">
-                <div>الرصيد المتاح للعميل: <strong>{availableCredit.toLocaleString()} ريال</strong></div>
-                <div>المتبقي على المستحق: <strong>{receivable.remaining_amount.toLocaleString()} ريال</strong></div>
+            <div className="rounded-lg border border-blue-600 bg-blue-50 p-4 flex flex-col gap-2 mb-4">
+                <div className="text-sm text-blue-800">الرصيد المتاح للعميل: <strong>{availableCredit.toLocaleString()} ريال</strong></div>
+                <div className="text-sm text-blue-800">المتبقي على المستحق: <strong>{receivable.remaining_amount.toLocaleString()} ريال</strong></div>
             </div>
             
-            <form onSubmit={handleSubmit(onSubmit)}>
+            <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
                 <Input
                     label="المبلغ المراد تطبيقه"
                     type="number"
@@ -69,10 +69,10 @@ const ApplyCreditModal = () => {
                     label="ملاحظات"
                     {...register('note')}
                 />
-                <footer className="modal-footer">
+                <div className="flex justify-end gap-2 pt-4 border-t border-border">
                     <Button type="button" variant="secondary" onClick={closeModal}>إلغاء</Button>
                     <Button type="submit" isLoading={applyCreditMutation.isPending}>تطبيق الرصيد</Button>
-                </footer>
+                </div>
             </form>
         </BaseModal>
     );

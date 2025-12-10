@@ -5,18 +5,23 @@ import type { ApiResponse, TaskType } from '../api/types';
 // Employee dashboard data types
 export interface EmployeeTransaction {
   id: string;
-  employee_user_id: string;
+  employee_user_id?: string;
   transaction_name: string;
   direction: 'CREDIT' | 'DEBIT';
   amount: string | null;
-  related_task_id: string;
-  task_amount: string;
+  related_task_id: string | null;
+  task_amount: string | null;
   notes: string;
   transaction_date: string;
-  created_at: string;
-  task_name: string;
-  client_id: string;
-  client_name: string;
+  created_at?: string;
+  task_name: string | null;
+  client_id?: string | null;
+  client_name: string | null;
+  // New ledger fields
+  balance?: string | null;
+  is_pending?: boolean;
+  source?: 'new_ledger' | 'legacy';
+  transaction_type?: string;
 }
 
 export interface FinancialSummary {

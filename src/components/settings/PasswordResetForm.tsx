@@ -33,29 +33,31 @@ const PasswordResetForm = ({ onSubmit, isLoading }: PasswordResetFormProps) => {
   };
 
   return (
-    <form onSubmit={handleSubmit} className="d-flex align-items-end gap-2 mt-2">
-      <div className="flex-grow-1">
-        <label className="form-label form-label-sm">New Password</label>
+    <form onSubmit={handleSubmit} className="flex items-end gap-2 mt-2">
+      <div className="flex-1">
+        <label className="block text-sm font-medium text-black mb-1">New Password</label>
         <input
           type="password"
-          className="form-control form-control-sm"
+          className="w-full px-3 py-1.5 text-sm border rounded-md focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent disabled:bg-muted disabled:cursor-not-allowed"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
           placeholder="Enter new password"
           disabled={isLoading}
         />
       </div>
-      <div className="flex-grow-1">
-        <label className="form-label form-label-sm">Confirm Password</label>
+      <div className="flex-1">
+        <label className="block text-sm font-medium text-black mb-1">Confirm Password</label>
         <input
           type="password"
-          className={`form-control form-control-sm ${error ? 'is-invalid' : ''}`}
+          className={`w-full px-3 py-1.5 text-sm border rounded-md focus:outline-none focus:ring-2 disabled:bg-muted disabled:cursor-not-allowed ${
+            error ? 'border-red-500 focus:ring-red-500' : 'focus:ring-primary focus:border-transparent'
+          }`}
           value={confirm}
           onChange={(e) => setConfirm(e.target.value)}
           placeholder="Confirm new password"
           disabled={isLoading}
         />
-        {error && <div className="invalid-feedback">{error}</div>}
+        {error && <div className="text-red-600 text-sm mt-1">{error}</div>}
       </div>
       <Button type="submit" size="sm" isLoading={isLoading}>
         Set Password

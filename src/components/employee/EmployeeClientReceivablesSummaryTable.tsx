@@ -11,10 +11,15 @@ interface ClientReceivablesSummaryItem {
   client_id: number;
   client_name: string;
   client_phone: string;
-  total_receivables: number | string;
-  total_paid: number | string;
+  // New API fields
+  total_debit?: number | string;
+  total_credit?: number | string;
   total_outstanding: number | string;
-  receivables_count: number | string;
+  // Legacy fields for backward compatibility
+  total_receivables?: number | string;
+  total_paid?: number | string;
+  receivables_count?: number | string;
+  transaction_count?: number | string;
 }
 
 interface EmployeeClientReceivablesSummaryTableProps {
@@ -55,7 +60,7 @@ const EmployeeClientReceivablesSummaryTable: React.FC<EmployeeClientReceivablesS
 
   if (isLoading) {
     return (
-      <div className="d-flex justify-content-center align-items-center p-5">
+      <div className="flex justify-center items-center p-5">
         <div className="spinner-border text-primary" role="status">
           <span className="visually-hidden">جاري التحميل...</span>
         </div>
@@ -70,7 +75,7 @@ const EmployeeClientReceivablesSummaryTable: React.FC<EmployeeClientReceivablesS
 
   if (!clients || clients.length === 0 || filteredClients.length === 0) {
     return (
-      <div className="text-center p-5 text-muted">
+      <div className="text-center p-5 text-black">
         <FileText size={48} className="mb-3 opacity-50" />
         <p className="mb-0">لا توجد مستحقات للعملاء</p>
       </div>
@@ -94,13 +99,13 @@ const EmployeeClientReceivablesSummaryTable: React.FC<EmployeeClientReceivablesS
   });
 
   return (
-    <div className="table-responsive" dir="rtl">
+    <div className="w-full overflow-x-auto" dir="rtl">
       {/* Sentinel element for sticky header detection */}
       <div ref={sentinelRef}></div>
       
-      <table className="table table-hover align-middle">
-        <thead className={`table-warning ${isSticky ? 'is-sticky' : ''}`}>
-          <tr className="fw-bold">
+      <table className="w-full">
+        <thead className={`bg-yellow-400 ${isSticky ? 'is-sticky' : ''}`}>
+          <tr className="font-bold">
             <th scope="col" className="text-end" style={{ width: '18%', color: '#000', padding: '12px 8px' }}>العميل</th>
             <th scope="col" className="text-center" style={{ width: '12%', color: '#000', padding: '12px 8px' }}>رقم الجوال</th>
             <th scope="col" className="text-center" style={{ width: '20%', color: '#000', padding: '12px 8px' }}>إجمالي المدين</th>
@@ -111,17 +116,17 @@ const EmployeeClientReceivablesSummaryTable: React.FC<EmployeeClientReceivablesS
         </thead>
         <tbody>
           {sortedClients.map((client) => (
-            <tr key={client.client_id}>
+            <tr key={client.client_id} className="hover:bg-muted/50 transition-colors">
               <td className="text-end" style={{ padding: '12px 8px' }}>
                 {/* Client name without link - just text */}
-                <div className="fw-bold text-dark" style={{ cursor: 'default' }}>
+                <div className="font-bold text-black" style={{ cursor: 'default' }}>
                   {client.client_name}
                 </div>
               </td>
               <td className="text-center" style={{ padding: '12px 8px' }}>
-                <div className="small d-flex align-items-center justify-content-center">
+                <div className="text-sm flex items-center justify-center gap-1">
                   <button
-                    className="btn btn-link btn-sm p-0 text-success ms-1"
+                    className="p-0 text-green-600 hover:text-green-700 transition-colors"
                     onClick={() => handleWhatsApp(client.client_phone)}
                     title="WhatsApp"
                     style={{ fontSize: '12px' }}
@@ -131,17 +136,17 @@ const EmployeeClientReceivablesSummaryTable: React.FC<EmployeeClientReceivablesS
                   <span>{client.client_phone}</span>
                 </div>
               </td>
-              <td className="text-center fw-bold" style={{ padding: '12px 8px' }}>
-                {formatCurrency(Number(client.total_receivables) || 0)}
+              <td className="text-center font-bold" style={{ padding: '12px 8px' }}>
+                {formatCurrency(Number(client.total_debit || client.total_receivables) || 0)}
               </td>
-              <td className="text-center fw-bold text-success" style={{ padding: '12px 8px' }}>
-                {formatCurrency(Number(client.total_paid) || 0)}
+              <td className="text-center font-bold text-green-600" style={{ padding: '12px 8px' }}>
+                {formatCurrency(Number(client.total_credit || client.total_paid) || 0)}
               </td>
-              <td className="text-center fw-bold text-danger" style={{ padding: '12px 8px' }}>
+              <td className="text-center font-bold text-red-600" style={{ padding: '12px 8px' }}>
                 {formatCurrency(Math.max(0, Number(client.total_outstanding) || 0))}
               </td>
               <td className="text-center" style={{ padding: '12px 8px' }}>
-                <div className="d-flex gap-1 justify-content-center">
+                <div className="flex gap-1 justify-center">
                   <Button
                     variant="outline-primary"
                     size="sm"
@@ -176,29 +181,29 @@ const EmployeeClientReceivablesSummaryTable: React.FC<EmployeeClientReceivablesS
       </table>
 
       {/* Summary Totals Card */}
-      <div className="card border-0 shadow-sm mt-2">
-        <div className="card-body p-2">
-          <div className="row text-center">
-            <div className="col-md-4">
-              <div className="d-flex justify-content-between align-items-center p-2 bg-light rounded">
-                <span className="text-muted small">إجمالي المدين:</span>
-                <span className="fw-bold text-danger">
+      <div className="rounded-lg border-0 bg-card shadow-sm mt-2">
+        <div className="p-2">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-2 text-center">
+            <div>
+              <div className="flex justify-between items-center p-2 bg-muted rounded">
+                <span className="text-black text-sm">إجمالي المدين:</span>
+                <span className="font-bold text-red-600">
                   {formatCurrency(displayTotals.totalAmount)}
                 </span>
               </div>
             </div>
-            <div className="col-md-4">
-              <div className="d-flex justify-content-between align-items-center p-2 bg-light rounded">
-                <span className="text-muted small">إجمالي الدائن:</span>
-                <span className="fw-bold text-success">
+            <div>
+              <div className="flex justify-between items-center p-2 bg-muted rounded">
+                <span className="text-black text-sm">إجمالي الدائن:</span>
+                <span className="font-bold text-green-600">
                   {formatCurrency(displayTotals.paidAmount)}
                 </span>
               </div>
             </div>
-            <div className="col-md-4">
-              <div className="d-flex justify-content-between align-items-center p-2 bg-light rounded">
-                <span className="text-muted small">الرصيد النهائي:</span>
-                <span className={`fw-bold ${displayTotals.remainingAmount > 0 ? 'text-primary' : 'text-success'}`}>
+            <div>
+              <div className="flex justify-between items-center p-2 bg-muted rounded">
+                <span className="text-black text-sm">الرصيد النهائي:</span>
+                <span className={`font-bold ${displayTotals.remainingAmount > 0 ? 'text-primary' : 'text-green-600'}`}>
                   {formatCurrency(displayTotals.remainingAmount)}
                 </span>
               </div>

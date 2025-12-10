@@ -1,17 +1,19 @@
 import type { HTMLAttributes } from 'react';
-import logoSvg from '../../assets/images/logo.svg';
 
 interface LogoProps extends HTMLAttributes<HTMLDivElement> {
   className?: string;
-  width?: string | number;
-  height?: string | number;
+  compact?: boolean;
 }
 
-const Logo = ({ className, width, height, ...props }: LogoProps) => {
+const Logo = ({ className, compact = false, ...props }: LogoProps) => {
   return (
-    <div className={`logo-container ${className || ''}`} {...props}>
-      <img src={logoSvg} alt="Hulool Logo" style={{ height: height || '64px', width: width || 'auto' }} />
-      <span className="logo-text">حلول</span>
+    <div className={`flex items-center gap-1.5 ${className || ''}`} {...props}>
+      <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-primary text-primary-foreground font-bold text-lg shadow-sm">
+        ح
+      </div>
+      {!compact && (
+        <span className="text-lg font-bold text-primary tracking-tight">حلول</span>
+      )}
     </div>
   );
 };

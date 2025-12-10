@@ -105,10 +105,10 @@ const CreditEditModal = () => {
 
   return (
     <BaseModal isOpen={true} onClose={closeModal} title={t('credits.editCredit')}>
-      <form onSubmit={handleSubmit(handleUpdate)}>
-        <div className="mb-3">
-          <label className="form-label text-dark">{t('credits.currentAmount')}</label>
-          <div className="text-dark">
+      <form onSubmit={handleSubmit(handleUpdate)} className="space-y-4">
+        <div className="space-y-2">
+          <label className="font-semibold text-black text-sm block">{t('credits.currentAmount')}</label>
+          <div className="text-black">
             <SaudiRiyalIcon amount={credit.amount} />
           </div>
         </div>
@@ -132,27 +132,29 @@ const CreditEditModal = () => {
         />
 
         {conflictData && (
-          <div className="alert alert-warning text-dark">
-            <h6>{t('credits.creditReductionConflict')}</h6>
-            <p>{t('credits.cannotReduceBelowAllocated')}</p>
-            <p><strong>{t('credits.allocatedAmount')}: </strong><SaudiRiyalIcon amount={conflictData.allocated_amount} /></p>
-            <p><strong>{t('credits.deficit')}: </strong><SaudiRiyalIcon amount={conflictData.deficit} /></p>
+          <div className="rounded-lg border border-yellow-600 bg-yellow-50 p-4 space-y-3">
+            <div>
+              <h6 className="font-semibold text-black">{t('credits.creditReductionConflict')}</h6>
+              <p className="text-sm text-yellow-800">{t('credits.cannotReduceBelowAllocated')}</p>
+              <p className="text-sm text-yellow-800"><strong>{t('credits.allocatedAmount')}: </strong><SaudiRiyalIcon amount={conflictData.allocated_amount} /></p>
+              <p className="text-sm text-yellow-800"><strong>{t('credits.deficit')}: </strong><SaudiRiyalIcon amount={conflictData.deficit} /></p>
+            </div>
             
-            <div className="mt-3">
-              <h6>{t('credits.allocationAdjustments')}</h6>
-              {conflictData.allocations.map((allocation, index) => (
-                <div key={allocation.id} className="card mb-2">
-                  <div className="card-body">
-                    <div className="d-flex justify-content-between align-items-center">
-                      <div>
-                        <strong>{allocation.description ?? t('common.noDescription')}</strong>
-                      <br />
-                      <br />
-                      <SaudiRiyalIcon amount={allocation.amount} />
+            <div className="space-y-2">
+              <h6 className="font-semibold text-black text-sm">{t('credits.allocationAdjustments')}</h6>
+              <div className="space-y-2 max-h-48 overflow-y-auto">
+                {conflictData.allocations.map((allocation, index) => (
+                  <div key={allocation.id} className="rounded-lg border border-border bg-card p-3">
+                    <div className="flex justify-between items-start gap-2">
+                      <div className="flex-1">
+                        <strong className="text-sm text-black block">{allocation.description ?? t('common.noDescription')}</strong>
+                        <div className="text-sm text-muted-foreground mt-1">
+                          <SaudiRiyalIcon amount={allocation.amount} />
+                        </div>
                       </div>
-                      <div>
+                      <div className="space-y-2">
                         <select
-                          className="form-select form-select-sm"
+                          className="w-full px-3 py-2 border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-primary text-sm"
                           value={allocationAdjustments[index]?.action || 'keep'}
                           onChange={(e) => {
                             const action = e.target.value as AllocationAdjustment['action'];
@@ -165,7 +167,7 @@ const CreditEditModal = () => {
                         </select>
                         
                         {allocationAdjustments[index]?.action === 'reduce_allocation' && (
-                          <div className="mt-2">
+                          <div>
                             <Input
                               type="number"
                               step="0.01"
@@ -184,23 +186,23 @@ const CreditEditModal = () => {
                       </div>
                     </div>
                   </div>
-                </div>
-              ))}
+                ))}
+              </div>
             </div>
             
-            <div className="mt-2">
-              <strong>{t('credits.totalReduction')}: <SaudiRiyalIcon amount={getTotalReduction()} /></strong>
+            <div className="text-sm font-semibold text-black pt-2 border-t border-yellow-200">
+              {t('credits.totalReduction')}: <SaudiRiyalIcon amount={getTotalReduction()} />
             </div>
             
             {!isResolutionValid() && (
-              <div className="text-danger small mt-2">
+              <div className="text-destructive text-xs">
                 {t('credits.insufficientReduction')}
               </div>
             )}
           </div>
         )}
 
-        <footer className="modal-footer">
+        <div className="flex justify-end gap-2 pt-4 border-t border-border">
           <Button type="button" variant="secondary" onClick={closeModal}>
             {t('common.cancel')}
           </Button>
@@ -212,7 +214,7 @@ const CreditEditModal = () => {
             >
               {t('common.save')}
             </Button>
-        </footer>
+        </div>
       </form>
     </BaseModal>
   );

@@ -1,10 +1,27 @@
-import {  CreditCard, Edit3 } from 'lucide-react';
+/**
+ * ClientsReceivablesTable - Excel-like grid for displaying all clients receivables summary
+ * 
+ * Uses HuloolDataGrid for consistent styling with:
+ * - Proper RTL alignment
+ * - Full height support
+ * - Active cell bold text
+ * - WhatsApp integration
+ * - Actions column
+ */
+
+import React, { useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import Button from '../ui/Button';
+import { CreditCard, Edit3 } from 'lucide-react';
+import HuloolDataGrid from '../grid/HuloolDataGrid';
+import type { HuloolGridColumn } from '../grid/HuloolDataGrid';
+import type { CellProps } from 'react-datasheet-grid';
 import { useModalStore } from '../../stores/modalStore';
 import WhatsAppIcon from '../ui/WhatsAppIcon';
 import { sendPaymentReminder, formatPhoneForWhatsApp } from '../../utils/whatsappUtils';
-import { useStickyHeader } from '../../hooks/useStickyHeader';
+
+// ================================
+// TYPE DEFINITIONS
+// ================================
 
 interface ClientReceivablesSummary {
   client_id: number;
@@ -31,19 +48,237 @@ interface ClientsReceivablesTableProps {
   isTotalsLoading?: boolean;
 }
 
-const ClientsReceivablesTable = ({ clients, isLoading, totals, isTotalsLoading }: ClientsReceivablesTableProps) => {
-  const navigate = useNavigate();
-  const openModal = useModalStore((state) => state.openModal);
-  const { sentinelRef, isSticky } = useStickyHeader();
+// ================================
+// HELPER FUNCTIONS
+// ================================
 
-  const handlePayment = (clientId: number) => {
-    // Open the modal to select specific receivable for payment
-    openModal('selectReceivableForPayment', {
-      clientId,
-      receivables: [] // Will be loaded in the modal
-    });
+const formatCurrency = (amount: number) => {
+  const numAmount = Number(amount) || 0;
+  return new Intl.NumberFormat('en-US', {
+    style: 'currency',
+    currency: 'SAR',
+    minimumFractionDigits: 2
+  }).format(numAmount);
+};
+
+// ================================
+// CUSTOM CELL COMPONENTS
+// ================================
+
+// Client Name Cell with clickable link
+interface ClientNameCellData {
+  onClientClick: (clientId: number) => void;
+}
+
+const ClientNameCell = React.memo(({ rowData, columnData, active }: CellProps<ClientReceivablesSummary, ClientNameCellData>) => {
+  const handleClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    columnData?.onClientClick?.(rowData.client_id);
   };
 
+  return (
+    <span 
+      className="hulool-cell-content"
+      style={{ 
+        fontWeight: active ? 800 : 600,
+        color: 'var(--color-primary, #3b82f6)',
+        cursor: 'pointer',
+      }}
+      onClick={handleClick}
+    >
+      {rowData.client_name || '—'}
+    </span>
+  );
+});
+ClientNameCell.displayName = 'ClientNameCell';
+
+// Phone Cell with WhatsApp button
+interface PhoneCellData {
+  onWhatsApp: (phone: string) => void;
+}
+
+const PhoneCell = React.memo(({ rowData, columnData, active }: CellProps<ClientReceivablesSummary, PhoneCellData>) => {
+  const phone = rowData.client_phone;
+
+  const handleWhatsAppClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    columnData?.onWhatsApp?.(phone);
+  };
+
+  if (!phone) {
+    return <span className="hulool-cell-content" style={{ justifyContent: 'center', color: '#9ca3af', fontWeight: active ? 700 : 400 }}>—</span>;
+  }
+
+  return (
+    <div className="hulool-cell-content" style={{ justifyContent: 'center', gap: '8px', fontWeight: active ? 700 : 400 }}>
+      <button
+        onClick={handleWhatsAppClick}
+        title="فتح واتساب"
+        className="hulool-whatsapp-btn"
+      >
+        <WhatsAppIcon size={14} />
+      </button>
+      <span style={{ color: '#000000' }}>{phone}</span>
+    </div>
+  );
+});
+PhoneCell.displayName = 'PhoneCell';
+
+// Total Debit Cell - Black currency
+const TotalDebitCell = React.memo(({ rowData, active }: CellProps<ClientReceivablesSummary>) => {
+  const amount = Number(rowData.total_amount) || 0;
+  
+  return (
+    <span className="hulool-cell-content" style={{ justifyContent: 'center', color: '#000000', fontWeight: active ? 700 : 500 }}>
+      {formatCurrency(amount)}
+    </span>
+  );
+});
+TotalDebitCell.displayName = 'TotalDebitCell';
+
+// Total Credit Cell - Green currency
+const TotalCreditCell = React.memo(({ rowData, active }: CellProps<ClientReceivablesSummary>) => {
+  const amount = Number(rowData.paid_amount) || 0;
+  
+  return (
+    <span className="hulool-cell-content" style={{ justifyContent: 'center', color: '#16a34a', fontWeight: active ? 700 : 500 }}>
+      {formatCurrency(amount)}
+    </span>
+  );
+});
+TotalCreditCell.displayName = 'TotalCreditCell';
+
+// Remaining Amount Cell - Red currency
+const RemainingCell = React.memo(({ rowData, active }: CellProps<ClientReceivablesSummary>) => {
+  const amount = Math.max(0, Number(rowData.remaining_amount) || 0);
+  
+  return (
+    <span className="hulool-cell-content" style={{ justifyContent: 'center', fontWeight: active ? 800 : 700, color: '#dc2626' }}>
+      {formatCurrency(amount)}
+    </span>
+  );
+});
+RemainingCell.displayName = 'RemainingCell';
+
+// Actions Cell
+interface ActionsCellData {
+  openModal: (modal: string, data: any) => void;
+  onPaymentReminder: (phone: string, clientName: string, amount: number) => void;
+  onPayment: (clientId: number) => void;
+}
+
+const ActionsCell = React.memo(({ rowData, columnData }: CellProps<ClientReceivablesSummary, ActionsCellData>) => {
+  const { openModal, onPaymentReminder, onPayment } = columnData || {};
+  const hasDebt = Number(rowData.remaining_amount) > 0;
+
+  const handleEdit = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    openModal?.('clientReceivablesEdit', { clientId: rowData.client_id });
+  };
+
+  const handleReminder = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    onPaymentReminder?.(rowData.client_phone, rowData.client_name, Number(rowData.remaining_amount));
+  };
+
+  const handlePay = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    onPayment?.(rowData.client_id);
+  };
+
+  return (
+    <div 
+      style={{ 
+        display: 'flex', 
+        gap: '4px', 
+        justifyContent: 'center', 
+        alignItems: 'center',
+        height: '100%',
+        pointerEvents: 'auto',
+      }}
+      onMouseDown={(e) => e.stopPropagation()}
+      onClick={(e) => e.stopPropagation()}
+    >
+      {/* COMMENTED OUT: Edit receivables - deprecated functionality
+      <button
+        onClick={handleEdit}
+        onMouseDown={(e) => e.stopPropagation()}
+        title="تعديل المستحقات"
+        style={{
+          padding: '4px 8px',
+          borderRadius: '6px',
+          border: '1px solid var(--color-primary, #3b82f6)',
+          backgroundColor: 'transparent',
+          color: 'var(--color-primary, #3b82f6)',
+          cursor: 'pointer',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+        }}
+      >
+        <Edit3 size={14} />
+      </button>
+      */}
+      <button
+        onClick={handleReminder}
+        onMouseDown={(e) => e.stopPropagation()}
+        title="إرسال تذكير دفع عبر واتساب"
+        disabled={!hasDebt}
+        style={{
+          padding: '4px 8px',
+          borderRadius: '6px',
+          border: '1px solid #22c55e',
+          backgroundColor: 'transparent',
+          color: '#22c55e',
+          cursor: hasDebt ? 'pointer' : 'not-allowed',
+          opacity: hasDebt ? 1 : 0.5,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+        }}
+      >
+        <WhatsAppIcon size={14} />
+      </button>
+      <button
+        onClick={handlePay}
+        onMouseDown={(e) => e.stopPropagation()}
+        disabled={!hasDebt}
+        style={{
+          padding: '4px 12px',
+          borderRadius: '6px',
+          border: 'none',
+          backgroundColor: hasDebt ? 'var(--color-primary, #3b82f6)' : '#9ca3af',
+          color: '#ffffff',
+          cursor: hasDebt ? 'pointer' : 'not-allowed',
+          display: 'flex',
+          alignItems: 'center',
+          gap: '4px',
+          fontSize: '0.875rem',
+          fontWeight: 500,
+        }}
+      >
+        <CreditCard size={14} />
+        سداد
+      </button>
+    </div>
+  );
+});
+ActionsCell.displayName = 'ActionsCell';
+
+// ================================
+// MAIN COMPONENT
+// ================================
+
+const ClientsReceivablesTable: React.FC<ClientsReceivablesTableProps> = ({ 
+  clients, 
+  isLoading, 
+  totals, 
+  isTotalsLoading 
+}) => {
+  const navigate = useNavigate();
+  const openModal = useModalStore((state) => state.openModal);
+
+  // Handlers
   const handleClientClick = (clientId: number) => {
     navigate(`/clients/${clientId}?mode=receivables`);
   };
@@ -53,48 +288,28 @@ const ClientsReceivablesTable = ({ clients, isLoading, totals, isTotalsLoading }
     window.open(`https://wa.me/${cleanPhone}`, '_blank');
   };
 
-  const handleWhatsAppPaymentReminder = (phone: string, clientName: string, remainingAmount: number) => {
+  const handlePaymentReminder = (phone: string, clientName: string, remainingAmount: number) => {
     const formattedAmount = formatCurrency(remainingAmount);
     sendPaymentReminder(phone, clientName, formattedAmount);
   };
 
-  const formatCurrency = (amount: number) => {
-    // Ensure amount is a valid number
-    const numAmount = Number(amount) || 0;
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'SAR',
-      minimumFractionDigits: 2
-    }).format(numAmount);
+  const handlePayment = (clientId: number) => {
+    // TODO: Create selectInvoiceForPayment modal to use new /invoices API
+    // For now, using existing modal which will need to be updated
+    openModal('selectReceivableForPayment', {
+      clientId,
+      receivables: [] // Will be fetched by the modal
+    });
   };
 
-  if (isLoading) {
-    return (
-      <div className="d-flex justify-content-center align-items-center" style={{ minHeight: '200px' }}>
-        <div className="spinner-border text-primary" role="status">
-          <span className="visually-hidden">Loading...</span>
-        </div>
-      </div>
-    );
-  }
-
-  // Filter out clients with zero outstanding amounts
-  const filteredClients = clients.filter(client => 
-    (Number(client.remaining_amount) || 0) > 0
+  // Filter clients with debt
+  const filteredClients = useMemo(() => 
+    clients.filter(client => (Number(client.remaining_amount) || 0) > 0),
+    [clients]
   );
 
-  if (!clients || clients.length === 0 || filteredClients.length === 0) {
-    return (
-      <div className="text-center  py-5">
-        <p>
-          لا يوجد عملاء لديهم مستحقات
-        </p>
-      </div>
-    );
-  }
-
-  // Use totals from props (from API) instead of calculating from paginated data
-  const displayTotals = totals ? {
+  // Calculate display totals from API or fallback
+  const displayTotals = useMemo(() => totals ? {
     totalAmount: totals.total_amount,
     paidAmount: totals.total_paid,
     remainingAmount: totals.total_unpaid,
@@ -102,132 +317,133 @@ const ClientsReceivablesTable = ({ clients, isLoading, totals, isTotalsLoading }
     totalAmount: 0,
     paidAmount: 0,
     remainingAmount: 0,
-  };
+  }, [totals]);
 
+  // Define columns - order is right-to-left for RTL (first = rightmost)
+  const columns = useMemo((): HuloolGridColumn<ClientReceivablesSummary>[] => [
+    {
+      id: 'client_name',
+      key: 'client_name',
+      title: 'العميل',
+      type: 'custom',
+      component: ClientNameCell as React.ComponentType<CellProps<ClientReceivablesSummary>>,
+      columnData: { onClientClick: handleClientClick },
+      grow: 2,
+    },
+    {
+      id: 'client_phone',
+      key: 'client_phone',
+      title: 'رقم الجوال',
+      type: 'custom',
+      component: PhoneCell as React.ComponentType<CellProps<ClientReceivablesSummary>>,
+      columnData: { onWhatsApp: handleWhatsApp },
+      grow: 1,
+    },
+    {
+      id: 'total_amount',
+      key: 'total_amount',
+      title: 'إجمالي المدين',
+      type: 'custom',
+      component: TotalDebitCell,
+      grow: 1,
+    },
+    {
+      id: 'paid_amount',
+      key: 'paid_amount',
+      title: 'إجمالي الدائن',
+      type: 'custom',
+      component: TotalCreditCell,
+      grow: 1,
+    },
+    {
+      id: 'remaining_amount',
+      key: 'remaining_amount',
+      title: 'إجمالي المستحقات',
+      type: 'custom',
+      component: RemainingCell,
+      grow: 1,
+    },
+    {
+      id: 'actions',
+      key: 'client_id',
+      title: 'الإجراءات',
+      type: 'custom',
+      component: ActionsCell as React.ComponentType<CellProps<ClientReceivablesSummary>>,
+      columnData: { 
+        openModal, 
+        onPaymentReminder: handlePaymentReminder, 
+        onPayment: handlePayment 
+      },
+      width: 200, // Fixed width for actions
+      grow: 0,
+    },
+  ], [handleClientClick, handleWhatsApp, openModal, handlePaymentReminder, handlePayment]);
 
-  // Sort clients by newest first (assuming client_id represents creation order)
-  // const sortedClients = [...filteredClients].sort((a, b) => {
-  //   return b.client_id - a.client_id; // Newest first (higher IDs are newer)
-  // });
+  // Empty state
+  if (!clients || clients.length === 0 || filteredClients.length === 0) {
+    return (
+      <div className="text-center py-5">
+        <p className="text-black">
+          لا يوجد عملاء لديهم مستحقات
+        </p>
+      </div>
+    );
+  }
 
   return (
-    <div className="table-responsive" dir="rtl">
-      {/* Sentinel element for sticky header detection */}
-      <div ref={sentinelRef} ></div>
-      
-      <table className="table table-hover align-middle">
-        <thead className={`table-warning ${isSticky ? 'is-sticky' : ''}`}>
-          <tr className="fw-bold">
-            <th scope="col" className="text-end" style={{ width: '18%', color: '#000', padding: '12px 8px' }}>العميل</th>
-            <th scope="col" className="text-center" style={{ width: '12%', color: '#000', padding: '12px 8px' }}>رقم الجوال</th>
-            <th scope="col" className="text-center" style={{ width: '20%', color: '#000', padding: '12px 8px' }}>إجمالي المدين</th>
-            <th scope="col" className="text-center" style={{ width: '20%', color: '#000', padding: '12px 8px' }}>إجمالي الدائن</th>
-            <th scope="col" className="text-center" style={{ width: '20%', color: '#000', padding: '12px 8px' }}>إجمالي المستحقات</th>
-            <th scope="col" className="text-center" style={{ width: '15%', color: '#000', padding: '12px 8px' }}>الإجراءات</th>
-          </tr>
-        </thead>
-        <tbody>
-          {clients.map((client) => (
-            <tr key={client.client_id}>
-              <td className="text-end" style={{ padding: '12px 8px' }}>
-                <div
-                  className="fw-bold primary cursor-pointer"
-                  onClick={() => handleClientClick(client.client_id)}
-                  style={{ cursor: 'pointer' }}
-                >
-                  {client.client_name}
-                </div>
-              </td>
-              <td className="text-center" style={{ padding: '12px 8px' }}>
-                <div className=" small d-flex align-items-center justify-content-center">
-                  <button
-                    className="btn btn-link btn-sm p-0 text-success ms-1"
-                    onClick={() => handleWhatsApp(client.client_phone)}
-                    title="WhatsApp"
-                    style={{ fontSize: '12px' }}
-                  >
-                    <WhatsAppIcon size={12} />
-                  </button>
-                  <span>{client.client_phone}</span>
-                </div>
-              </td>
-              <td className="text-center fw-bold" style={{ padding: '12px 8px' }}>
-                {formatCurrency(Number(client.total_amount) || 0)}
-              </td>
-              <td className="text-center fw-bold text-success" style={{ padding: '12px 8px' }}>
-                {formatCurrency(Number(client.paid_amount) || 0)}
-              </td>
-              <td className="text-center fw-bold  text-danger" style={{ padding: '12px 8px' }}>
-                {formatCurrency(Math.max(0, Number(client.remaining_amount) || 0))}
-              </td>
-              <td className="text-center" style={{ padding: '12px 8px' }}>
-                <div className="d-flex gap-2 justify-content-center">
-                  <Button
-                    variant="outline-primary"
-                    size="sm"
-                    onClick={() => openModal('clientReceivablesEdit', { clientId: client.client_id })}
-                    title="تعديل المستحقات"
-                  >
-                    <Edit3 size={14} />
-                  </Button>
-                  <Button
-                    variant="outline-success"
-                    size="sm"
-                    onClick={() => handleWhatsAppPaymentReminder(client.client_phone, client.client_name, Number(client.remaining_amount))}
-                    disabled={Number(client.remaining_amount) <= 0}
-                    title="إرسال تذكير دفع عبر واتساب"
-                  >
-                    <WhatsAppIcon size={14} />
-                  </Button>
-                  <Button
-                    variant="primary"
-                    size="sm"
-                    onClick={() => handlePayment(client.client_id)}
-                    disabled={Number(client.remaining_amount) <= 0}
-                  >
-                    <CreditCard size={14} className="me-1" />
-                    سداد
-                  </Button>
-                </div>
-              </td>
-            </tr>
-          ))}
-        </tbody>
-        <tfoot className="table-warning">
-          <tr className="fw-bold">
-            <td className="text-start" style={{ padding: '12px 8px' }}>الإجمالي</td>
-            <td className="text-start" style={{ padding: '12px 8px' }}></td>
-            <td className="text-center" style={{ padding: '12px 8px' }}>
-              {isTotalsLoading ? (
-                <div className="spinner-border spinner-border-sm" role="status">
-                  <span className="visually-hidden">Loading...</span>
-                </div>
-              ) : (
-                formatCurrency(displayTotals.totalAmount)
-              )}
-            </td>
-            <td className="text-center text-success" style={{ padding: '12px 8px' }}>
-              {isTotalsLoading ? (
-                <div className="spinner-border spinner-border-sm" role="status">
-                  <span className="visually-hidden">Loading...</span>
-                </div>
-              ) : (
-                formatCurrency(displayTotals.paidAmount)
-              )}
-            </td>
-            <td className="text-center text-danger" style={{ padding: '12px 8px' }}>
-              {isTotalsLoading ? (
-                <div className="spinner-border spinner-border-sm" role="status">
-                  <span className="visually-hidden">Loading...</span>
-                </div>
-              ) : (
-                formatCurrency(displayTotals.remainingAmount)
-              )}
-            </td>
-            <td style={{ padding: '12px 8px' }}></td>
-          </tr>
-        </tfoot>
-      </table>
+    <div className="clients-receivables-wrapper" dir="rtl">
+      {/* Main Grid */}
+      <HuloolDataGrid
+        data={filteredClients}
+        columns={columns}
+        isLoading={isLoading}
+        emptyMessage="لا يوجد عملاء لديهم مستحقات"
+        showId={false}
+        height="auto"
+        minHeight={400}
+      />
+
+      {/* Summary Totals Row */}
+      <div className="rounded-lg border border-border bg-card shadow-sm mt-2">
+        <div className="p-2">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-2 text-center">
+            <div className="flex justify-between items-center p-2 bg-primary text-white rounded font-bold">
+              <span className="text-sm">الإجمالي</span>
+              <span></span>
+            </div>
+            <div className="flex justify-between items-center p-2 bg-gray-100 rounded">
+              <span className="text-gray-600 text-sm">إجمالي المدين:</span>
+              <span className="font-bold text-black">
+                {isTotalsLoading ? (
+                  <div className="inline-block w-4 h-4 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+                ) : (
+                  formatCurrency(displayTotals.totalAmount)
+                )}
+              </span>
+            </div>
+            <div className="flex justify-between items-center p-2 bg-gray-100 rounded">
+              <span className="text-gray-600 text-sm">إجمالي الدائن:</span>
+              <span className="font-bold text-green-600">
+                {isTotalsLoading ? (
+                  <div className="inline-block w-4 h-4 border-2 border-green-600 border-t-transparent rounded-full animate-spin" />
+                ) : (
+                  formatCurrency(displayTotals.paidAmount)
+                )}
+              </span>
+            </div>
+            <div className="flex justify-between items-center p-2 bg-red-100 rounded">
+              <span className="text-gray-600 text-sm">إجمالي المستحقات:</span>
+              <span className="font-bold text-red-600">
+                {isTotalsLoading ? (
+                  <div className="inline-block w-4 h-4 border-2 border-red-600 border-t-transparent rounded-full animate-spin" />
+                ) : (
+                  formatCurrency(displayTotals.remainingAmount)
+                )}
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
   );
 };

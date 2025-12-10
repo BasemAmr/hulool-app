@@ -43,14 +43,16 @@ const RecordCreditModal = () => {
 
   return (
     <BaseModal isOpen={true} onClose={closeModal} title="إضافة دفعة للرصيد">
-      <form onSubmit={handleSubmit(onSubmit)}>
+      <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
         {!selectedClient ? (
           <ClientSearchCompact onSelect={handleClientSelect} />
         ) : (
-          <div>
-            <div className="alert alert-info">
-              العميل: <strong>{selectedClient.name}</strong>
-              <Button variant="secondary" size="sm" className="float-end" onClick={() => setSelectedClient(null)}>تغيير</Button>
+          <div className="space-y-4">
+            <div className="rounded-lg border border-blue-600 bg-blue-50 p-3 flex items-center justify-between">
+              <p className="text-blue-800 text-sm">
+                العميل: <strong>{selectedClient.name}</strong>
+              </p>
+              <Button variant="secondary" size="sm" onClick={() => setSelectedClient(null)}>تغيير</Button>
             </div>
             <Input
               label="المبلغ"
@@ -71,18 +73,24 @@ const RecordCreditModal = () => {
               {...register('received_at', { required: true })}
               error={errors.received_at && "التاريخ مطلوب"}
             />
-             <div className="mb-3">
-              <label className="form-label">طريقة الدفع</label>
-              <select {...register('payment_method_id')} className="form-select">
+             <div className="space-y-2">
+              <label className="font-medium text-sm text-black block">طريقة الدفع</label>
+              <select 
+                {...register('payment_method_id', { 
+                  setValueAs: (v) => v === '' ? undefined : Number(v) 
+                })} 
+                className="w-full px-3 py-2 border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-primary text-black"
+              >
+                <option value="">اختر طريقة الدفع</option>
                 {paymentMethods?.map(method => <option key={method.id} value={method.id}>{method.name}</option>)}
               </select>
             </div>
           </div>
         )}
-        <footer className="modal-footer">
+        <div className="flex justify-end gap-2 pt-4 border-t border-border">
           <Button type="button" variant="secondary" onClick={closeModal} disabled={recordCreditMutation.isPending}>إلغاء</Button>
           <Button type="submit" isLoading={recordCreditMutation.isPending} disabled={!selectedClient}>حفظ الدفعة</Button>
-        </footer>
+        </div>
       </form>
     </BaseModal>
   );

@@ -73,8 +73,8 @@ const AllClientsPage = () => {
     openModal('clientForm', { clientToEdit: client });
   };
 
-  const handleAddReceivable = (client: Client) => {
-    openModal('manualReceivable', { client });
+  const handleAddInvoice = (client: Client) => {
+    openModal('invoiceForm', { client_id: client.id, client });
   };
 
   // ADD THIS HANDLER
@@ -116,42 +116,32 @@ const AllClientsPage = () => {
   return (
     <div>
       {/* Compact header with add button next to title */}
-      <div className="d-flex justify-content-between align-items-center mb-1 py-1">
+      <div className="flex justify-between items-center mb-3 py-2">
         {/* Title and Add Button */}
-        <div className="d-flex align-items-center gap-2">
-          <h5 className="mb-0" style={{ 
-            background: 'linear-gradient(135deg, #d4af37 0%, #b8941f 100%)',
-            WebkitBackgroundClip: 'text',
-            WebkitTextFillColor: 'transparent',
-            backgroundClip: 'text',
-            fontWeight: 'bold',
-            minWidth: 'fit-content',
-            fontSize: '1.1rem'
-          }}>{t('clients.title')}</h5>
+        <div className="flex items-center gap-3">
+          <h5 className="mb-0 text-primary font-bold text-xl">{t('clients.title')}</h5>
           
-          <Button onClick={handleAddClient} size="sm">
-            <PlusCircle size={14} className="me-1" />
+          <Button onClick={handleAddClient} size="sm" className="hover:scale-105 transition-transform">
+            <PlusCircle size={16} className="me-1" />
             {t('clients.addNew')}
           </Button>
         </div>
         
         {/* Search and Export */}
-        <div className="d-flex align-items-center gap-2">
+        <div className="flex items-center gap-2">
           {/* Compact Search */}
-          <div className="position-relative" style={{ minWidth: '200px' }}>
+          <div className="relative min-w-[200px]">
             <input
               type="text"
-              className="form-control form-control-sm"
+              className="w-full px-3 py-1.5 text-sm border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary"
               placeholder="البحث بالاسم أو رقم الهاتف..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              style={{ fontSize: '0.875rem' }}
             />
             {search && (
               <button
                 type="button"
-                className="btn btn-link position-absolute text-muted p-0"
-                style={{ right: '8px', top: '50%', transform: 'translateY(-50%)' }}
+                className="absolute left-2 top-1/2 -translate-y-1/2 text-black hover:text-foreground transition-colors p-0 bg-transparent border-0 cursor-pointer"
                 onClick={() => setSearch('')}
                 title="مسح البحث"
               >
@@ -161,26 +151,27 @@ const AllClientsPage = () => {
           </div>
 
           {/* Region Filter */}
-          <div style={{ minWidth: '150px' }}>
+          <div className="min-w-[150px]">
             <RegionSelect
               value={regionFilter}
               onChange={setRegionFilter}
               placeholder="كل المناطق"
               allowCreate={false}
-              className="mb-0 form-control-sm"
+              className="mb-0"
             />
           </div>
           
           {/* Export Action Buttons */}
-          <div className="d-flex gap-1">
+          <div className="flex gap-2">
             <Button 
               variant="outline-primary" 
               size="sm"
               onClick={handleExportToExcel}
               isLoading={exportMutation.isPending}
               title="تصدير إلى Excel"
+              className="hover:bg-primary/10 hover:text-primary transition-all"
             >
-              <FileSpreadsheet size={14} className="me-1" />
+              <FileSpreadsheet size={16} className="me-1" />
               Excel
             </Button>
             <Button 
@@ -188,26 +179,27 @@ const AllClientsPage = () => {
               size="sm"
               onClick={handlePrint}
               title="طباعة"
+              className="hover:bg-primary/10 hover:text-primary transition-all"
             >
-              <Printer size={14} className="me-1" />
+              <Printer size={16} className="me-1" />
               طباعة
             </Button>
           </div>
         </div>
       </div>
 
-      <div className="card">
-        <div className="card-body p-0">
+      <div className="rounded-lg border border-border bg-card shadow-sm">
+        <div className="p-0">
           <ClientsTable
             clients={allClients}
             isLoading={isLoading && !data}
             onEdit={handleEditClient}
             onAddTask={handleAddTaskToClient}
-            onAddReceivable={handleAddReceivable}
+            onAddInvoice={handleAddInvoice}
           />
           
           {/* --- NEW: Load More Button & Intersection Observer --- */}
-          <div ref={ref} className="text-center p-4">
+          <div ref={ref} className="text-center p-4 border-t border-border">
             {hasNextPage && (
               <Button
                 onClick={() => fetchNextPage()}
@@ -218,7 +210,7 @@ const AllClientsPage = () => {
               </Button>
             )}
             {!hasNextPage && !isLoading && allClients.length > 0 && (
-              <p className="text-muted mb-0">وصلت إلى نهاية القائمة</p>
+              <p className="text-black mb-0 text-sm">وصلت إلى نهاية القائمة</p>
             )}
           </div>
         </div>

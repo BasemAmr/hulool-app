@@ -13,31 +13,27 @@ const ClientHistoryIcons = ({ onViewTaskHistory, onViewPaymentHistory, disabled 
   if (disabled) return null;
 
   return (
-    <div className="d-flex gap-2 align-items-center">
+    <div className="flex gap-2 items-center">
       <button
         type="button"
-        className="btn btn-outline-warning btn-sm rounded-circle p-2"
+        className="border border-yellow-600 text-yellow-600 hover:bg-yellow-50 rounded-full p-2 transition-colors"
         onClick={onViewTaskHistory}
         title={t('tasks.taskHistory')}
         style={{ 
           width: '36px', 
-          height: '36px',
-          borderColor: 'var(--bs-warning)',
-          color: 'var(--bs-warning)'
+          height: '36px'
         }}
       >
         <History size={16} />
       </button>
       <button
         type="button"
-        className="btn btn-outline-warning btn-sm rounded-circle p-2"
+        className="border border-yellow-600 text-yellow-600 hover:bg-yellow-50 rounded-full p-2 transition-colors"
         onClick={onViewPaymentHistory}
         title={t('tasks.paymentHistory')}
         style={{ 
           width: '36px', 
-          height: '36px',
-          borderColor: 'var(--bs-warning)',
-          color: 'var(--bs-warning)'
+          height: '36px'
         }}
       >
         <CreditCard size={16} />

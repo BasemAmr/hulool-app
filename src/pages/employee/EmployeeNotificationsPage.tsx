@@ -45,17 +45,15 @@ const EmployeeNotificationsPage = () => {
 
   if (isError) {
     return (
-      <div className="container-fluid p-4">
-        <div className="row">
-          <div className="col-12">
-            <div className="alert alert-danger text-center">
-              <h5>خطأ في تحميل الإشعارات</h5>
-              <p className="mb-3">{error?.message || 'حدث خطأ غير متوقع'}</p>
-              <button className="btn btn-outline-danger" onClick={() => refetch()}>
-                <RefreshCw size={16} className="me-2" />
-                إعادة المحاولة
-              </button>
-            </div>
+      <div className="w-full p-4">
+        <div className="w-full">
+          <div className="rounded-lg border border-destructive bg-destructive/10 p-4 text-center">
+            <h5>خطأ في تحميل الإشعارات</h5>
+            <p className="mb-3">{error?.message || 'حدث خطأ غير متوقع'}</p>
+            <button className="px-4 py-2 border border-destructive text-destructive rounded hover:bg-destructive hover:text-white transition-colors" onClick={() => refetch()}>
+              <RefreshCw size={16} className="me-2" />
+              إعادة المحاولة
+            </button>
           </div>
         </div>
       </div>
@@ -63,7 +61,7 @@ const EmployeeNotificationsPage = () => {
   }
 
   return (
-    <div className="container-fluid p-4" dir="rtl">
+    <div className="w-full p-4" dir="rtl">
       {/* Header */}
       <EmployeeNotificationsHeader 
         notifications={allNotifications}
@@ -75,41 +73,39 @@ const EmployeeNotificationsPage = () => {
       <EmployeeNotificationsStats notifications={allNotifications} />
 
       {/* Notifications Table */}
-      <div className="row">
-        <div className="col-12">
-          <div className="card border-0 shadow-sm">
-            <div className="card-body p-0">
-              <EmployeeNotificationsTable 
-                notifications={allNotifications}
-                isLoading={isLoading}
-              />
-              
-              {/* Load More / Loading Indicator */}
-              {isFetchingNextPage && (
-                <div className="text-center p-4">
-                  <div className="spinner-border text-primary" role="status">
-                    <span className="visually-hidden">جاري تحميل المزيد...</span>
-                  </div>
+      <div className="w-full">
+        <div className="rounded-lg border-0 bg-card shadow-sm">
+          <div className="p-0">
+            <EmployeeNotificationsTable 
+              notifications={allNotifications}
+              isLoading={isLoading}
+            />
+            
+            {/* Load More / Loading Indicator */}
+            {isFetchingNextPage && (
+              <div className="text-center p-4">
+                <div className="spinner-border text-primary" role="status">
+                  <span className="visually-hidden">جاري تحميل المزيد...</span>
                 </div>
-              )}
-              
-              {hasNextPage && !isFetchingNextPage && (
-                <div className="text-center p-4">
-                  <button 
-                    className="btn btn-outline-primary"
-                    onClick={() => fetchNextPage()}
-                  >
-                    تحميل المزيد من الإشعارات
-                  </button>
-                </div>
-              )}
-              
-              {!hasNextPage && allNotifications.length > 0 && (
-                <div className="text-center p-4 text-muted">
-                  <small>تم عرض جميع الإشعارات</small>
-                </div>
-              )}
-            </div>
+              </div>
+            )}
+            
+            {hasNextPage && !isFetchingNextPage && (
+              <div className="text-center p-4">
+                <button 
+                  className="px-4 py-2 border border-primary text-primary rounded hover:bg-primary hover:text-white transition-colors"
+                  onClick={() => fetchNextPage()}
+                >
+                  تحميل المزيد من الإشعارات
+                </button>
+              </div>
+            )}
+            
+            {!hasNextPage && allNotifications.length > 0 && (
+              <div className="text-center p-4 text-black">
+                <small>تم عرض جميع الإشعارات</small>
+              </div>
+            )}
           </div>
         </div>
       </div>

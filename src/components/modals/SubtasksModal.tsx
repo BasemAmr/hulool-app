@@ -150,97 +150,92 @@ const SubtasksModal = (directProps?: SubtasksModalProps) => {
       title="إدارة المهام الفرعية"
       className="subtasks-modal"
     >
-      <div className="modal-content-wrapper">
+      <div className="modal-content-wrapper space-y-4">
         {/* Instructions */}
-        <div className="alert alert-info mb-4">
-          <div className="d-flex align-items-start">
-            <Layers size={18} className="me-2 mt-1" style={{ color: '#0ea5e9' }} />
-            <div>
-              <div className="fw-bold mb-1">إدارة المهام الفرعية</div>
-              <small className="text-muted">
-                يمكنك تقسيم المهمة إلى مهام فرعية منفصلة. سيتم حساب المبلغ الإجمالي تلقائياً من مجموع المهام الفرعية.
-              </small>
-            </div>
+        <div className="rounded-lg border border-blue-600 bg-blue-50 p-4 flex gap-3">
+          <Layers size={18} className="text-blue-600 flex-shrink-0 mt-0.5" />
+          <div>
+            <div className="font-semibold text-black mb-1">إدارة المهام الفرعية</div>
+            <small className="text-muted-foreground text-sm">
+              يمكنك تقسيم المهمة إلى مهام فرعية منفصلة. سيتم حساب المبلغ الإجمالي تلقائياً من مجموع المهام الفرعية.
+            </small>
           </div>
         </div>
 
         {/* Subtasks List */}
-        <div className="subtasks-list mb-4">
+        <div className="subtasks-list space-y-3 max-h-96 overflow-y-auto">
           {localSubtasks.map((subtask, index) => (
             <div 
               key={index} 
-              className="subtask-item card mb-3"
-              style={{ border: '1px solid #e9ecef' }}
+              className="subtask-item rounded-lg border border-border bg-card p-4 transition-shadow hover:shadow-md"
             >
-              <div className="card-body">
-                <div className="row align-items-center">
-                  {/* Description */}
-                  <div className="col-md-5">
-                    <label className="form-label small text-muted">وصف المهمة الفرعية</label>
-                    <Input
-                      value={subtask.description}
-                      onChange={(e) => handleSubtaskChange(index, 'description', e.target.value)}
-                      placeholder="مثال: تصميم الواجهة"
-                      className={errors[index]?.description ? 'is-invalid' : ''}
+              <div className="grid grid-cols-5 gap-4 items-start">
+                {/* Description */}
+                <div className="col-span-2">
+                  <label className="font-medium text-black text-sm block mb-2">وصف المهمة الفرعية</label>
+                  <Input
+                    value={subtask.description}
+                    onChange={(e) => handleSubtaskChange(index, 'description', e.target.value)}
+                    placeholder="مثال: تصميم الواجهة"
+                    className={errors[index]?.description ? 'border-destructive bg-destructive/5' : ''}
+                  />
+                  {errors[index]?.description && (
+                    <div className="text-destructive text-xs mt-1">{errors[index].description}</div>
+                  )}
+                </div>
+                
+                {/* Amount */}
+                <div className="col-span-1">
+                  <label className="font-medium text-black text-sm block mb-2">المبلغ (ريال)</label>
+                  <Input
+                    type="number"
+                    value={subtask.amount}
+                    onChange={(e) => handleSubtaskChange(index, 'amount', Number(e.target.value))}
+                    placeholder="0"
+                    min="0"
+                    step="0.01"
+                    className={errors[index]?.amount ? 'border-destructive bg-destructive/5' : ''}
+                  />
+                  {errors[index]?.amount && (
+                    <div className="text-destructive text-xs mt-1">{errors[index].amount}</div>
+                  )}
+                </div>
+                
+                {/* Completion Status */}
+                <div className="col-span-1">
+                  <label className="font-medium text-black text-sm block mb-2">مكتملة</label>
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="checkbox"
+                      className="rounded cursor-pointer"
+                      id={`completed-${index}`}
+                      checked={subtask.is_completed}
+                      onChange={(e) => handleSubtaskChange(index, 'is_completed', e.target.checked)}
                     />
-                    {errors[index]?.description && (
-                      <div className="invalid-feedback">{errors[index].description}</div>
-                    )}
+                    <label className="cursor-pointer text-sm" htmlFor={`completed-${index}`}>
+                      {subtask.is_completed ? (
+                        <span className="text-green-600 flex items-center gap-1">
+                          <Check size={14} />
+                          مكتملة
+                        </span>
+                      ) : (
+                        <span className="text-muted-foreground">غير مكتملة</span>
+                      )}
+                    </label>
                   </div>
-                  
-                  {/* Amount */}
-                  <div className="col-md-3">
-                    <label className="form-label small text-muted">المبلغ (ريال)</label>
-                    <Input
-                      type="number"
-                      value={subtask.amount}
-                      onChange={(e) => handleSubtaskChange(index, 'amount', Number(e.target.value))}
-                      placeholder="0"
-                      min="0"
-                      step="0.01"
-                      className={errors[index]?.amount ? 'is-invalid' : ''}
-                    />
-                    {errors[index]?.amount && (
-                      <div className="invalid-feedback">{errors[index].amount}</div>
-                    )}
-                  </div>
-                  
-                  {/* Completion Status */}
-                  <div className="col-md-2">
-                    <label className="form-label small text-muted">مكتملة</label>
-                    <div className="form-check">
-                      <input
-                        type="checkbox"
-                        className="form-check-input"
-                        id={`completed-${index}`}
-                        checked={subtask.is_completed}
-                        onChange={(e) => handleSubtaskChange(index, 'is_completed', e.target.checked)}
-                      />
-                      <label className="form-check-label" htmlFor={`completed-${index}`}>
-                        {subtask.is_completed ? (
-                          <span className="text-success d-flex align-items-center">
-                            <Check size={14} className="me-1" />
-                            مكتملة
-                          </span>
-                        ) : (
-                          <span className="text-muted">غير مكتملة</span>
-                        )}
-                      </label>
-                    </div>
-                  </div>
-                  
-                  {/* Actions */}
-                  <div className="col-md-2 text-end">
-                    <Button
-                      variant="outline-danger"
-                      size="sm"
-                      onClick={() => removeSubtask(index)}
-                      disabled={localSubtasks.length === 1}
-                      title="حذف المهمة الفرعية"
-                    >
-                      <Trash2 size={16} />
-                    </Button>
-                  </div>
+                </div>
+                
+                {/* Actions */}
+                <div className="col-span-1 flex justify-end pt-8">
+                  <Button
+                    variant="outline-danger"
+                    size="sm"
+                    onClick={() => removeSubtask(index)}
+                    disabled={localSubtasks.length === 1}
+                    title="حذف المهمة الفرعية"
+                  >
+                    <Trash2 size={16} />
+                  </Button>
                 </div>
               </div>
             </div>
@@ -248,12 +243,11 @@ const SubtasksModal = (directProps?: SubtasksModalProps) => {
         </div>
 
         {/* Add Subtask Button */}
-        <div className="text-center mb-4">
+        <div className="flex justify-center">
           <Button
             variant="outline-primary"
             onClick={addSubtask}
-            className="d-flex align-items-center gap-2 mx-auto"
-            style={{ borderColor: '#d4af37', color: '#d4af37' }}
+            className="flex items-center gap-2"
           >
             <Plus size={18} />
             إضافة مهمة فرعية جديدة
@@ -263,20 +257,16 @@ const SubtasksModal = (directProps?: SubtasksModalProps) => {
         {/* Total Summary */}
         {hasValidSubtasks && (
           <div 
-            className="p-3 rounded mb-4"
-            style={{ 
-              background: 'linear-gradient(135deg, #d4af37 0%, #b8941f 100%)',
-              color: 'white'
-            }}
+            className="p-4 rounded-lg text-white bg-gradient-to-r from-yellow-500 to-yellow-700"
           >
-            <div className="d-flex justify-content-between align-items-center">
+            <div className="flex justify-between items-center">
               <div>
-                <div className="fw-bold">المجموع الإجمالي</div>
-                <small className="opacity-75">مجموع جميع المهام الفرعية</small>
+                <div className="font-semibold">المجموع الإجمالي</div>
+                <small className="opacity-75 text-xs">مجموع جميع المهام الفرعية</small>
               </div>
-              <div className="text-end">
-                <div className="fw-bold fs-5 d-flex align-items-center">
-                  <DollarSign size={20} className="me-1" />
+              <div className="text-right">
+                <div className="font-semibold text-lg flex items-center gap-1">
+                  <DollarSign size={20} />
                   {calculateTotal().toLocaleString()} ريال
                 </div>
               </div>
@@ -285,17 +275,16 @@ const SubtasksModal = (directProps?: SubtasksModalProps) => {
         )}
 
         {/* Footer Actions */}
-        <div className="d-flex justify-content-end gap-2 pt-3" style={{ borderTop: '1px solid #e9ecef' }}>
+        <div className="flex justify-end gap-2 pt-4 border-t border-border">
           <Button variant="secondary" onClick={onClose || closeModal}>
-            <X size={16} className="me-1" />
+            <X size={16} className="mr-1" />
             إلغاء
           </Button>
           <Button 
             variant="primary" 
             onClick={handleSave}
-            style={{ backgroundColor: '#d4af37', borderColor: '#d4af37' }}
           >
-            <Save size={16} className="me-1" />
+            <Save size={16} className="mr-1" />
             حفظ التغييرات
           </Button>
         </div>
@@ -311,18 +300,8 @@ const SubtasksModal = (directProps?: SubtasksModalProps) => {
           transition: all 0.2s ease;
         }
         
-        .subtask-item:hover {
-          box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-        }
-        
         .modal-content-wrapper {
           max-height: 80vh;
-          overflow-y: auto;
-        }
-        
-        .form-check-input:checked {
-          background-color: #d4af37;
-          border-color: #d4af37;
         }
       `}</style>
     </BaseModal>

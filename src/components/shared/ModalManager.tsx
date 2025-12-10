@@ -28,7 +28,6 @@ import AllocationDeleteModal from '../modals/AllocationDeleteModal';
 import UrgentAlertModal from '../modals/UrgentAlertModal';
 import EmployeePayoutModal from '../modals/EmployeePayoutModal';
 import EmployeeBorrowModal from '../modals/EmployeeBorrowModal';
-import EmployeeManualCreditModal from '../modals/EmployeeManualCreditModal';
 import EditEmployeePayoutModal from '../modals/EditEmployeePayoutModal';
 import EditTaskExpenseModal from '../modals/EditTaskExpenseModal';
 
@@ -50,6 +49,13 @@ import ConcurrentModificationModal from '../modals/ConcurrentModificationModal';
 import AssignTaskModal from '../modals/AssignTaskModal';
 import ApprovalModal from '../modals/ApprovalModal';
 import SubmitForReviewModal from '../modals/SubmitForReviewModal';
+
+// NEW INVOICE/LEDGER MODALS
+import { InvoiceFormModal, RecordPaymentModal, InvoiceDetailsModal } from '../invoices';
+
+// FINANCIAL CENTER MODALS
+import ManualTransactionModal from '../admin/ManualTransactionModal';
+import JournalEntryDetailsModal from '../modals/JournalEntryDetailsModal';
 
 // Separate component for client receivables to avoid re-renders
 const ClientReceivablesFetcher = ({ client }: { client?: any }) => {
@@ -235,27 +241,6 @@ const ModalManager = () => {
           />
         );
 
-      case 'paymentForm':
-        return <ReceivablePaymentModal key="paymentForm" />;
-
-      case 'paymentHistory':
-        return <PaymentHistoryModal key="paymentHistory" />;
-
-      case 'paymentEdit':
-        return <PaymentEditModal key="paymentEdit" />;
-
-      case 'paymentDelete':
-        return <PaymentDeleteModal key="paymentDelete" />;
-
-      case 'clientSearch':
-        return <ClientSearchModal key="clientSearch" />;
-
-      case 'tagForm':
-        return <TagFormModal key="tagForm" />;
-
-      case 'tagManagement':
-        return <TagManagementModal key="tagManagement" />;
-
       case 'confirmDelete':
         return (
           <BaseModal
@@ -265,12 +250,12 @@ const ModalManager = () => {
             title={props.title}
           >
             <p>{props.message}</p>
-            <footer className="modal-footer">
+            <div className="flex justify-end gap-2 mt-6">
                <Button variant="secondary" onClick={closeModal}>{t('common.cancel')}</Button>
                <Button variant="danger" onClick={() => { props.onConfirm(); closeModal(); }}>
                  {t('common.confirm')}
                </Button>
-            </footer>
+            </div>
           </BaseModal>
         );
 
@@ -280,9 +265,6 @@ const ModalManager = () => {
       case 'employeeBorrow':
         return <EmployeeBorrowModal key="employeeBorrow" />;
 
-      case 'employeeManualCredit':
-        return <EmployeeManualCreditModal key="employeeManualCredit" />;
-
       case 'editEmployeePayout':
         return <EditEmployeePayoutModal key="editEmployeePayout" />;
 
@@ -291,6 +273,35 @@ const ModalManager = () => {
 
       case 'submitForReview':
         return <SubmitForReviewModal key="submitForReview" />;
+
+      // NEW INVOICE/LEDGER MODALS
+      case 'invoiceForm':
+        return <InvoiceFormModal key="invoiceForm" />;
+
+      case 'recordPayment':
+        return <RecordPaymentModal key="recordPayment" />;
+
+      case 'invoiceDetails':
+        return <InvoiceDetailsModal key="invoiceDetails" />;
+
+      // FINANCIAL CENTER MODALS
+      case 'manualTransaction':
+        return (
+          <ManualTransactionModal
+            key="manualTransaction"
+            isOpen={isOpen}
+            onClose={closeModal}
+            preselectedAccount={props.preselectedAccount}
+            preselectedToAccount={props.preselectedToAccount}
+            direction={props.direction}
+          />
+        );
+
+      case 'createInvoice':
+        return <InvoiceFormModal key="createInvoice" />;
+
+      case 'journalEntryDetails':
+        return <JournalEntryDetailsModal key="journalEntryDetails" />;
 
       default:
         return null;

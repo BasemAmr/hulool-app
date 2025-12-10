@@ -3,6 +3,7 @@ import { useParams } from 'react-router-dom';
 import { useGetEmployee } from '../queries/employeeQueries';
 import AdminEmployeeClientColumn from './AdminEmployeeClientColumn';
 import AdminEmployeeTasksTable from './AdminEmployeeTasksTable';
+import { Card, CardHeader, CardContent } from '../components/ui/card';
 
 const EmployeeManagementPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -11,42 +12,47 @@ const EmployeeManagementPage: React.FC = () => {
   const { data: employee, isLoading, error: employeeError } = useGetEmployee(employeeId);
 
   if (isLoading) {
-    return <div className="p-4 text-center">Loading employee...</div>;
+    return (
+      <div className="p-4 text-center">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
+        <p className="mt-2 text-muted-foreground">جاري تحميل الموظف...</p>
+      </div>
+    );
   }
 
   if (employeeError || !employee) {
     return (
-      <div className="alert alert-danger text-center">
-        <h4>Employee Not Found</h4>
-        <p>The requested employee could not be found.</p>
+      <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded text-center">
+        <h4 className="font-bold">الموظف غير موجود</h4>
+        <p>لم يتم العثور على الموظف المطلوب.</p>
       </div>
     );
   }
 
   return (
-    <div className="row g-3">
+    <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
       {/* Left column: Client cards */}
-      <div className="col-lg-4">
-        <div className="card shadow-sm">
-          <div className="card-header bg-primary text-white">
-            <h6 className="mb-0">Clients with Active Tasks</h6>
-          </div>
-          <div className="card-body p-0" style={{ maxHeight: 'calc(100vh - 200px)', overflowY: 'auto' }}>
+      <div className="lg:col-span-4">
+        <Card className="shadow-sm">
+          <CardHeader className="bg-primary text-white rounded-t-lg py-3">
+            <h6 className="mb-0 font-medium">العملاء ذوي المهام النشطة</h6>
+          </CardHeader>
+          <CardContent className="p-0 max-h-[calc(100vh-200px)] overflow-y-auto">
             <AdminEmployeeClientColumn employeeId={employeeId} />
-          </div>
-        </div>
+          </CardContent>
+        </Card>
       </div>
 
       {/* Right column: Tasks table with filters */}
-      <div className="col-lg-8">
-        <div className="card shadow-sm">
-          <div className="card-header bg-primary text-white">
-            <h6 className="mb-0">All Employee Tasks</h6>
-          </div>
-          <div className="card-body p-0">
+      <div className="lg:col-span-8">
+        <Card className="shadow-sm">
+          <CardHeader className="bg-primary text-white rounded-t-lg py-3">
+            <h6 className="mb-0 font-medium">جميع مهام الموظف</h6>
+          </CardHeader>
+          <CardContent className="p-0">
             <AdminEmployeeTasksTable employeeId={employeeId} />
-          </div>
-        </div>
+          </CardContent>
+        </Card>
       </div>
     </div>
   );

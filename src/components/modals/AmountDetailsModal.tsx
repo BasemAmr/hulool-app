@@ -81,39 +81,39 @@ const AmountDetailsModal = () => {
 
   return (
     <BaseModal isOpen={true} onClose={closeModal} title="تفاصيل المبلغ" className="amount-details-modal">
-      <div className="modal-content-wrapper">
+      <div className="max-h-screen overflow-y-auto space-y-4">
         {/* Header Info */}
-        <div className="bg-light rounded p-3 mb-4" style={{ border: '1px solid #e9ecef' }}>
-          <div className="row">
-            <div className="col-md-6">
-              <small className="text-muted">العميل</small>
-              <div className="fw-bold">{task.client.name}</div>
+        <div className="bg-gray-100 rounded-lg p-4 border border-gray-300 space-y-3">
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <small className="text-muted-foreground text-xs block">العميل</small>
+              <div className="font-semibold">{task.client.name}</div>
             </div>
-            <div className="col-md-6">
-              <small className="text-muted">نوع المهمة</small>
-              <div className="fw-bold">{t(`type.${task.type}`)}</div>
+            <div>
+              <small className="text-muted-foreground text-xs block">نوع المهمة</small>
+              <div className="font-semibold">{t(`type.${task.type}`)}</div>
             </div>
           </div>
           {task.task_name && (
-            <div className="mt-2">
-              <small className="text-muted">اسم المهمة</small>
-              <div className="fw-bold">{task.task_name}</div>
+            <div>
+              <small className="text-muted-foreground text-xs block">اسم المهمة</small>
+              <div className="font-semibold">{task.task_name}</div>
             </div>
           )}
         </div>
 
         {/* Amount Details List */}
-        <div className="amount-details-list">
-          <div className="d-flex justify-content-between align-items-center mb-3">
-            <h6 className="mb-0 d-flex align-items-center">
-              <Layers size={18} className="me-2" style={{ color: '#d4af37' }} />
+        <div className="space-y-3">
+          <div className="flex justify-between items-center">
+            <h6 className="font-semibold text-black flex items-center gap-2 m-0">
+              <Layers size={18} className="text-yellow-600" />
               بنود المبلغ
             </h6>
             <Button
               variant="outline-primary"
               size="sm"
               onClick={handleCopyAll}
-              className="d-flex align-items-center gap-1"
+              className="flex items-center gap-1"
               style={{ 
                 borderColor: '#d4af37', 
                 color: copiedAll ? '#28a745' : '#d4af37'
@@ -124,22 +124,16 @@ const AmountDetailsModal = () => {
             </Button>
           </div>
 
-          <div className="list-group list-group-flush">
+          <div className="space-y-2 max-h-64 overflow-y-auto">
             {amountDetailsArr.map((detail, index) => (
               <div 
                 key={index} 
-                className="list-group-item d-flex justify-content-between align-items-center py-3"
-                style={{ 
-                  border: '1px solid #e9ecef', 
-                  borderRadius: '8px',
-                  marginBottom: '8px',
-                  background: '#fafafa'
-                }}
+                className="flex justify-between items-start p-3 rounded-lg border border-gray-200 bg-gray-50 transition-all duration-200 hover:shadow-md hover:-translate-y-0.5"
               >
-                <div className="flex-grow-1">
-                  <div className="fw-medium mb-1">{detail.description}</div>
-                  <div className="text-muted small d-flex align-items-center">
-                    <DollarSign size={14} className="me-1" />
+                <div className="flex-1">
+                  <div className="font-medium text-black mb-1">{detail.description}</div>
+                  <div className="text-muted-foreground text-sm flex items-center gap-1">
+                    <DollarSign size={14} />
                     {detail.amount.toLocaleString()} ريال
                   </div>
                 </div>
@@ -147,7 +141,7 @@ const AmountDetailsModal = () => {
                   variant="outline-primary"
                   size="sm"
                   onClick={() => handleCopyItem(index, `${detail.description}: ${detail.amount} ريال`)}
-                  className="ms-2"
+                  className="ml-2 flex items-center gap-1"
                   style={{ 
                     borderColor: copiedItems.has(index) ? '#28a745' : '#6c757d',
                     color: copiedItems.has(index) ? '#28a745' : '#6c757d',
@@ -156,12 +150,12 @@ const AmountDetailsModal = () => {
                 >
                   {copiedItems.has(index) ? (
                     <>
-                      <Check size={14} className="me-1" />
+                      <Check size={14} />
                       تم النسخ
                     </>
                   ) : (
                     <>
-                      <Copy size={14} className="me-1" />
+                      <Copy size={14} />
                       نسخ
                     </>
                   )}
@@ -172,19 +166,18 @@ const AmountDetailsModal = () => {
 
           {/* Total */}
           <div 
-            className="mt-4 p-3 rounded"
+            className="p-4 rounded-lg text-white"
             style={{ 
-              background: 'linear-gradient(135deg, #d4af37 0%, #b8941f 100%)',
-              color: 'white'
+              background: 'linear-gradient(135deg, #d4af37 0%, #b8941f 100%)'
             }}
           >
-            <div className="d-flex justify-content-between align-items-center">
+            <div className="flex justify-between items-start">
               <div>
-                <div className="fw-bold fs-5">المجموع الإجمالي</div>
+                <div className="font-bold text-lg">المجموع الإجمالي</div>
                 <small className="opacity-75">إجمالي جميع البنود</small>
               </div>
-              <div className="text-end">
-                <div className="fw-bold fs-4">{total.toLocaleString()} ريال</div>
+              <div className="text-right">
+                <div className="font-bold text-2xl">{total.toLocaleString()} ريال</div>
                 {total !== task.amount && (
                   <small className="opacity-75">
                     (المبلغ في المهمة: {task.amount.toLocaleString()} ريال)
@@ -196,7 +189,7 @@ const AmountDetailsModal = () => {
         </div>
 
         {/* Footer Actions */}
-        <div className="d-flex justify-content-end gap-2 mt-4 pt-3" style={{ borderTop: '1px solid #e9ecef' }}>
+        <div className="flex justify-end gap-2 pt-4 border-t border-gray-300">
           <Button variant="secondary" onClick={closeModal}>
             إغلاق
           </Button>
@@ -207,20 +200,6 @@ const AmountDetailsModal = () => {
       <style>{`
         .amount-details-modal .modal-dialog {
           max-width: 750px;
-        }
-        
-        .amount-details-list .list-group-item {
-          transition: all 0.2s ease;
-        }
-        
-        .amount-details-list .list-group-item:hover {
-          transform: translateY(-2px);
-          box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-        }
-        
-        .modal-content-wrapper {
-          max-height: 70vh;
-          overflow-y: auto;
         }
       `}</style>
     </BaseModal>

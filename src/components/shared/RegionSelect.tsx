@@ -164,13 +164,13 @@ const RegionSelect: React.FC<RegionSelectProps> = ({
     const activeSelectedRegion = regions.find(region => Number(region.id) === activeValue);
     
     return (
-      <div className="dropdown-menu show w-100 shadow-lg border-0" style={{ maxHeight: '300px', overflowY: 'auto' }}>
+      <div className="absolute top-full right-0 left-0 mt-1 bg-popover border border-border rounded-md shadow-lg z-50 animate-in fade-in duration-200" style={{ maxHeight: '300px', overflowY: 'auto' }}>
       {/* Search Input */}
-      <div className="p-3 border-bottom">
+      <div className="p-3 border-b border-border">
         <input
           ref={searchInputRef}
           type="text"
-          className="form-control form-control-sm"
+          className="base-input text-sm"
           placeholder="البحث عن منطقة..."
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
@@ -182,18 +182,18 @@ const RegionSelect: React.FC<RegionSelectProps> = ({
       {!required && (
         <button
           type="button"
-          className="dropdown-item text-muted"
+          className="w-full px-3 py-2 text-right text-black hover:bg-accent transition-colors duration-150 flex items-center gap-2"
           onClick={() => handleClearSelection(onControllerChange)}
         >
-          <i className="fas fa-times me-2"></i>
+          <i className="fas fa-times"></i>
           إلغاء التحديد
         </button>
       )}
 
       {/* Loading State */}
       {isLoading && (
-        <div className="dropdown-item text-center">
-          <i className="fas fa-spinner fa-spin me-2"></i>
+        <div className="px-3 py-2 text-center text-black">
+          <i className="fas fa-spinner fa-spin mr-2"></i>
           جاري التحميل...
         </div>
       )}
@@ -203,21 +203,23 @@ const RegionSelect: React.FC<RegionSelectProps> = ({
         <button
           key={region.id}
           type="button"
-          className={`dropdown-item d-flex justify-content-between align-items-center ${
-            activeSelectedRegion?.id === region.id ? 'active' : ''
+          className={`w-full px-3 py-2 text-right flex justify-between items-center transition-colors duration-150 ${
+            activeSelectedRegion?.id === region.id 
+              ? 'bg-primary text-primary-foreground' 
+              : 'hover:bg-accent'
           }`}
           onClick={() => handleRegionSelect(region, onControllerChange)}
         >
           <span>{region.name}</span>
           {region.client_count !== undefined && (
-            <small className="text-muted">({region.client_count} عميل)</small>
+            <small className="text-sm opacity-75">({region.client_count} عميل)</small>
           )}
         </button>
       ))}
 
       {/* No Results */}
       {!isLoading && searchTerm && filteredRegions.length === 0 && (
-        <div className="dropdown-item text-muted text-center">
+        <div className="px-3 py-2 text-center text-black">
           لا توجد مناطق تطابق البحث
         </div>
       )}
@@ -225,52 +227,56 @@ const RegionSelect: React.FC<RegionSelectProps> = ({
       {/* Create New Region Section */}
       {allowCreate && (
         <>
-          <div className="dropdown-divider"></div>
+          <div className="border-t border-border"></div>
           {!isCreating ? (
             <button
               type="button"
-              className="dropdown-item text-primary"
+              className="w-full px-3 py-2 text-right flex items-center gap-2 hover:bg-accent transition-colors duration-150"
+              style={{ color: 'hsl(var(--primary))' }}
               onClick={handleStartCreating}
             >
-              <i className="fas fa-plus me-2"></i>
+              <i className="fas fa-plus"></i>
               {searchTerm ? `إنشاء منطقة جديدة: "${searchTerm}"` : 'إنشاء منطقة جديدة'}
             </button>
           ) : (
-            <div className="p-3 bg-light">
+            <div className="p-3 bg-muted/50">
               <div className="mb-2">
-                <label className="form-label small">اسم المنطقة الجديدة:</label>
+                <label className="block text-sm text-black mb-1">اسم المنطقة الجديدة:</label>
                 <input
                   ref={createInputRef}
                   type="text"
-                  className="form-control form-control-sm"
+                  className="base-input text-sm"
                   value={newRegionName}
                   onChange={(e) => setNewRegionName(e.target.value)}
                   onKeyDown={(e) => handleKeyDown(e, onControllerChange)}
                   placeholder="أدخل اسم المنطقة"
                 />
               </div>
-              <div className="d-flex gap-2">
+              <div className="flex gap-2">
                 <button
                   type="button"
-                  className="btn btn-primary btn-sm flex-fill"
+                  className="flex-1 px-3 py-1.5 text-sm font-medium rounded-md text-primary-foreground transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                  style={{
+                    background: 'linear-gradient(135deg, hsl(var(--primary)) 0%, hsl(var(--primary) / 0.9) 100%)'
+                  }}
                   onClick={() => handleCreateRegion(onControllerChange)}
                   disabled={!newRegionName.trim() || createRegionMutation.isPending}
                 >
                   {createRegionMutation.isPending ? (
                     <>
-                      <i className="fas fa-spinner fa-spin me-1"></i>
+                      <i className="fas fa-spinner fa-spin ml-1"></i>
                       جاري الحفظ...
                     </>
                   ) : (
                     <>
-                      <i className="fas fa-check me-1"></i>
+                      <i className="fas fa-check ml-1"></i>
                       حفظ
                     </>
                   )}
                 </button>
                 <button
                   type="button"
-                  className="btn btn-secondary btn-sm"
+                  className="px-3 py-1.5 text-sm font-medium rounded-md bg-secondary text-secondary-foreground hover:bg-secondary/80 transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
                   onClick={handleCancelCreating}
                   disabled={createRegionMutation.isPending}
                 >
@@ -288,9 +294,9 @@ const RegionSelect: React.FC<RegionSelectProps> = ({
   return (
     <div className={`${className}`}>
       {label && (
-        <label className="form-label">
+        <label className="block text-sm font-medium text-foreground mb-1.5">
           {label}
-          {required && <span className="text-danger ms-1">*</span>}
+          {required && <span className="text-destructive mr-1">*</span>}
         </label>
       )}
       
@@ -303,19 +309,19 @@ const RegionSelect: React.FC<RegionSelectProps> = ({
             const selectedRegion = regions.find(region => Number(region.id) === controllerValue);
 
             return (
-              <div className="position-relative" ref={dropdownRef}>
+              <div className="relative" ref={dropdownRef}>
                 <button
                   type="button"
-                  className={`form-control ${className.includes('form-control-sm') ? 'form-control-sm' : ''} text-start d-flex justify-content-between align-items-center ${
-                    error ? 'is-invalid' : ''
+                  className={`base-input ${className.includes('form-control-sm') ? 'text-sm py-1.5' : ''} text-right flex justify-between items-center ${
+                    error ? 'border-destructive' : ''
                   }`}
                   onClick={() => setIsOpen(!isOpen)}
-                  style={{ minHeight: className.includes('form-control-sm') ? '31px' : '38px', fontSize: className.includes('form-control-sm') ? '0.875rem' : undefined }}
+                  style={{ minHeight: className.includes('form-control-sm') ? '31px' : '38px' }}
                 >
-                  <span className={selectedRegion ? '' : 'text-muted'}>
+                  <span className={selectedRegion ? '' : 'text-black'}>
                     {selectedRegion ? selectedRegion.name : (placeholder || 'اختر منطقة')}
                   </span>
-                  <i className={`fas fa-chevron-${isOpen ? 'up' : 'down'} text-muted`}></i>
+                  <i className={`fas fa-chevron-${isOpen ? 'up' : 'down'} text-black`}></i>
                 </button>
 
                 {isOpen && renderDropdownContent(onControllerChange, controllerValue)}
@@ -324,19 +330,19 @@ const RegionSelect: React.FC<RegionSelectProps> = ({
           }}
         />
       ) : (
-        <div className="position-relative" ref={dropdownRef}>
+        <div className="relative" ref={dropdownRef}>
           <button
             type="button"
-            className={`form-control ${className.includes('form-control-sm') ? 'form-control-sm' : ''} text-start d-flex justify-content-between align-items-center ${
-              error ? 'is-invalid' : ''
+            className={`base-input ${className.includes('form-control-sm') ? 'text-sm py-1.5' : ''} text-right flex justify-between items-center ${
+              error ? 'border-destructive' : ''
             }`}
             onClick={() => setIsOpen(!isOpen)}
-            style={{ minHeight: className.includes('form-control-sm') ? '31px' : '38px', fontSize: className.includes('form-control-sm') ? '0.875rem' : undefined }}
+            style={{ minHeight: className.includes('form-control-sm') ? '31px' : '38px' }}
           >
-            <span className={selectedRegion ? '' : 'text-muted'}>
+            <span className={selectedRegion ? '' : 'text-black'}>
               {selectedRegion ? selectedRegion.name : (placeholder || 'اختر منطقة')}
             </span>
-            <i className={`fas fa-chevron-${isOpen ? 'up' : 'down'} text-muted`}></i>
+            <i className={`fas fa-chevron-${isOpen ? 'up' : 'down'} text-black`}></i>
           </button>
 
           {isOpen && renderDropdownContent(undefined, value)}
@@ -344,7 +350,7 @@ const RegionSelect: React.FC<RegionSelectProps> = ({
       )}
 
       {error && (
-        <div className="invalid-feedback d-block">
+        <div className="text-destructive text-sm mt-1">
           {error}
         </div>
       )}

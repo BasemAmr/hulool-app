@@ -19,27 +19,20 @@ const ToastContainer = ({ toasts, onRemove }: ToastContainerProps) => {
   const container = document.getElementById('toast-root') || document.body;
 
   return createPortal(
-    <div 
-      className="toast-container position-fixed"
-      style={{
-        top: '20px',
-        right: '20px',
-        zIndex: 1055,
-        maxHeight: 'calc(100vh - 40px)',
-        overflowY: 'auto'
-      }}
-    >
-      {toasts.map((toast) => (
-        <Toast
-          key={toast.id}
-          id={toast.id}
-          type={toast.type}
-          title={toast.title}
-          message={toast.message}
-          duration={toast.duration}
-          onClose={onRemove}
-        />
-      ))}
+    <div className="fixed top-4 right-4 z-[9999] max-h-[calc(100vh-2rem)] overflow-y-auto flex flex-col gap-0 pointer-events-none">
+      <div className="pointer-events-auto">
+        {toasts.map((toast) => (
+          <Toast
+            key={toast.id}
+            id={toast.id}
+            type={toast.type}
+            title={toast.title}
+            message={toast.message}
+            duration={toast.duration}
+            onClose={onRemove}
+          />
+        ))}
+      </div>
     </div>,
     container
   );

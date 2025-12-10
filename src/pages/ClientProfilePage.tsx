@@ -16,6 +16,7 @@ import { useGetClientCredits } from '../queries/clientCreditQueries';
 import ClientProfileHeader from '../components/clients/ClientProfileHeader';
 import AllTasksTable from '../components/tasks/AllTasksTable';
 import ClientReceivablesTable from '../components/receivables/ClientReceivablesTable';
+import { AccountLedgerTable } from '../components/invoices';
 import type {  Task, StatementItem, TaskCancellationConflictData } from '../api/types';
 import { useReceivablesPermissions } from '../hooks/useReceivablesPermissions';
 import ClientCreditsHistoryTable from '../components/clients/ClientCreditsHistoryTable';
@@ -23,6 +24,9 @@ import ClientCreditsHistoryTable from '../components/clients/ClientCreditsHistor
 // Import export service
 import { exportService } from '../services/export/ExportService';
 import type { ClientStatementReportData, ClientTasksReportData, ClientCreditsReportData } from '../services/export/exportTypes';
+
+// Feature flag: Set to true to use new Invoice/Ledger system
+const USE_INVOICE_LEDGER_SYSTEM = true;
 
 const ClientProfilePage = () => {
     const { t } = useTranslation();
@@ -104,7 +108,13 @@ const ClientProfilePage = () => {
     };
 
     const handleAddReceivable = () => {
-        if (client) openModal('manualReceivable', { client_id: clientId, client });
+        if (client) {
+            if (USE_INVOICE_LEDGER_SYSTEM) {
+                openModal('invoiceForm', { client_id: clientId, client });
+            } else {
+                openModal('manualReceivable', { client_id: clientId, client });
+            }
+        }
     };
 
     const handleAddCredit = () => {
@@ -300,7 +310,7 @@ const ClientProfilePage = () => {
                 client={client}
                 mode={mode}
                 onAddTask={handleAddTask}
-                onAddReceivable={handleAddReceivable}
+                onAddInvoice={handleAddReceivable}
                 onAddCredit={handleAddCredit}
                 onExportStatement={handleExportStatement}
                 onExportTasks={handleExportTasks}
@@ -312,12 +322,12 @@ const ClientProfilePage = () => {
 
             {/* Tasks Table - Show in general and tasks modes */}
             {(mode === 'general' || mode === 'tasks') && (
-                <div className="card mb-3">
-                    <div className="card-header d-flex justify-content-between align-items-center">
-                        <h5 className="mb-0">{t('clientProfile.tasksSectionTitle')}</h5>
+                <div className="rounded-lg border border-border bg-card shadow-sm mb-3">
+                    <div className="flex justify-between items-center px-4 py-3 border-b border-border">
+                        <h5 className="text-primary font-bold text-lg mb-0">{t('clientProfile.tasksSectionTitle')}</h5>
                         {mode === 'tasks' && tasksData?.tasks && tasksData.tasks.length > 0 && (
                             <button
-                                className="btn btn-outline-primary btn-sm"
+                                className="px-3 py-1.5 text-sm border border-primary text-primary rounded-md hover:bg-primary/10 transition-colors disabled:opacity-50"
                                 onClick={handleExportTasks}
                                 disabled={exportTasksMutation.isPending}
                                 title={t('export.exportTasks', 'تصدير المهام')}
@@ -327,7 +337,7 @@ const ClientProfilePage = () => {
                             </button>
                         )}
                     </div>
-                    <div className="card-body p-0">
+                    <div className="p-0">
                         <AllTasksTable
                             tasks={tasksData?.tasks || []}
                             isLoading={isLoadingTasks}
@@ -344,35 +354,43 @@ const ClientProfilePage = () => {
             {/* Receivables Table - Show in general and receivables modes */}
             {(mode === 'general' || mode === 'receivables') && (
                 hasViewAllReceivablesPermission ? (
-                    <div className="card mb-3">
-                        <div className="card-header">
-                            <h5 className="mb-0">كشف الحساب</h5>
+                    <div className="rounded-lg border border-border bg-card shadow-sm mb-3">
+                        <div className="px-4 py-3 border-b border-border">
+                            <h5 className="text-primary font-bold text-lg mb-0">كشف الحساب</h5>
                         </div>
-                        <div className="card-body p-0">
-                            <ClientReceivablesTable
-                                receivables={statementData?.statementItems as StatementItem[] || []}
-                                isLoading={isLoadingReceivables}
-                                client={client}
-                                filter={filter}
-                                hideAmounts={!hasViewAmountsPermission}
-                            />
+                        <div className="p-0">
+                            {USE_INVOICE_LEDGER_SYSTEM ? (
+                                <AccountLedgerTable
+                                    client={client}
+                                    filter={filter === 'all' ? 'all' : filter === 'unpaid' ? 'invoices' : 'all'}
+                                    hideAmounts={!hasViewAmountsPermission}
+                                />
+                            ) : (
+                                <ClientReceivablesTable
+                                    receivables={statementData?.statementItems as StatementItem[] || []}
+                                    isLoading={isLoadingReceivables}
+                                    client={client}
+                                    filter={filter}
+                                    hideAmounts={!hasViewAmountsPermission}
+                                />
+                            )}
                         </div>
                     </div>
                 ) : (
-                    <div className="alert alert-warning text-center">
-                        <h5>Access Denied</h5>
-                        <p>You don't have permission to view receivables for this client.</p>
+                    <div className="rounded-lg bg-yellow-50 border-2 border-yellow-400 p-4 text-center">
+                        <h5 className="text-yellow-800 font-bold text-lg mb-2">Access Denied</h5>
+                        <p className="text-black mb-0">You don't have permission to view receivables for this client.</p>
                     </div>
                 )
             )}
 
             {/* Credits History Table - Show in general - receivables modes only */}
             {(mode === 'general' || mode === 'receivables') && (
-                <div className="card mb-3">
-                    <div className="card-header">
-                        <h5 className="mb-0">{t('clients.creditsHistory')}</h5>
+                <div className="rounded-lg border border-border bg-card shadow-sm mb-3">
+                    <div className="px-4 py-3 border-b border-border">
+                        <h5 className="text-primary font-bold text-lg mb-0">{t('clients.creditsHistory')}</h5>
                     </div>
-                    <div className="card-body p-0">
+                    <div className="p-0">
                         <ClientCreditsHistoryTable
                             credits={creditsData?.credits || []}
                             isLoading={isLoadingCredits}

@@ -42,12 +42,12 @@ const TaskFilter = ({
 
   return (
     <div className="task-filters">
-      <div className="row g-3 align-items-center">
+      <div className="grid grid-cols-1 md:grid-cols-12 gap-3 items-center">
         {/* Search Input */}
-        <div className="col-md-4">
+        <div className="md:col-span-4">
           <input
             type="text"
-            className="form-control"
+            className="w-full px-3 py-2 border border-input rounded-md bg-background text-black text-base focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-colors"
             placeholder={t('tasks.searchPlaceholder')}
             value={search}
             onChange={(e) => onSearchChange(e.target.value)}
@@ -55,9 +55,9 @@ const TaskFilter = ({
         </div>
 
         {/* Status Filter */}
-        <div className="col-md-3">
+        <div className="md:col-span-3">
           <select
-            className="form-select"
+            className="w-full px-3 py-2 border border-input rounded-md bg-background text-black text-base focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-colors"
             value={status}
             onChange={(e) => onStatusChange(e.target.value)}
           >
@@ -70,9 +70,9 @@ const TaskFilter = ({
         </div>
 
         {/* Type Filter */}
-        <div className="col-md-3">
+        <div className="md:col-span-3">
           <select
-            className="form-select"
+            className="w-full px-3 py-2 border border-input rounded-md bg-background text-black text-base focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-colors"
             value={type}
             onChange={(e) => onTypeChange(e.target.value)}
           >
@@ -85,11 +85,11 @@ const TaskFilter = ({
         </div>
 
         {/* Clear Filters Button */}
-        <div className="col-md-2">
+        <div className="md:col-span-2">
           {hasActiveFilters && (
             <button
               type="button"
-              className="btn btn-outline-secondary w-100"
+              className="w-full px-4 py-2 border border-border rounded-md bg-background text-black text-base font-medium hover:bg-muted transition-colors"
               onClick={onClearFilters}
             >
               {t('common.clearFilters')}
@@ -101,41 +101,41 @@ const TaskFilter = ({
       {/* Active Filters Display */}
       {hasActiveFilters && (
         <div className="mt-3">
-          <div className="d-flex flex-wrap gap-2">
+          <div className="flex flex-wrap gap-2">
             {search && (
-              <span className="badge bg-info">
+              <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-blue-500 text-white text-sm">
                 {t('common.search')}: {search}
                 <button
                   type="button"
-                  className="btn-close btn-close-white ms-1"
+                  className="ml-1 text-white hover:text-gray-200 transition-colors"
                   style={{ fontSize: '0.7em' }}
                   onClick={() => onSearchChange('')}
                   aria-label={t('common.remove')}
-                ></button>
+                >×</button>
               </span>
             )}
             {status && (
-              <span className="badge bg-warning">
+              <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-yellow-500 text-white text-sm">
                 {t('common.status')}: {statusOptions.find(opt => opt.value === status)?.label}
                 <button
                   type="button"
-                  className="btn-close btn-close-white ms-1"
+                  className="ml-1 text-white hover:text-gray-200 transition-colors"
                   style={{ fontSize: '0.7em' }}
                   onClick={() => onStatusChange('')}
                   aria-label={t('common.remove')}
-                ></button>
+                >×</button>
               </span>
             )}
             {type && (
-              <span className="badge bg-success">
+              <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-green-500 text-white text-sm">
                 {t('common.type')}: {typeOptions.find(opt => opt.value === type)?.label}
                 <button
                   type="button"
-                  className="btn-close btn-close-white ms-1"
+                  className="ml-1 text-white hover:text-gray-200 transition-colors"
                   style={{ fontSize: '0.7em' }}
                   onClick={() => onTypeChange('')}
                   aria-label={t('common.remove')}
-                ></button>
+                >×</button>
               </span>
             )}
           </div>

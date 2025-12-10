@@ -36,7 +36,12 @@ import TaskSuccessModal from './TaskSuccessModal';
 import TaskHistoryModal from '../shared/TaskHistoryModal';
 import PaymentHistoryModal from '../shared/PaymentHistoryModal';
 import { playNotificationSound } from '../../utils/soundUtils';
-import { Accordion } from 'react-bootstrap';
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from '../ui/accordion';
 
 // Import step components
 import TaskTypeStep from './steps/TaskTypeStep';
@@ -249,15 +254,16 @@ const TaskModal = () => {
     }
   };
 
-  // Helper function to handle prepaid payment flow with credit support
+  // Helper function to handle prepaid payment flow with invoice support
   const handlePrepaidPayment = (createdTask: any) => {
-    if (createdTask.prepaid_receivable_id && createdTask.receivable) {
-      // For now, skip credit check and proceed with regular payment flow
-      // This can be enhanced later to check client credits via API
+    // Check if task has prepaid amount and invoice was created
+    if (createdTask.prepaid_amount > 0 && createdTask.prepaid_invoice) {
+      // Use the NEW invoice payment modal (recordPayment)
       closeModal();
-      openModal('paymentForm', { 
-        receivable: createdTask.receivable,
-        isRequired: true
+      openModal('recordPayment', { 
+        invoiceId: createdTask.prepaid_invoice.id,
+        clientId: createdTask.client_id,
+        clientName: createdTask.client?.name
       });
     } else {
       // No prepaid amount, show success modal as usual
@@ -526,9 +532,9 @@ const TaskModal = () => {
             {(step === 2 || isEditMode) && (
               <div className="step-content main-form fade-in">
                 {/* Row 1: Task Type, Client Name, Assigned Employee */}
-                <div className="row g-2 mb-3">
-                  <div className="col-md-4">
-                    <label className="form-label small fw-bold mb-1">نوع مهمة</label>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-2 mb-3">
+                  <div>
+                    <label className="font-semibold text-black text-sm block mb-1">نوع مهمة</label>
                     <Controller
                       name="type"
                       control={control}
@@ -536,7 +542,7 @@ const TaskModal = () => {
                       render={({ field }) => (
                         <select
                           {...field}
-                          className={`form-select form-select-sm ${errors.type ? 'is-invalid' : ''}`}
+                          className={`w-full px-3 py-1.5 border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-primary ${errors.type ? 'border-destructive bg-destructive/5' : 'border-border'}`}
                         >
                           <option value="">{t('tasks.formTypeLabel')}</option>
                           {taskTypes.map((type) => (
@@ -545,14 +551,14 @@ const TaskModal = () => {
                         </select>
                       )}
                     />
-                    {errors.type && <div className="invalid-feedback">مطلوب</div>}
+                    {errors.type && <div className="text-destructive text-xs mt-1">مطلوب</div>}
                   </div>
 
-                  <div className="col-md-4">
-                    <label className="form-label small fw-bold mb-1">اسم العميل</label>
-                    <div className="d-flex align-items-center gap-2">
+                  <div>
+                    <label className="font-semibold text-black text-sm block mb-1">اسم العميل</label>
+                    <div className="flex items-center gap-2">
                       <input
-                        className="form-control form-control-sm"
+                        className="flex-1 px-3 py-1.5 border border-border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-primary"
                         value={currentClientDisplay?.name || ''}
                         readOnly={isEditMode}
                         disabled={isEditMode}
@@ -565,10 +571,10 @@ const TaskModal = () => {
                       )}
                     </div>
                     {!isEditMode && step === 2 && (
-                      <small className="text-muted">
+                      <small className="text-muted-foreground text-xs">
                         <button 
                           type="button" 
-                          className="btn btn-link btn-sm p-0 text-decoration-none"
+                          className="text-primary hover:underline"
                           onClick={() => setStep(1)}
                         >
                           تغيير العميل
@@ -586,15 +592,15 @@ const TaskModal = () => {
                   </div>
 
                   {isAdmin() && (
-                    <div className="col-md-4">
-                      <label className="form-label small fw-bold mb-1">تكليف الموظف</label>
+                    <div>
+                      <label className="font-semibold text-black text-sm block mb-1">تكليف الموظف</label>
                       <Controller
                         name="assigned_to_id"
                         control={control}
                         render={({ field }) => (
                           <select
                             {...field}
-                            className="form-select form-select-sm"
+                            className="w-full px-3 py-1.5 border border-border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-primary"
                             value={field.value || ''}
                             onChange={(e) => field.onChange(e.target.value === '' ? null : Number(e.target.value))}
                           >
@@ -612,59 +618,55 @@ const TaskModal = () => {
                 </div>
 
                 {/* Row: Task Name (Required) + Start Date */}
-                <div className="row g-2 mb-3">
-                  <div className="col-md-8">
-                    <label className="form-label small fw-bold mb-1">
-                      المهمة الرئيسية <span className="text-danger">*</span>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-2 mb-3">
+                  <div className="md:col-span-2">
+                    <label className="font-semibold text-black text-sm block mb-1">
+                      المهمة الرئيسية <span className="text-destructive">*</span>
                     </label>
                     <input
-                      className={`form-control form-control-sm ${errors.task_name ? 'is-invalid' : ''}`}
+                      className={`w-full px-3 py-1.5 border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-primary ${errors.task_name ? 'border-destructive bg-destructive/5' : 'border-border'}`}
                       {...register('task_name', { required: true })}
                       placeholder="أدخل اسم المهمة..."
                     />
-                    {errors.task_name && <div className="invalid-feedback">اسم المهمة مطلوب</div>}
+                    {errors.task_name && <div className="text-destructive text-xs mt-1">اسم المهمة مطلوب</div>}
                   </div>
 
-                  <div className="col-md-4">
-                    <label className="form-label small fw-bold mb-1">التاريخ الإنشاء</label>
+                  <div>
+                    <label className="font-semibold text-black text-sm block mb-1">التاريخ الإنشاء</label>
                     <input
-                      className={`form-control form-control-sm ${errors.start_date ? 'is-invalid' : ''}`}
+                      className={`w-full px-3 py-1.5 border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-primary ${errors.start_date ? 'border-destructive bg-destructive/5' : 'border-border'}`}
                       type="date"
                       {...register('start_date', { required: true })}
                     />
-                    {errors.start_date && <div className="invalid-feedback">مطلوب</div>}
+                    {errors.start_date && <div className="text-destructive text-xs mt-1">مطلوب</div>}
                   </div>
                 </div>
 
                 {/* Progress Bar for Subtasks (if exists) */}
                 {hasSubtasks() && (
                   <div 
-                    className="mb-3 p-3 rounded"
-                    style={{ 
-                      background: 'linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%)',
-                      border: '1px solid #dee2e6'
-                    }}
+                    className="mb-3 p-3 rounded-lg bg-gradient-to-r from-gray-100 to-gray-200 border border-gray-300"
                   >
-                    <div className="row">
-                      <div className="col-md-8">
-                        <div className="fw-bold mb-2 d-flex align-items-center">
-                          <Layers size={16} className="me-2" style={{ color: '#0ea5e9' }} />
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <div className="font-semibold mb-2 flex items-center gap-2">
+                          <Layers size={16} className="text-blue-500" />
                           تقدم إنجاز المهام الفرعية
                         </div>
-                        <div className="progress mb-2" style={{ height: '8px' }}>
+                        <div className="w-full h-2 bg-gray-300 rounded-full mb-2 overflow-hidden">
                           <div 
-                            className="progress-bar bg-success" 
+                            className="h-full bg-green-600 transition-all duration-300"
                             style={{ width: `${calculateProgress().percentage}%` }}
                           ></div>
                         </div>
-                        <small className="text-muted">
+                        <small className="text-muted-foreground text-xs">
                           {calculateProgress().completed} من {calculateProgress().total} مهام مكتملة
                         </small>
                       </div>
-                      <div className="col-md-4 text-end">
-                        <div className="d-flex flex-column align-items-end">
-                          <div className="h5 mb-1">{calculateProgress().percentage}%</div>
-                          <small className="text-success fw-bold">
+                      <div className="text-right">
+                        <div className="flex flex-col items-end">
+                          <div className="text-2xl font-semibold mb-1">{calculateProgress().percentage}%</div>
+                          <small className="text-green-600 font-semibold text-sm">
                             {calculateProgress().completed}/{calculateProgress().total}
                           </small>
                         </div>
@@ -675,11 +677,10 @@ const TaskModal = () => {
 
                 {/* Subtasks Table */}
                 <div className="mb-4">
-                  <div className="d-flex justify-content-between align-items-center mb-2">
-                    <label className="form-label small fw-bold mb-0">
+                  <div className="flex justify-between items-center mb-2">
+                    <label className="font-semibold text-black text-sm mb-0">
                       <span 
-                        className="px-2 py-1 rounded"
-                        style={{ backgroundColor: '#1976d2', color: 'white', fontSize: '0.75rem' }}
+                        className="px-2 py-1 rounded bg-blue-600 text-white text-xs"
                       >
                         إضافة مهمة فرعية
                       </span>
@@ -688,50 +689,44 @@ const TaskModal = () => {
 
                   {/* Subtasks Header */}
                   <div 
-                    className="row py-2 fw-bold text-center"
-                    style={{ 
-                      backgroundColor: '#1976d2', 
-                      color: 'white',
-                      margin: '0',
-                      borderRadius: '4px 4px 0 0'
-                    }}
+                    className="grid grid-cols-12 py-2 font-semibold text-center text-white bg-blue-600 rounded-t"
                   >
-                    <div className="col-6">البيان</div>
-                    <div className="col-3">المبلغ</div>
-                    <div className="col-3">الإجراءات</div>
+                    <div className="col-span-6">البيان</div>
+                    <div className="col-span-3">المبلغ</div>
+                    <div className="col-span-3">الإجراءات</div>
                   </div>
 
                   {/* Subtasks List */}
-                  <div style={{ border: '1px solid #1976d2', borderTop: 'none', borderRadius: '0 0 4px 4px' }}>
+                  <div className="border border-blue-600 border-t-0 rounded-b">
                     {localSubtasks.map((subtask, index) => (
                       <div 
                         key={index} 
-                        className={`row py-2 align-items-center ${index % 2 === 0 ? 'bg-light' : 'bg-white'}`}
-                        style={{ margin: '0', borderBottom: index === localSubtasks.length - 1 ? 'none' : '1px solid #e9ecef' }}
+                        className={`grid grid-cols-12 py-2 items-center ${index % 2 === 0 ? 'bg-gray-50' : 'bg-white'}`}
+                        style={{ borderBottom: index === localSubtasks.length - 1 ? 'none' : '1px solid #e9ecef' }}
                       >
-                        <div className="col-6">
+                        <div className="col-span-6 px-2">
                           <input
                             type="text"
-                            className="form-control form-control-sm"
+                            className="w-full px-3 py-1.5 border border-border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-primary"
                             value={subtask.description || ''}
                             onChange={(e) => handleSubtaskChange(index, 'description', e.target.value)}
                             placeholder="وصف المهمة الفرعية..."
                           />
                         </div>
-                        <div className="col-3">
+                        <div className="col-span-3 px-2">
                           <input
                             type="number"
-                            className="form-control form-control-sm"
+                            className="w-full px-3 py-1.5 border border-border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-primary"
                             value={subtask.amount || ''}
                             onChange={(e) => handleSubtaskChange(index, 'amount', Number(e.target.value))}
                             placeholder="0.00"
                           />
                         </div>
-                        <div className="col-3 text-center">
-                          <div className="d-flex justify-content-center gap-1">
+                        <div className="col-span-3 text-center">
+                          <div className="flex justify-center gap-1">
                             <button
                               type="button"
-                              className={`btn btn-sm ${subtask.is_completed ? 'btn-success' : 'btn-outline-success'}`}
+                              className={`px-2 py-1 rounded text-sm ${subtask.is_completed ? 'bg-green-600 text-white' : 'border border-green-600 text-green-600'}`}
                               onClick={() => handleSubtaskChange(index, 'is_completed', !subtask.is_completed)}
                               title={subtask.is_completed ? 'مكتملة' : 'غير مكتملة'}
                             >
@@ -739,7 +734,7 @@ const TaskModal = () => {
                             </button>
                             <button
                               type="button"
-                              className="btn btn-sm btn-outline-danger"
+                              className="px-2 py-1 rounded text-sm border border-destructive text-destructive"
                               onClick={() => removeSubtask(index)}
                               title="حذف"
                             >
@@ -752,130 +747,115 @@ const TaskModal = () => {
 
                     {/* Add New Subtask Row */}
                     <div 
-                      className="row py-2 text-center"
+                      className="py-2 text-center bg-gray-50"
                       style={{ 
-                        margin: '0',
-                        backgroundColor: '#f8f9fa',
                         borderTop: localSubtasks.length > 0 ? '1px solid #e9ecef' : 'none'
                       }}
                     >
-                      <div className="col-12">
-                        <button
-                          type="button"
-                          className="btn btn-sm btn-outline-primary"
-                          onClick={addSubtask}
-                        >
-                          <Plus size={14} className="me-1" />
-                          إضافة مهمة فرعية جديدة
-                        </button>
-                      </div>
+                      <button
+                        type="button"
+                        className="px-3 py-1.5 rounded text-sm border border-primary text-primary hover:bg-primary/10"
+                        onClick={addSubtask}
+                      >
+                        <Plus size={14} className="inline mr-1" />
+                        إضافة مهمة فرعية جديدة
+                      </button>
                     </div>
 
                     {/* Total Row */}
                     {localSubtasks.length > 0 && (
                       <div 
-                        className="row py-2 fw-bold text-center"
-                        style={{ 
-                          backgroundColor: '#1976d2', 
-                          color: 'white',
-                          margin: '0'
-                        }}
+                        className="grid grid-cols-12 py-2 font-semibold text-center text-white bg-blue-600"
                       >
-                        <div className="col-6">الإجمالي</div>
-                        <div className="col-3">{calculateTotal()}</div>
-                        <div className="col-3">-</div>
+                        <div className="col-span-6">الإجمالي</div>
+                        <div className="col-span-3">{calculateTotal()}</div>
+                        <div className="col-span-3">-</div>
                       </div>
                     )}
                   </div>
                 </div>
 
                 {/* بيانات أخرى Accordion */}
-                <Accordion className="mb-3">
-                  <Accordion.Item eventKey="0">
-                    <Accordion.Header>بيانات أخرى</Accordion.Header>
-                    <Accordion.Body>
+                <Accordion type="single" collapsible className="mb-3">
+                  <AccordionItem value="item-1">
+                    <AccordionTrigger>بيانات أخرى</AccordionTrigger>
+                    <AccordionContent>
                       {/* Prepaid Amount */}
-                      <div className="row g-2 mb-3">
-                        <div className="col-12">
-                          <label className="form-label small fw-bold mb-1">المدفوع مقدماً</label>
-                          <input
-                            className={`form-control form-control-sm ${errors.prepaid_amount ? 'is-invalid' : ''}`}
-                            type="number"
-                            step="1"
-                            placeholder="المبلغ المقدم"
-                            {...register('prepaid_amount', { 
-                              validate: value => {
-                                const amount = calculateTotal() || 0;
-                                return !value || value <= amount || 'المبلغ المقدم لا يمكن أن يتجاوز مبلغ المهمة';
-                              }
-                            })}
-                          />
-                          {errors.prepaid_amount && <div className="invalid-feedback">{errors.prepaid_amount.message}</div>}
-                        </div>
+                      <div className="mb-3">
+                        <label className="font-semibold text-black text-sm block mb-1">المدفوع مقدماً</label>
+                        <input
+                          className={`w-full px-3 py-2 border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-primary ${errors.prepaid_amount ? 'border-destructive bg-destructive/5' : 'border-border'}`}
+                          type="number"
+                          step="1"
+                          placeholder="المبلغ المقدم"
+                          {...register('prepaid_amount', { 
+                            validate: value => {
+                              const amount = calculateTotal() || 0;
+                              return !value || value <= amount || 'المبلغ المقدم لا يمكن أن يتجاوز مبلغ المهمة';
+                            }
+                          })}
+                        />
+                        {errors.prepaid_amount && <div className="text-destructive text-xs mt-1">{errors.prepaid_amount.message}</div>}
                       </div>
 
                       {/* End Date (moved here) */}
-                      <div className="row g-2 mb-3">
-                        <div className="col-12">
-                          <label className="form-label small fw-bold mb-1">تاريخ الانتهاء</label>
-                          <input
-                            className="form-control form-control-sm"
-                            type="date"
-                            {...register('end_date')}
-                          />
-                        </div>
+                      <div className="mb-3">
+                        <label className="font-semibold text-black text-sm block mb-1">تاريخ الانتهاء</label>
+                        <input
+                          className="w-full px-3 py-2 border border-border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+                          type="date"
+                          {...register('end_date')}
+                        />
                       </div>
 
                       {/* Notes */}
-                      <div className="row g-2 mb-3">
-                        <div className="col-12">
-                          <label className="form-label small fw-bold mb-1">ملاحظات</label>
-                          <textarea
-                            className="form-control form-control-sm"
-                            {...register('notes')}
-                            rows={3}
-                            placeholder="أدخل ملاحظات إضافية..."
-                          />
-                        </div>
+                      <div className="mb-3">
+                        <label className="font-semibold text-black text-sm block mb-1">ملاحظات</label>
+                        <textarea
+                          className="w-full px-3 py-2 border border-border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-primary resize-none"
+                          {...register('notes')}
+                          rows={3}
+                          placeholder="أدخل ملاحظات إضافية..."
+                        />
                       </div>
 
                       {/* Requirements Section */}
                       <div className="requirements-section">
-                        <div className="d-flex justify-content-between align-items-center mb-2">
-                          <label className="form-label small fw-bold mb-0">المتطلبات</label>
+                        <div className="flex justify-between items-center mb-2">
+                          <label className="font-semibold text-black text-sm mb-0">المتطلبات</label>
                           <Button
                             type="button"
                             variant="outline-primary"
                             size="sm"
                             onClick={addRequirementField}
-                            className="btn-xs"
+                            className="text-xs"
                           >
-                            <PlusCircle size={14} className="me-1" /> إضافة متطلب
+                            <PlusCircle size={14} className="mr-1" /> إضافة متطلب
                           </Button>
                         </div>
 
                         {localRequirements.length === 0 ? (
-                          <div className="text-muted text-center py-3">
-                            <p className="mb-0 small">لا توجد متطلبات</p>
+                          <div className="text-muted-foreground text-center py-3">
+                            <p className="mb-0 text-sm">لا توجد متطلبات</p>
                           </div>
                         ) : (
                           <div className="requirements-list">
                             {localRequirements.map((req, index) => (
                               <div key={req.temp_id || String(req.id)} className="requirement-item mb-2">
-                                <div className="d-flex align-items-center gap-2">
-                                  <div className="form-check">
+                                <div className="flex items-center gap-2">
+                                  <div>
                                     <input
                                       type="checkbox"
-                                      className="form-check-input"
+                                      className="rounded"
                                       id={`req-${req.temp_id || req.id}`}
                                       checked={req.is_provided}
                                       onChange={() => toggleRequirementProvided(req.temp_id || req.id)}
                                     />
                                   </div>
-                                  <div className="flex-grow-1">
+                                  <div className="flex-1">
                                     <input
                                       type="text"
-                                      className="form-control form-control-sm"
+                                      className="w-full px-3 py-1.5 border border-border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-primary"
                                       value={req.requirement_text}
                                       onChange={(e) => updateRequirementText(req.temp_id || req.id, e.target.value)}
                                       placeholder={`متطلب ${index + 1}`}
@@ -886,7 +866,7 @@ const TaskModal = () => {
                                     variant="danger"
                                     size="sm"
                                     onClick={() => removeRequirementField(req.temp_id || req.id)}
-                                    className="btn-xs"
+                                    className="text-xs"
                                     title="حذف المتطلب"
                                   >
                                     <XCircle size={14} />
@@ -897,8 +877,8 @@ const TaskModal = () => {
                           </div>
                         )}
                       </div>
-                    </Accordion.Body>
-                  </Accordion.Item>
+                    </AccordionContent>
+                  </AccordionItem>
                 </Accordion>
               </div>
             )}

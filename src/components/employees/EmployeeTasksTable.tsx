@@ -77,20 +77,20 @@ const EmployeeTasksTable: React.FC<EmployeeTasksTableProps> = ({
 
       {/* Pagination */}
       {pagination.total > perPage && (
-        <div className="p-4 d-flex justify-content-between align-items-center">
-          <div className="text-muted">
+        <div className="p-4 flex justify-between items-center border-t">
+          <div className="text-black text-sm">
             Showing {((page - 1) * perPage) + 1} to {Math.min(page * perPage, pagination.total)} of {pagination.total} tasks
           </div>
-          <div className="btn-group" role="group">
+          <div className="inline-flex gap-2">
             <button
-              className="btn btn-outline-secondary btn-sm"
+              className="px-3 py-1.5 text-sm border rounded-md hover:bg-muted disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
               disabled={page <= 1}
               onClick={() => onPageChange(page - 1)}
             >
               Previous
             </button>
             <button
-              className="btn btn-outline-secondary btn-sm"
+              className="px-3 py-1.5 text-sm border rounded-md hover:bg-muted disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
               disabled={page >= Math.ceil(pagination.total / perPage)}
               onClick={() => onPageChange(page + 1)}
             >

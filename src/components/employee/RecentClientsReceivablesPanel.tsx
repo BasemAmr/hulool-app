@@ -12,6 +12,21 @@ import { useToast } from '../../hooks/useToast';
 
 interface RecentClientsReceivablesPanelProps {}
 
+// Transform invoice to receivable-like format for display
+interface DisplayInvoice {
+  id: number;
+  client_id: number;
+  client_name: string;
+  client_phone: string;
+  task_id: number | null;
+  task_name: string;
+  description: string;
+  amount: number;
+  paid_amount: number;
+  remaining_amount: number;
+  status: string;
+}
+
 const RecentClientsReceivablesPanel: React.FC<RecentClientsReceivablesPanelProps> = () => {
   const navigate = useNavigate();
   const { openModal } = useModalStore();
@@ -19,14 +34,14 @@ const RecentClientsReceivablesPanel: React.FC<RecentClientsReceivablesPanelProps
   const { success, error } = useToast();
 
 
-  // Fetch recent receivables with pagination
-  const { data: receivablesData, isLoading } = useQuery({
-    queryKey: ['receivables', 'employee-dashboard', 'unpaid-partial'],
+  // Fetch recent invoices with pagination using new endpoint
+  const { data: invoicesData, isLoading } = useQuery({
+    queryKey: ['invoices', 'employee-dashboard', 'unpaid-partial'],
     queryFn: async () => {
-      const response = await apiClient.get('/receivables/employee/me/dashboard', {
+      const response = await apiClient.get('/invoices/employee/me/dashboard', {
         params: { 
           per_page: 20,
-          payment_status: ['unpaid', 'partial']
+          payment_status: ['pending', 'partially_paid'] // Use correct enum values
         }
       });
       return response.data;
@@ -35,7 +50,20 @@ const RecentClientsReceivablesPanel: React.FC<RecentClientsReceivablesPanelProps
     refetchInterval: 20000, // Refetch every 20 seconds
   });
 
-  const clients = receivablesData?.data?.receivables || [];
+  // Transform invoices to display format
+  const clients: DisplayInvoice[] = (invoicesData?.invoices || []).map((invoice: any) => ({
+    id: invoice.id,
+    client_id: invoice.client_id,
+    client_name: invoice.client?.name || invoice.client_name || '',
+    client_phone: invoice.client?.phone || invoice.client_phone || '',
+    task_id: invoice.task_id,
+    task_name: invoice.task?.task_name || invoice.task_name || '',
+    description: invoice.description,
+    amount: Number(invoice.amount),
+    paid_amount: Number(invoice.paid_amount),
+    remaining_amount: Number(invoice.remaining_amount),
+    status: invoice.status,
+  }));
 
   // const handlePayment = (receivable: any) => {
   //   openModal('paymentForm', { receivable });
@@ -82,10 +110,8 @@ const RecentClientsReceivablesPanel: React.FC<RecentClientsReceivablesPanelProps
   if (isLoading) {
     return (
       <div 
-        className="card h-100 shadow-sm"
+        className="rounded-lg border border-border bg-card shadow-sm h-full"
         style={{
-          borderRadius: 'var(--border-radius)',
-          border: '1px solid var(--color-gray-100)',
           overflow: 'visible',
           position: 'relative',
           display: 'flex',
@@ -93,18 +119,18 @@ const RecentClientsReceivablesPanel: React.FC<RecentClientsReceivablesPanelProps
         }}
       >
         <div
-          className="card-header border-0 py-2"
+          className="px-4 py-2 border-b border-border"
           style={{
             backgroundColor: 'var(--color-primary)',
             color: 'var(--color-white)',
             flexShrink: 0
           }}
         >
-          <h6 className="mb-0 fw-bold" style={{ fontSize: 'var(--font-size-base)' }}>
+          <h6 className="mb-0 font-bold text-base">
             المستحقات الأخيرة
           </h6>
         </div>
-        <div className="card-body d-flex justify-content-center align-items-center">
+        <div className="flex-1 flex justify-center items-center">
           <div className="spinner-border text-primary" role="status">
             <span className="visually-hidden">جاري التحميل...</span>
           </div>
@@ -113,17 +139,15 @@ const RecentClientsReceivablesPanel: React.FC<RecentClientsReceivablesPanelProps
     );
   }
 
-  // Filter out receivables with zero outstanding amounts
-  const filteredReceivables = clients.filter((receivable: any) => 
-    (Number(receivable.remaining_amount) || 0) > 0
+  // Filter out invoices with zero outstanding amounts
+  const filteredReceivables = clients.filter((invoice: DisplayInvoice) => 
+    invoice.remaining_amount > 0
   );
 
   return (
     <div 
-      className="card h-100 shadow-sm"
+      className="rounded-lg border border-border bg-card shadow-sm h-full"
       style={{
-        borderRadius: 'var(--border-radius)',
-        border: '1px solid var(--color-gray-100)',
         overflow: 'visible',
         position: 'relative',
         display: 'flex',
@@ -133,33 +157,33 @@ const RecentClientsReceivablesPanel: React.FC<RecentClientsReceivablesPanelProps
     >
       {/* Header */}
       <div
-        className="card-header border-0 py-2"
+        className="px-4 py-2 border-b border-border"
         style={{
           backgroundColor: '#ffc107',
           color: '#fff',
           flexShrink: 0
         }}
       >
-        <div className="d-flex justify-content-center align-items-center">
-          <h6 className="mb-0 text-white fw-bold" style={{ fontSize: 'var(--font-size-base)' }}>
+        <div className="flex justify-center items-center">
+          <h6 className="mb-0 text-white font-bold text-base">
             المستحقات عند العملاء
           </h6>
         </div>
       </div>
 
-      {/* Body - Receivables Table */}
-      <div className="card-body p-0" style={{ flex: 1, overflow: 'visible', position: 'relative' }}>
+      {/* Body - Invoices Table */}
+      <div className="p-0" style={{ flex: 1, overflow: 'visible', position: 'relative' }}>
         {filteredReceivables.length === 0 ? (
-          <div className="d-flex justify-content-center align-items-center h-100">
+          <div className="flex justify-center items-center h-full">
             <div className="text-center">
-              <p className="text-muted mb-0" style={{ fontSize: 'var(--font-size-sm)' }}>
+              <p className="text-black mb-0 text-sm">
                 لا يوجد مستحقات
               </p>
             </div>
           </div>
         ) : (
-          <div className="table-responsive h-100" style={{ overflow: 'visible', position: 'relative', zIndex: 10 }}>
-            <table className="table table-sm mb-0" style={{ position: 'relative', zIndex: 10 }}>
+          <div className="w-full overflow-x-auto h-full" style={{ overflow: 'visible', position: 'relative', zIndex: 10 }}>
+            <table className="w-full text-sm mb-0" style={{ position: 'relative', zIndex: 10 }}>
               <thead
                 style={{
                   position: 'sticky',
@@ -169,25 +193,25 @@ const RecentClientsReceivablesPanel: React.FC<RecentClientsReceivablesPanelProps
               >
                 <tr>
                   <th style={{
-                    fontSize: 'var(--font-size-xs)',
+                    fontSize: '0.75rem',
                     padding: '8px',
                     borderBottom: '2px solid var(--color-gray-100)',
                     textAlign: 'start'
                   }}>العميل</th>
                   <th style={{
-                    fontSize: 'var(--font-size-xs)',
+                    fontSize: '0.75rem',
                     padding: '8px',
                     borderBottom: '2px solid var(--color-gray-100)',
                     textAlign: 'center'
                   }}>الوصف</th>
                   <th style={{
-                    fontSize: 'var(--font-size-xs)',
+                    fontSize: '0.75rem',
                     padding: '8px',
                     borderBottom: '2px solid var(--color-gray-100)',
                     textAlign: 'center'
                   }}>المستحق</th>
                   <th style={{
-                    fontSize: 'var(--font-size-xs)',
+                    fontSize: '0.75rem',
                     padding: '8px',
                     borderBottom: '2px solid var(--color-gray-100)',
                     textAlign: 'end',
@@ -196,55 +220,50 @@ const RecentClientsReceivablesPanel: React.FC<RecentClientsReceivablesPanelProps
                 </tr>
               </thead>
               <tbody>
-                {clients.map((receivable: any, index: number) => (
+                {filteredReceivables.map((invoice: DisplayInvoice, index: number) => (
                   <tr
-                    key={receivable.id}
-                    style={{
-                      transition: 'all 0.2s ease-in-out',
-                      cursor: 'pointer'
-                    }}
+                    key={invoice.id}
+                    className="hover:bg-muted/50 transition-colors cursor-pointer"
                   >
                     <td style={{
-                      fontSize: 'var(--font-size-xs)',
+                      fontSize: '0.75rem',
                       padding: '6px',
                       textAlign: 'start',
                       borderBottom: '1px solid var(--color-gray-100)',
                       backgroundColor: index % 2 === 0 ? '#fff8e1' : '#ffecb3'
                     }}>
                       <span 
-                        className="fw-medium" 
+                        className="font-bold text-black" 
                         style={{ 
                           maxWidth: '100px', 
                           display: 'inline-block',
-                          cursor: 'pointer',
-                          color: 'var(--color-primary)'
+                          cursor: 'pointer'
                         }}
-                        // onClick={() => handleClientClick(parseInt(receivable.client_id))}
-                        title={receivable.client_name}
+                        title={invoice.client_name}
                       >
-                        {receivable.client_name}
+                        {invoice.client_name}
                       </span>
                     </td>
                     <td style={{
-                      fontSize: 'var(--font-size-xs)',
+                      fontSize: '0.8rem',
                       padding: '6px',
                       textAlign: 'start',
                       borderBottom: '1px solid var(--color-gray-100)',
                       backgroundColor: index % 2 === 0 ? '#fff8e1' : '#ffecb3'
-                    }}>
-                      <span style={{ fontSize: '10px' }}>
-                        {receivable.description || receivable.task_name}
+                    }} className='font-semibold'>
+                      <span>
+                        {invoice.description || invoice.task_name}
                       </span>
                     </td>
                     <td style={{
-                      fontSize: 'var(--font-size-xs)',
+                      fontSize: '0.75rem',
                       padding: '6px',
                       textAlign: 'center',
                       borderBottom: '1px solid var(--color-gray-100)',
                       backgroundColor: index % 2 === 0 ? '#fff8e1' : '#ffecb3'
                     }}>
-                      <span className="fw-bold text-danger">
-                        {formatCurrency(Number(receivable.remaining_amount) || Number(receivable.amount) )} ر.س
+                      <span className="font-bold text-red-600">
+                        {formatCurrency(invoice.remaining_amount)} ر.س
                       </span>
                     </td>
                     <td style={{
@@ -254,54 +273,48 @@ const RecentClientsReceivablesPanel: React.FC<RecentClientsReceivablesPanelProps
                       minWidth: '80px',
                       backgroundColor: index % 2 === 0 ? '#fff8e1' : '#ffecb3'
                     }}>
-                      <div className="d-flex justify-content-center gap-1">
+                      <div className="flex justify-center gap-1">
                         <button
-                          className="btn btn-outline-info btn-sm p-1"
-                          onClick={() => openModal('editReceivable', { receivable })}
+                          className="px-1.5 py-1 text-xs border border-blue-500 text-blue-500 rounded hover:bg-blue-500 hover:text-white transition-colors"
+                          onClick={() => openModal('editReceivable', { receivable: { 
+                            id: invoice.id,
+                            client_id: invoice.client_id,
+                            description: invoice.description,
+                            amount: invoice.amount,
+                            remaining_amount: invoice.remaining_amount,
+                            client_name: invoice.client_name,
+                            client_phone: invoice.client_phone,
+                            task_id: invoice.task_id
+                          } as any })}
                           title="تعديل المستحق"
-                          style={{ fontSize: '10px', lineHeight: 1 }}
                         >
                           <Edit3 size={10} />
                         </button>
 
                         <button
-                          className="btn btn-outline-success btn-sm p-1"
-                          onClick={() => handleWhatsAppPaymentReminder(receivable.client_phone, receivable.client_name, Number(receivable.remaining_amount))}
-                          disabled={Number(receivable.remaining_amount) <= 0}
+                          className="px-1.5 py-1 text-xs border border-green-600 text-green-600 rounded hover:bg-green-600 hover:text-white transition-colors"
+                          onClick={() => handleWhatsAppPaymentReminder(invoice.client_phone, invoice.client_name, invoice.remaining_amount)}
+                          disabled={invoice.remaining_amount <= 0}
                           title="إرسال تذكير دفع عبر واتساب"
-                          style={{ fontSize: '10px', lineHeight: 1 }}
                         >
                           <WhatsAppIcon size={10} />
                         </button>
 
-                        {/* Restore Button - Only show for completed tasks */}
-                        {receivable.task_id && (
+                        {/* Restore Button - Only show for tasks */}
+                        {invoice.task_id && (
                           <button
-                            className="btn btn-outline-warning btn-sm p-1"
-                            onClick={() => handleRestore(receivable)}
+                            className="px-1.5 py-1 text-xs border border-yellow-600 text-yellow-600 rounded hover:bg-yellow-600 hover:text-white transition-colors"
+                            onClick={() => handleRestore({ task_id: invoice.task_id })}
                             disabled={restoreTaskMutation.isPending}
                             title="استرداد المهمة إلى حالة جديدة"
-                            style={{ fontSize: '10px', lineHeight: 1 }}
                           >
                             <RotateCcw size={10} />
                           </button>
                         )}
-
-                        {/* <button
-                          className="btn btn-primary btn-sm p-1"
-                          onClick={() => handlePayment(receivable)}
-                          disabled={Number(receivable.remaining_amount) <= 0}
-                          title="سداد"
-                          style={{ fontSize: '10px', lineHeight: 1 }}
-                        >
-                          <CreditCard size={10} />
-                        </button> */}
                       </div>
                     </td>
                   </tr>
                 ))}
-
-                {/* Show More Row - Remove pagination dependency */}
               </tbody>
             </table>
           </div>
@@ -310,18 +323,14 @@ const RecentClientsReceivablesPanel: React.FC<RecentClientsReceivablesPanelProps
 
       {/* Footer - Pagination and Show More */}
       <div 
-        className="card-footer bg-light border-0 py-2"
+        className="px-4 py-2 bg-muted/30 border-t border-border"
         style={{ flexShrink: 0 }}
       >
-        <div className="d-flex justify-content-center align-items-center">
-          {/* Items per page selector */}
-         
-
+        <div className="flex justify-center items-center">
           {/* Show More Button */}
           <button
             onClick={navigateToFinancials}
-            className="btn btn-link text-primary p-0 d-flex align-items-center gap-1"
-            style={{ fontSize: 'var(--font-size-sm)' }}
+            className="text-primary p-0 flex items-center gap-1 hover:text-primary/80 transition-colors text-sm"
           >
             <MoreHorizontal size={16} />
             <span>عرض المزيد</span>

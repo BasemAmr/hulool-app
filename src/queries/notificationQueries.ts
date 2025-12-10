@@ -1,103 +1,122 @@
-import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import  apiClient  from '../api/apiClient';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import apiClient from '../api/apiClient';
 
-// Types
-export interface Notification {
+// Types - New grouped notification structure
+
+export type NotificationGroup = 'task_submissions' | 'messages' | 'task_approvals' | 'task_rejections' | 'assignments';
+
+export interface GroupedNotification {
   id: number;
-  task_id: number;
-  task_name: string;
-  client_name: string;
-  content: string;
   event_type: string;
-  event_id: number | null;
+  title: string;
+  message: string;
+  related_entity_type: string;
+  related_entity_id: number;
   is_read: boolean;
   created_at: string;
   read_at: string | null;
 }
 
-export interface NotificationPaginatedData {
-  notifications: Notification[];
-  pagination: {
-    current_page: number;
-    per_page: number;
-    total_items: number;
-    total_pages: number;
-    has_more: boolean;
-  };
+export interface NotificationGroupData {
+  notifications: GroupedNotification[];
+  unread_count: number;
+  total_count: number;
+}
+
+export interface GroupedNotificationsResponse {
+  groups: Record<NotificationGroup, NotificationGroupData>;
+  total_unread: number;
+  group_labels: Record<NotificationGroup, string>;
 }
 
 export interface NotificationCountData {
   count: number;
 }
 
+// ============================================
 // API Functions
-export const getUnreadNotificationCount = async (): Promise<NotificationCountData> => {
-  const response = await apiClient.get('/notifications/unread-count');
-  return response.data.data; // Strip the wrapper like other API calls
-};
+// ============================================
 
-export const getNotifications = async ({ pageParam = 1 }): Promise<NotificationPaginatedData> => {
-  const response = await apiClient.get(`/notifications?page=${pageParam}&per_page=20`);
+/**
+ * Get notifications grouped by type
+ */
+export const getGroupedNotifications = async (): Promise<GroupedNotificationsResponse> => {
+  const response = await apiClient.get('/notifications/grouped');
   return response.data.data;
 };
 
+/**
+ * Get unread notification count
+ */
+export const getUnreadNotificationCount = async (): Promise<NotificationCountData> => {
+  const response = await apiClient.get('/notifications/unread-count');
+  return response.data.data;
+};
+
+/**
+ * Mark a single notification as read
+ */
 export const markNotificationAsRead = async (notificationId: number): Promise<{ message: string }> => {
   const response = await apiClient.post(`/notifications/${notificationId}/mark-read`);
   return response.data.data;
 };
 
+/**
+ * Mark all notifications in a group as read
+ */
+export const markGroupAsRead = async (group: NotificationGroup): Promise<{ message: string; marked_count: number }> => {
+  const response = await apiClient.post(`/notifications/group/${group}/mark-read`);
+  return response.data.data;
+};
+
+/**
+ * Mark all notifications as read
+ */
 export const markAllNotificationsAsRead = async (): Promise<{ message: string }> => {
   const response = await apiClient.post('/notifications/mark-all-read');
   return response.data.data;
 };
 
+// ============================================
 // React Query Hooks
+// ============================================
+
+/**
+ * Hook to get grouped notifications
+ */
+export const useGetGroupedNotifications = () => {
+  return useQuery({
+    queryKey: ['groupedNotifications'],
+    queryFn: getGroupedNotifications,
+    staleTime: 15000,
+    refetchInterval: 30000, // Poll every 30 seconds
+    refetchOnWindowFocus: false,
+  });
+};
 
 /**
  * Hook to get unread notification count with polling
- * Polls every 20 seconds with exponential backoff on errors
  */
 export const useGetUnreadNotificationCount = () => {
   return useQuery({
     queryKey: ['notificationCount'],
     queryFn: getUnreadNotificationCount,
     refetchInterval: (query) => {
-      // Exponential backoff on error: 20s -> 40s -> 60s -> 60s...
       if (query.state.error) {
         const failureCount = query.state.fetchFailureCount || 0;
         return Math.min(20000 * Math.pow(2, failureCount), 60000);
       }
-      return 20000; // 20 seconds
+      return 20000;
     },
     refetchOnWindowFocus: false,
     refetchOnMount: true,
-    staleTime: 15000, // Consider data stale after 15 seconds
-    retry: (failureCount, error: any) => {
-      // Stop retrying after 3 attempts or on 4xx errors
+    staleTime: 15000,
+    retry: (failureCount, error: unknown) => {
       if (failureCount >= 3) return false;
-      if (error?.response?.status >= 400 && error?.response?.status < 500) return false;
+      const err = error as { response?: { status?: number } };
+      if (err?.response?.status && err.response.status >= 400 && err.response.status < 500) return false;
       return true;
     },
-  });
-};
-
-/**
- * Hook to get paginated notifications with infinite scroll
- */
-export const useGetNotifications = () => {
-  return useInfiniteQuery({
-    queryKey: ['notifications'],
-    queryFn: getNotifications,
-    initialPageParam: 1,
-    getNextPageParam: (lastPage) => {
-      if (!lastPage?.pagination) {
-        return undefined;
-      }
-      const { current_page, has_more } = lastPage.pagination;
-      return has_more ? current_page + 1 : undefined;
-    },
-    staleTime: 30000, // Consider data stale after 30 seconds
-    refetchOnWindowFocus: false,
   });
 };
 
@@ -109,52 +128,65 @@ export const useMarkNotificationAsRead = () => {
 
   return useMutation({
     mutationFn: markNotificationAsRead,
-    onMutate: async (notificationId: number) => {
-      // Cancel any outgoing refetches for notifications
-      await queryClient.cancelQueries({ queryKey: ['notifications'] });
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['groupedNotifications'] });
+      queryClient.invalidateQueries({ queryKey: ['notificationCount'] });
+    },
+  });
+};
+
+/**
+ * Hook to mark all notifications in a group as read
+ */
+export const useMarkGroupAsRead = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: markGroupAsRead,
+    onMutate: async (group: NotificationGroup) => {
+      await queryClient.cancelQueries({ queryKey: ['groupedNotifications'] });
       await queryClient.cancelQueries({ queryKey: ['notificationCount'] });
 
-      // Snapshot the previous values
-      const previousNotifications = queryClient.getQueryData(['notifications']);
-      const previousCount = queryClient.getQueryData(['notificationCount']);
+      const previousData = queryClient.getQueryData<GroupedNotificationsResponse>(['groupedNotifications']);
+      const previousCount = queryClient.getQueryData<NotificationCountData>(['notificationCount']);
 
-      // Optimistically update notifications
-      queryClient.setQueryData(['notifications'], (old: any) => {
-        if (!old) return old;
+      // Optimistically update
+      if (previousData) {
+        const groupUnreadCount = previousData.groups[group]?.unread_count || 0;
+        queryClient.setQueryData<GroupedNotificationsResponse>(['groupedNotifications'], {
+          ...previousData,
+          groups: {
+            ...previousData.groups,
+            [group]: {
+              ...previousData.groups[group],
+              notifications: previousData.groups[group].notifications.map(n => ({
+                ...n,
+                is_read: true,
+                read_at: n.read_at || new Date().toISOString()
+              })),
+              unread_count: 0
+            }
+          },
+          total_unread: previousData.total_unread - groupUnreadCount
+        });
 
-        return {
-          ...old,
-          pages: old.pages.map((page: NotificationPaginatedData) => ({
-            ...page,
-            notifications: page.notifications.map((notification: Notification) =>
-              notification.id === notificationId
-                ? { ...notification, is_read: true, read_at: new Date().toISOString() }
-                : notification
-            ),
-          })),
-        };
-      });
+        queryClient.setQueryData<NotificationCountData>(['notificationCount'], {
+          count: Math.max(0, (previousCount?.count || 0) - groupUnreadCount)
+        });
+      }
 
-      // Optimistically update count
-      queryClient.setQueryData(['notificationCount'], (old: NotificationCountData | undefined) => {
-        if (!old) return old;
-        return { count: Math.max(0, old.count - 1) };
-      });
-
-      return { previousNotifications, previousCount };
+      return { previousData, previousCount };
     },
-    onError: (_err, _notificationId, context) => {
-      // If the mutation fails, use the context returned from onMutate to roll back
-      if (context?.previousNotifications) {
-        queryClient.setQueryData(['notifications'], context.previousNotifications);
+    onError: (_err, _group, context) => {
+      if (context?.previousData) {
+        queryClient.setQueryData(['groupedNotifications'], context.previousData);
       }
       if (context?.previousCount) {
         queryClient.setQueryData(['notificationCount'], context.previousCount);
       }
     },
     onSettled: () => {
-      // Always refetch after error or success to ensure we have correct data
-      queryClient.invalidateQueries({ queryKey: ['notifications'] });
+      queryClient.invalidateQueries({ queryKey: ['groupedNotifications'] });
       queryClient.invalidateQueries({ queryKey: ['notificationCount'] });
     },
   });
@@ -169,48 +201,50 @@ export const useMarkAllNotificationsAsRead = () => {
   return useMutation({
     mutationFn: markAllNotificationsAsRead,
     onMutate: async () => {
-      // Cancel any outgoing refetches
-      await queryClient.cancelQueries({ queryKey: ['notifications'] });
+      await queryClient.cancelQueries({ queryKey: ['groupedNotifications'] });
       await queryClient.cancelQueries({ queryKey: ['notificationCount'] });
 
-      // Snapshot the previous values
-      const previousNotifications = queryClient.getQueryData(['notifications']);
-      const previousCount = queryClient.getQueryData(['notificationCount']);
+      const previousData = queryClient.getQueryData<GroupedNotificationsResponse>(['groupedNotifications']);
+      const previousCount = queryClient.getQueryData<NotificationCountData>(['notificationCount']);
 
-      // Optimistically update all notifications as read
-      queryClient.setQueryData(['notifications'], (old: any) => {
-        if (!old) return old;
+      // Optimistically mark all as read
+      if (previousData) {
+        const updatedGroups = Object.fromEntries(
+          Object.entries(previousData.groups).map(([key, group]) => [
+            key,
+            {
+              ...group,
+              notifications: group.notifications.map(n => ({
+                ...n,
+                is_read: true,
+                read_at: n.read_at || new Date().toISOString()
+              })),
+              unread_count: 0
+            }
+          ])
+        ) as Record<NotificationGroup, NotificationGroupData>;
 
-        return {
-          ...old,
-          pages: old.pages.map((page: NotificationPaginatedData) => ({
-            ...page,
-            notifications: page.notifications.map((notification: Notification) => ({
-              ...notification,
-              is_read: true,
-              read_at: notification.read_at || new Date().toISOString(),
-            })),
-          })),
-        };
-      });
+        queryClient.setQueryData<GroupedNotificationsResponse>(['groupedNotifications'], {
+          ...previousData,
+          groups: updatedGroups,
+          total_unread: 0
+        });
+      }
 
-      // Optimistically update count to 0
-      queryClient.setQueryData(['notificationCount'], { count: 0 });
+      queryClient.setQueryData<NotificationCountData>(['notificationCount'], { count: 0 });
 
-      return { previousNotifications, previousCount };
+      return { previousData, previousCount };
     },
     onError: (_err, _variables, context) => {
-      // If the mutation fails, use the context returned from onMutate to roll back
-      if (context?.previousNotifications) {
-        queryClient.setQueryData(['notifications'], context.previousNotifications);
+      if (context?.previousData) {
+        queryClient.setQueryData(['groupedNotifications'], context.previousData);
       }
       if (context?.previousCount) {
         queryClient.setQueryData(['notificationCount'], context.previousCount);
       }
     },
     onSettled: () => {
-      // Always refetch after error or success
-      queryClient.invalidateQueries({ queryKey: ['notifications'] });
+      queryClient.invalidateQueries({ queryKey: ['groupedNotifications'] });
       queryClient.invalidateQueries({ queryKey: ['notificationCount'] });
     },
   });

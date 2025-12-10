@@ -9,23 +9,29 @@ import PageWrapper from '../components/layout/PageWrapper';
 import EmployeePageWrapper from '../components/layout/EmployeePageWrapper';
 // Admin Pages
 import AllClientsPage from '../pages/AllClientsPage';
-import AllTasksPage from '../pages/AllTasksPage'; 
+import AllTasksPage from '../pages/AllTasksPage';
 import ReceivablesPage from '../pages/ReceivablesPage';
 import PaidReceivablesPage from '../pages/PaidReceivablesPage';
 import OverdueReceivablesPage from '../pages/OverdueReceivablesPage';
 import ClientProfilePage from '../pages/ClientProfilePage';
 import DashboardPage from '../pages/DashboardPage';
-import SettingsPage from '../pages/SettingsPage'; 
+import SettingsPage from '../pages/SettingsPage';
 import TagsPage from '../pages/TagsPage';
 import EmployeeManagementPage from '../pages/EmployeeManagementPage';
-import EmployeeProfilePage from '../pages/EmployeeProfilePage'; 
+import EmployeeProfilePage from '../pages/EmployeeProfilePage';
+// Financial Center Pages
+import AccountsOverviewPage from '../pages/admin/AccountsOverviewPage';
+import InvoicesHubPage from '../pages/admin/InvoicesHubPage';
+import CompanyProfilePage from '../pages/admin/CompanyProfilePage';
 // Employee Pages
 import EmployeeDashboardPage from '../pages/employee/EmployeeDashboardPage';
 import EmployeeTasksPage from '../pages/employee/EmployeeTasksPage';
 import EmployeeClientsPage from '../pages/employee/EmployeeClientsPage';
-import EmployeeFinancialsPage from '../pages/employee/EmployeeFinancialsPage';
+import EmployeeFinancialsPage from '../pages/employee/EmployeeFinancialsPageRedesigned';
 import EmployeeClientProfilePage from '../pages/employee/EmployeeClientProfilePage';
 import EmployeeNotificationsPage from '../pages/employee/EmployeeNotificationsPage';
+import EmployeeClientReceivablesPage from '../pages/employee/EmployeeClientReceivablesPage';
+import PendingCommissionsPage from '@/pages/admin/PendingCommissionsPage';
 
 const routes: RouteObject[] = [
   {
@@ -38,7 +44,7 @@ const routes: RouteObject[] = [
     children: [
       // Root redirect based on role
       { index: true, element: <RoleBasedRedirect /> },
-      
+
       // Admin Routes
       {
         path: 'dashboard',
@@ -103,6 +109,18 @@ const routes: RouteObject[] = [
         ],
       },
       {
+        path: 'company',
+        element: <AdminRoute />, // Admin route guard
+        children: [
+          {
+            element: <PageWrapper />, // Admin layout wrapper
+            children: [
+              { path: ':id', element: <CompanyProfilePage /> },
+            ],
+          },
+        ],
+      },
+      {
         path: 'settings',
         element: <AdminRoute />, // Admin route guard
         children: [
@@ -128,7 +146,23 @@ const routes: RouteObject[] = [
           },
         ],
       },
-      
+      // Financial Center Routes
+      {
+        path: 'financial-center',
+        element: <AdminRoute />, // Admin route guard
+        children: [
+          {
+            element: <PageWrapper />, // Admin layout wrapper
+            children: [
+              { index: true, element: <Navigate to="accounts" replace /> },
+              { path: 'accounts', element: <AccountsOverviewPage /> },
+              { path: 'pending', element: <PendingCommissionsPage /> },
+              { path: 'invoices', element: <InvoicesHubPage /> },
+            ],
+          },
+        ],
+      },
+
       // Employee Routes (new)
       {
         path: 'employee',
@@ -142,6 +176,7 @@ const routes: RouteObject[] = [
               { path: 'tasks', element: <EmployeeTasksPage /> },
               { path: 'clients', element: <EmployeeClientsPage /> },
               { path: 'clients/:id', element: <EmployeeClientProfilePage /> },
+              { path: 'receivables', element: <EmployeeClientReceivablesPage /> },
               { path: 'financials', element: <EmployeeFinancialsPage /> },
               { path: 'notifications', element: <EmployeeNotificationsPage /> },
             ],

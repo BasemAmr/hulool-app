@@ -157,7 +157,7 @@ const EmployeeOwnTasksTable: React.FC<EmployeeOwnTasksTableProps> = ({
 
   if (isLoading) {
     return (
-      <div className="d-flex justify-content-center align-items-center p-5">
+      <div className="flex justify-center items-center p-5">
         <div className="spinner-border text-primary" role="status">
           <span className="visually-hidden">جاري التحميل...</span>
         </div>
@@ -167,9 +167,11 @@ const EmployeeOwnTasksTable: React.FC<EmployeeOwnTasksTableProps> = ({
 
   if (error) {
     return (
-      <div className="alert alert-danger" role="alert">
-        <AlertCircle size={20} className="me-2" />
-        خطأ في تحميل المهام. يرجى المحاولة مرة أخرى.
+      <div className="rounded-lg border border-destructive bg-destructive/10 p-4" role="alert">
+        <div className="flex items-center gap-2">
+          <AlertCircle size={20} className="text-destructive" />
+          <span className="text-destructive">خطأ في تحميل المهام. يرجى المحاولة مرة أخرى.</span>
+        </div>
       </div>
     );
   }
@@ -177,18 +179,18 @@ const EmployeeOwnTasksTable: React.FC<EmployeeOwnTasksTableProps> = ({
   if (tasks.length === 0) {
     return (
       <div className="text-center p-5">
-        <FileText size={48} className="text-muted mb-3" />
-        <h5 className="text-muted">لا توجد مهام</h5>
-        <p className="text-muted">لم يتم العثور على أي مهام بناءً على المعايير المحددة.</p>
+        <FileText size={48} className="text-black mb-3" />
+        <h5 className="text-black font-bold">لا توجد مهام</h5>
+        <p className="text-black text-sm">لم يتم العثور على أي مهام بناءً على المعايير المحددة.</p>
       </div>
     );
   }
 
   return (
-    <div className="card border-0 shadow-sm">
-      <div className="card-body p-0">
-        <div className="table-responsive">
-          <table className="table mb-0">
+    <div className="rounded-lg border-0 bg-card shadow-sm">
+      <div className="p-0">
+        <div className="w-full overflow-x-auto">
+          <table className="w-full mb-0">
             <thead style={{ backgroundColor: 'var(--color-gray-50)' }}>
               <tr>
                 <th style={{ padding: '8px', fontSize: 'var(--font-size-sm)', fontWeight: 'bold' }}>
@@ -223,6 +225,7 @@ const EmployeeOwnTasksTable: React.FC<EmployeeOwnTasksTableProps> = ({
                 return (
                 <tr
                   key={task.id}
+                  className="hover:bg-muted/50 transition-colors"
                   style={{
                     backgroundColor: isHighlighted 
                       ? 'rgba(255, 193, 7, 0.1)' 
@@ -234,16 +237,15 @@ const EmployeeOwnTasksTable: React.FC<EmployeeOwnTasksTableProps> = ({
                   {isHighlighted && (
                     <td colSpan={8} className="p-0" style={{ position: 'absolute', top: 0, left: 0, right: 0, zIndex: 10 }}>
                       <div 
-                        className="w-80 text-center py-1"
+                        className="w-full text-center py-1 cursor-pointer"
                         style={{ 
-                          backgroundColor: 'rgba(255, 193, 7, 0.1)', 
-                          cursor: 'pointer',
+                          backgroundColor: 'rgba(255, 193, 7, 0.1)',
                           fontSize: '0.8em'
                         }}
                         onClick={handleHighlightClick}
                         title="انقر لإزالة التمييز"
                       >
-                        <small className="text-dark fw-bold">
+                        <small className="text-black font-bold">
                           ⭐ هذه المهمة المحددة من الإشعار - انقر لإزالة التمييز
                         </small>
                       </div>
@@ -251,57 +253,52 @@ const EmployeeOwnTasksTable: React.FC<EmployeeOwnTasksTableProps> = ({
                   )}
                   {[
                     <td key="name" style={{ backgroundColor: getTypeRowStyle ? getTypeRowStyle(task.type).backgroundColor : 'transparent', padding: '8px', fontSize: 'var(--font-size-sm)' }}>
-                      <span className="fw-bold text-dark">{task.task_name || 'مهمة بدون اسم'}</span>
+                      <span className="font-bold text-black">{task.task_name || 'مهمة بدون اسم'}</span>
                     </td>,
                     <td key="notes" style={{ backgroundColor: getTypeRowStyle ? getTypeRowStyle(task.type).backgroundColor : 'transparent', padding: '8px', fontSize: 'var(--font-size-sm)' }}>
                       {task.notes ? (
-                        <div className="text-muted" style={{ fontSize: 'var(--font-size-xs)' }}>
+                        <div className="text-black text-xs">
                           {task.notes.length > 40 ? `${task.notes.substring(0, 40)}...` : task.notes}
                         </div>
                       ) : (
-                        <span className="text-muted">—</span>
+                        <span className="text-black">—</span>
                       )}
                     </td>,
                     <td key="client" style={{ backgroundColor: getTypeRowStyle ? getTypeRowStyle(task.type).backgroundColor : 'transparent', padding: '8px', fontSize: 'var(--font-size-sm)' }}>
-                      <div className="d-flex align-items-center gap-2">
+                      <div className="flex items-center gap-2">
                         {task.client?.id ? (
                           <Link 
                             to={`/employee/clients/${task.client.id}`}
-                            className="fw-medium text-decoration-none text-dark"
+                            className="font-medium no-underline text-black hover:text-primary transition-colors"
                           >
                             {task.client.name}
                           </Link>
                         ) : (
-                          <span className="fw-medium">{task.client?.name || 'غير محدد'}</span>
+                          <span className="font-medium">{task.client?.name || 'غير محدد'}</span>
                         )}
-                        <span className="text-muted" style={{ fontSize: 'var(--font-size-xs)' }}>{task.client?.phone}</span>
+                        <span className="text-black text-xs">{task.client?.phone}</span>
                         {task.client?.phone && (
                           <a
                             href={`https://wa.me/${task.client.phone.replace(/[^\d]/g, '')}`}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="btn btn-sm p-0"
+                            className="p-0 hover:scale-110 transition-transform"
                             title="إرسال رسالة واتساب"
-                            style={{ fontSize: '12px' }}
                           >
-                            <MessageCircle size={12} className="text-success" />
+                            <MessageCircle size={12} className="text-green-600" />
                           </a>
                         )}
                       </div>
                     </td>,
                     <td key="type" style={{ backgroundColor: getTypeRowStyle ? getTypeRowStyle(task.type).backgroundColor : 'transparent', padding: '8px', fontSize: 'var(--font-size-sm)' }}>
-                      <span className="badge" style={{ backgroundColor: 'var(--color-primary)', color: 'white', fontSize: '0.75rem' }}>{task.type}</span>
+                      <span className="px-2.5 py-1 bg-primary text-white rounded-full text-xs font-medium">{task.type}</span>
                     </td>,
                     <td key="status" style={{ backgroundColor: getTypeRowStyle ? getTypeRowStyle(task.type).backgroundColor : 'transparent', padding: '8px', fontSize: 'var(--font-size-sm)' }}>
                       {getStatusBadgeStyle ? (
                         <span 
-                          className="badge"
+                          className="inline-block px-2 py-1 rounded-xl text-xs font-medium"
                           style={{
-                            ...getStatusBadgeStyle(task.status),
-                            padding: '4px 8px',
-                            borderRadius: '12px',
-                            fontSize: '0.75rem',
-                            fontWeight: '500'
+                            ...getStatusBadgeStyle(task.status)
                           }}
                         >
                           {getStatusText(task.status)}
@@ -311,25 +308,24 @@ const EmployeeOwnTasksTable: React.FC<EmployeeOwnTasksTableProps> = ({
                       )}
                     </td>,
                     <td key="start" style={{ backgroundColor: getTypeRowStyle ? getTypeRowStyle(task.type).backgroundColor : 'transparent', padding: '8px', fontSize: 'var(--font-size-sm)' }}>
-                      <div className="d-flex align-items-center text-muted">
+                      <div className="flex items-center text-black">
                         <Calendar size={14} className="me-1" />
                         {formatDate(task.start_date)}
                       </div>
                     </td>,
                     <td key="end" style={{ backgroundColor: getTypeRowStyle ? getTypeRowStyle(task.type).backgroundColor : 'transparent', padding: '8px', fontSize: 'var(--font-size-sm)' }}>
-                      <div className="d-flex align-items-center text-muted">
+                      <div className="flex items-center text-black">
                         <Calendar size={14} className="me-1" />
                         {formatDate(task.end_date)}
                       </div>
                     </td>,
                     <td key="actions" style={{ backgroundColor: getTypeRowStyle ? getTypeRowStyle(task.type).backgroundColor : 'transparent', padding: '8px', fontSize: 'var(--font-size-sm)' }}>
-                      <div className="d-flex justify-content-center gap-1">
+                      <div className="flex justify-center gap-1">
                         {/* View Amount Details */}
                         <button
                           onClick={() => handleViewAmountDetails(task)}
-                          className="btn btn-sm btn-outline-info"
+                          className="px-1.5 py-0.5 text-xs border border-blue-500 text-blue-500 rounded hover:bg-blue-500 hover:text-white transition-colors"
                           title="عرض تفاصيل المبلغ"
-                          style={{ padding: '2px 6px' }}
                         >
                           <Eye size={12} />
                         </button>
@@ -337,9 +333,8 @@ const EmployeeOwnTasksTable: React.FC<EmployeeOwnTasksTableProps> = ({
                         {/* Edit Task */}
                         <button
                           onClick={() => handleEditTask(task)}
-                          className="btn btn-sm btn-outline-primary"
+                          className="px-1.5 py-0.5 text-xs border border-primary text-primary rounded hover:bg-primary hover:text-white transition-colors"
                           title="تعديل المهمة"
-                          style={{ padding: '2px 6px' }}
                         >
                           <Edit2 size={12} />
                         </button>
@@ -348,9 +343,8 @@ const EmployeeOwnTasksTable: React.FC<EmployeeOwnTasksTableProps> = ({
                         {['New', 'Deferred'].includes(task.status) && (
                           <button
                             onClick={() => handleSubmitForReview(task)}
-                            className="btn btn-sm btn-outline-success"
+                            className="px-1.5 py-0.5 text-xs border border-green-600 text-green-600 rounded hover:bg-green-600 hover:text-white transition-colors"
                             title="تقديم للمراجعة"
-                            style={{ padding: '2px 6px' }}
                             disabled={submitForReviewMutation.isPending}
                           >
                             <CheckCircle size={12} />
@@ -361,9 +355,8 @@ const EmployeeOwnTasksTable: React.FC<EmployeeOwnTasksTableProps> = ({
                         {task.requirements && task.requirements.length > 0 && (
                           <button
                             onClick={() => handleShowRequirements(task)}
-                            className="btn btn-sm btn-outline-warning"
+                            className="px-1.5 py-0.5 text-xs border border-yellow-600 text-yellow-600 rounded hover:bg-yellow-600 hover:text-white transition-colors"
                             title="عرض المتطلبات"
-                            style={{ padding: '2px 6px' }}
                           >
                             <FileText size={12} />
                           </button>
@@ -372,9 +365,8 @@ const EmployeeOwnTasksTable: React.FC<EmployeeOwnTasksTableProps> = ({
                         {/* Cancel Task */}
                         <button
                           onClick={() => handleDeleteTask(task)}
-                          className="btn btn-sm btn-outline-danger"
+                          className="px-1.5 py-0.5 text-xs border border-red-600 text-red-600 rounded hover:bg-red-600 hover:text-white transition-colors"
                           title="حذف المهمة"
-                          style={{ padding: '2px 6px' }}
                         >
                           <X size={12} />
                         </button>
@@ -397,7 +389,7 @@ const EmployeeOwnTasksTable: React.FC<EmployeeOwnTasksTableProps> = ({
               <span className="visually-hidden">جاري تحميل المزيد...</span>
             </div>
           ) : (
-            <div className="text-muted" style={{ fontSize: 'var(--font-size-sm)' }}>
+            <div className="text-black text-sm">
               عرض {tasks.length} مهمة
             </div>
           )}
@@ -406,8 +398,8 @@ const EmployeeOwnTasksTable: React.FC<EmployeeOwnTasksTableProps> = ({
       
       {/* Show total when no more data */}
       {!hasNextPage && tasks.length > 0 && (
-        <div className="card-footer bg-light border-0 text-center">
-          <small className="text-muted">
+        <div className="px-4 py-3 bg-muted/30 border-t border-border text-center">
+          <small className="text-black">
             تم عرض جميع المهام ({tasks.length} مهمة)
           </small>
         </div>

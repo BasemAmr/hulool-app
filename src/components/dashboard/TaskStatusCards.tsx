@@ -72,7 +72,7 @@ const TaskStatusCards = ({ stats, totalPaidAmount = 0, isLoading }: TaskStatusCa
             isClickable: true
         },
         { 
-            to: '/receivables/paid', 
+            to: '/financial-center/invoices?status=paid', 
             icon: SaudiRiyalIcon, 
             label: 'مستحقات مسددة', 
             value: hasViewAmountsPermission ? totalPaidAmount : '***', 
@@ -84,7 +84,7 @@ const TaskStatusCards = ({ stats, totalPaidAmount = 0, isLoading }: TaskStatusCa
             isClickable: hasViewPaidReceivablesPermission
         },
         { 
-            to: '/receivables/overdue', 
+            to: '/financial-center/invoices?status=overdue', 
             icon: SaudiRiyalIcon, 
             label: 'مستحقات متأخرة', 
             value: hasViewAmountsPermission ? (stats.total_unpaid_amount || 0) : '***', 
@@ -98,48 +98,18 @@ const TaskStatusCards = ({ stats, totalPaidAmount = 0, isLoading }: TaskStatusCa
     
     if (isLoading) {
         return (
-            <div className="d-flex gap-2 flex-wrap">
+            <div className="flex gap-3 flex-wrap">
                 {[1, 2, 3, 4, 5, 6, 7].map(i => (
                     <div 
                         key={i} 
-                        className="card border-0 shadow-sm"
-                        style={{ 
-                            backgroundColor: '#f8fafc',
-                            borderRadius: '8px',
-                            minWidth: '140px',
-                            flex: '1 1 auto'
-                        }}
+                        className="rounded-lg shadow-md bg-muted/30 min-w-[140px] flex-1"
                     >
-                        <div className="card-body p-2">
-                            <div className="d-flex align-items-center gap-2">
-                                <div 
-                                    className="skeleton" 
-                                    style={{ 
-                                        width: '20px', 
-                                        height: '20px', 
-                                        borderRadius: '4px',
-                                        backgroundColor: '#e2e8f0'
-                                    }}
-                                ></div>
-                                <div className="flex-grow-1">
-                                    <div 
-                                        className="skeleton mb-1" 
-                                        style={{ 
-                                            width: '50px', 
-                                            height: '10px',
-                                            backgroundColor: '#e2e8f0',
-                                            borderRadius: '4px'
-                                        }}
-                                    ></div>
-                                    <div 
-                                        className="skeleton" 
-                                        style={{ 
-                                            width: '30px', 
-                                            height: '16px',
-                                            backgroundColor: '#e2e8f0',
-                                            borderRadius: '4px'
-                                        }}
-                                    ></div>
+                        <div className="p-2">
+                            <div className="flex items-center gap-2">
+                                <div className="w-5 h-5 rounded bg-muted-foreground/20 animate-pulse"></div>
+                                <div className="flex-1">
+                                    <div className="h-2.5 w-12 bg-muted-foreground/20 rounded mb-1 animate-pulse"></div>
+                                    <div className="h-4 w-8 bg-muted-foreground/20 rounded animate-pulse"></div>
                                 </div>
                             </div>
                         </div>
@@ -150,23 +120,19 @@ const TaskStatusCards = ({ stats, totalPaidAmount = 0, isLoading }: TaskStatusCa
     }
 
     return (
-        <div className="d-flex gap-2 flex-wrap">
+        <div className="flex gap-3 mb-4 flex-wrap">
             {cardData.map(card => {
                 const CardContent = (
                     <div 
-                        className="card border-0 shadow-sm"
+                        className="rounded-lg shadow-md border-l-4 transition-all duration-200 min-w-[140px] flex-1"
                         style={{ 
                             backgroundColor: card.bgColor,
-                            borderLeft: `3px solid ${card.borderColor}`,
-                            borderRadius: '8px',
-                            transition: 'all 0.2s ease',
-                            minWidth: '140px',
-                            flex: '1 1 auto'
+                            borderLeftColor: card.borderColor,
                         }}
                     >
-                        <div className="card-body p-2">
-                            <div className="d-flex align-items-center gap-2">
-                                <div className="icon-wrapper">
+                        <div className="p-2">
+                            <div className="flex items-center gap-2">
+                                <div className="flex-shrink-0">
                                     {card.icon === SaudiRiyalIcon ? (
                                         <SaudiRiyalIcon 
                                             size={20} 
@@ -180,26 +146,16 @@ const TaskStatusCards = ({ stats, totalPaidAmount = 0, isLoading }: TaskStatusCa
                                         />
                                     )}
                                 </div>
-                                <div className="content-wrapper flex-grow-1">
+                                <div className="flex-1">
                                     <p 
-                                        className="mb-0" 
-                                        style={{ 
-                                            color: card.textColor,
-                                            fontSize: '0.7rem',
-                                            fontWeight: '600',
-                                            opacity: '0.9',
-                                            lineHeight: '1.1'
-                                        }}
+                                        className="mb-0 text-[0.7rem] font-semibold opacity-90 leading-tight" 
+                                        style={{ color: card.textColor }}
                                     >
                                         {card.label}
                                     </p>
                                     <h6 
-                                        className="mb-0 fw-bold" 
-                                        style={{ 
-                                            color: card.textColor,
-                                            fontSize: '1rem',
-                                            lineHeight: '1.2'
-                                        }}
+                                        className="mb-0 font-bold text-base leading-tight" 
+                                        style={{ color: card.textColor }}
                                     >
                                         {(card.label === 'مستحقات مسددة' || card.label === 'مستحقات متأخرة') 
                                             ? (typeof card.value === 'number' ? card.value.toLocaleString('ar-SA') : card.value)
@@ -219,18 +175,7 @@ const TaskStatusCards = ({ stats, totalPaidAmount = 0, isLoading }: TaskStatusCa
                     <Link 
                         key={card.label}
                         to={card.to} 
-                        className="text-decoration-none"
-                        style={{
-                            flex: '1 1 auto',
-                            minWidth: '140px',
-                            transition: 'transform 0.2s ease'
-                        }}
-                        onMouseEnter={(e) => {
-                            e.currentTarget.style.transform = 'translateY(-2px)';
-                        }}
-                        onMouseLeave={(e) => {
-                            e.currentTarget.style.transform = 'translateY(0)';
-                        }}
+                        className="no-underline flex-1 min-w-[140px] transition-transform duration-200 hover:-translate-y-0.5"
                     >
                         {CardContent}
                     </Link>

@@ -27,11 +27,16 @@ import {
 import { arrayMove, sortableKeyboardCoordinates, SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable';
 
 import CollapsibleTaskStatusCards from '../components/dashboard/CollapsibleTaskStatusCards';
-import DashboardClientCard from '../components/dashboard/DashboardClientCard';
-import SortableClientCard from '../components/dashboard/SortableClientCard';
 import DashboardTaskTypeFilter from '../components/dashboard/DashboardTaskTypeFilter';
 import EmployeeTasksColumn from '../components/dashboard/EmployeeTasksColumn';
 import { useUpdateClientSortOrder } from '../queries/clientQueries';
+
+// New unified components
+import { 
+  SortableBaseClientCard, 
+  AdminDashboardClientCard,
+  CardColumnContainer 
+} from '../components/common/BaseClientCard';
 
 const DashboardPage = () => {
     const { t } = useTranslation();
@@ -108,56 +113,32 @@ const DashboardPage = () => {
 
     const columnTypes: (keyof typeof taskTypeConfig)[] = ['Government', 'Accounting', 'Real Estate', 'Other'];
 
-    // const findClientDataById = (id: string | number): { clientData: ClientWithTasksAndStats, type: keyof GroupedClientsResponse } | null => {
-    //     if (!groupedClients) return null;
-    //     const clientId = id.toString();
-        
-    //     for (const type in groupedClients) {
-    //         const key = type as keyof GroupedClientsResponse;
-    //         const client = groupedClients[key].find(c => c.client.id.toString() === clientId);
-    //         if (client) {
-    //             return { clientData: client, type: key };
-    //         }
-    //     }
-    //     return null;
-    // };
-
     function handleDragStart(event: DragStartEvent): void {
         const { active } = event;
-        // console.log('Drag started for:', active.id);
         
         // Parse the composite ID (format: "containerType-clientId")
         const [containerType, clientId] = active.id.toString().split('-');
         const container = containerType as keyof GroupedClientsResponse;
-        
-        // console.log('Container:', container, 'ClientId:', clientId);
         
         if (groupedClients && container && clientId) {
             const clientData = groupedClients[container].find(c => c.client.id.toString() === clientId);
             if (clientData) {
                 setActiveDragItem(clientData);
                 setActiveContainer(container);
-                // console.log('Found client data:', clientData.client.name, 'in container:', container);
             }
         }
     }
 
     function handleDragEnd(event: DragEndEvent): void {
-        // console.log('Drag ended');
-        
         const { active, over } = event;
 
         if (!active || !over || active.id === over.id) {
-            // console.log('No valid drop target or same position');
             setActiveDragItem(null);
             setActiveContainer(null);
             return;
         }
 
-        // console.log('Active:', active.id, 'Over:', over.id);
-
         if (!groupedClients || !activeContainer) {
-            // console.log('Missing groupedClients or activeContainer');
             setActiveDragItem(null);
             setActiveContainer(null);
             return;
@@ -169,7 +150,6 @@ const DashboardPage = () => {
         
         // Only allow reordering within the same container
         if (activeContainerType !== overContainerType) {
-            // console.log('Cross-container drag not supported');
             setActiveDragItem(null);
             setActiveContainer(null);
             return;
@@ -178,8 +158,6 @@ const DashboardPage = () => {
         const containerItems = groupedClients[activeContainer];
         const oldIndex = containerItems.findIndex(c => c.client.id.toString() === activeClientId);
         const newIndex = containerItems.findIndex(c => c.client.id.toString() === overClientId);
-
-        // console.log('Old index:', oldIndex, 'New index:', newIndex);
 
         if (oldIndex !== -1 && newIndex !== -1 && oldIndex !== newIndex) {
             const reorderedItems = arrayMove(containerItems, oldIndex, newIndex);
@@ -200,18 +178,14 @@ const DashboardPage = () => {
             });
             const typeForApi = activeContainer === 'Real Estate' ? 'RealEstate' : activeContainer;
             
-            // console.log('Making API call with:', { taskType: typeForApi, clientIds });
-            
             updateSortOrderMutation.mutate(
                 { taskType: typeForApi, clientIds },
                 {
                     onSuccess: () => {
-                        // console.log('Sort order updated successfully');
+                        // Sort order updated successfully
                     },
                     onError: (error) => {
                         console.error('Failed to update sort order:', error);
-                        // Revert optimistic update - refresh data from server
-                        // Handled by React Query's automatic refetch
                     }
                 }
             );
@@ -223,7 +197,7 @@ const DashboardPage = () => {
     }
 
     return (
-        <div className="dashboard-page" style={{ position: 'relative', paddingBottom: '200px' }}>
+        <div className="relative pb-[200px]">
             {/* Task Type Filter - Floating Component */}
             <DashboardTaskTypeFilter 
                 value={taskTypeFilter}
@@ -245,8 +219,8 @@ const DashboardPage = () => {
             />
 
             {isLoadingClients && (
-                <div className="d-flex justify-content-center py-5">
-                    <div className="loading-spinner size-lg"></div>
+                <div className="flex justify-center py-12">
+                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
                 </div>
             )}
 
@@ -258,125 +232,51 @@ const DashboardPage = () => {
             >
                 {!isLoadingClients && taskTypeFilter === 'admin' && groupedClients && (
                     // *** ADMIN VIEW - Task Type Columns ***
-                    <div className="dashboard-columns-container" style={{ minHeight: 'calc(100vh - 200px)', overflow: 'visible', position: 'relative', zIndex: 1 }}>
-                        <div className="recent-tasks-section" style={{ overflow: 'visible', position: 'relative', zIndex: 1 }}>
-                            <div className="row g-0" style={{ overflow: 'visible', position: 'relative', zIndex: 1 }}>
+                    <div className="min-h-[calc(100vh-200px)] overflow-visible relative z-[1]">
+                        <div className="overflow-visible relative z-[1]">
+                            <div className="grid grid-cols-1 lg:grid-cols-4 gap-0 overflow-visible relative z-[1]">
                                 {columnTypes.map((type, columnIndex) => {
                                 const clients = groupedClients[type] || [];
                                 const config = taskTypeConfig[type];
 
                                 return (
-                                    <div className="col-lg-3 p-2" key={type} style={{
-                                        overflow: 'visible',
-                                        position: 'relative',
-                                        zIndex: 10 - columnIndex, // Higher z-index for leftmost columns
-                                        isolation: 'auto' // Don't create new stacking context
-                                    }}>
-                                        <div
-                                            className="card"
-                                            style={{
-                                                borderRadius: '0',
-                                                border: '1px solid #dee2e6',
-                                                borderRight: type === 'Other' ? '1px solid #dee2e6' : 'none',
-                                                minHeight: '400px',
-                                                display: 'flex',
-                                                flexDirection: 'column',
-                                                overflow: 'visible',
-                                                position: 'relative'
-                                            }}
+                                    <div 
+                                        className="p-2 overflow-visible relative" 
+                                        key={type} 
+                                        style={{ zIndex: 10 - columnIndex }}
+                                    >
+                                        <CardColumnContainer
+                                            title={`خدمات ${config.displayName}`}
+                                            icon={config.icon}
+                                            primaryColor={config.color}
+                                            itemCount={clients.length}
+                                            moreLink={`/tasks?type=${type}`}
+                                            darkText={type === 'Accounting'}
+                                            isEmpty={clients.length === 0}
+                                            emptyMessage={t('common.noResults')}
+                                            className={type === 'Other' ? '' : 'border-r-0'}
                                         >
-                                            {/* Fixed Header */}
-                                            <div
-                                                className="card-header text-white d-flex justify-content-center align-items-center py-2 border-bottom"
-                                                style={{
-                                                    background: config.color,
-                                                    color: type === 'Accounting' ? '#333' : '#fff',
-                                                    borderBottom: '1px solid #dee2e6',
-                                                    flexShrink: 0
-                                                }}
-                                            >
-                                                <div className="d-flex justify-content-center align-items-center font-weight-bold">
-                                                    <span style={{ color: '#000' }}>
-                                                        {config.icon}
-                                                    </span>
-                                                    <Link
-                                                        to={`/tasks?type=${type}`}
-                                                        className="text-decoration-none ms-2 text-center"
-                                                        style={{ color: '#000' }}
-                                                    >
-                                                        <h6 className="mb-0 fw-medium text-center">
-                                                            خدمات {config.displayName}
-                                                        </h6>
-                                                    </Link>
-                                                </div>
-                                                <span className="badge bg-white text-primary rounded-pill px-2 py-1 text-black">
-                                                    {clients.length}
-                                                </span>
-                                            </div>
-
-                                            {/* Scrollable Card Body */}
-                                            <div
-                                                className="card-body p-0"
-                                                style={{
-                                                    minHeight: clients.length === 0 ? '200px' : 'auto',
-                                                    overflowY: 'visible',
-                                                    overflowX: 'visible',
-                                                    flex: 1,
-                                                    zIndex: 0
-                                                }}
-                                            >
-                                                {clients.length > 0 ? (
-                                                    <SortableContext 
-                                                        items={clients.map(c => `${type}-${c.client.id}`)}
-                                                        strategy={verticalListSortingStrategy}
-                                                    >
-                                                        {clients.map((clientData, index) => (
-                                                            <div key={`${type}-${clientData.client.id}`}>
-                                                                <SortableClientCard
-                                                                    clientData={clientData}
-                                                                    containerType={type}
-                                                                    alternatingColors={config.alternatingColors}
-                                                                    onAssign={handleAssignTask}
-                                                                />
-                                                                {index < clients.length - 1 && (
-                                                                    <hr className="m-0" style={{ borderColor: '#dee2e6', pointerEvents: 'none' }} />
-                                                                )}
-                                                            </div>
-                                                        ))}
-                                                    </SortableContext>
-                                                ) : (
-                                                    <div className="empty-state py-5 text-center">
-                                                        <div className="empty-icon mb-3">
-                                                            <i className="fas fa-clipboard-list fa-3x text-gray-400"></i>
-                                                        </div>
-                                                        <p className="empty-description text-muted mb-0">
-                                                            {t('common.noResults')}
-                                                        </p>
-                                                    </div>
-                                                )}
-                                            </div>
-
-                                            {/* Fixed Footer */}
-                                            <div
-                                                className="card-footer py-2 border-top"
-                                                style={{
-                                                    flexShrink: 0,
-                                                    backgroundColor: config.color
-                                                }}
-                                            >
-                                                <Link
-                                                    to={`/tasks?type=${type}`}
-                                                    className="btn btn-sm w-100 fw-medium text-white"
-                                                    style={{
-                                                        backgroundColor: 'transparent',
-                                                        border: '1px solid rgba(255,255,255,0.3)',
-                                                        color: type === 'Accounting' ? '#333' : '#fff'
-                                                    }}
+                                            {clients.length > 0 && (
+                                                <SortableContext 
+                                                    items={clients.map(c => `${type}-${c.client.id}`)}
+                                                    strategy={verticalListSortingStrategy}
                                                 >
-                                                    عرض المزيد
-                                                </Link>
-                                            </div>
-                                        </div>
+                                                    {clients.map((clientData) => (
+                                                        <SortableBaseClientCard
+                                                            key={`${type}-${clientData.client.id}`}
+                                                            data={clientData}
+                                                            role="admin"
+                                                            context="admin-dashboard"
+                                                            sortableId={`${type}-${clientData.client.id}`}
+                                                            alternatingColors={config.alternatingColors}
+                                                            onAssign={handleAssignTask}
+                                                            showAmount={true}
+                                                            showEmployeePrefix={true}
+                                                        />
+                                                    ))}
+                                                </SortableContext>
+                                            )}
+                                        </CardColumnContainer>
                                     </div>
                                 );
                                 })}
@@ -387,32 +287,12 @@ const DashboardPage = () => {
 
                 {!isLoadingClients && taskTypeFilter === 'employee' && employeeTasksGrouped && (
                     // *** EMPLOYEE VIEW - Employee Task Columns ***
-                    <div className="employee-dashboard-container" style={{ 
-                        overflow: 'visible', 
-                        position: 'relative', 
-                        zIndex: 1,
-                        display: 'flex',
-                        flexDirection: 'column'
-                    }}>
-                        <div className="employee-tasks-section" style={{ 
-                            overflow: 'visible', 
-                            position: 'relative', 
-                            zIndex: 1,
-                            display: 'flex'
-                        }}>
-                            <div className="row g-3" style={{ 
-                                overflow: 'visible', 
-                                position: 'relative', 
-                                zIndex: 1,
-                                justifyContent: 'flex-start',
-                                width: '100%',
-                                margin: 0,
-                                padding: 0,
-                                flex: 1,
-                                display: 'flex',
-                                alignItems: 'flex-start',
-                                perspective: '1000px'
-                            }}>
+                    <div className="overflow-visible relative z-[1] flex flex-col">
+                        <div className="overflow-visible relative z-[1] flex">
+                            <div 
+                                className="flex gap-3 overflow-visible relative z-[1] justify-start w-full m-0 p-0 flex-1 items-start"
+                                style={{ perspective: '1000px' }}
+                            >
                                 {employeeTasksGrouped.map((employeeGroup, index) => {
                                     // Color rotation for different employees
                                     const colorIndex = index % Object.values(taskTypeConfig).length;
@@ -437,58 +317,41 @@ const DashboardPage = () => {
 
                                     return (
                                         <div 
-                                            className="col-lg-2-4" 
                                             key={`employee-${employeeGroup.employee_id}`} 
+                                            className="overflow-visible relative flex"
                                             style={{
-                                                overflow: 'visible',
-                                                position: 'relative',
                                                 zIndex: 10 - index,
-                                                isolation: 'auto',
-                                                // Responsive columns layout
                                                 flex: `0 0 ${getColumnWidth()}`,
                                                 minWidth: 0,
-                                                display: 'flex',
                                                 perspective: '1000px'
                                             }}
                                         >
                                             <div
-                                                className="card h-100 shadow-sm"
+                                                className="h-full shadow-sm rounded-none overflow-visible relative flex flex-col transition-all duration-300 w-full"
                                                 style={{
-                                                    borderRadius: '0px',
                                                     border: `3px solid ${currentConfig.color}`,
-                                                    overflow: 'visible',
-                                                    position: 'relative',
-                                                    display: 'flex',
-                                                    flexDirection: 'column',
-                                                    transition: 'all 0.3s ease-in-out',
-                                                    width: '100%'
                                                 }}
                                             >
                                                 {/* Header */}
                                                 <div
-                                                    className="card-header text-white d-flex justify-content-between align-items-center py-3 border-0"
-                                                    style={{
-                                                        backgroundColor: currentConfig.color,
-                                                        borderRadius: 0,
-                                                        flexShrink: 0
-                                                    }}
+                                                    className="flex justify-between items-center py-3 border-0 rounded-none flex-shrink-0"
+                                                    style={{ backgroundColor: currentConfig.color }}
                                                 >
-                                                    <div className="d-flex align-items-center gap-2" style={{ width: '100%', justifyContent: 'center' }}>
+                                                    <div className="flex items-center gap-2 w-full justify-center">
                                                         <Link
                                                             to={`/employees/${employeeGroup.employee_id}`}
-                                                            className="text-decoration-none"
+                                                            className="no-underline"
                                                             style={{ color: 'inherit' }}
                                                             title="عرض ملف الموظف"
                                                         >
-                                                            <h6 className="mb-0 fw-bold text-white">
+                                                            <h6 className="mb-0 font-bold text-white">
                                                                 المهام - {employeeGroup.employee_name}
                                                             </h6>
                                                         </Link>
-                                                        <span className="badge bg-white rounded-pill px-2 py-1" style={{ 
-                                                            color: currentConfig.color,
-                                                            fontWeight: 'bold',
-                                                            fontSize: '0.85em'
-                                                        }}>
+                                                        <span 
+                                                            className="bg-white rounded-full px-2 py-1 font-bold text-[0.85em]"
+                                                            style={{ color: currentConfig.color }}
+                                                        >
                                                             {totalClients}
                                                         </span>
                                                     </div>
@@ -496,16 +359,8 @@ const DashboardPage = () => {
 
                                                 {/* Body - Scrollable */}
                                                 <div
-                                                    className="card-body p-0"
-                                                    style={{
-                                                        overflow: 'visible',
-                                                        backgroundColor: 'transparent',
-                                                        zIndex: 0,
-                                                        minHeight: 0,
-                                                        display: 'flex',
-                                                        flexDirection: 'column',
-                                                        isolation: 'auto'
-                                                    }}
+                                                    className="p-0 overflow-visible bg-transparent z-0 min-h-0 flex flex-col"
+                                                    style={{ isolation: 'auto' }}
                                                 >
                                                     <EmployeeTasksColumn
                                                         groupedByEmployee={[employeeGroup]}
@@ -523,11 +378,11 @@ const DashboardPage = () => {
                 )}
 
                 {!isLoadingClients && !groupedClients && !employeeTasksGrouped && (
-                    <div className="empty-state py-5 text-center">
-                        <div className="empty-icon mb-3">
+                    <div className="py-12 text-center">
+                        <div className="mb-3">
                             <i className="fas fa-clipboard-list fa-3x text-gray-400"></i>
                         </div>
-                        <p className="empty-description text-muted mb-0">
+                        <p className="text-muted-foreground mb-0">
                             {t('common.noResults')}
                         </p>
                     </div>
@@ -540,12 +395,11 @@ const DashboardPage = () => {
                     }}
                 >
                     {activeDragItem ? (
-                        <div style={{ 
-                            width: '300px', // Fixed width for drag overlay
-                            opacity: 0.9,
-                            transform: 'rotate(5deg)' // Slight rotation for visual feedback
-                        }}>
-                            <DashboardClientCard
+                        <div 
+                            className="w-[300px] opacity-90"
+                            style={{ transform: 'rotate(5deg)' }}
+                        >
+                            <AdminDashboardClientCard
                                 data={activeDragItem}
                                 alternatingColors={['#fff', '#f1f1f1']}
                             />

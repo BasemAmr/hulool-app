@@ -1,17 +1,22 @@
 // Admin view: Groups tasks by employee, then by client within each employee
 import { useState, useRef, useMemo, useEffect } from 'react';
-import { createPortal } from 'react-dom';
 import { useTranslation } from 'react-i18next';
 import type { Task, Client } from '../../api/types';
 import { useModalStore } from '../../stores/modalStore';
 import { useQueryClient } from '@tanstack/react-query';
 import { MoreVertical, Pause, Play, X, ListChecks, MessageSquare, AlertTriangle, Eye, Upload, Receipt } from 'lucide-react';
-import { Dropdown } from 'react-bootstrap';
 import { Link } from 'react-router-dom';
 import { useToast } from '../../hooks/useToast';
 import { useDeferTask, useResumeTask, useCancelTask, useUpdateTask } from '../../queries/taskQueries';
 import { useDrawerStore } from '../../stores/drawerStore';
 import { useAdminSubmitTaskForReview } from '../../employee_management_temp_page/employeeManagementQueries';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+  DropdownMenuSeparator,
+} from '../ui/dropdown-menu';
 import { 
   DndContext, 
   PointerSensor, 
@@ -25,6 +30,8 @@ import { arrayMove, sortableKeyboardCoordinates, SortableContext, verticalListSo
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { FloatingCardWrapper } from '../common/FloatingCardWrapper';
+import { Badge } from '../ui/badge';
+import { cn } from '@/lib/utils';
 
 export interface GroupedClientsByType {
   [key: string]: Array<{
@@ -121,16 +128,7 @@ const SortableAdminEmployeeClientCard = ({
       {/* Drag Handle */}
       <div
         {...listeners}
-        style={{
-          cursor: 'grab',
-          padding: '3px 8px',
-          backgroundColor: '#e8e8e8ff',
-          borderBottom: '1px solid rgba(0,0,0,0.1)',
-          fontSize: '10px',
-          color: '#585858ff',
-          textAlign: 'center',
-          userSelect: 'none'
-        }}
+        className="cursor-grab px-2 py-1 bg-gray-200 border-b border-black/10 text-[10px] text-gray-600 text-center select-none"
       >
         ⋮⋮ اسحب لإعادة الترتيب
       </div>
@@ -142,7 +140,7 @@ const SortableAdminEmployeeClientCard = ({
           alternatingColors={alternatingColors}
           index={index}
           onAssign={onAssign}
-          onWidthCalculated={setDynamicWidth} // Pass callback
+          onWidthCalculated={setDynamicWidth}
         />
       </FloatingCardWrapper>
     </div>
@@ -177,11 +175,7 @@ const AdminEmployeeClientCard = ({
   const submitForReviewMutation = useAdminSubmitTaskForReview();
   const cardRef = useRef<HTMLDivElement>(null);
   const taskRowRefs = useRef<(HTMLTableRowElement | null)[]>([]);
-  const cardBodyRef = useRef<HTMLDivElement>(null);
-  const dropdownMenuRef = useRef<HTMLDivElement>(null);
   const [isHovered, setIsHovered] = useState(false);
-  const [activeDropdownTaskId, setActiveDropdownTaskId] = useState<number | null>(null);
-  const [dropdownPosition, setDropdownPosition] = useState<{ top: number; left: number } | null>(null);
 
   useEffect(() => {
     if (isHovered && cardRef.current && taskRowRefs.current.length > 0 && onWidthCalculated) {
@@ -202,30 +196,7 @@ const AdminEmployeeClientCard = ({
         onWidthCalculated('100%');
       }
     }
-  }, [isHovered]);
-
-  // Handle click outside to close dropdown
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (activeDropdownTaskId && dropdownPosition) {
-        const dropdownToggle = document.querySelector(`[data-task-id="${activeDropdownTaskId}"] .dropdown-toggle`);
-        if (dropdownMenuRef.current && dropdownToggle &&
-            !dropdownMenuRef.current.contains(event.target as Node) &&
-            !dropdownToggle.contains(event.target as Node)) {
-          setActiveDropdownTaskId(null);
-          setDropdownPosition(null);
-        }
-      }
-    };
-
-    if (activeDropdownTaskId) {
-      document.addEventListener('mousedown', handleClickOutside);
-    }
-
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
-    };
-  }, [activeDropdownTaskId, dropdownPosition]);
+  }, [isHovered, onWidthCalculated]);
 
   const handleAction = (mutation: any, task: Task, successKey: string, successMessageKey: string, errorKey: string) => {
     mutation.mutate({ id: task.id }, {
@@ -361,142 +332,70 @@ const AdminEmployeeClientCard = ({
   return (
     <div
       ref={cardRef}
-      className="card h-100 shadow-sm admin-employee-client-card"
+      className="h-full shadow-sm rounded-none overflow-visible relative transition-all duration-300 flex flex-col"
       style={{
-        borderRadius: '0px',
         border: `3px solid ${borderColor}`,
-        overflow: 'visible',
-        position: 'relative',
-        transition: 'all 0.3s ease-in-out',
-        display: 'flex',
-        flexDirection: 'column'
       }}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
       {/* Header */}
       <div
-        className="card-header border-0 py-2"
-        style={{
-          backgroundColor: headerColor,
-          borderRadius: 0
-        }}
+        className="border-0 py-2 rounded-none"
+        style={{ backgroundColor: headerColor }}
       >
-        <div className="d-flex justify-content-between align-items-center">
-          <div className="d-flex align-items-center gap-2">
-            <span style={{ fontSize: '0.85em' }}>
+        <div className="flex justify-between items-center px-2">
+          <div className="flex items-center gap-2">
+            <span className="text-sm">
               {client.phone}
             </span>
           </div>
 
-          <div className="d-flex align-items-center justify-content-center gap-2">
+          <div className="flex items-center justify-center gap-2">
             <Link
               to={`/clients/${client.id}`}
-              className="text-decoration-none fw-bold text-black"
-              style={{ fontSize: '0.95em' }}
+              className="no-underline font-bold text-black text-[0.95em]"
             >
               {client.name}
             </Link>
             {isClientUrgent && (
-              <AlertTriangle size={12} className="text-warning" />
+              <AlertTriangle size={12} className="text-yellow-500" />
             )}
           </div>
 
-          <Dropdown align="end">
-            <Dropdown.Toggle
-              as="button"
-              className="btn btn-outline-light btn-sm p-1 border-0 text-black"
-              style={{ background: 'none' }}
-            >
-              <MoreVertical size={14} />
-            </Dropdown.Toggle>
-
-            <Dropdown.Menu
-              style={{
-                fontSize: '0.85em',
-                direction: 'rtl',
-                textAlign: 'right',
-                zIndex: 1060,
-                position: 'absolute'
-              }}
-            >
-              <Dropdown.Item onClick={() => openModal('taskForm', { client })} className="text-end">
-                <Receipt size={14} className="ms-2" />
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <button className="p-1 rounded hover:bg-white/20 transition-all duration-200 cursor-pointer border-0 bg-transparent text-black">
+                <MoreVertical size={14} />
+              </button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="text-right min-w-[150px]" style={{ direction: 'rtl' }}>
+              <DropdownMenuItem onClick={() => openModal('taskForm', { client })} className="text-right cursor-pointer">
+                <Receipt size={14} className="ml-2" />
                 إضافة مهمة
-              </Dropdown.Item>
-            </Dropdown.Menu>
-          </Dropdown>
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       </div>
 
       {/* Body - Tasks Table */}
       <div
-        ref={cardBodyRef}
-        className="card-body p-0"
-        style={{
-          position: 'relative',
-          backgroundColor: row1Color,
-          overflow: 'visible',
-          display: 'flex',
-          flexDirection: 'column'
-        }}
+        className="p-0 relative overflow-visible flex flex-col"
+        style={{ backgroundColor: row1Color }}
       >
-        <div
-          className="table-responsive"
-          style={{
-            overflow: 'auto',
-            position: 'relative'
-          }}
-        >
-          <table className="table table-sm mb-0">
-            <thead
-              style={{
-                position: 'sticky',
-                top: 0,
-                zIndex: 2,
-                border: 'none'
-              }}
-            >
+        <div className="overflow-auto relative">
+          <table className="w-full text-sm">
+            <thead className="sticky top-0 z-[2]">
               <tr>
-                <th style={{
-                  fontSize: '0.8em',
-                  padding: '6px 8px',
-                  backgroundColor: headerColor,
-                  border: 'none'
-                }}>الخدمة</th>
-                <th style={{
-                  fontSize: '0.8em',
-                  padding: '6px 8px',
-                  backgroundColor: headerColor,
-                  border: 'none'
-                }}>النوع</th>
-                <th style={{
-                  fontSize: '0.8em',
-                  padding: '6px 8px',
-                  backgroundColor: headerColor,
-                  border: 'none'
-                }}>الحالة</th>
-                <th style={{
-                  fontSize: '0.8em',
-                  padding: '6px 8px',
-                  backgroundColor: headerColor,
-                  border: 'none'
-                }}>الوقت</th>
-                <th style={{
-                  fontSize: '0.8em',
-                  padding: '6px 8px',
-                  width: '80px',
-                  minWidth: '80px',
-                  backgroundColor: headerColor,
-                  border: 'none'
-                }}>الإجراءات</th>
+                <th className="text-[0.8em] px-2 py-1.5 border-0" style={{ backgroundColor: headerColor }}>الخدمة</th>
+                <th className="text-[0.8em] px-2 py-1.5 border-0" style={{ backgroundColor: headerColor }}>النوع</th>
+                <th className="text-[0.8em] px-2 py-1.5 border-0" style={{ backgroundColor: headerColor }}>الحالة</th>
+                <th className="text-[0.8em] px-2 py-1.5 border-0" style={{ backgroundColor: headerColor }}>الوقت</th>
+                <th className="text-[0.8em] px-2 py-1.5 w-20 min-w-[80px] border-0" style={{ backgroundColor: headerColor }}>الإجراءات</th>
               </tr>
             </thead>
-            <tbody
-              style={{
-                overflow: 'visible'
-              }}
-            >
+            <tbody className="overflow-visible">
               {tasks.map((task, idx) => {
                 const isUrgent = task.tags?.some(tag => tag.name === 'قصوى');
                 const rowColor = idx % 2 === 0 ? row1Color : row2Color;
@@ -506,123 +405,157 @@ const AdminEmployeeClientCard = ({
                   <tr
                     key={task.id}
                     ref={(el) => { taskRowRefs.current[idx] = el; }}
-                    style={{
-                      backgroundColor: rowColor,
-                      borderBottom: '1px solid rgba(0,0,0,0.05)',
-                      opacity: isDeferred ? 0.6 : 1,
-                      position: 'relative',
-                      border: 'none',
-                      transition: 'all 0.2s ease-in-out'
-                    }}
-                    className="task-row"
+                    className={cn(
+                      "border-b border-black/5 relative transition-all duration-200",
+                      isDeferred && "opacity-60"
+                    )}
+                    style={{ backgroundColor: rowColor }}
                   >
                     {/* Service */}
-                    <td style={{
-                      fontSize: '0.82em',
-                      padding: '8px',
-                      color: 'black',
-                      backgroundColor: rowColor,
-                      border: 'none'
-                    }}>
-                      <div className="d-flex align-items-center gap-1">
-                        <span className="text-truncate" style={{ maxWidth: 180, display: 'inline-block' }}>
+                    <td className="text-[0.82em] px-2 py-2 text-black border-0" style={{ backgroundColor: rowColor }}>
+                      <div className="flex items-center gap-1">
+                        <span className="truncate max-w-[180px] inline-block">
                           {task.task_name || t(`type.${task.type}`)}
                         </span>
                         {isUrgent && (
-                          <AlertTriangle size={10} className="text-danger" />
+                          <AlertTriangle size={10} className="text-red-500" />
                         )}
                       </div>
                     </td>
 
                     {/* Type */}
-                    <td style={{
-                      fontSize: '0.77em',
-                      padding: '8px',
-                      color: 'black',
-                      backgroundColor: rowColor,
-                      border: 'none'
-                    }}>
-                      <span>
-                        {t(`type.${task.type}`)}
-                      </span>
+                    <td className="text-[0.77em] px-2 py-2 text-black border-0" style={{ backgroundColor: rowColor }}>
+                      <span>{t(`type.${task.type}`)}</span>
                     </td>
 
                     {/* Status */}
-                    <td style={{
-                      fontSize: '0.77em',
-                      padding: '8px',
-                      color: 'black',
-                      backgroundColor: rowColor,
-                      border: 'none'
-                    }} className="text-center">
-                      <span
-                        className={`badge ${
-                          task.status === 'New' ? 'bg-warning text-dark' :
-                          task.status === 'Deferred' ? 'bg-danger' :
-                          task.status === 'Pending Review' ? 'bg-info text-dark' :
-                          task.status === 'Completed' ? 'bg-success' :
-                          'bg-secondary'
-                        }`}
-                        style={{ fontSize: '0.7em' }}
+                    <td className="text-[0.77em] px-2 py-2 text-black border-0 text-center" style={{ backgroundColor: rowColor }}>
+                      <Badge
+                        variant={
+                          task.status === 'New' ? 'default' :
+                          task.status === 'Deferred' ? 'destructive' :
+                          task.status === 'Pending Review' ? 'secondary' :
+                          task.status === 'Completed' ? 'default' :
+                          'outline'
+                        }
+                        className={cn(
+                          "text-[0.7em]",
+                          task.status === 'New' && "bg-yellow-500 text-black hover:bg-yellow-500",
+                          task.status === 'Pending Review' && "bg-blue-400 text-black hover:bg-blue-400",
+                          task.status === 'Completed' && "bg-green-500 text-white hover:bg-green-500"
+                        )}
                       >
                         {t(`status.${task.status}`)}
-                      </span>
+                      </Badge>
                     </td>
 
                     {/* Time Elapsed */}
-                    <td style={{
-                      fontSize: '0.77em',
-                      padding: '8px',
-                      color: 'black',
-                      backgroundColor: rowColor,
-                      border: 'none'
-                    }} className="text-center">
-                      <span className="text-muted">
+                    <td className="text-[0.77em] px-2 py-2 text-black border-0 text-center" style={{ backgroundColor: rowColor }}>
+                      <span className="text-muted-foreground">
                         {formatDaysElapsed(task.start_date)}
                       </span>
                     </td>
 
                     {/* Actions */}
                     <td
-                      className="task-actions"
-                      style={{
-                        padding: '8px',
-                        position: 'static',
-                        color: 'black',
-                        backgroundColor: rowColor,
-                        border: 'none',
-                        minWidth: '50px',
-                        whiteSpace: 'nowrap'
-                      }}
-                      data-task-id={task.id}
+                      className="px-2 py-2 static text-black border-0 min-w-[50px] whitespace-nowrap"
+                      style={{ backgroundColor: rowColor }}
                     >
-                      <Dropdown show={activeDropdownTaskId === task.id} onToggle={(isOpen) => {
-                        if (isOpen) {
-                          setActiveDropdownTaskId(task.id);
-                          // Calculate position relative to trigger button
-                          const triggerElement = document.querySelector(`[data-task-id="${task.id}"] .dropdown-toggle`) as HTMLElement;
-                          if (triggerElement && cardBodyRef.current) {
-                            const triggerRect = triggerElement.getBoundingClientRect();
-                            const cardBodyRect = cardBodyRef.current.getBoundingClientRect();
-                            setDropdownPosition({
-                              top: triggerRect.bottom - cardBodyRect.top + 2,
-                              left: triggerRect.right - cardBodyRect.left - 120
-                            });
-                          }
-                        } else {
-                          setActiveDropdownTaskId(null);
-                          setDropdownPosition(null);
-                        }
-                      }}>
-                        <Dropdown.Toggle
-                          as="button"
-                          className="btn btn-sm btn-outline-secondary p-1"
-                          style={{ fontSize: '10px', lineHeight: 1 }}
-                        //   data-task-id={task.id}
-                        >
-                          <MoreVertical size={12} />
-                        </Dropdown.Toggle>
-                      </Dropdown>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <button className="p-1 rounded border border-gray-300 bg-white hover:bg-gray-100 transition-all duration-200 cursor-pointer text-[10px] leading-none">
+                            <MoreVertical size={12} />
+                          </button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end" className="text-right min-w-[200px] text-[0.85em]" style={{ direction: 'rtl' }}>
+                          {/* Follow-up */}
+                          <DropdownMenuItem
+                            onClick={() => {
+                              openDrawer('taskFollowUp', { 
+                                taskId: task.id,
+                                taskName: task.task_name || undefined,
+                                clientName: task.client?.name || client.name
+                              });
+                            }}
+                            className="text-right cursor-pointer"
+                          >
+                            <MessageSquare size={14} className="ml-2" />
+                            المراسلات والمتابعة
+                          </DropdownMenuItem>
+
+                          {/* Requirements */}
+                          {task.requirements && task.requirements.length > 0 && (
+                            <DropdownMenuItem
+                              onClick={() => handleShowRequirements(task)}
+                              className="text-right cursor-pointer"
+                            >
+                              <ListChecks size={14} className="ml-2" />
+                              عرض المتطلبات
+                            </DropdownMenuItem>
+                          )}
+
+                          {/* Submit for Review */}
+                          {task.status === 'New' && (
+                            <DropdownMenuItem
+                              onClick={() => handleSubmitForReview(task)}
+                              className="text-right cursor-pointer"
+                            >
+                              <Upload size={14} className="ml-2" />
+                              إرسال للمراجعة
+                            </DropdownMenuItem>
+                          )}
+
+                          {/* View Subtasks */}
+                          <DropdownMenuItem
+                            onClick={() => handleViewSubtasks(task)}
+                            className="text-right cursor-pointer"
+                          >
+                            <Eye size={14} className="ml-2" />
+                            المهام الفرعية
+                          </DropdownMenuItem>
+
+                          <DropdownMenuSeparator />
+
+                          {/* Defer/Resume */}
+                          {task.status !== 'Deferred' ? (
+                            <DropdownMenuItem
+                              onClick={() => handleDefer(task)}
+                              className="text-right cursor-pointer"
+                            >
+                              <Pause size={14} className="ml-2" />
+                              تأجيل المهمة
+                            </DropdownMenuItem>
+                          ) : (
+                            <DropdownMenuItem
+                              onClick={() => handleResume(task)}
+                              className="text-right cursor-pointer"
+                            >
+                              <Play size={14} className="ml-2" />
+                              استئناف المهمة
+                            </DropdownMenuItem>
+                          )}
+
+                          {/* Toggle Urgent */}
+                          <DropdownMenuItem
+                            onClick={() => handleToggleUrgentTag(task)}
+                            className="text-right cursor-pointer"
+                          >
+                            <AlertTriangle size={14} className="ml-2" />
+                            {task.tags?.some(tag => tag.name === 'قصوى') ? 'إزالة علامة العاجل' : 'وضع علامة عاجل'}
+                          </DropdownMenuItem>
+
+                          <DropdownMenuSeparator />
+
+                          {/* Cancel Task */}
+                          <DropdownMenuItem
+                            onClick={() => handleCancelTask(task)}
+                            className="text-right text-destructive cursor-pointer"
+                          >
+                            <X size={14} className="ml-2" />
+                            إلغاء المهمة
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
                     </td>
                   </tr>
                 );
@@ -630,142 +563,6 @@ const AdminEmployeeClientCard = ({
             </tbody>
           </table>
         </div>
-
-        {/* Render active dropdown menu via createPortal */}
-        {(() => {
-          const task = tasks.find(t => t.id === activeDropdownTaskId);
-          if (!task || !dropdownPosition || !cardBodyRef.current) return null;
-
-          return createPortal(
-            <div ref={dropdownMenuRef}>
-              <Dropdown.Menu
-                show
-                align="end"
-                className="text-end"
-                style={{
-                  zIndex: 9999,
-                  minWidth: '200px',
-                  fontSize: '0.85em',
-                  position: 'absolute',
-                  top: dropdownPosition.top,
-                  left: `calc(${dropdownPosition.left}px + 50px)`,
-                  marginTop: '2px',
-                  direction: 'rtl'
-                }}
-              >
-                {/* Follow-up */}
-                <Dropdown.Item
-                  onClick={() => {
-                    openDrawer('taskFollowUp', { 
-                      taskId: task.id,
-                      taskName: task.task_name || undefined,
-                      clientName: task.client?.name || client.name
-                    });
-                    setActiveDropdownTaskId(null);
-                  }}
-                  className="text-end"
-                >
-                  <MessageSquare size={14} className="ms-2" />
-                  المراسلات والمتابعة
-                </Dropdown.Item>
-
-                {/* Requirements */}
-                {task.requirements && task.requirements.length > 0 && (
-                  <Dropdown.Item
-                    onClick={() => {
-                      handleShowRequirements(task);
-                      setActiveDropdownTaskId(null);
-                    }}
-                    className="text-end"
-                  >
-                    <ListChecks size={14} className="ms-2" />
-                    عرض المتطلبات
-                  </Dropdown.Item>
-                )}
-
-                {/* Submit for Review */}
-                {task.status === 'New' && (
-                  <Dropdown.Item
-                    onClick={() => {
-                      handleSubmitForReview(task);
-                      setActiveDropdownTaskId(null);
-                    }}
-                    className="text-end"
-                  >
-                    <Upload size={14} className="ms-2" />
-                    إرسال للمراجعة
-                  </Dropdown.Item>
-                )}
-
-                {/* View Subtasks */}
-                <Dropdown.Item
-                  onClick={() => {
-                    handleViewSubtasks(task);
-                    setActiveDropdownTaskId(null);
-                  }}
-                  className="text-end"
-                >
-                  <Eye size={14} className="ms-2" />
-                  المهام الفرعية
-                </Dropdown.Item>
-
-                <Dropdown.Divider />
-
-                {/* Defer/Resume */}
-                {task.status !== 'Deferred' ? (
-                  <Dropdown.Item
-                    onClick={() => {
-                      handleDefer(task);
-                      setActiveDropdownTaskId(null);
-                    }}
-                    className="text-end"
-                  >
-                    <Pause size={14} className="ms-2" />
-                    تأجيل المهمة
-                  </Dropdown.Item>
-                ) : (
-                  <Dropdown.Item
-                    onClick={() => {
-                      handleResume(task);
-                      setActiveDropdownTaskId(null);
-                    }}
-                    className="text-end"
-                  >
-                    <Play size={14} className="ms-2" />
-                    استئناف المهمة
-                  </Dropdown.Item>
-                )}
-
-                {/* Toggle Urgent */}
-                <Dropdown.Item
-                  onClick={() => {
-                    handleToggleUrgentTag(task);
-                    setActiveDropdownTaskId(null);
-                  }}
-                  className="text-end"
-                >
-                  <AlertTriangle size={14} className="ms-2" />
-                  {task.tags?.some(tag => tag.name === 'قصوى') ? 'إزالة علامة العاجل' : 'وضع علامة عاجل'}
-                </Dropdown.Item>
-
-                <Dropdown.Divider />
-
-                {/* Cancel Task */}
-                <Dropdown.Item
-                  onClick={() => {
-                    handleCancelTask(task);
-                    setActiveDropdownTaskId(null);
-                  }}
-                  className="text-end text-danger"
-                >
-                  <X size={14} className="ms-2" />
-                  إلغاء المهمة
-                </Dropdown.Item>
-              </Dropdown.Menu>
-            </div>,
-            cardBodyRef.current
-          );
-        })()}
       </div>
     </div>
   );
@@ -790,11 +587,10 @@ const EmployeeTasksColumn: React.FC<EmployeeTasksColumnProps> = ({
 
     groupedByEmployee.forEach((employeeGroup) => {
       const clientsData: ClientWithTasksAndStats[] = [];
-      const seenTaskIds = new Set<number>(); // Track seen task IDs to avoid duplicates
+      const seenTaskIds = new Set<number>();
 
       Object.entries(employeeGroup.grouped_clients).forEach(([_type, clients]) => {
         clients.forEach((clientRaw: any) => {
-          // Skip if we've already seen this task ID
           if (seenTaskIds.has(clientRaw.id)) {
             return;
           }
@@ -861,11 +657,11 @@ const EmployeeTasksColumn: React.FC<EmployeeTasksColumnProps> = ({
 
   if (!groupedByEmployee || groupedByEmployee.length === 0) {
     return (
-      <div className="empty-state py-5 text-center">
-        <div className="empty-icon mb-3">
+      <div className="py-12 text-center">
+        <div className="mb-3">
           <i className="fas fa-clipboard-list fa-3x text-gray-400"></i>
         </div>
-        <p className="empty-description text-muted mb-0">
+        <p className="text-muted-foreground mb-0">
           لا توجد مهام موظفين
         </p>
       </div>
@@ -873,15 +669,7 @@ const EmployeeTasksColumn: React.FC<EmployeeTasksColumnProps> = ({
   }
 
   return (
-    <div className="employee-tasks-column-container" style={{ 
-        display: 'flex', 
-        flexDirection: 'column', 
-        gap: '0.75rem', 
-        width: '100%',
-        overflow: 'visible',
-        position: 'relative',
-        zIndex: 1
-    }}>
+    <div className="flex flex-col gap-3 w-full overflow-visible relative z-[1]">
       {Array.from(clientTasksMap.entries()).map(([employeeId, clients]) => {
         const employeeGroup = groupedByEmployee.find(eg => eg.employee_id === employeeId);
         if (!employeeGroup) return null;
@@ -889,59 +677,43 @@ const EmployeeTasksColumn: React.FC<EmployeeTasksColumnProps> = ({
         const alternatingColors = propAlternatingColors || ['#e3f2fd', '#bbdefb'];
 
         return (
-          <div key={employeeId} className="employee-section" style={{ 
-              display: 'flex', 
-              flexDirection: 'column', 
-              gap: '0.75rem',
-              overflow: 'visible'
-          }}>
+          <div key={employeeId} className="flex flex-col gap-3 overflow-visible">
             <DndContext
               sensors={sensors}
               collisionDetection={closestCenter}
               onDragEnd={(event) => handleDragEnd(event, employeeId)}
             >
-              <div style={{ 
-                  display: 'flex', 
-                  flexDirection: 'column', 
-                  gap: '0.75rem', 
-                  overflow: 'visible', 
-                  position: 'relative', 
-                  zIndex: 1
-              }}>
+              <div className="flex flex-col gap-3 overflow-visible relative z-[1]">
                 {clients.length === 0 ? (
-                  <div className="empty-state py-5 text-center">
-                    <div className="empty-icon mb-3">
+                  <div className="py-12 text-center">
+                    <div className="mb-3">
                       <i className="fas fa-clipboard-list fa-3x text-gray-400"></i>
                     </div>
-                    <p className="empty-description text-muted mb-0">
+                    <p className="text-muted-foreground mb-0">
                       لا توجد مهام نشطة
                     </p>
                   </div>
                 ) : (
-                  <>
-                    <SortableContext
-                      items={clients.map(c => `employee-${c.client.id}`)}
-                      strategy={verticalListSortingStrategy}
-                    >
-                      {clients.map((clientData, index) => (
-                        <div key={`${employeeId}-client-${clientData.client.id}`} style={{
-                          overflow: 'visible',
-                          position: 'relative',
-                          zIndex: 50 - index,
-                          isolation: 'auto',
-                          flexShrink: 0
-                        }}>
-                          <SortableAdminEmployeeClientCard
-                            clientData={clientData}
-                            containerType="employee"
-                            alternatingColors={alternatingColors}
-                            index={index}
-                            onAssign={onAssign}
-                          />
-                        </div>
-                      ))}
-                    </SortableContext>
-                  </>
+                  <SortableContext
+                    items={clients.map(c => `employee-${c.client.id}`)}
+                    strategy={verticalListSortingStrategy}
+                  >
+                    {clients.map((clientData, index) => (
+                      <div 
+                        key={`${employeeId}-client-${clientData.client.id}`} 
+                        className="overflow-visible relative flex-shrink-0"
+                        style={{ zIndex: 50 - index }}
+                      >
+                        <SortableAdminEmployeeClientCard
+                          clientData={clientData}
+                          containerType="employee"
+                          alternatingColors={alternatingColors}
+                          index={index}
+                          onAssign={onAssign}
+                        />
+                      </div>
+                    ))}
+                  </SortableContext>
                 )}
               </div>
             </DndContext>

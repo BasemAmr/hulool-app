@@ -3,7 +3,8 @@ import { useSearchParams } from 'react-router-dom';
 import { applyPageBackground } from '../../utils/backgroundUtils';
 import { useInView } from 'react-intersection-observer';
 import Button from '../../components/ui/Button';
-import { Spinner, Alert } from 'react-bootstrap';
+import { Spinner } from '../../components/ui/spinner';
+import { Alert, AlertDescription, AlertTitle } from '../../components/ui/alert';
 import { 
   useGetMyTransactions, 
   useGetMyCreditsInfinite,
@@ -106,10 +107,10 @@ const EmployeeFinancialsPage = () => {
 
   if (isLoading && activeMode === 'all') {
     return (
-      <div className="container-fluid p-4">
-        <div className="d-flex justify-content-center align-items-center" style={{ minHeight: '50vh' }}>
-          <Spinner animation="border" role="status" variant="primary">
-            <span className="visually-hidden">جاري التحميل...</span>
+      <div className="w-full p-4">
+        <div className="flex justify-center items-center" style={{ minHeight: '50vh' }}>
+          <Spinner>
+            <span className="sr-only">جاري التحميل...</span>
           </Spinner>
         </div>
       </div>
@@ -118,53 +119,51 @@ const EmployeeFinancialsPage = () => {
 
   if (hasError) {
     return (
-      <div className="container-fluid p-4">
-        <Alert variant="danger">
-          <Alert.Heading>خطأ في تحميل البيانات</Alert.Heading>
-          <p>{hasError?.message || 'حدث خطأ أثناء تحميل البيانات المالية'}</p>
+      <div className="w-full p-4">
+        <Alert variant="destructive">
+          <AlertTitle>خطأ في تحميل البيانات</AlertTitle>
+          <AlertDescription>{hasError?.message || 'حدث خطأ أثناء تحميل البيانات المالية'}</AlertDescription>
         </Alert>
       </div>
     );
   }
 
   return (
-    <div className="container-fluid p-4">
+    <div className="w-full p-4">
       {/* Header with Navigation */}
-      <div className="row mb-4">
-        <div className="col-12">
-          <div className="d-flex justify-content-between align-items-center">
-            <div>
-              <h1 className="h3 mb-1">الماليات والعمولات</h1>
-              <p className="text-muted mb-0">تتبع العمولات والمدفوعات ومستحقات العملاء</p>
-            </div>
-            
-            {/* Mode Navigation Buttons */}
-            <div className="btn-group" role="group">
-              {modeOptions.map((option) => (
-                <Button
-                  key={option.key}
-                  variant={activeMode === option.key ? 'primary' : 'outline-primary'}
-                  size="sm"
-                  onClick={() => setActiveMode(option.key as ViewMode)}
-                >
-                  {option.label}
-                </Button>
-              ))}
-            </div>
+      <div className="mb-4">
+        <div className="flex justify-between items-center">
+          <div>
+            <h1 className="text-xl font-bold mb-1 text-black">الماليات والعمولات</h1>
+            <p className="text-black mb-0 text-sm">تتبع العمولات والمدفوعات ومستحقات العملاء</p>
+          </div>
+          
+          {/* Mode Navigation Buttons */}
+          <div className="inline-flex rounded-md shadow-sm" role="group">
+            {modeOptions.map((option) => (
+              <Button
+                key={option.key}
+                variant={activeMode === option.key ? 'primary' : 'outline-primary'}
+                size="sm"
+                onClick={() => setActiveMode(option.key as ViewMode)}
+              >
+                {option.label}
+              </Button>
+            ))}
           </div>
         </div>
       </div>
 
       {/* Content based on mode */}
       {activeMode === 'all' && (
-        <div className="row">
+        <div className="space-y-4">
           {/* Client Receivables Summary */}
-          <div className="col-12 mb-4">
-            <div className="card border-0 shadow-sm">
-              <div className="card-header bg-primary text-white">
-                <h5 className="mb-0">بيانات مستحقات العملاء</h5>
+          <div>
+            <div className="rounded-lg border-0 bg-card shadow-sm">
+              <div className="px-4 py-3 bg-primary text-white rounded-t-lg">
+                <h5 className="mb-0 font-bold">بيانات مستحقات العملاء</h5>
               </div>
-              <div className="card-body p-0">
+              <div className="p-0">
                 <EmployeeClientsStatementsTable
                   receivables={allReceivables}
                   isLoading={isReceivablesLoading}
@@ -173,7 +172,7 @@ const EmployeeFinancialsPage = () => {
                 {hasNextReceivablesPage && (
                   <div ref={receivablesRef} className="text-center p-3">
                     {isFetchingNextReceivablesPage ? (
-                      <Spinner animation="border" size="sm" />
+                      <Spinner size="sm" />
                     ) : (
                       <Button
                         onClick={() => fetchNextReceivablesPage()}
@@ -190,12 +189,12 @@ const EmployeeFinancialsPage = () => {
           </div>
 
           {/* Employee Transactions */}
-          <div className="col-12 mb-4">
-            <div className="card border-0 shadow-sm">
-              <div className="card-header bg-success text-white">
-                <h5 className="mb-0">معاملات الموظف</h5>
+          <div>
+            <div className="rounded-lg border-0 bg-card shadow-sm">
+              <div className="px-4 py-3 bg-green-600 text-white rounded-t-lg">
+                <h5 className="mb-0 font-bold">معاملات الموظف</h5>
               </div>
-              <div className="card-body p-0">
+              <div className="p-0">
                 <EmployeeTransactionsTable
                   transactions={transactions}
                   isLoading={isTransactionsLoading}
@@ -206,12 +205,12 @@ const EmployeeFinancialsPage = () => {
           </div>
 
           {/* Employee Credits */}
-          <div className="col-12 mb-4">
-            <div className="card border-0 shadow-sm">
-              <div className="card-header bg-info text-white">
-                <h5 className="mb-0">ائتمانات العملاء المسجلة</h5>
+          <div>
+            <div className="rounded-lg border-0 bg-card shadow-sm">
+              <div className="px-4 py-3 bg-blue-500 text-white rounded-t-lg">
+                <h5 className="mb-0 font-bold">ائتمانات العملاء المسجلة</h5>
               </div>
-              <div className="card-body p-0">
+              <div className="p-0">
                 <EmployeeCreditsTable
                   credits={allCredits}
                   isLoading={isCreditsLoading}
@@ -220,7 +219,7 @@ const EmployeeFinancialsPage = () => {
                 {hasNextCreditsPage && (
                   <div ref={creditsRef} className="text-center p-3">
                     {isFetchingNextCreditsPage ? (
-                      <Spinner animation="border" size="sm" />
+                      <Spinner size="sm" />
                     ) : (
                       <Button
                         onClick={() => fetchNextCreditsPage()}
@@ -239,33 +238,31 @@ const EmployeeFinancialsPage = () => {
       )}
 
       {activeMode === 'transactions' && (
-        <div className="row">
-          <div className="col-12">
-            <div className="card border-0 shadow-sm">
-              <div className="card-header bg-success text-white">
-                <h5 className="mb-0">معاملات الموظف</h5>
-              </div>
-              <div className="card-body p-0">
-                <EmployeeTransactionsTable
-                  transactions={transactions}
-                  isLoading={isTransactionsLoading}
-                  highlightTransactionId={highlightTransactionId || undefined}
-                />
-              </div>
+        <div>
+          <div className="rounded-lg border-0 bg-card shadow-sm">
+            <div className="px-4 py-3 bg-green-600 text-white rounded-t-lg">
+              <h5 className="mb-0 font-bold">معاملات الموظف</h5>
+            </div>
+            <div className="p-0">
+              <EmployeeTransactionsTable
+                transactions={transactions}
+                isLoading={isTransactionsLoading}
+                highlightTransactionId={highlightTransactionId || undefined}
+              />
             </div>
           </div>
         </div>
       )}
 
       {activeMode === 'clients' && (
-        <div className="row">
+        <div className="space-y-4">
           {/* Client Receivables Summary */}
-          <div className="col-12 mb-4">
-            <div className="card border-0 shadow-sm">
-              <div className="card-header bg-primary text-white">
-                <h5 className="mb-0">بيانات مستحقات العملاء</h5>
+          <div>
+            <div className="rounded-lg border-0 bg-card shadow-sm">
+              <div className="px-4 py-3 bg-primary text-white rounded-t-lg">
+                <h5 className="mb-0 font-bold">بيانات مستحقات العملاء</h5>
               </div>
-              <div className="card-body p-0">
+              <div className="p-0">
                 <EmployeeClientsStatementsTable
                   receivables={allReceivables}
                   isLoading={isReceivablesLoading}
@@ -274,7 +271,7 @@ const EmployeeFinancialsPage = () => {
                 {hasNextReceivablesPage && (
                   <div ref={receivablesRef} className="text-center p-3">
                     {isFetchingNextReceivablesPage ? (
-                      <Spinner animation="border" size="sm" />
+                      <Spinner size="sm" />
                     ) : (
                       <Button
                         onClick={() => fetchNextReceivablesPage()}
@@ -291,12 +288,12 @@ const EmployeeFinancialsPage = () => {
           </div>
 
           {/* Employee Credits */}
-          <div className="col-12 mb-4">
-            <div className="card border-0 shadow-sm">
-              <div className="card-header bg-info text-white">
-                <h5 className="mb-0">ائتمانات العملاء المسجلة</h5>
+          <div>
+            <div className="rounded-lg border-0 bg-card shadow-sm">
+              <div className="px-4 py-3 bg-blue-500 text-white rounded-t-lg">
+                <h5 className="mb-0 font-bold">ائتمانات العملاء المسجلة</h5>
               </div>
-              <div className="card-body p-0">
+              <div className="p-0">
                 <EmployeeCreditsTable
                   credits={allCredits}
                   isLoading={isCreditsLoading}
@@ -305,7 +302,7 @@ const EmployeeFinancialsPage = () => {
                 {hasNextCreditsPage && (
                   <div ref={creditsRef} className="text-center p-3">
                     {isFetchingNextCreditsPage ? (
-                      <Spinner animation="border" size="sm" />
+                      <Spinner size="sm" />
                     ) : (
                       <Button
                         onClick={() => fetchNextCreditsPage()}

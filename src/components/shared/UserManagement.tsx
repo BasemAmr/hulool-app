@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Users, UserPlus, Shield, Briefcase, UserMinus } from 'lucide-react';
-import styles from './UserManagement.module.scss';
 import { useUsers, useCreateUser, useUpdateUserCapabilities, useCurrentUserCapabilities } from '../../queries/userQueries';
 import { useCreateEmployee, useRemoveEmployeeStatus } from '../../queries/employeeQueries';
 import { useToast } from '../../hooks/useToast';
@@ -119,33 +118,36 @@ const UserManagement: React.FC = () => {
 
   if (!canManageUsers) {
     return (
-      <div className={styles.noPermission}>
-        <Shield className={styles.noPermissionIcon} size={48} />
-        <h3>{t('users.noPermission') || 'لا تملك صلاحية إدارة المستخدمين'}</h3>
-        <p>{t('users.contactAdmin') || 'اتصل بالمدير للحصول على الصلاحيات المطلوبة'}</p>
+      <div className="text-center p-12 bg-card border border-border rounded-lg">
+        <Shield className="text-black mx-auto mb-4" size={48} />
+        <h3 className="text-foreground mb-2 text-lg font-semibold">{t('users.noPermission') || 'لا تملك صلاحية إدارة المستخدمين'}</h3>
+        <p className="text-black">{t('users.contactAdmin') || 'اتصل بالمدير للحصول على الصلاحيات المطلوبة'}</p>
       </div>
     );
   }
 
   if (usersLoading) {
     return (
-      <div className={styles.loading}>
-        <div className={styles.spinner}></div>
-        <p>{t('users.loading') || 'جاري تحميل المستخدمين...'}</p>
+      <div className="text-center p-8">
+        <div className="w-8 h-8 border-4 border-border border-t-primary rounded-full animate-spin mx-auto mb-4"></div>
+        <p className="text-black">{t('users.loading') || 'جاري تحميل المستخدمين...'}</p>
       </div>
     );
   }
 
   return (
-    <div className={styles.userManagement}>
-      <div className={styles.header}>
-        <h3 className={styles.sectionTitle}>
+    <div className="mb-8">
+      <div className="flex justify-between items-center mb-6">
+        <h3 className="flex items-center gap-2 text-xl font-semibold text-foreground m-0">
           <Users size={20} />
           {t('users.title') || 'إدارة المستخدمين'}
         </h3>
         <button
           onClick={() => setShowCreateForm(!showCreateForm)}
-          className={styles.createButton}
+          className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-primary-foreground rounded-md transition-all duration-200"
+          style={{
+            background: 'linear-gradient(135deg, hsl(var(--primary)) 0%, hsl(var(--primary) / 0.9) 100%)'
+          }}
         >
           <UserPlus size={16} />
           {t('users.createNew') || 'إنشاء مستخدم جديد'}
@@ -153,47 +155,51 @@ const UserManagement: React.FC = () => {
       </div>
 
       {showCreateForm && (
-        <div className={styles.createForm}>
-          <h4>{t('users.createFormTitle') || 'إنشاء مستخدم جديد'}</h4>
+        <div className="bg-card border border-border rounded-lg p-6 mb-8">
+          <h4 className="m-0 mb-6 text-foreground text-lg font-semibold">{t('users.createFormTitle') || 'إنشاء مستخدم جديد'}</h4>
           <form onSubmit={handleCreateUser}>
-            <div className={styles.formGrid}>
-              <div className={styles.formGroup}>
-                <label htmlFor="username">{t('users.username') || 'اسم المستخدم'}</label>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+              <div>
+                <label htmlFor="username" className="block mb-2 text-foreground font-medium text-sm">{t('users.username') || 'اسم المستخدم'}</label>
                 <input
                   type="text"
                   id="username"
+                  className="base-input"
                   value={createForm.username}
                   onChange={(e) => setCreateForm(prev => ({ ...prev, username: e.target.value }))}
                   required
                 />
               </div>
               
-              <div className={styles.formGroup}>
-                <label htmlFor="email">{t('users.email') || 'البريد الإلكتروني'}</label>
+              <div>
+                <label htmlFor="email" className="block mb-2 text-foreground font-medium text-sm">{t('users.email') || 'البريد الإلكتروني'}</label>
                 <input
                   type="email"
                   id="email"
+                  className="base-input"
                   value={createForm.email}
                   onChange={(e) => setCreateForm(prev => ({ ...prev, email: e.target.value }))}
                   required
                 />
               </div>
               
-              <div className={styles.formGroup}>
-                <label htmlFor="display_name">{t('users.displayName') || 'الاسم المعروض'}</label>
+              <div>
+                <label htmlFor="display_name" className="block mb-2 text-foreground font-medium text-sm">{t('users.displayName') || 'الاسم المعروض'}</label>
                 <input
                   type="text"
                   id="display_name"
+                  className="base-input"
                   value={createForm.display_name}
                   onChange={(e) => setCreateForm(prev => ({ ...prev, display_name: e.target.value }))}
                 />
               </div>
               
-              <div className={styles.formGroup}>
-                <label htmlFor="password">{t('users.password') || 'كلمة المرور'}</label>
+              <div>
+                <label htmlFor="password" className="block mb-2 text-foreground font-medium text-sm">{t('users.password') || 'كلمة المرور'}</label>
                 <input
                   type="password"
                   id="password"
+                  className="base-input"
                   value={createForm.password}
                   onChange={(e) => setCreateForm(prev => ({ ...prev, password: e.target.value }))}
                   required
@@ -201,11 +207,14 @@ const UserManagement: React.FC = () => {
               </div>
             </div>
             
-            <div className={styles.formActions}>
+            <div className="flex gap-3 justify-end">
               <button
                 type="submit"
                 disabled={createUserMutation.isPending}
-                className={styles.submitButton}
+                className="px-6 py-3 text-sm font-medium text-primary-foreground rounded-md transition-all duration-200 disabled:opacity-60 disabled:cursor-not-allowed"
+                style={{
+                  background: 'linear-gradient(135deg, hsl(var(--primary)) 0%, hsl(var(--primary) / 0.9) 100%)'
+                }}
               >
                 {createUserMutation.isPending ? 
                   (t('users.creating') || 'جاري الإنشاء...') : 
@@ -215,7 +224,7 @@ const UserManagement: React.FC = () => {
               <button
                 type="button"
                 onClick={() => setShowCreateForm(false)}
-                className={styles.cancelButton}
+                className="px-6 py-3 bg-background text-foreground border border-border rounded-md text-sm transition-colors duration-200 hover:bg-card"
               >
                 {t('common.cancel') || 'إلغاء'}
               </button>
@@ -224,22 +233,22 @@ const UserManagement: React.FC = () => {
         </div>
       )}
 
-      <div className={styles.usersList}>
+      <div className="grid gap-4">
         {users.map((user: User) => (
-          <div key={user.id} className={styles.userCard}>
-            <div className={styles.userInfo}>
-              <h4 className={styles.userName}>{user.display_name || user.username}</h4>
-              <p className={styles.userEmail}>{user.email}</p>
-              <div className={styles.userRoles}>
+          <div key={user.id} className="bg-card border border-border rounded-lg p-6 grid md:grid-cols-[1fr_auto] gap-8 items-start">
+            <div>
+              <h4 className="m-0 mb-1 text-foreground text-lg font-semibold">{user.display_name || user.username}</h4>
+              <p className="m-0 mb-3 text-black text-sm">{user.email}</p>
+              <div className="flex gap-2 flex-wrap">
                 {user.roles.map(role => (
-                  <span key={role} className={styles.role}>{role}</span>
+                  <span key={role} className="px-3 py-1 bg-primary/10 rounded text-xs font-medium capitalize" style={{ color: 'hsl(var(--primary))' }}>{role}</span>
                 ))}
               </div>
             </div>
             
-            <div className={styles.userCapabilities}>
-              <h5>{t('users.capabilities') || 'الصلاحيات'}</h5>
-              <div className={styles.capabilityList}>
+            <div className="min-w-[300px]">
+              <h5 className="m-0 mb-4 text-foreground text-base font-semibold">{t('users.capabilities') || 'الصلاحيات'}</h5>
+              <div className="flex flex-col gap-3">
                 {[
                   { key: 'tm_manage_users', label: t('users.capability.manageUsers') || 'إدارة المستخدمين' },
                   { key: 'tm_delete_any_task', label: t('users.capability.deleteAnyTask') || 'حذف أي مهمة' },
@@ -250,9 +259,10 @@ const UserManagement: React.FC = () => {
                   { key: 'tm_view_overdue_receivables', label: t('users.capability.viewOverdueReceivables') || 'عرض المستحقات المتأخرة' },
                   { key: 'tm_view_all_receivables', label: t('users.capability.viewAllReceivables') || 'عرض جميع المستحقات' }
                 ].map(capability => (
-                  <label key={capability.key} className={styles.capabilityItem}>
+                  <label key={capability.key} className="flex items-center gap-3 cursor-pointer text-sm text-foreground hover:text-primary transition-colors duration-200">
                     <input
                       type="checkbox"
+                      className="w-4 h-4 cursor-pointer accent-primary"
                       checked={user.capabilities[capability.key] || false}
                       onChange={() => handleCapabilityToggle(
                         user.id, 
@@ -267,11 +277,11 @@ const UserManagement: React.FC = () => {
               </div>
             </div>
             
-            <div className={styles.employeeActions}>
-              <h5>حالة الموظف</h5>
+            <div className="md:col-span-2 pt-4 border-t border-border">
+              <h5 className="m-0 mb-3 text-foreground text-base font-semibold">حالة الموظف</h5>
               {isEmployee(user) ? (
                 <button 
-                  className={`${styles.employeeButton} ${styles.removeEmployee}`}
+                  className="flex items-center gap-2 px-4 py-2 bg-destructive text-destructive-foreground rounded-md text-sm font-medium transition-all duration-200 hover:bg-destructive/90 disabled:opacity-60 disabled:cursor-not-allowed"
                   onClick={() => handleRemoveEmployee(user.id)}
                   disabled={removeEmployeeStatusMutation.isPending}
                 >
@@ -280,7 +290,10 @@ const UserManagement: React.FC = () => {
                 </button>
               ) : (
                 <button 
-                  className={`${styles.employeeButton} ${styles.makeEmployee}`}
+                  className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-primary-foreground rounded-md transition-all duration-200 disabled:opacity-60 disabled:cursor-not-allowed"
+                  style={{
+                    background: 'linear-gradient(135deg, hsl(var(--primary)) 0%, hsl(var(--primary) / 0.9) 100%)'
+                  }}
                   onClick={() => handleMakeEmployee(user.id)}
                   disabled={createEmployeeMutation.isPending}
                 >

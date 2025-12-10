@@ -1,7 +1,6 @@
 import React, { useState, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Upload, X, Settings, Image as ImageIcon } from 'lucide-react';
-import styles from './SettingsPage.module.scss';
 import { useToast } from '../hooks/useToast';
 import { setPageBackground, removePageBackground, getPageBackground } from '../utils/backgroundUtils';
 import UserManagement from '../components/shared/UserManagement';
@@ -148,25 +147,25 @@ const SettingsPage: React.FC = () => {
   // };
 
   return (
-    <div className={styles.settingsPage}>
-      <div className={styles.header}>
-        <div className={styles.titleContainer}>
-          <Settings className={styles.titleIcon} size={28} />
-          <h1 className={styles.pageTitle}>
+    <div className="min-h-screen p-6">
+      <div className="mb-6">
+        <div className="flex items-center gap-3">
+          <Settings className="text-primary" size={28} />
+          <h1 className="text-3xl font-bold text-black">
             {t('settings.title') || 'الإعدادات'}
           </h1>
         </div>
       </div>
 
-      <div className={styles.content}>
+      <div className="space-y-6">
         {/* User Management Section */}
-        <div className={styles.section}>
+        <div className="rounded-lg border bg-card p-6">
           <UserManagement />
         </div>
 
         {/* NEW: Password Management Section */}
-        <div className={styles.section}>
-          <h2 className={styles.sectionTitle}>Password Management</h2>
+        <div className="rounded-lg border bg-card p-6">
+          <h2 className="text-xl font-semibold text-black mb-4 flex items-center gap-2">Password Management</h2>
           
           {/* Change Own Password */}
           <div className="mb-4">
@@ -196,31 +195,31 @@ const SettingsPage: React.FC = () => {
         </div>
 
         {/* Page Backgrounds Section */}
-        <div className={styles.section}>
-          <h2 className={styles.sectionTitle}>
+        <div className="rounded-lg border bg-card p-6">
+          <h2 className="text-xl font-semibold text-black mb-4 flex items-center gap-2">
             <ImageIcon size={20} />
             {t('settings.pageBackgrounds') || 'خلفيات الصفحات'}
           </h2>
           
-          <div className={styles.backgroundGrid}>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {backgroundOptions.map((option) => (
-              <div key={option.key} className={styles.backgroundCard}>
-                <div className={styles.cardHeader}>
-                  <h3 className={styles.cardTitle}>{option.label}</h3>
+              <div key={option.key} className="rounded-lg border bg-background overflow-hidden">
+                <div className="bg-primary p-3">
+                  <h3 className="text-base font-semibold text-white">{option.label}</h3>
                 </div>
                 
-                <div className={styles.cardContent}>
+                <div className="p-4 space-y-3">
                   {backgrounds[option.key] ? (
-                    <div className={styles.imagePreview}>
+                    <div className="relative group">
                       <img 
                         src={backgrounds[option.key]} 
                         alt={option.label}
-                        className={styles.previewImage}
+                        className="w-full h-40 object-cover rounded-md"
                       />
-                      <div className={styles.imageActions}>
+                      <div className="absolute top-2 right-2">
                         <button
                           onClick={() => handleRemoveBackground(option.key)}
-                          className={styles.removeButton}
+                          className="bg-red-600 hover:bg-red-700 text-white rounded-full p-1.5 transition-colors shadow-md"
                           title={t('settings.removeImage') || 'إزالة الصورة'}
                         >
                           <X size={16} />
@@ -228,13 +227,13 @@ const SettingsPage: React.FC = () => {
                       </div>
                     </div>
                   ) : (
-                    <div className={styles.uploadPlaceholder}>
-                      <ImageIcon size={32} className={styles.placeholderIcon} />
-                      <p className={styles.placeholderText}>لا توجد صورة خلفية</p>
+                    <div className="flex flex-col items-center justify-center h-40 bg-muted rounded-md">
+                      <ImageIcon size={32} className="text-black mb-2" />
+                      <p className="text-sm text-black">لا توجد صورة خلفية</p>
                     </div>
                   )}
                   
-                  <div className={styles.cardActions}>
+                  <div>
                     <input
                       type="file"
                       ref={fileInputRefs[option.key]}
@@ -245,12 +244,12 @@ const SettingsPage: React.FC = () => {
                         }
                       }}
                       accept="image/*"
-                      className={styles.hiddenInput}
+                      className="hidden"
                     />
                     <button
                       onClick={() => fileInputRefs[option.key].current?.click()}
                       disabled={uploading === option.key}
-                      className={styles.uploadButton}
+                      className="w-full bg-primary hover:bg-primary/90 disabled:bg-primary/50 text-white px-4 py-2 rounded-md transition-colors flex items-center justify-center gap-2"
                     >
                       <Upload size={16} />
                       {uploading === option.key 

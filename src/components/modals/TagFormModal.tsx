@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react';
 import { useModalStore } from '../../stores/modalStore';
 import { useToast } from '../../hooks/useToast';
 import Button from '../ui/Button';
+import BaseModal from '../ui/BaseModal';
 import type { Tag } from '../../api/types';
 import { useCreateTag, useUpdateTag } from '../../queries/tagQueries';
 
@@ -96,112 +97,93 @@ const TagFormModal = () => {
     if (!isActive) return null;
 
     return (
-        <div className="modal show d-block" style={{ backgroundColor: 'rgba(0,0,0,0.5)' }}>
-            <div className="modal-dialog modal-dialog-centered" onClick={(e) => e.stopPropagation()}>
-                <div className="modal-content">
-                    <div className="modal-header">
-                        <h5 className="modal-title">
-                            {isEditMode ? 'تعديل العلامة' : 'إضافة علامة جديدة'}
-                        </h5>
-                        <button 
-                            type="button" 
-                            className="btn-close" 
-                            onClick={closeModal}
-                            disabled={isLoading} // Disable close button while submitting
-                        ></button>
-                    </div>
-                    
-                    <form onSubmit={handleSubmit}>
-                        <div className="modal-body">
-                            <div className="mb-3">
-                                <label htmlFor="tagName" className="form-label">
-                                    اسم العلامة <span className="text-danger">*</span>
-                                </label>
-                                <input
-                                    type="text"
-                                    id="tagName"
-                                    className="form-control"
-                                    value={formData.name}
-                                    onChange={(e) => handleInputChange('name', e.target.value)}
-                                    placeholder="أدخل اسم العلامة"
-                                    required
-                                    disabled={isLoading || (isEditMode && tagToEdit?.is_system)}
-                                />
-                                {isEditMode && tagToEdit?.is_system && (
-                                    <div className="form-text text-warning">
-                                        لا يمكن تعديل اسم العلامات النظامية.
-                                    </div>
-                                )}
-                            </div>
-
-                            <div className="mb-3">
-                                <label htmlFor="tagColor" className="form-label">
-                                    لون العلامة
-                                </label>
-                                <div className="d-flex align-items-center gap-3">
-                                    <input
-                                        type="color"
-                                        id="tagColor"
-                                        className="form-control form-control-color"
-                                        value={formData.color}
-                                        onChange={(e) => handleInputChange('color', e.target.value)}
-                                        disabled={isLoading}
-                                        style={{ width: '60px', height: '38px' }}
-                                    />
-                                    <input
-                                        type="text"
-                                        className="form-control"
-                                        value={formData.color}
-                                        onChange={(e) => handleInputChange('color', e.target.value)}
-                                        placeholder="#d4af37"
-                                        pattern="^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$"
-                                        disabled={isLoading}
-                                        style={{ fontFamily: 'monospace' }}
-                                    />
-                                </div>
-                            </div>
-
-                            <div className="mb-3">
-                                <div className="d-flex align-items-center gap-2">
-                                    <span className="form-label mb-0">معاينة:</span>
-                                    <span 
-                                        className="badge"
-                                        style={{ 
-                                            backgroundColor: formData.color, 
-                                            color: '#fff',
-                                            fontSize: '0.9rem',
-                                            padding: '0.5rem 1rem',
-                                            textShadow: '1px 1px 2px rgba(0,0,0,0.3)'
-                                        }}
-                                    >
-                                        {formData.name || 'اسم العلامة'}
-                                    </span>
-                                </div>
-                            </div>
+        <BaseModal
+            isOpen={isActive}
+            onClose={closeModal}
+            title={isEditMode ? 'تعديل العلامة' : 'إضافة علامة جديدة'}
+        >
+            <form onSubmit={handleSubmit} className="space-y-4">
+                <div className="space-y-2">
+                    <label htmlFor="tagName" className="font-semibold text-black text-sm block">
+                        اسم العلامة <span className="text-destructive">*</span>
+                    </label>
+                    <input
+                        type="text"
+                        id="tagName"
+                        className="w-full px-3 py-2 border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
+                        value={formData.name}
+                        onChange={(e) => handleInputChange('name', e.target.value)}
+                        placeholder="أدخل اسم العلامة"
+                        required
+                        disabled={isLoading || (isEditMode && tagToEdit?.is_system)}
+                    />
+                    {isEditMode && tagToEdit?.is_system && (
+                        <div className="text-xs text-yellow-600">
+                            لا يمكن تعديل اسم العلامات النظامية.
                         </div>
-                        
-                        <div className="modal-footer">
-                            <Button
-                                type="button"
-                                variant="secondary"
-                                onClick={closeModal}
-                                disabled={isLoading} // Disable cancel button during submission
-                            >
-                                إلغاء
-                            </Button>
-                            <Button
-                                type="submit"
-                                variant="primary"
-                                isLoading={isLoading} // Use the consolidated loading state
-                                disabled={!formData.name.trim()}
-                            >
-                                {isEditMode ? 'تحديث' : 'حفظ'}
-                            </Button>
-                        </div>
-                    </form>
+                    )}
                 </div>
-            </div>
-        </div>
+
+                <div className="space-y-2">
+                    <label htmlFor="tagColor" className="font-semibold text-black text-sm block">
+                        لون العلامة
+                    </label>
+                    <div className="flex items-center gap-3">
+                        <input
+                            type="color"
+                            id="tagColor"
+                            className="w-16 h-10 border border-border rounded-md cursor-pointer"
+                            value={formData.color}
+                            onChange={(e) => handleInputChange('color', e.target.value)}
+                            disabled={isLoading}
+                        />
+                        <input
+                            type="text"
+                            className="flex-1 px-3 py-2 border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-primary font-mono text-sm"
+                            value={formData.color}
+                            onChange={(e) => handleInputChange('color', e.target.value)}
+                            placeholder="#d4af37"
+                            pattern="^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$"
+                            disabled={isLoading}
+                        />
+                    </div>
+                </div>
+
+                <div className="space-y-2">
+                    <div className="flex items-center gap-2">
+                        <span className="font-semibold text-black text-sm">معاينة:</span>
+                        <span 
+                            className="px-3 py-1 rounded-full text-white text-sm font-semibold"
+                            style={{ 
+                                backgroundColor: formData.color, 
+                                textShadow: '1px 1px 2px rgba(0,0,0,0.3)'
+                            }}
+                        >
+                            {formData.name || 'اسم العلامة'}
+                        </span>
+                    </div>
+                </div>
+                
+                <div className="flex justify-end gap-2 pt-4 border-t border-border">
+                    <Button
+                        type="button"
+                        variant="secondary"
+                        onClick={closeModal}
+                        disabled={isLoading}
+                    >
+                        إلغاء
+                    </Button>
+                    <Button
+                        type="submit"
+                        variant="primary"
+                        isLoading={isLoading}
+                        disabled={!formData.name.trim()}
+                    >
+                        {isEditMode ? 'تحديث' : 'حفظ'}
+                    </Button>
+                </div>
+            </form>
+        </BaseModal>
     );
 };
 

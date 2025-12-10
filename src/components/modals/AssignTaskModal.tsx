@@ -99,42 +99,32 @@ const AssignTaskModal = () => {
     >
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
         {/* Task Information */}
-        <div className="mb-4 p-3 bg-light rounded">
-          <h6 className="fw-bold mb-2">معلومات المهمة</h6>
-          <div className="row">
-            <div className="col-md-6">
-              <div className="mb-2">
-                <span className="text-muted small">العميل:</span>
-                <div className="fw-medium">{task.client?.name || 'لا يوجد عميل'}</div>
-              </div>
+        <div className="p-4 rounded-lg bg-muted border border-border space-y-3">
+          <h6 className="font-semibold text-black">معلومات المهمة</h6>
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <span className="text-muted-foreground text-xs block">العميل:</span>
+              <div className="font-medium text-black">{task.client?.name || 'لا يوجد عميل'}</div>
             </div>
-            <div className="col-md-6">
-              <div className="mb-2">
-                <span className="text-muted small">نوع المهمة:</span>
-                <div className="fw-medium">{t(`type.${task.type}`)}</div>
-              </div>
+            <div className="space-y-2">
+              <span className="text-muted-foreground text-xs block">نوع المهمة:</span>
+              <div className="font-medium text-black">{t(`type.${task.type}`)}</div>
             </div>
-          </div>
-          <div className="row">
-            <div className="col-md-6">
-              <div className="mb-2">
-                <span className="text-muted small">الخدمة المقدمة:</span>
-                <div className="fw-medium">{task.task_name || t(`type.${task.type}`)}</div>
-              </div>
+            <div className="space-y-2">
+              <span className="text-muted-foreground text-xs block">الخدمة المقدمة:</span>
+              <div className="font-medium text-black">{task.task_name || t(`type.${task.type}`)}</div>
             </div>
-            <div className="col-md-6">
-              <div className="mb-2">
-                <span className="text-muted small">المكلف الحالي:</span>
-                <div className="fw-medium text-primary">{getCurrentAssignedEmployeeName()}</div>
-              </div>
+            <div className="space-y-2">
+              <span className="text-muted-foreground text-xs block">المكلف الحالي:</span>
+              <div className="font-medium text-primary">{getCurrentAssignedEmployeeName()}</div>
             </div>
           </div>
         </div>
 
         {/* Assignment Selection */}
-        <div className="form-group">
-          <label className="form-label fw-medium mb-2">
-            <UserPlus size={16} className="me-2" />
+        <div className="space-y-2">
+          <label className="font-semibold text-black text-sm flex items-center gap-2">
+            <UserPlus size={16} />
             تكليف الموظف
           </label>
           <Controller
@@ -143,7 +133,7 @@ const AssignTaskModal = () => {
             render={({ field }) => (
               <select
                 {...field}
-                className="form-select"
+                className="w-full px-3 py-2 border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-primary disabled:bg-muted text-black"
                 value={field.value || ''}
                 onChange={(e) => field.onChange(e.target.value === '' ? null : Number(e.target.value))}
                 disabled={isLoadingEmployees || isSubmitting}
@@ -158,19 +148,19 @@ const AssignTaskModal = () => {
             )}
           />
           {isLoadingEmployees && (
-            <small className="text-muted">جاري تحميل قائمة الموظفين...</small>
+            <small className="text-muted-foreground text-xs">جاري تحميل قائمة الموظفين...</small>
           )}
         </div>
 
         {/* Action Buttons */}
-        <div className="d-flex justify-content-end gap-2 mt-4 pt-3 border-top">
+        <div className="flex justify-end gap-2 pt-4 border-t border-border">
           <Button
             type="button"
             variant="secondary"
             onClick={closeModal}
             disabled={isSubmitting}
           >
-            <X size={16} className="me-1" />
+            <X size={16} className="mr-1" />
             إلغاء
           </Button>
           <Button
@@ -179,7 +169,7 @@ const AssignTaskModal = () => {
             disabled={isSubmitting || isLoadingEmployees}
             isLoading={isSubmitting}
           >
-            <UserPlus size={16} className="me-1" />
+            <UserPlus size={16} className="mr-1" />
             {isSubmitting ? 'جاري الحفظ...' : 'حفظ التكليف'}
           </Button>
         </div>

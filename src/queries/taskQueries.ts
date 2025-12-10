@@ -292,6 +292,13 @@ export const useCreateTask = () => {
       // Specific client tasks in case task was added from client profile
       queryClient.invalidateQueries({ queryKey: ['client', createdTask.client.id] }); // Correct client_id access
       queryClient.invalidateQueries({ queryKey: ['receivables', 'client', createdTask.client.id] }); // Invalidate receivables of the client
+      
+      // Invalidate new Invoice/Ledger system queries (prepaid tasks create invoices)
+      queryClient.invalidateQueries({ queryKey: ['invoices'] });
+      queryClient.invalidateQueries({ queryKey: ['invoices', 'client', createdTask.client.id] });
+      queryClient.invalidateQueries({ queryKey: ['account', 'client', createdTask.client.id] });
+      queryClient.invalidateQueries({ queryKey: ['account', 'clients'] });
+      
       // Employee-related invalidations
       queryClient.invalidateQueries({ queryKey: ['employee'] }); // Invalidate all employee queries
       queryClient.invalidateQueries({ queryKey: ['employees'] }); // Invalidate employees list
@@ -311,6 +318,13 @@ export const useUpdateTask = () => {
       queryClient.invalidateQueries({ queryKey: ['tasks-by-tags'] }); // Invalidate tags columns view
       // Invalidate receivables for the client if task is updated
       queryClient.invalidateQueries({ queryKey: ['receivables', 'client', updatedTask.client.id] });
+      
+      // Invalidate new Invoice/Ledger system queries
+      queryClient.invalidateQueries({ queryKey: ['invoices'] });
+      queryClient.invalidateQueries({ queryKey: ['invoices', 'client', updatedTask.client.id] });
+      queryClient.invalidateQueries({ queryKey: ['account', 'client', updatedTask.client.id] });
+      queryClient.invalidateQueries({ queryKey: ['account', 'clients'] });
+      
       // Employee-related invalidations
       queryClient.invalidateQueries({ queryKey: ['employee'] }); // Invalidate all employee queries
       queryClient.invalidateQueries({ queryKey: ['employees'] }); // Invalidate employees list
@@ -408,6 +422,10 @@ export const useDeleteTask = () => {
       queryClient.invalidateQueries({ queryKey: ['dashboard'] });
       queryClient.invalidateQueries({ queryKey: ['tasks-by-tags'] });
       queryClient.invalidateQueries({ queryKey: ['receivables'] });
+      
+      // Invalidate new Invoice/Ledger system queries
+      queryClient.invalidateQueries({ queryKey: ['invoices'] });
+      queryClient.invalidateQueries({ queryKey: ['account'] });
     },
     onSuccess: () => {
       // The UI has already updated optimistically
@@ -530,9 +548,7 @@ export const useResumeTask = () => {
     // Always refetch after error or success to ensure data consistency
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ['tasks'] });
-      // Invalidate both admin and employee dashboard queries
-      queryClient.invalidateQueries({ queryKey: ['dashboard', 'clientsWithActiveTasks', 'admin'] });
-      queryClient.invalidateQueries({ queryKey: ['dashboard', 'clientsWithActiveTasks', 'employee'] });
+      queryClient.invalidateQueries({ queryKey: ['dashboard', 'clientsWithActiveTasks'] });
       queryClient.invalidateQueries({ queryKey: ['dashboard', 'stats'] });
       queryClient.invalidateQueries({ queryKey: ['tasks-by-tags'] });
     },
@@ -556,11 +572,20 @@ export const useResolvePrepaidChange = () => {
       if (result.task?.id) {
         queryClient.invalidateQueries({ queryKey: ['task', result.task.id] });
         queryClient.invalidateQueries({ queryKey: ['receivables', 'client', result.task.client_id] });
+        
+        // Invalidate new Invoice/Ledger system queries for the client
+        queryClient.invalidateQueries({ queryKey: ['invoices', 'client', result.task.client_id] });
+        queryClient.invalidateQueries({ queryKey: ['account', 'client', result.task.client_id] });
       }
       queryClient.invalidateQueries({ queryKey: ['clients'] });
       queryClient.invalidateQueries({ queryKey: ['dashboard'] });
       queryClient.invalidateQueries({ queryKey: ['receivables'] });
       queryClient.invalidateQueries({ queryKey: ['client-credits'] });
+      
+      // Invalidate new Invoice/Ledger system queries
+      queryClient.invalidateQueries({ queryKey: ['invoices'] });
+      queryClient.invalidateQueries({ queryKey: ['account', 'clients'] });
+      
       // Employee-related invalidations
       queryClient.invalidateQueries({ queryKey: ['employee'] }); 
       queryClient.invalidateQueries({ queryKey: ['employees'] });
@@ -598,11 +623,23 @@ export const useResolveTaskAmountChange = () => {
       if (result.task?.id) {
         queryClient.invalidateQueries({ queryKey: ['task', result.task.id] });
         queryClient.invalidateQueries({ queryKey: ['receivables', 'client', result.task.client_id] });
+        
+        // Invalidate new Invoice/Ledger system queries for the client
+        queryClient.invalidateQueries({ queryKey: ['invoices', 'client', result.task.client_id] });
+        queryClient.invalidateQueries({ queryKey: ['account', 'client', result.task.client_id] });
       }
       queryClient.invalidateQueries({ queryKey: ['clients'] });
       queryClient.invalidateQueries({ queryKey: ['dashboard'] });
       queryClient.invalidateQueries({ queryKey: ['receivables'] });
       queryClient.invalidateQueries({ queryKey: ['client-credits'] });
+      
+      // Invalidate new Invoice/Ledger system queries
+      queryClient.invalidateQueries({ queryKey: ['invoices'] });
+      queryClient.invalidateQueries({ queryKey: ['account', 'clients'] });
+      
+      // Employee-related invalidations
+      queryClient.invalidateQueries({ queryKey: ['employee'] });
+      queryClient.invalidateQueries({ queryKey: ['employees'] });
     },
   });
 };
@@ -619,11 +656,23 @@ export const useCancelTask = () => {
         if (resolutionResult.task?.id) {
           queryClient.invalidateQueries({ queryKey: ['task', resolutionResult.task.id] });
           queryClient.invalidateQueries({ queryKey: ['receivables', 'client', resolutionResult.task.client_id] });
+          
+          // Invalidate new Invoice/Ledger system queries for the client
+          queryClient.invalidateQueries({ queryKey: ['invoices', 'client', resolutionResult.task.client_id] });
+          queryClient.invalidateQueries({ queryKey: ['account', 'client', resolutionResult.task.client_id] });
         }
         queryClient.invalidateQueries({ queryKey: ['clients'] });
         queryClient.invalidateQueries({ queryKey: ['dashboard'] });
         queryClient.invalidateQueries({ queryKey: ['receivables'] });
         queryClient.invalidateQueries({ queryKey: ['client-credits'] });
+        
+        // Invalidate new Invoice/Ledger system queries
+        queryClient.invalidateQueries({ queryKey: ['invoices'] });
+        queryClient.invalidateQueries({ queryKey: ['account', 'clients'] });
+        
+        // Employee-related invalidations
+        queryClient.invalidateQueries({ queryKey: ['employee'] });
+        queryClient.invalidateQueries({ queryKey: ['employees'] });
       }
       // If it's a conflict response, we don't invalidate queries yet
     },
@@ -720,9 +769,7 @@ export const useDeferTask = () => {
     // Always refetch after error or success to ensure data consistency
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ['tasks'] });
-      // Invalidate both admin and employee dashboard queries
-      queryClient.invalidateQueries({ queryKey: ['dashboard', 'clientsWithActiveTasks', 'admin'] });
-      queryClient.invalidateQueries({ queryKey: ['dashboard', 'clientsWithActiveTasks', 'employee'] });
+      queryClient.invalidateQueries({ queryKey: ['dashboard', 'clientsWithActiveTasks'] });
       queryClient.invalidateQueries({ queryKey: ['dashboard', 'stats'] });
     },
     onSuccess: (response: {id: number; status: string; receivable_id?: number}) => {
@@ -754,10 +801,24 @@ export const useCompleteTask = () => {
             if (result.task?.client_id) {
                  queryClient.invalidateQueries({ queryKey: ['receivables', 'client', result.task.client_id] });
                  queryClient.invalidateQueries({ queryKey: ['receivables', 'payable', result.task.client_id] });
+                 
+                 // Invalidate new Invoice/Ledger system queries for the client
+                 queryClient.invalidateQueries({ queryKey: ['invoices', 'client', result.task.client_id] });
+                 queryClient.invalidateQueries({ queryKey: ['account', 'client', result.task.client_id] });
             }
+            
+            // Invalidate new Invoice/Ledger system queries (task completion creates invoices)
+            queryClient.invalidateQueries({ queryKey: ['invoices'] });
+            queryClient.invalidateQueries({ queryKey: ['invoices', 'stats'] });
+            queryClient.invalidateQueries({ queryKey: ['account', 'clients'] });
+            
             // Invalidate filtered receivables if task completion affects them (e.g., if a new receivable is created that is overdue/paid)
             queryClient.invalidateQueries({ queryKey: ['receivables', 'filtered', 'paid'] });
             queryClient.invalidateQueries({ queryKey: ['receivables', 'filtered', 'overdue'] });
+            
+            // Employee-related invalidations
+            queryClient.invalidateQueries({ queryKey: ['employee'] });
+            queryClient.invalidateQueries({ queryKey: ['employees'] });
         },
     });
 };
@@ -841,9 +902,7 @@ export const useSubmitTaskForReview = () => {
     },
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ['tasks'] });
-      // Invalidate both admin and employee dashboard queries
-      queryClient.invalidateQueries({ queryKey: ['dashboard', 'clientsWithActiveTasks', 'admin'] });
-      queryClient.invalidateQueries({ queryKey: ['dashboard', 'clientsWithActiveTasks', 'employee'] });
+      queryClient.invalidateQueries({ queryKey: ['dashboard', 'clientsWithActiveTasks'] });
       queryClient.invalidateQueries({ queryKey: ['dashboard', 'stats'] });
     },
     onSuccess: (updatedTask: Task) => {
@@ -867,11 +926,24 @@ export const useApproveTask = () => {
       queryClient.invalidateQueries({ queryKey: ['tasks-by-tags'] });
       queryClient.invalidateQueries({ queryKey: ['receivables'] });
       
+      // Invalidate new Invoice/Ledger system queries (task approval creates invoices)
+      queryClient.invalidateQueries({ queryKey: ['invoices'] });
+      queryClient.invalidateQueries({ queryKey: ['invoices', 'stats'] });
+      queryClient.invalidateQueries({ queryKey: ['account', 'clients'] });
+      
       // Invalidate client-specific data
       if (updatedTask.client?.id) {
         queryClient.invalidateQueries({ queryKey: ['receivables', 'client', updatedTask.client.id] });
         queryClient.invalidateQueries({ queryKey: ['client', updatedTask.client.id] });
+        
+        // Invalidate new Invoice/Ledger system queries for the client
+        queryClient.invalidateQueries({ queryKey: ['invoices', 'client', updatedTask.client.id] });
+        queryClient.invalidateQueries({ queryKey: ['account', 'client', updatedTask.client.id] });
       }
+      
+      // Employee-related invalidations
+      queryClient.invalidateQueries({ queryKey: ['employee'] });
+      queryClient.invalidateQueries({ queryKey: ['employees'] });
     }
   });
 };
@@ -953,9 +1025,7 @@ export const useRejectTask = () => {
     },
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ['tasks'] });
-      // Invalidate both admin and employee dashboard queries
-      queryClient.invalidateQueries({ queryKey: ['dashboard', 'clientsWithActiveTasks', 'admin'] });
-      queryClient.invalidateQueries({ queryKey: ['dashboard', 'clientsWithActiveTasks', 'employee'] });
+      queryClient.invalidateQueries({ queryKey: ['dashboard', 'clientsWithActiveTasks'] });
       queryClient.invalidateQueries({ queryKey: ['dashboard', 'stats'] });
     },
     onSuccess: (updatedTask: Task) => {
@@ -1042,9 +1112,7 @@ export const useRestoreTask = () => {
     },
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ['tasks'] });
-      // Invalidate both admin and employee dashboard queries
-      queryClient.invalidateQueries({ queryKey: ['dashboard', 'clientsWithActiveTasks', 'admin'] });
-      queryClient.invalidateQueries({ queryKey: ['dashboard', 'clientsWithActiveTasks', 'employee'] });
+      queryClient.invalidateQueries({ queryKey: ['dashboard', 'clientsWithActiveTasks'] });
       queryClient.invalidateQueries({ queryKey: ['dashboard', 'stats'] });
       queryClient.invalidateQueries({ queryKey: ['tasks-by-tags'] });
     },

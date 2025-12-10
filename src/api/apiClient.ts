@@ -47,7 +47,8 @@ apiClient.interceptors.response.use(
     const originalRequest = error.config;
     if (error.response?.status === 403 && !originalRequest._retry) {
       const isNonceError = error.response?.data?.code === 'rest_cookie_invalid_nonce' ||
-                          error.response?.data?.message?.toLowerCase().includes('nonce');
+                          error.response?.data?.message?.toLowerCase().includes('nonce') ||
+                          error.response?.data?.data?.status === 403;
       if (isNonceError) {
         originalRequest._retry = true;
         if (isRefreshingNonce) {

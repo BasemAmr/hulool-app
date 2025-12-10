@@ -66,26 +66,26 @@ const MessageInput: React.FC<MessageInputProps> = ({ taskId }) => {
     <div className="p-3">
       {/* Input Form */}
       <form onSubmit={handleSubmit}>
-        <div className="d-flex">
-          <div className="flex-grow-1 me-2">
+        <div className="flex">
+          <div className="flex-1 mr-2">
             <textarea
               ref={textareaRef}
               value={message}
               onChange={handleTextareaChange}
               onKeyDown={handleKeyDown}
               placeholder="اكتب تعليق..."
-              className="form-control form-control-sm"
+              className="w-full px-3 py-2 text-sm border border-input rounded-md bg-background text-black focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-colors disabled:opacity-50"
               rows={1}
               style={{ minHeight: '38px', maxHeight: '120px', resize: 'none' }}
               disabled={isLoading}
             />
             
             {/* Character count and hint */}
-            <div className="d-flex justify-content-between align-items-center mt-1">
-              <small className="text-muted">
+            <div className="flex justify-between items-center mt-1">
+              <small className="text-black">
                 {message.length > 0 && `${message.length} حرف`}
               </small>
-              <small className="text-muted">
+              <small className="text-black">
                 Enter للإرسال • Shift+Enter للسطر الجديد
               </small>
             </div>
@@ -93,12 +93,12 @@ const MessageInput: React.FC<MessageInputProps> = ({ taskId }) => {
 
           <button
             type="submit"
-            className="btn btn-primary btn-sm align-self-start"
+            className="bg-primary text-white px-3 py-2 rounded-md hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed self-start"
             disabled={!canSend}
             style={{ minWidth: '38px' }}
           >
             {isLoading ? (
-              <Loader2 size={16} />
+              <Loader2 size={16} className="animate-spin" />
             ) : (
               <Send size={16} />
             )}

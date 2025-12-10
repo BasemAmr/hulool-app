@@ -78,37 +78,30 @@ const ClientSearchCompact = ({ onSelect, onCreate, label, disabled }: ClientSear
       />
       {isLoading && (
         <div className="text-center py-2">
-          <Loader2 className="spin" size={20} />
-          <style>{`
-            .spin {
-              animation: spin 1s linear infinite;
-            }
-            @keyframes spin {
-              from { transform: rotate(0deg); }
-              to { transform: rotate(360deg); }
-            }
-          `}</style>
+          <Loader2 className="animate-spin" size={20} />
         </div>
       )}
       {!isLoading && debouncedSearchTerm && clients.length > 0 && (
-        <div className="list-group shadow-sm mb-2">
+        <div className="shadow-sm rounded-lg overflow-hidden mb-2 border border-gray-200">
           {clients.map(client => (
             <button
               key={client.id}
               type="button"
-              className="list-group-item list-group-item-action d-flex align-items-center"
+              className="w-full flex items-center px-4 py-3 border-b border-gray-100 last:border-b-0 bg-white hover:bg-muted transition-colors duration-150 text-right"
               onClick={() => handleSelect(client)}
             >
-              <User size={18} className="me-2 text-gold" />
-              <span>{client.name}</span>
-              <span className="ms-auto text-muted small">{client.phone}</span>
+              <User size={18} className="mr-2" style={{ color: 'hsl(var(--primary))' }} />
+              <span className="text-gray-900">{client.name}</span>
+              <span className="mr-auto text-gray-500 text-sm">{client.phone}</span>
             </button>
           ))}
         </div>
       )}
       {!isLoading && debouncedSearchTerm && clients.length === 0 && (
         <div className="mb-2">
-          <div className="alert alert-info py-2 px-3 mb-2 small">لا يوجد عميل بهذا الاسم أو الرقم.</div>
+          <div className="bg-blue-50 border border-blue-200 text-blue-800 py-2 px-3 rounded-lg mb-2 text-sm">
+            لا يوجد عميل بهذا الاسم أو الرقم.
+          </div>
         </div>
       )}
       {!isLoading && !showCreate && (
@@ -119,7 +112,7 @@ const ClientSearchCompact = ({ onSelect, onCreate, label, disabled }: ClientSear
         </div>
       )}
       {showCreate && (
-        <div className="border rounded p-2 mb-2 bg-light">
+        <div className="border border-gray-200 rounded-lg p-3 mb-2 bg-gray-50">
           <Input
             label="اسم العميل"
             value={newClientName}
@@ -147,16 +140,16 @@ const ClientSearchCompact = ({ onSelect, onCreate, label, disabled }: ClientSear
             className="mb-2"
           />
           <div className="mb-2">
-            <label className="form-label">ملاحظات</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1 text-right">ملاحظات</label>
             <textarea 
-              className="form-control"
+              className="base-input w-full resize-y"
               value={newClientNotes}
               onChange={e => setNewClientNotes(e.target.value)}
               rows={3}
               placeholder="أدخل ملاحظات العميل..."
             />
           </div>
-          <div className="d-flex gap-2">
+          <div className="flex gap-2">
             <Button
               type="button"
               variant="primary"

@@ -5,7 +5,8 @@ import type {
     ClientCredit, 
     RecordCreditPayload, 
     ApplyCreditPayload,
-
+    ApplyCreditToInvoicePayload,
+    ApplyCreditResponse,
     AllocationAdjustment,
     AllocationResolution
 } from '../api/types';
@@ -60,8 +61,25 @@ const resolveCreditDeletion = async ({
     return data.data;
 };
 
+/**
+ * @deprecated Use applyCreditToInvoice instead. This targets the old receivables endpoint.
+ */
 const applyCreditToReceivable = async (payload: ApplyCreditPayload) => {
     const { data } = await apiClient.post<ApiResponse<any>>(`/receivables/${payload.receivableId}/apply-credit`, { amount: payload.amount });
+    return data.data;
+};
+
+/**
+ * Apply credit to an invoice (new Invoice/Ledger system)
+ */
+const applyCreditToInvoice = async ({ invoiceId, payload }: { invoiceId: number; payload: ApplyCreditToInvoicePayload }): Promise<ApplyCreditResponse> => {
+    const { data } = await apiClient.post<ApiResponse<ApplyCreditResponse>>(
+        `/invoices/${invoiceId}/apply-credit`,
+        payload
+    );
+    if (!data.success) {
+        throw new Error(data.message || 'Failed to apply credit to invoice');
+    }
     return data.data;
 };
 
@@ -84,6 +102,10 @@ export const useRecordClientCredit = () => {
             queryClient.invalidateQueries({ queryKey: ['clientCredits', newCredit.client_id] });
             queryClient.invalidateQueries({ queryKey: ['clients'] });
             
+            // Invalidate account/ledger data (new system)
+            queryClient.invalidateQueries({ queryKey: ['account', 'client', newCredit.client_id] });
+            queryClient.invalidateQueries({ queryKey: ['account', 'clients'] });
+            
             // Employee-related invalidations
             queryClient.invalidateQueries({ queryKey: ['employee'] });
             queryClient.invalidateQueries({ queryKey: ['employees'] });
@@ -98,6 +120,10 @@ export const useUpdateClientCredit = () => {
         onSuccess: (updatedCredit) => {
             queryClient.invalidateQueries({ queryKey: ['clientCredits', updatedCredit.client_id] });
             queryClient.invalidateQueries({ queryKey: ['clients'] });
+            
+            // Invalidate account/ledger data (new system)
+            queryClient.invalidateQueries({ queryKey: ['account', 'client', updatedCredit.client_id] });
+            queryClient.invalidateQueries({ queryKey: ['account', 'clients'] });
             
             // Employee-related invalidations
             queryClient.invalidateQueries({ queryKey: ['employee'] });
@@ -115,6 +141,9 @@ export const useDeleteClientCredit = () => {
             queryClient.invalidateQueries({ queryKey: ['clientCredits'] });
             queryClient.invalidateQueries({ queryKey: ['clients'] });
             
+            // Invalidate account/ledger data (new system)
+            queryClient.invalidateQueries({ queryKey: ['account'] });
+            
             // Employee-related invalidations
             queryClient.invalidateQueries({ queryKey: ['employee'] });
             queryClient.invalidateQueries({ queryKey: ['employees'] });
@@ -130,6 +159,11 @@ export const useResolveCreditReduction = () => {
             queryClient.invalidateQueries({ queryKey: ['clientCredits', updatedCredit.client_id] });
             queryClient.invalidateQueries({ queryKey: ['clients'] });
             queryClient.invalidateQueries({ queryKey: ['receivables'] });
+            
+            // Invalidate invoice/account data (new system)
+            queryClient.invalidateQueries({ queryKey: ['invoices'] });
+            queryClient.invalidateQueries({ queryKey: ['account', 'client', updatedCredit.client_id] });
+            queryClient.invalidateQueries({ queryKey: ['account', 'clients'] });
             
             // Employee-related invalidations
             queryClient.invalidateQueries({ queryKey: ['employee'] });
@@ -147,6 +181,10 @@ export const useResolveCreditDeletion = () => {
             queryClient.invalidateQueries({ queryKey: ['clients'] });
             queryClient.invalidateQueries({ queryKey: ['receivables'] });
             
+            // Invalidate invoice/account data (new system)
+            queryClient.invalidateQueries({ queryKey: ['invoices'] });
+            queryClient.invalidateQueries({ queryKey: ['account'] });
+            
             // Employee-related invalidations
             queryClient.invalidateQueries({ queryKey: ['employee'] });
             queryClient.invalidateQueries({ queryKey: ['employees'] });
@@ -154,6 +192,9 @@ export const useResolveCreditDeletion = () => {
     });
 };
 
+/**
+ * @deprecated Use useApplyCreditToInvoice instead. This targets the old receivables endpoint.
+ */
 export const useApplyCreditToReceivable = () => {
     const queryClient = useQueryClient();
     return useMutation({
@@ -162,6 +203,44 @@ export const useApplyCreditToReceivable = () => {
             queryClient.invalidateQueries({ queryKey: ['receivables'] });
             queryClient.invalidateQueries({ queryKey: ['clients'] });
             queryClient.invalidateQueries({ queryKey: ['clientCredits'] });
+            
+            // Also invalidate new system queries for compatibility
+            queryClient.invalidateQueries({ queryKey: ['invoices'] });
+            queryClient.invalidateQueries({ queryKey: ['account'] });
+            
+            // Employee-related invalidations
+            queryClient.invalidateQueries({ queryKey: ['employee'] });
+            queryClient.invalidateQueries({ queryKey: ['employees'] });
+        },
+    });
+};
+
+/**
+ * Apply credit to an invoice (new Invoice/Ledger system)
+ * Use this instead of useApplyCreditToReceivable
+ */
+export const useApplyCreditToInvoice = () => {
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: applyCreditToInvoice,
+        onSuccess: (response) => {
+            // Invalidate specific invoice
+            queryClient.invalidateQueries({ queryKey: ['invoice', response.invoice_id] });
+            
+            // Invalidate invoice lists
+            queryClient.invalidateQueries({ queryKey: ['invoices'] });
+            
+            // Invalidate credit data
+            queryClient.invalidateQueries({ queryKey: ['clientCredits'] });
+            
+            // Invalidate account/ledger data
+            queryClient.invalidateQueries({ queryKey: ['account'] });
+            
+            // Invalidate client data
+            queryClient.invalidateQueries({ queryKey: ['clients'] });
+            
+            // Also invalidate old receivables for backward compatibility
+            queryClient.invalidateQueries({ queryKey: ['receivables'] });
             
             // Employee-related invalidations
             queryClient.invalidateQueries({ queryKey: ['employee'] });
@@ -179,6 +258,10 @@ export const useReplacePaymentWithCredit = () => {
             queryClient.invalidateQueries({ queryKey: ['clients'] });
             queryClient.invalidateQueries({ queryKey: ['clientCredits'] });
             queryClient.invalidateQueries({ queryKey: ['payments'] });
+            
+            // Invalidate invoice/account data (new system)
+            queryClient.invalidateQueries({ queryKey: ['invoices'] });
+            queryClient.invalidateQueries({ queryKey: ['account'] });
             
             // Employee-related invalidations
             queryClient.invalidateQueries({ queryKey: ['employee'] });

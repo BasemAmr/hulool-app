@@ -103,36 +103,36 @@ const EditEmployeePayoutModal = () => {
       onClose={handleClose}
       title="Edit Payout"
     >
-      <form onSubmit={handleSubmit}>
-        <div className="mb-3">
-          <label htmlFor="edit-payout-amount" className="form-label">
-            Amount <span className="text-danger">*</span>
+      <form onSubmit={handleSubmit} className="space-y-4">
+        <div className="space-y-2">
+          <label htmlFor="edit-payout-amount" className="font-semibold text-black text-sm block">
+            Amount <span className="text-destructive">*</span>
           </label>
-          <div className="input-group">
-            <span className="input-group-text">SAR</span>
+          <div className="flex items-center gap-2">
+            <span className="px-3 py-2 border border-border rounded-md bg-muted text-sm font-medium">SAR</span>
             <input
               type="number"
               step="0.01"
               min="0.01"
-              className={`form-control ${errors.amount ? 'is-invalid' : ''}`}
+              className={`flex-1 px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary ${errors.amount ? 'border-destructive bg-destructive/5' : 'border-border'}`}
               id="edit-payout-amount"
               value={formData.amount}
               onChange={(e) => handleInputChange('amount', e.target.value)}
               placeholder="Enter payout amount"
               required
             />
-            {errors.amount && (
-              <div className="invalid-feedback">{errors.amount}</div>
-            )}
           </div>
+          {errors.amount && (
+            <div className="text-destructive text-sm">{errors.amount}</div>
+          )}
         </div>
 
-        <div className="mb-3">
-          <label htmlFor="edit-payout-notes" className="form-label">
+        <div className="space-y-2">
+          <label htmlFor="edit-payout-notes" className="font-semibold text-black text-sm block">
             Notes
           </label>
           <textarea
-            className="form-control"
+            className="w-full px-3 py-2 border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-primary resize-none"
             id="edit-payout-notes"
             rows={3}
             value={formData.notes}
@@ -141,13 +141,13 @@ const EditEmployeePayoutModal = () => {
           />
         </div>
 
-        <div className="d-flex justify-content-end gap-2">
+        <div className="flex justify-end gap-2 pt-4 border-t border-border">
           <Button
             type="button"
             variant="outline-secondary"
             onClick={handleClose}
           >
-            <X size={16} className="me-1" />
+            <X size={16} className="mr-1" />
             Cancel
           </Button>
           <Button
@@ -155,7 +155,7 @@ const EditEmployeePayoutModal = () => {
             variant="primary"
             isLoading={updateTransactionMutation.isPending}
           >
-            <Save size={16} className="me-1" />
+            <Save size={16} className="mr-1" />
             Update Payout
           </Button>
         </div>

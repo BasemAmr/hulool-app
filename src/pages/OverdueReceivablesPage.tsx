@@ -38,21 +38,21 @@ const OverdueReceivablesPage = () => {
 
   // Show permission denied message if user doesn't have access
   if (isPermissionsLoading) {
-    return <div className="d-flex justify-content-center p-4">Loading permissions...</div>;
+    return <div className="flex justify-center p-4">Loading permissions...</div>;
   }
 
   if (!hasViewOverdueReceivablesPermission) {
     return (
-      <div className="alert alert-warning text-center">
-        <h4>Access Denied</h4>
-        <p>You don't have permission to view overdue receivables.</p>
+      <div className="rounded-lg border border-yellow-500 bg-yellow-500/10 p-4 text-center">
+        <h4 className="text-lg font-bold text-black mb-2">Access Denied</h4>
+        <p className="text-black">You don't have permission to view overdue receivables.</p>
       </div>
     );
   }
 
   return (
     <div>
-      <header className="d-flex justify-content-between align-items-center mb-3">
+      <header className="flex justify-between items-center mb-3">
         <h1 style={{ 
           background: 'linear-gradient(135deg, #f55a3f 0%, #dc2626 100%)',
           WebkitBackgroundClip: 'text',
@@ -62,8 +62,8 @@ const OverdueReceivablesPage = () => {
         }}>مستحقات متأخرة</h1>
       </header>
 
-      <div className="card">
-        <div className="card-body p-0">
+      <div className="rounded-lg border border-border bg-card shadow-sm">
+        <div className="p-0">
           <FilteredReceivablesTable
             receivables={allReceivables}
             isLoading={isLoading && !data}
@@ -82,7 +82,7 @@ const OverdueReceivablesPage = () => {
               </Button>
             )}
             {!hasNextPage && !isLoading && allReceivables.length > 0 && (
-              <p className="text-muted mb-0">وصلت إلى نهاية القائمة</p>
+              <p className="text-black mb-0">وصلت إلى نهاية القائمة</p>
             )}
           </div>
         </div>

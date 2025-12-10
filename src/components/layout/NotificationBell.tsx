@@ -98,42 +98,42 @@ const NotificationBell: React.FC<NotificationBellProps> = ({ className = '' }) =
     setIsOpen(prev => !prev);
   };
 
-  const handleNotificationClick = (taskId: number, eventId?: number | null) => {
-    // Navigate to the task with optional message highlighting
-    const searchParams = new URLSearchParams();
-    searchParams.set('taskId', taskId.toString());
-    if (eventId) {
-      searchParams.set('highlightMessage', eventId.toString());
+  const handleNotificationClick = (entityId: number, entityType?: string) => {
+    // Navigate based on entity type
+    let url = '/tasks';
+    
+    if (entityType === 'task') {
+      url = `/tasks?taskId=${entityId}`;
+    } else if (entityType === 'message') {
+      url = `/tasks?highlightMessage=${entityId}`;
+    } else if (entityType === 'invoice') {
+      url = `/invoices?invoiceId=${entityId}`;
+    } else {
+      // Default to tasks with entity ID
+      url = `/tasks?taskId=${entityId}`;
     }
     
-    const url = `/tasks?${searchParams.toString()}`;
     console.log('Navigating to:', url);
-    
     navigate(url);
     setIsOpen(false);
   };
 
   return (
-    <div className={`position-relative notification-bell-container ${className}`}>
+    <div className={`relative ${className}`}>
       {/* Notification Bell Button */}
       <button
         ref={buttonRef}
         onClick={handleToggleDropdown}
-        className={`btn btn-light position-relative p-2 rounded-3 border-0 ${
-          isOpen ? 'btn-secondary' : 'btn-light'
+        className={`relative p-2 rounded-lg border-0 transition-all duration-200 ${
+          isOpen ? 'bg-gray-300 scale-95' : 'bg-gray-100 hover:bg-gray-200'
         } ${
-          error ? 'text-danger' : 'text-muted'
+          error ? 'text-red-500' : 'text-gray-600'
         }`}
-        style={{
-          transition: 'all 0.2s ease-in-out',
-          transform: isOpen ? 'scale(0.95)' : 'scale(1)',
-        }}
         aria-label={`الإشعارات${unreadCount > 0 ? ` (${unreadCount} غير مقروءة)` : ''}`}
         disabled={isLoading}
       >
         {/* Bell Icon */}
         <Bell 
-          className="" 
           size={20}
           fill={unreadCount > 0 ? 'currentColor' : 'none'}
         />
@@ -141,15 +141,7 @@ const NotificationBell: React.FC<NotificationBellProps> = ({ className = '' }) =
         {/* Unread Count Badge */}
         {unreadCount > 0 && (
           <span 
-            className="position-absolute badge bg-danger rounded-pill d-flex align-items-center justify-content-center"
-            style={{
-              top: '-2px',
-              right: '-2px',
-              fontSize: '10px',
-              minWidth: '18px',
-              height: '18px',
-              animation: 'pulse 2s infinite'
-            }}
+            className="absolute -top-0.5 -right-0.5 bg-red-500 text-white rounded-full flex items-center justify-center text-[10px] min-w-[18px] h-[18px] animate-pulse"
           >
             {unreadCount > 99 ? '99+' : unreadCount}
           </span>
@@ -157,13 +149,12 @@ const NotificationBell: React.FC<NotificationBellProps> = ({ className = '' }) =
 
         {/* Loading Indicator */}
         {isLoading && (
-          <span className="position-absolute" style={{ top: '-2px', right: '-2px' }}>
+          <span className="absolute -top-0.5 -right-0.5">
             <div 
-              className="spinner-border spinner-border-sm text-primary"
-              style={{ width: '12px', height: '12px' }}
+              className="w-3 h-3 border-2 border-blue-500 border-t-transparent rounded-full animate-spin"
               role="status"
             >
-              <span className="visually-hidden">Loading...</span>
+              <span className="sr-only">Loading...</span>
             </div>
           </span>
         )}
@@ -171,13 +162,7 @@ const NotificationBell: React.FC<NotificationBellProps> = ({ className = '' }) =
         {/* Error Indicator */}
         {error && (
           <span 
-            className="position-absolute bg-danger rounded-circle"
-            style={{
-              top: '-2px',
-              right: '-2px',
-              width: '12px',
-              height: '12px'
-            }}
+            className="absolute -top-0.5 -right-0.5 bg-red-500 rounded-full w-3 h-3"
             title="خطأ في تحميل الإشعارات"
           />
         )}
@@ -187,7 +172,7 @@ const NotificationBell: React.FC<NotificationBellProps> = ({ className = '' }) =
       {isOpen && createPortal(
         <div
           ref={dropdownRef}
-          className="dropdown-menu shadow-lg border-0 show"
+          className="fixed shadow-2xl border-0 bg-white rounded-xl overflow-hidden transition-all duration-300"
           style={{
             position: 'fixed',
             top: dropdownPosition.top,

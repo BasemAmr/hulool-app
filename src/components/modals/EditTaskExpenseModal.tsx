@@ -126,104 +126,86 @@ const EditTaskExpenseModal = () => {
       title="تعديل مصاريف المهمة"
     >
       {/* Task Information */}
-      <div className="mb-3">
-        <div className="alert alert-info">
-          <strong>المهمة:</strong> {transaction?.task_name || 'مهمة غير معروفة'}<br />
-          <strong>العميل:</strong> {transaction?.client_name || 'عميل غير معروف'}<br />
-          <strong>العمولة الحالية:</strong> {transaction?.amount ? `${transaction.amount} ريال` : 'قيد المراجعة'}
-        </div>
+      <div className="rounded-lg border border-blue-600 bg-blue-50 p-4 space-y-2">
+        <div><strong className="text-black">المهمة:</strong> <span className="text-blue-800">{transaction?.task_name || 'مهمة غير معروفة'}</span></div>
+        <div><strong className="text-black">العميل:</strong> <span className="text-blue-800">{transaction?.client_name || 'عميل غير معروف'}</span></div>
+        <div><strong className="text-black">العمولة الحالية:</strong> <span className="text-blue-800">{transaction?.amount ? `${transaction.amount} ريال` : 'قيد المراجعة'}</span></div>
       </div>
 
       {/* Financial Breakdown Visual Indicators */}
-      <div className="mb-4">
-        <h6 className="mb-3">التفصيل المالي</h6>
-        <div className="row g-3">
+      <div className="space-y-3">
+        <h6 className="font-semibold text-black text-sm">التفصيل المالي</h6>
+        <div className="grid grid-cols-2 gap-3">
           {/* Task Amount */}
-          <div className="col-md-6">
-            <div className="card border-primary">
-              <div className="card-body text-center p-3">
-                <div className="text-primary fs-5 fw-bold">
-                  {formatCurrency(breakdown.taskAmount)}
-                </div>
-                <small className="text-muted">مبلغ المهمة الإجمالي</small>
-              </div>
+          <div className="rounded-lg border border-primary bg-white p-3 text-center">
+            <div className="text-primary text-lg font-semibold">
+              {formatCurrency(breakdown.taskAmount)}
             </div>
+            <small className="text-muted-foreground text-xs block">مبلغ المهمة الإجمالي</small>
           </div>
 
           {/* Current Expense */}
-          <div className="col-md-6">
-            <div className="card border-warning">
-              <div className="card-body text-center p-3">
-                <div className="text-warning fs-5 fw-bold">
-                  {formatCurrency(breakdown.currentExpense)}
-                </div>
-                <small className="text-muted">المصاريف الحالية</small>
-              </div>
+          <div className="rounded-lg border border-yellow-600 bg-white p-3 text-center">
+            <div className="text-yellow-600 text-lg font-semibold">
+              {formatCurrency(breakdown.currentExpense)}
             </div>
+            <small className="text-muted-foreground text-xs block">المصاريف الحالية</small>
           </div>
 
           {/* Net Amount */}
-          <div className="col-md-6">
-            <div className="card border-info">
-              <div className="card-body text-center p-3">
-                <div className="text-info fs-5 fw-bold">
-                  {formatCurrency(breakdown.netAmount)}
-                </div>
-                <small className="text-muted">المبلغ الصافي</small>
-              </div>
+          <div className="rounded-lg border border-blue-600 bg-white p-3 text-center">
+            <div className="text-blue-600 text-lg font-semibold">
+              {formatCurrency(breakdown.netAmount)}
             </div>
+            <small className="text-muted-foreground text-xs block">المبلغ الصافي</small>
           </div>
 
           {/* Employee Commission */}
-          <div className="col-md-6">
-            <div className="card border-success">
-              <div className="card-body text-center p-3">
-                <div className="text-success fs-5 fw-bold">
-                  {formatCurrency(breakdown.employeeCommission)}
-                </div>
-                <small className="text-muted">
-                  عمولة الموظف ({breakdown.commissionRate}%)
-                </small>
-              </div>
+          <div className="rounded-lg border border-green-600 bg-white p-3 text-center">
+            <div className="text-green-600 text-lg font-semibold">
+              {formatCurrency(breakdown.employeeCommission)}
             </div>
+            <small className="text-muted-foreground text-xs block">
+              عمولة الموظف ({breakdown.commissionRate}%)
+            </small>
           </div>
         </div>
       </div>
 
-      <form onSubmit={handleSubmit}>
-        <div className="mb-3">
-          <label htmlFor="edit-expense-amount" className="form-label">
-            مبلغ المصاريف <span className="text-danger">*</span>
+      <form onSubmit={handleSubmit} className="space-y-4">
+        <div className="space-y-2">
+          <label htmlFor="edit-expense-amount" className="font-semibold text-black text-sm block">
+            مبلغ المصاريف <span className="text-destructive">*</span>
           </label>
-          <div className="input-group">
-            <span className="input-group-text">ريال</span>
+          <div className="flex items-center gap-2">
+            <span className="px-3 py-2 border border-border rounded-md bg-muted text-sm font-medium">ريال</span>
             <input
               type="number"
               step="0.01"
               min="0"
-              className={`form-control ${errors.expense_amount ? 'is-invalid' : ''}`}
+              className={`flex-1 px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary ${errors.expense_amount ? 'border-destructive bg-destructive/5' : 'border-border'}`}
               id="edit-expense-amount"
               value={formData.expense_amount}
               onChange={(e) => handleInputChange('expense_amount', e.target.value)}
               placeholder="أدخل مبلغ المصاريف"
               required
             />
-            {errors.expense_amount && (
-              <div className="invalid-feedback">{errors.expense_amount}</div>
-            )}
           </div>
-          <div className="form-text">
+          {errors.expense_amount && (
+            <div className="text-destructive text-sm">{errors.expense_amount}</div>
+          )}
+          <div className="text-muted-foreground text-xs">
             سيؤدي هذا إلى تحديث مصاريف المهمة وإعادة حساب عمولة الموظف.
           </div>
         </div>
 
-        <div className="d-flex justify-content-end gap-2">
+        <div className="flex justify-end gap-2 pt-4 border-t border-border">
           <Button
             type="button"
             variant="outline-secondary"
             onClick={handleClose}
           >
-            <X size={16} className="me-1" />
+            <X size={16} className="mr-1" />
             إلغاء
           </Button>
           <Button
@@ -231,7 +213,7 @@ const EditTaskExpenseModal = () => {
             variant="primary"
             isLoading={updateTaskMutation.isPending}
           >
-            <Save size={16} className="me-1" />
+            <Save size={16} className="mr-1" />
             تحديث المصاريف
           </Button>
         </div>

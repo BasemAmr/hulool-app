@@ -9,12 +9,15 @@ import type {
   TaskAmountConflictData,
   TaskCancellationAnalysis,
   ConcurrentModificationData,
-  Employee
+  Employee,
+  Invoice,
+  UnifiedAccount,
+  TransactionDirection
 } from '../api/types';
 
 // Define all possible modals in the app.
 // We will add more types like 'task' in later phases.
-export type ModalType = 'clientForm' | 'confirmDelete' | 'taskForm' | 'requirements' | 'manualReceivable' | 'clientReceivables' | 'paymentForm' | 'paymentHistory' | 'clientSearch' | 'tagForm' | 'tagManagement' | 'selectReceivableForPayment' | 'taskCompletion' | 'amountDetails' | 'subtasksModal' | 'taskSelection' | 'taskDetails' | 'taskSubtasks' | 'recordCreditModal' | 'applyCreditModal' | 'clientCreditHistory' | 'creditEdit' | 'creditDelete' | 'allocationEdit' | 'allocationDelete' | 'paymentEdit' | 'paymentDelete' | 'editReceivable' | 'deleteReceivable' | 'clientReceivablesEdit' | 'urgentAlert' | 'prepaidConflict' | 'taskAmountConflict' | 'taskCancellation' | 'concurrentModification' | 'assignTask' | 'approval' | 'employeePayout' | 'editEmployeePayout' | 'editTaskExpense' | 'submitForReview' | 'employeeBorrow' | 'employeeManualCredit'
+export type ModalType = 'clientForm' | 'confirmDelete' | 'taskForm' | 'requirements' | 'manualReceivable' | 'clientReceivables' | 'paymentForm' | 'paymentHistory' | 'clientSearch' | 'tagForm' | 'tagManagement' | 'selectReceivableForPayment' | 'taskCompletion' | 'amountDetails' | 'subtasksModal' | 'taskSelection' | 'taskDetails' | 'taskSubtasks' | 'recordCreditModal' | 'applyCreditModal' | 'clientCreditHistory' | 'creditEdit' | 'creditDelete' | 'allocationEdit' | 'allocationDelete' | 'paymentEdit' | 'paymentDelete' | 'editReceivable' | 'deleteReceivable' | 'clientReceivablesEdit' | 'urgentAlert' | 'prepaidConflict' | 'taskAmountConflict' | 'taskCancellation' | 'concurrentModification' | 'assignTask' | 'approval' | 'employeePayout' | 'editEmployeePayout' | 'editTaskExpense' | 'submitForReview' | 'employeeBorrow' | 'invoiceForm' | 'recordPayment' | 'accountLedger' | 'invoiceDetails' | 'applyCreditToInvoice' | 'manualTransaction' | 'createInvoice' | 'journalEntryDetails'
 
 // Define the props each modal type can receive.
 interface ModalProps {
@@ -44,9 +47,9 @@ interface ModalProps {
   };
   taskCompletion: { task: Task };
   amountDetails: { task: Task };
-  subtasksModal: { 
-    subtasks: any[]; 
-    onSave: (subtasks: any[]) => void; 
+  subtasksModal: {
+    subtasks: any[];
+    onSave: (subtasks: any[]) => void;
   };
   taskSelection: { tagId: number };
   taskDetails: { task: Task };
@@ -97,7 +100,28 @@ interface ModalProps {
   editTaskExpense: { task: Task; transaction?: any };
   submitForReview: { task: Task };
   employeeBorrow: { employee: Employee; onSuccess?: () => void };
-  employeeManualCredit: { employee: Employee; onSuccess?: () => void };
+
+  // NEW INVOICE/LEDGER MODALS
+  invoiceForm: { client?: Client; client_id?: number };
+  recordPayment: {
+    invoiceId?: number;
+    invoice?: Invoice;
+    amountDue?: number;
+    clientId?: number;
+    clientName?: string
+  };
+  accountLedger: { clientId: number; clientName?: string; filter?: 'all' | 'invoices' | 'payments' | 'credits' };
+  invoiceDetails: { invoice?: Invoice; invoiceId?: number; isEmployeeView?: boolean };
+  applyCreditToInvoice: { invoice: Invoice; availableCredit: number };
+
+  // FINANCIAL CENTER MODALS
+  manualTransaction: {
+    preselectedAccount?: UnifiedAccount;
+    preselectedToAccount?: UnifiedAccount;
+    direction?: TransactionDirection
+  };
+  createInvoice: { client?: Client; client_id?: number };
+  journalEntryDetails: { transactionId: number; accountType: string; accountId: number };
 }
 
 interface ModalState {

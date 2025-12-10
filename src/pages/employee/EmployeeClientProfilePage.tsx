@@ -87,8 +87,8 @@ const EmployeeClientProfilePage = () => {
         if (client) openModal('taskForm', { client });
     };
 
-    const handleAddReceivable = () => {
-        if (client) openModal('manualReceivable', { client_id: client.id });
+    const handleAddInvoice = () => {
+        if (client) openModal('invoiceForm', { client_id: client.id, client });
     };
 
     const handleAddCredit = () => {
@@ -184,7 +184,7 @@ const EmployeeClientProfilePage = () => {
                 client={client}
                 mode={mode}
                 onAddTask={handleAddTask}
-                onAddReceivable={handleAddReceivable}
+                onAddInvoice={handleAddInvoice}
                 onAddCredit={handleAddCredit}
                 onExportStatement={handleExportStatement}
                 onExportTasks={() => {}} // Tasks export not implemented for employee view
@@ -194,11 +194,11 @@ const EmployeeClientProfilePage = () => {
 
             {/* Employee Tasks Table - Show in general and tasks modes */}
             {(mode === 'general' || mode === 'tasks') && (
-                <div className="card mb-3">
-                    <div className="card-header d-flex justify-content-between align-items-center">
-                        <h5 className="mb-0">مهامي مع هذا العميل</h5>
+                <div className="rounded-lg border border-border bg-card shadow-sm mb-3">
+                    <div className="px-4 py-3 border-b border-border flex justify-between items-center">
+                        <h5 className="mb-0 text-lg font-bold text-primary">مهامي مع هذا العميل</h5>
                     </div>
-                    <div className="card-body p-0">
+                    <div className="p-0">
                         <EmployeeOwnTasksTable
                             clientId={clientId}
                             searchTerm=""
@@ -211,11 +211,11 @@ const EmployeeClientProfilePage = () => {
             {/* Employee Receivables Table - Show in general and receivables modes */}
             {(mode === 'general' || mode === 'receivables') && (
                 hasViewAllReceivablesPermission ? (
-                    <div className="card mb-3">
-                        <div className="card-header">
-                            <h5 className="mb-0">كشف حساب العميل</h5>
+                    <div className="rounded-lg border border-border bg-card shadow-sm mb-3">
+                        <div className="px-4 py-3 border-b border-border">
+                            <h5 className="mb-0 text-lg font-bold text-primary">كشف حساب العميل</h5>
                         </div>
-                        <div className="card-body p-0">
+                        <div className="p-0">
                             <EmployeeClientsStatementsTable
                                 receivables={statementData?.pages?.flatMap(page => page.data.receivables) || []}
                                 isLoading={isLoadingReceivables}
@@ -225,20 +225,20 @@ const EmployeeClientProfilePage = () => {
                         </div>
                     </div>
                 ) : (
-                    <div className="alert alert-warning text-center">
-                        <h5>Access Denied</h5>
-                        <p>You don't have permission to view receivables for this client.</p>
+                    <div className="rounded-lg border border-yellow-600 bg-yellow-50 p-4 text-center">
+                        <h5 className="text-yellow-800 font-bold">Access Denied</h5>
+                        <p className="text-yellow-700">You don't have permission to view receivables for this client.</p>
                     </div>
                 )
             )}
 
             {/* Credits History Table - Show in general and receivables modes only */}
             {(mode === 'general' || mode === 'receivables') && (
-                <div className="card mb-3">
-                    <div className="card-header">
-                        <h5 className="mb-0">{t('clients.creditsHistory')}</h5>
+                <div className="rounded-lg border border-border bg-card shadow-sm mb-3">
+                    <div className="px-4 py-3 border-b border-border">
+                        <h5 className="mb-0 text-lg font-bold text-primary">{t('clients.creditsHistory')}</h5>
                     </div>
-                    <div className="card-body p-0">
+                    <div className="p-0">
                         <ClientCreditsHistoryTable
                             credits={creditsData?.credits || []}
                             isLoading={isLoadingCredits}

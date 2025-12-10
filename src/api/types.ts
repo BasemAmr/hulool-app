@@ -7,7 +7,7 @@ export interface ApiResponse<T> {
 }
 
 // REFINED PAGINATION: Generic structure for pagination metadata
-interface Pagination {
+export interface Pagination {
   total: number;
   per_page: number;
   current_page: number;
@@ -259,6 +259,10 @@ export type TaskStatus = 'New' | 'Deferred' | 'Pending Review' | 'Completed' | '
 export type TaskType = 'Government' | 'RealEstate' | 'Accounting' | 'Other';
 
 // Receivables & Payments Types
+/**
+ * @deprecated The receivable system is being replaced by the Invoice/Ledger system.
+ * Use InvoiceStatus instead.
+ */
 export type ReceivableStatus = 'Due' | 'Pending' | 'Paid';
 
 export interface PaymentMethod {
@@ -267,6 +271,10 @@ export interface PaymentMethod {
   name: string;
 }
 
+/**
+ * @deprecated Use InvoicePayment instead. The Payment type is linked to receivables 
+ * which are being replaced by invoices. Use InvoicePayment for invoice-linked payments.
+ */
 export interface Payment {
   id: number;
   receivable_id: number;
@@ -320,6 +328,10 @@ export interface ClientStatementPaginatedData {
   };
 }
 
+/**
+ * @deprecated Use Invoice instead. The Receivable entity is being replaced by Invoice.
+ * Invoices use a double-entry ledger system for accurate financial tracking.
+ */
 export interface Receivable {
   id: number;
   client_id: number | string;
@@ -369,6 +381,9 @@ export interface CompleteTaskResponse {
   payment?: Payment;
 }
 
+/**
+ * @deprecated Use CreateInvoicePayload instead.
+ */
 export interface ManualReceivablePayload {
   client_id: number;
   type: TaskType;
@@ -379,6 +394,9 @@ export interface ManualReceivablePayload {
   due_date: string;
 }
 
+/**
+ * @deprecated Use UpdateInvoicePayload instead.
+ */
 export interface UpdateReceivablePayload {
   type?: TaskType;
   description?: string;
@@ -388,6 +406,10 @@ export interface UpdateReceivablePayload {
   due_date?: string;
 }
 
+/**
+ * @deprecated Use RecordInvoicePaymentPayload instead.
+ * Payments now target invoices via POST /invoices/{id}/payments
+ */
 export interface PaymentPayload {
   receivable_id: number;
   amount: number;
@@ -788,3 +810,578 @@ export interface EmployeeReceivablesData {
   clients: EmployeeReceivablesClient[];
   pagination: Pagination;
 }
+
+// ========================================
+// NEW INVOICE & LEDGER TYPES
+// ========================================
+// These types replace the deprecated Receivable-centric model.
+// The backend now uses an Invoice/Ledger system with double-entry accounting.
+
+/**
+ * Invoice status values
+ * - draft: Created but not sent to client
+ * - pending: Sent/awaiting payment (maps to old "Due")
+ * - partially_paid: Some payments received
+ * - paid: Fully paid
+ * - overdue: Past due date with outstanding balance
+ * - cancelled: Invoice cancelled/voided
+ */
+export type InvoiceStatus = 'draft' | 'pending' | 'partially_paid' | 'paid' | 'overdue' | 'cancelled';
+
+/**
+ * Payment status values for quick filtering
+ */
+export type InvoicePaymentStatus = 'Unpaid' | 'Partial' | 'Paid';
+
+/**
+ * Invoice line item for itemized invoices
+ */
+export interface InvoiceLineItem {
+  id?: number;
+  description: string;
+  quantity: number;
+  unit_price: number;
+  amount: number;
+}
+
+/**
+ * Invoice payment record (linked to invoice, not receivable)
+ */
+export interface InvoicePayment {
+  id: number;
+  invoice_id: number;
+  created_by: number;
+  amount: number;
+  paid_at: string;
+  note: string | null;
+  payment_method_id: number | null;
+  reference_number?: string | null;
+  created_at: string;
+  updated_at: string;
+  payment_method?: {
+    id: number;
+    name_en: string;
+    name_ar: string;
+  };
+}
+
+/**
+ * Invoice entity - replaces Receivable
+ * Maps to InvoiceDTO from backend
+ */
+export interface Invoice {
+  id: number;
+  invoice_number?: string;
+  client_id: number;
+  task_id: number | null;
+  created_by: number;
+  employee_user_id?: number;
+  type: TaskType;
+  status: InvoiceStatus;
+  description: string;
+  notes: string | null;
+  
+  // Financial fields
+  amount: number;
+  total_amount?: number; // Alias used by some endpoints
+  paid_amount: number;
+  amount_paid?: number; // Alias used by some endpoints
+  remaining_amount: number;
+  amount_due?: number; // Alias used by some endpoints
+  
+  // Dates
+  due_date: string;
+  issued_date?: string;
+  paid_date?: string | null;
+  created_at: string;
+  updated_at: string;
+  
+  // Migration reference
+  original_receivable_id?: number | null;
+  
+  // Prepaid flag (for prepaid invoices)
+  is_prepaid?: boolean;
+  
+  // Computed flags
+  is_fully_paid?: boolean;
+  is_partially_paid?: boolean;
+  is_overdue?: boolean;
+  
+  // Related entities
+  line_items?: InvoiceLineItem[];
+  payments?: InvoicePayment[];
+  allocations?: CreditAllocation[];
+  client?: Partial<Client>;
+  client_name?: string;
+  client_phone?: string;
+  task?: Partial<Task>;
+  employee_name?: string;
+}
+
+/**
+ * Payload for creating a new invoice
+ */
+export interface CreateInvoicePayload {
+  client_id: number;
+  employee_user_id?: number;
+  type: TaskType;
+  description: string;
+  amount: number;
+  total_amount?: number;
+  line_items?: InvoiceLineItem[];
+  due_date: string;
+  notes?: string;
+  task_id?: number;
+}
+
+/**
+ * Payload for updating an invoice
+ */
+export interface UpdateInvoicePayload {
+  type?: TaskType;
+  status?: InvoiceStatus;
+  description?: string;
+  amount?: number;
+  total_amount?: number;
+  line_items?: InvoiceLineItem[];
+  due_date?: string;
+  notes?: string;
+}
+
+/**
+ * Payload for recording a payment on an invoice
+ */
+export interface RecordInvoicePaymentPayload {
+  amount: number;
+  payment_method_id: number;
+  paid_at: string;
+  note?: string;
+  reference_number?: string;
+}
+
+/**
+ * Payload for applying credit to an invoice
+ */
+export interface ApplyCreditToInvoicePayload {
+  amount: number;
+  credit_id: number;
+}
+
+/**
+ * Response from recording a payment
+ */
+export interface RecordPaymentResponse {
+  payment_id: number;
+  invoice_id: number;
+  amount: number;
+  payment_method?: string;
+  paid_at: string;
+  invoice_status: InvoiceStatus;
+  invoice_remaining: number;
+}
+
+/**
+ * Response from applying credit
+ */
+export interface ApplyCreditResponse {
+  invoice_id: number;
+  credit_applied: number;
+  new_amount_due: number;
+  allocation_id: number;
+}
+
+/**
+ * Invoice statistics for dashboard
+ */
+export interface InvoiceStats {
+  total_invoices: number;
+  draft_count: number;
+  sent_count: number;
+  paid_count: number;
+  overdue_count: number;
+  cancelled_count: number;
+  total_amount: number;
+  total_paid: number;
+  total_outstanding: number;
+  average_invoice_value?: number;
+}
+
+/**
+ * Paginated invoice data
+ */
+export interface InvoicePaginatedData {
+  invoices: Invoice[];
+  pagination: Pagination;
+}
+
+// ========================================
+// ACCOUNT / LEDGER TYPES
+// ========================================
+// Double-entry ledger system for tracking all financial transactions
+
+/**
+ * Account types in the ledger system
+ */
+export type AccountType = 'client' | 'employee' | 'company';
+
+/**
+ * Transaction types in the ledger
+ */
+export type TransactionType = 
+  | 'INVOICE_CREATED'
+  | 'INVOICE_GENERATED'
+  | 'PAYMENT_RECEIVED'
+  | 'CREDIT_RECEIVED'
+  | 'CREDIT_APPLIED'
+  | 'CREDIT_ALLOCATED'
+  | 'ADJUSTMENT'
+  | 'REVERSAL'
+  | 'COMMISSION'
+  | 'SALARY'
+  | 'EXPENSE'
+  | 'INCOME';
+
+/**
+ * Direction of a transaction (affects balance calculation)
+ */
+export type TransactionDirection = 'debit' | 'credit';
+
+/**
+ * Financial transaction in the ledger
+ * Maps to FinancialTransactionDTO
+ */
+export interface FinancialTransaction {
+  id: number;
+  account_type: AccountType;
+  account_id: number;
+  client_id?: number;
+  transaction_type: TransactionType;
+  description: string;
+  amount: number;
+  direction?: TransactionDirection;
+  balance_after: number;
+  related_object_type?: string;
+  related_object_id?: number;
+  transaction_date?: string;
+  created_by?: number;
+  created_at: string;
+  metadata?: Record<string, any>;
+}
+
+/**
+ * Account balance summary
+ */
+export interface AccountBalance {
+  account_type: AccountType;
+  account_id: number;
+  name?: string;
+  current_balance: number;
+  total_credits: number;
+  total_debits: number;
+  total_invoiced?: number;
+  total_paid?: number;
+  last_updated: string;
+}
+
+/**
+ * Account statistics
+ */
+export interface AccountStats {
+  current_balance: number;
+  total_income: number;
+  total_expense: number;
+  transaction_count: number;
+  last_transaction_date: string | null;
+}
+
+/**
+ * Transaction summary by type
+ */
+export interface TransactionSummary {
+  [transactionType: string]: {
+    count: number;
+    total: number;
+  };
+}
+
+/**
+ * Client balance with additional info
+ */
+export interface ClientAccountBalance {
+  client_id: number | string;
+  client_name?: string;
+  client_phone?: string;
+  name?: string;
+  type?: string;
+  balance?: number;
+  current_balance?: number;
+  total_outstanding?: number | string;
+  total_debit?: number | string;
+  total_credit?: number | string;
+  total_invoiced?: number;
+  total_paid?: number;
+  total_receivables?: number | string;
+  transaction_count?: number | string;
+  latest_transaction_date?: string;
+}
+
+/**
+ * Total balance statistics across all clients
+ */
+export interface ClientsTotalStats {
+  total_clients: number;
+  total_balance: number;
+  total_invoiced: number;
+  total_paid: number;
+  average_balance_per_client: number;
+}
+
+/**
+ * Total unpaid statistics
+ */
+export interface TotalUnpaidStats {
+  total_unpaid: number;
+  clients_with_outstanding: number;
+  oldest_invoice_date: string | null;
+}
+
+/**
+ * Payment statistics by method
+ */
+export interface PaymentMethodStats {
+  [methodName: string]: {
+    count: number;
+    total: number;
+    average: number;
+  };
+}
+
+/**
+ * Daily payment totals
+ */
+export interface DailyPaymentTotal {
+  date: string;
+  total: number;
+  count: number;
+}
+
+/**
+ * Paginated account history response
+ */
+export interface AccountHistoryPaginatedData {
+  transactions: FinancialTransaction[];
+  pagination: Pagination;
+}
+
+/**
+ * Paginated client balances response
+ */
+export interface ClientBalancesPaginatedData {
+  clients: ClientAccountBalance[];
+  pagination: Pagination;
+}
+
+/**
+ * Balance verification result
+ */
+export interface BalanceVerification {
+  is_valid: boolean;
+  reported_balance: number;
+  calculated_balance: number;
+  difference: number;
+  issues: string[];
+}
+
+/**
+ * Balance recalculation result
+ */
+export interface BalanceRecalculation {
+  new_balance: number;
+  old_balance: number;
+  adjustment: number;
+  recalculated_at: string;
+}
+
+// ========================================
+// FINANCIAL CENTER TYPES
+// ========================================
+
+/**
+ * Pending item types
+ */
+export type PendingItemType = 'commission' | 'payout_approval' | 'invoice_payment';
+export type PendingItemStatus = 'pending' | 'approved' | 'rejected' | 'finalized';
+
+/**
+ * Pending item in the financial system
+ */
+export interface PendingItem {
+  id: number;
+  item_type: PendingItemType;
+  related_entity: string | null;
+  related_id: number | null;
+  account_type: AccountType | null;
+  account_id: number | null;
+  expected_amount: number;
+  status: PendingItemStatus;
+  assigned_to: number | null;
+  notes: string | null;
+  created_at: string;
+  resolved_at: string | null;
+  resolved_by: number | null;
+  days_pending?: number;
+  // Joined data
+  account_name?: string;
+  related_name?: string;
+}
+
+/**
+ * Pending items list response
+ */
+export interface PendingItemsResponse {
+  items: PendingItem[];
+  count: number;
+}
+
+/**
+ * Pending items summary by status
+ */
+export interface PendingItemsSummary {
+  pending: number;
+  approved: number;
+  rejected: number;
+  finalized: number;
+  total: number;
+  by_type: {
+    commission: number;
+    payout_approval: number;
+    invoice_payment: number;
+  };
+}
+
+/**
+ * Create pending item payload
+ */
+export interface CreatePendingItemPayload {
+  item_type: PendingItemType;
+  related_entity?: string;
+  related_id?: number;
+  account_type: AccountType;
+  account_id: number;
+  expected_amount: number;
+  assigned_to?: number;
+  notes?: string;
+}
+
+/**
+ * Unified account in accounts overview
+ */
+export interface UnifiedAccount {
+  type: AccountType;
+  id: number;
+  name: string;
+  email: string | null;
+  balance: number;
+  last_activity: string | null;
+  pending_count: number;
+  pending_amount: number;
+}
+
+/**
+ * Unified accounts list response
+ */
+export interface UnifiedAccountsResponse {
+  accounts: UnifiedAccount[];
+  summary: {
+    total_employee_balance: number;
+    total_client_balance: number;
+    total_company_balance: number;
+    pending_commissions: number;
+    account_count: number;
+  };
+  pagination?: {
+    page: number;
+    per_page: number;
+    total: number;
+    pages: number;
+  };
+}
+
+/**
+ * Manual transaction types
+ */
+export type ManualTransactionType = 'adjustment' | 'transfer';
+
+/**
+ * Create manual transaction payload
+ */
+export interface CreateManualTransactionPayload {
+  type: ManualTransactionType;
+  // For adjustments
+  account_type?: AccountType;
+  account_id?: number;
+  direction?: TransactionDirection;  // Required for adjustments
+  // For transfers
+  from_account_type?: AccountType;
+  from_account_id?: number;
+  to_account_type?: AccountType;
+  to_account_id?: number;
+  // Common fields
+  amount: number;
+  description: string;
+  effective_date?: string;
+  notes?: string;
+}
+
+/**
+ * Invoice aging bucket
+ */
+export interface AgingBucket {
+  count: number;
+  amount: number;
+  invoices?: {
+    id: string;
+    client_name: string;
+    amount: number;
+    paid_amount: number;
+    balance: number;
+    due_date: string;
+    days_overdue: number;
+  }[];
+}
+
+/**
+ * Invoice aging analysis response
+ */
+export interface InvoiceAgingAnalysis {
+  current: AgingBucket;
+  '30_days': AgingBucket;
+  '60_days': AgingBucket;
+  '90_plus': AgingBucket;
+  total_outstanding?: number;
+  clients?: {
+    client_id: number | string;
+    client_name: string;
+    current: number;
+    '30_days': number;
+    '60_days': number;
+    '90_plus': number;
+    total: number;
+  }[];
+}
+
+// ========================================
+// DEPRECATION NOTICES
+// ========================================
+
+/**
+ * @deprecated Use Invoice instead. Receivables are being migrated to the Invoice system.
+ * This type will be removed in a future version.
+ */
+// Receivable interface is marked deprecated above in its original location
+
+/**
+ * @deprecated Use RecordInvoicePaymentPayload instead. 
+ * Payments now target invoices, not receivables.
+ */
+// PaymentPayload interface is marked deprecated above in its original location

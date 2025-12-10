@@ -1,7 +1,7 @@
 // src/components/employee/RecentTransactionsPanel.tsx
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import {  MoreHorizontal } from 'lucide-react';
+import { MoreHorizontal, Clock } from 'lucide-react';
 import { formatDate } from '../../utils/dateUtils';
 import type { EmployeeTransaction, FinancialSummary } from '../../queries/employeeDashboardQueries';
 
@@ -22,17 +22,28 @@ const RecentTransactionsPanel: React.FC<RecentTransactionsPanelProps> = ({ trans
     }).format(numAmount);
   };
 
+  /**
+   * Check if transaction is pending (awaiting payment)
+   */
+  const isPendingTransaction = (transaction: EmployeeTransaction): boolean => {
+    return transaction.is_pending || 
+      (transaction.direction === 'CREDIT' && 
+        (parseFloat(transaction.amount || '0') === 0 || 
+         transaction.transaction_name?.startsWith('Pending:')));
+  };
+
   const navigateToFinancials = () => {
     navigate('/employee/financials');
   };
 
+  // Count pending transactions
+  const pendingCount = transactions.filter(t => isPendingTransaction(t)).length;
+
 
   return (
     <div 
-      className="card h-100 shadow-sm"
+      className="rounded-lg border border-border bg-card shadow-sm h-full"
       style={{
-        borderRadius: 'var(--border-radius)',
-        border: '1px solid var(--color-gray-100)',
         overflow: 'visible',
         position: 'relative',
         display: 'flex',
@@ -42,33 +53,39 @@ const RecentTransactionsPanel: React.FC<RecentTransactionsPanelProps> = ({ trans
     >
       {/* Header */}
       <div
-        className="card-header border-0 py-2"
+        className="px-4 py-2 border-b border-border"
         style={{
           backgroundColor: '#28a745',
           color: '#fff',
           flexShrink: 0
         }}
       >
-        <div className="d-flex justify-content-center align-items-center">
-          <h6 className="mb-0 fw-bold text-white" style={{ fontSize: 'var(--font-size-base)' }}>
+        <div className="flex justify-between items-center">
+          <h6 className="mb-0 font-bold text-white text-base">
            مستحقات الموظف
           </h6>
+          {pendingCount > 0 && (
+            <span className="inline-flex items-center px-2 py-0.5 text-xs font-medium bg-amber-100 text-amber-800 rounded">
+              <Clock size={12} className="mr-1" />
+              {pendingCount} معلق
+            </span>
+          )}
         </div>
       </div>
 
       {/* Body - Transactions Table */}
-      <div className="card-body p-0" style={{ flex: 1, overflow: 'visible', position: 'relative' }}>
+      <div className="p-0" style={{ flex: 1, overflow: 'visible', position: 'relative' }}>
         {transactions.length === 0 ? (
-          <div className="d-flex justify-content-center align-items-center h-100">
+          <div className="flex justify-center items-center h-full">
             <div className="text-center">
-              <p className="text-muted mb-0" style={{ fontSize: 'var(--font-size-sm)' }}>
+              <p className="text-black mb-0 text-sm">
                 لا توجد معاملات مالية
               </p>
             </div>
           </div>
         ) : (
-          <div className="table-responsive h-100" style={{ overflow: 'visible', position: 'relative', zIndex: 10 }}>
-            <table className="table table-sm mb-0" style={{ position: 'relative', zIndex: 10 }}>
+          <div className="w-full overflow-x-auto h-full" style={{ overflow: 'visible', position: 'relative', zIndex: 10 }}>
+            <table className="w-full text-sm mb-0" style={{ position: 'relative', zIndex: 10 }}>
               <thead
                 style={{
                   position: 'sticky',
@@ -79,26 +96,26 @@ const RecentTransactionsPanel: React.FC<RecentTransactionsPanelProps> = ({ trans
               >
                 <tr>
                   <th style={{
-                    fontSize: 'var(--font-size-xs)',
+                    fontSize: '0.75rem',
                     padding: '8px',
                     borderBottom: '2px solid var(--color-gray-100)',
                     textAlign: 'start'
                   }}>العميل/المهمة</th>
 
                   <th style={{
-                    fontSize: 'var(--font-size-xs)',
+                    fontSize: '0.75rem',
                     padding: '8px',
                     borderBottom: '2px solid var(--color-gray-100)',
                     textAlign: 'center'
                   }}>المدين</th>
                   <th style={{
-                    fontSize: 'var(--font-size-xs)',
+                    fontSize: '0.75rem',
                     padding: '8px',
                     borderBottom: '2px solid var(--color-gray-100)',
                     textAlign: 'center'
                   }}>الدائن</th>
                   <th style={{
-                    fontSize: 'var(--font-size-xs)',
+                    fontSize: '0.75rem',
                     padding: '8px',
                     borderBottom: '2px solid var(--color-gray-100)',
                     textAlign: 'center'
@@ -106,86 +123,100 @@ const RecentTransactionsPanel: React.FC<RecentTransactionsPanelProps> = ({ trans
                 </tr>
               </thead>
               <tbody>
-                {transactions.map((transaction, index) => (
+                {transactions.map((transaction, index) => {
+                  const isPending = isPendingTransaction(transaction);
+                  return (
                   <tr
                     key={transaction.id}
+                    className="hover:bg-muted/50 transition-colors"
                     style={{
-                      transition: 'all 0.2s ease-in-out',
                       cursor: transaction.related_task_id ? 'pointer' : 'default'
                     }}
                   >
                     <td style={{
-                      fontSize: 'var(--font-size-xs)',
+                      fontSize: '0.8rem',
                       padding: '6px',
                       textAlign: 'start',
                       borderBottom: '1px solid var(--color-gray-100)',
-                      backgroundColor: index % 2 === 0 ? '#e8f5e8' : '#c8e6c9'
+                      backgroundColor: isPending ? '#fef3c7' : (index % 2 === 0 ? '#e8f5e8' : '#c8e6c9'),
+                      fontWeight: '700'
                     }}>
-                      <div className="text-end">
-                        {transaction.client_name && (
-                          <span style={{ fontSize: '11px' }}>
-                            {transaction.client_name}: &nbsp;
+                      <div className="text-start">
+                        {isPending && (
+                          <Clock size={12} className="inline mr-1 text-amber-600" />
+                        )}
+                        {/* Show transaction name first */}
+                        {transaction.transaction_name && (
+                          <span className="font-semibold">
+                            {transaction.transaction_name}
                           </span>
                         )}
-                        {transaction.task_name && (
-                          <span style={{ fontSize: '10px' }}>
-                            {transaction.task_name}
+                        {/* If we have client or task name, show them */}
+                        {(transaction.client_name || transaction.task_name) && (
+                          <span className="text-xs text-gray-600">
+                            {' '}({transaction.client_name ? transaction.client_name : ''}{transaction.client_name && transaction.task_name ? ' - ' : ''}{transaction.task_name ? transaction.task_name : ''})
                           </span>
                         )}
-                        {!transaction.client_name && !transaction.task_name && (
-                          <span style={{ fontSize: '10px' }}>
-                              {transaction.notes} --- {transaction.transaction_name}
-                          </span>
+                        {/* Show notes if available */}
+                        {transaction.notes && transaction.notes.trim() && (
+                          <div className="text-xs text-gray-500 mt-0.5">
+                            {transaction.notes}
+                          </div>
                         )}
                       </div>
                     </td>
                     <td style={{
-                      fontSize: 'var(--font-size-xs)',
+                      fontSize: '0.75rem',
                       padding: '6px',
                       textAlign: 'center',
                       borderBottom: '1px solid var(--color-gray-100)',
-                      backgroundColor: index % 2 === 0 ? '#e8f5e8' : '#c8e6c9'
+                      backgroundColor: isPending ? '#fef3c7' : (index % 2 === 0 ? '#e8f5e8' : '#c8e6c9')
                     }}>
-                      <span className="text-success">
-                        {transaction.direction === 'CREDIT' && transaction.amount ? (
-                          <>
-                            {formatCurrency(transaction.amount)} ر.س
-                          </>
-                        ) : (
-                          <span className="text-muted">_</span>
-                        )}
-                      </span>
+                      {isPending ? (
+                        <span className="text-amber-600 font-medium text-xs">قيد الانتظار</span>
+                      ) : (
+                        <span className="text-green-600">
+                          {transaction.direction === 'CREDIT' && transaction.amount ? (
+                            <>
+                              {formatCurrency(transaction.amount)} ر.س
+                            </>
+                          ) : (
+                            <span className="text-black">_</span>
+                          )}
+                        </span>
+                      )}
                     </td>
                     <td style={{
-                      fontSize: 'var(--font-size-xs)',
+                      fontSize: '0.75rem',
                       padding: '6px',
                       textAlign: 'center',
                       borderBottom: '1px solid var(--color-gray-100)',
-                      backgroundColor: index % 2 === 0 ? '#e8f5e8' : '#c8e6c9'
+                      backgroundColor: isPending ? '#fef3c7' : (index % 2 === 0 ? '#e8f5e8' : '#c8e6c9')
                     }}>
-                      <span className="text-danger">
+                      <span className="text-red-600">
                         {transaction.direction === 'DEBIT' && transaction.amount ? (
                           <>
                             {formatCurrency(transaction.amount)} ر.س
                           </>
                         ) : (
-                          <span className="text-muted">_</span>
+                          <span className="text-black">_</span>
                         )}
                       </span>
                     </td>
                     <td style={{
-                      fontSize: 'var(--font-size-xs)',
+                      fontSize: '0.75rem',
                       padding: '6px',
                       textAlign: 'center',
                       borderBottom: '1px solid var(--color-gray-100)',
-                      backgroundColor: index % 2 === 0 ? '#e8f5e8' : '#c8e6c9'
+                      backgroundColor: isPending ? '#fef3c7' : (index % 2 === 0 ? '#e8f5e8' : '#c8e6c9')
                     }}>
                       <span style={{ fontSize: '10px' }}>
                         {formatDate(transaction.transaction_date).replace(/\/20/, '/')}
                       </span>
                     </td>
                   </tr>
-                ))}
+                  );
+                })}
                 {/* Totals Footer Row */}
                 <tr style={{
                   backgroundColor: 'var(--color-gray-50)',
@@ -193,7 +224,7 @@ const RecentTransactionsPanel: React.FC<RecentTransactionsPanelProps> = ({ trans
                   fontWeight: 'bold'
                 }}>
                   <td style={{
-                    fontSize: 'var(--font-size-xs)',
+                    fontSize: '0.75rem',
                     padding: '8px',
                     textAlign: 'center',
                     fontWeight: 'bold',
@@ -202,35 +233,35 @@ const RecentTransactionsPanel: React.FC<RecentTransactionsPanelProps> = ({ trans
                     الإجماليات
                   </td>
                   <td style={{
-                    fontSize: 'var(--font-size-xs)',
+                    fontSize: '0.75rem',
                     padding: '8px',
                     textAlign: 'center',
                     fontWeight: 'bold',
                     backgroundColor: 'var(--color-gray-50)'
                   }}>
-                    <span className="text-success">
+                    <span className="text-green-600">
                       {formatCurrency(financialSummary.total_earned.toString())} ر.س
                     </span>
                   </td>
                   <td style={{
-                    fontSize: 'var(--font-size-xs)',
+                    fontSize: '0.75rem',
                     padding: '8px',
                     textAlign: 'center',
                     fontWeight: 'bold',
                     backgroundColor: 'var(--color-gray-50)'
                   }}>
-                    <span className="text-danger">
+                    <span className="text-red-600">
                       {formatCurrency(financialSummary.total_paid_out.toString())} ر.س
                     </span>
                   </td>
                   <td style={{
-                    fontSize: 'var(--font-size-xs)',
+                    fontSize: '0.75rem',
                     padding: '8px',
                     textAlign: 'center',
                     fontWeight: 'bold',
                     backgroundColor: 'var(--color-gray-50)'
                   }}>
-                    <span className={financialSummary.balance_due > 0 ? 'text-danger' : 'text-muted'}>
+                    <span className={financialSummary.balance_due > 0 ? 'text-red-600' : 'text-black'}>
                       {formatCurrency(financialSummary.balance_due.toString())} ر.س
                     </span>
                   </td>
@@ -243,13 +274,12 @@ const RecentTransactionsPanel: React.FC<RecentTransactionsPanelProps> = ({ trans
 
       {/* Footer - Show More Button */}
       <div 
-        className="card-footer bg-light border-0 py-2"
-        style={{ flexShrink: 0, textAlign: 'center' }}
+        className="px-4 py-2 bg-muted/30 border-t border-border text-center"
+        style={{ flexShrink: 0 }}
       >
         <button
           onClick={navigateToFinancials}
-          className="btn btn-link text-primary p-0 d-flex align-items-center justify-content-center gap-1 w-100"
-          style={{ fontSize: 'var(--font-size-sm)' }}
+          className="text-primary p-0 flex items-center justify-center gap-1 w-full hover:text-primary/80 transition-colors text-sm"
         >
           <MoreHorizontal size={16} />
           <span>عرض جميع المعاملات</span>

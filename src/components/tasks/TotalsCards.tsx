@@ -19,40 +19,40 @@ const TotalsCards = ({ tasks, isLoading }: TotalsCardsProps) => {
     {
       label: t('status.New'),
       value: newTasks,
-      className: 'border-start border-4 border-info',
-      bgClass: 'bg-info bg-opacity-10',
-      textClass: 'text-info'
+      borderClass: 'border-l-4 border-blue-500',
+      bgClass: 'bg-blue-500/10',
+      textClass: 'text-blue-600'
     },
     {
       label: t('status.Deferred'),
       value: deferredTasks,
-      className: 'border-start border-4 border-warning',
-      bgClass: 'bg-warning bg-opacity-10',
-      textClass: 'text-warning'
+      borderClass: 'border-l-4 border-yellow-500',
+      bgClass: 'bg-yellow-500/10',
+      textClass: 'text-yellow-600'
     },
     {
       label: t('status.Completed'),
       value: completedTasks,
-      className: 'border-start border-4 border-success',
-      bgClass: 'bg-success bg-opacity-10',
-      textClass: 'text-success'
+      borderClass: 'border-l-4 border-green-500',
+      bgClass: 'bg-green-500/10',
+      textClass: 'text-green-600'
     },
     {
       label: t('dashboard.totalClients'),
       value: totalClients,
-      className: 'border-start border-4 border-primary',
-      bgClass: 'bg-primary bg-opacity-10',
+      borderClass: 'border-l-4 border-primary',
+      bgClass: 'bg-primary/10',
       textClass: 'text-primary'
     }
   ];
 
   if (isLoading) {
     return (
-      <div className="d-flex gap-3">
+      <div className="flex gap-3">
         {[1, 2, 3, 4].map(i => (
-          <div className="flex-fill" key={i}>
-            <div className="d-flex align-items-center p-2 rounded-3 border" style={{ minHeight: '60px' }}>
-              <div className="flex-grow-1 text-center">
+          <div className="flex-1" key={i}>
+            <div className="flex items-center p-2 rounded-lg border border-border" style={{ minHeight: '60px' }}>
+              <div className="flex-grow text-center">
                 <div className="skeleton mx-auto mb-1" style={{ width: '32px', height: '20px', borderRadius: '4px' }}></div>
                 <div className="skeleton mx-auto" style={{ width: '60px', height: '12px', borderRadius: '4px' }}></div>
               </div>
@@ -64,13 +64,13 @@ const TotalsCards = ({ tasks, isLoading }: TotalsCardsProps) => {
   }
 
   return (
-    <div className="d-flex gap-3">
+    <div className="flex gap-3">
       {cardData.map((card, index) => (
-        <div className="flex-fill" key={index}>
-          <div className={`d-flex align-items-center p-2 rounded-3 ${card.className} ${card.bgClass}`} style={{ minHeight: '60px' }}>
-            <div className="flex-grow-1 text-center">
-              <h5 className={`mb-0 fw-bold ${card.textClass}`} style={{ fontSize: '1.2rem' }}>{card.value}</h5>
-              <p className="text-muted mb-0" style={{ fontSize: '0.75rem' }}>{card.label}</p>
+        <div className="flex-1" key={index}>
+          <div className={`flex items-center p-2 rounded-lg ${card.borderClass} ${card.bgClass}`} style={{ minHeight: '60px' }}>
+            <div className="flex-grow text-center">
+              <h5 className={`mb-0 font-bold ${card.textClass}`} style={{ fontSize: '1.2rem' }}>{card.value}</h5>
+              <p className="text-black mb-0" style={{ fontSize: '0.75rem' }}>{card.label}</p>
             </div>
           </div>
         </div>

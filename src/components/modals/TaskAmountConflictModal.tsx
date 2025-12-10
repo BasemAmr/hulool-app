@@ -83,8 +83,8 @@ const TaskAmountConflictModal: React.FC<TaskAmountConflictModalProps> = ({
   };
 
   const renderConflictSummary = () => (
-    <div className="conflict-summary bg-red-50 p-4 rounded-lg mb-6">
-      <h3 className="text-lg font-semibold text-red-800 mb-3">
+    <div className="rounded-lg border border-destructive bg-destructive/10 p-4 space-y-3">
+      <h3 className="text-lg font-semibold text-destructive">
         {t('tasks.taskAmountConflictDetected')}
       </h3>
       <div className="space-y-2 text-sm">
@@ -93,12 +93,12 @@ const TaskAmountConflictModal: React.FC<TaskAmountConflictModalProps> = ({
         <p><strong>{t('tasks.currentMainReceivableAmount')}:</strong> {conflictData.current_main_receivable_amount.toLocaleString()} SAR</p>
         <p><strong>{t('tasks.calculatedNewMainAmount')}:</strong> {conflictData.calculated_new_main_amount.toLocaleString()} SAR</p>
         <p><strong>{t('tasks.totalPaidOnMain')}:</strong> {conflictData.main_receivable_paid.toLocaleString()} SAR</p>
-        <p className="text-red-700 font-semibold">
+        <p className="text-destructive font-semibold">
           <strong>{t('tasks.overpaymentSurplus')}:</strong> {conflictData.surplus.toLocaleString()} SAR
         </p>
       </div>
       
-      <div className="mt-4 p-3 bg-yellow-50 border-l-4 border-yellow-400">
+      <div className="p-3 rounded-lg border border-yellow-600 bg-yellow-50">
         <p className="text-yellow-800 text-sm">
           <strong>{t('tasks.conflictExplanation')}:</strong> {t('tasks.mainReceivableOverpaymentMessage')}
         </p>
@@ -107,39 +107,39 @@ const TaskAmountConflictModal: React.FC<TaskAmountConflictModalProps> = ({
   );
 
   const renderPaymentDecisions = () => (
-    <div className="payment-decisions mb-6">
-      <h3 className="text-lg font-semibold mb-3">{t('tasks.mainReceivablePaymentDecisions')}</h3>
+    <div className="space-y-3">
+      <h3 className="text-lg font-semibold text-black">{t('tasks.mainReceivablePaymentDecisions')}</h3>
       {conflictData.financial_records.payments.map((payment) => (
-        <div key={payment.id} className="payment-item border p-4 rounded-lg mb-3">
-          <div className="payment-info mb-3">
+        <div key={payment.id} className="rounded-lg border border-border bg-card p-4 space-y-3">
+          <div className="space-y-2 text-sm">
             <p><strong>{t('payments.amount')}:</strong> {payment.amount.toLocaleString()} SAR</p>
             <p><strong>{t('payments.method')}:</strong> {payment.payment_method_name || 'Cash'}</p>
             <p><strong>{t('payments.paidAt')}:</strong> {new Date(payment.paid_at).toLocaleDateString()}</p>
             <p><strong>{t('payments.createdBy')}:</strong> {payment.created_by_name || 'Unknown'}</p>
           </div>
           
-          <div className="decision-options">
-            <label className="block mb-2 font-semibold">{t('tasks.chooseAction')}:</label>
+          <div className="space-y-2">
+            <label className="block font-semibold text-sm text-black">{t('tasks.chooseAction')}:</label>
             <div className="space-y-2">
-              <label className="flex items-center">
+              <label className="flex items-center gap-2 p-2 rounded hover:bg-muted/50 transition-colors cursor-pointer">
                 <input 
                   type="radio" 
                   name={`main-payment-${payment.id}`}
                   onChange={() => handlePaymentDecision(payment, { payment_id: payment.id, action: 'keep' })}
-                  className="mr-2"
+                  className="rounded"
                 />
-                {t('tasks.keepPayment')} ({t('tasks.willCreateOverpayment')})
+                <span className="text-sm">{t('tasks.keepPayment')} ({t('tasks.willCreateOverpayment')})</span>
               </label>
-              <label className="flex items-center">
+              <label className="flex items-center gap-2 p-2 rounded hover:bg-muted/50 transition-colors cursor-pointer">
                 <input 
                   type="radio" 
                   name={`main-payment-${payment.id}`}
                   onChange={() => handlePaymentDecision(payment, { payment_id: payment.id, action: 'delete' })}
-                  className="mr-2"
+                  className="rounded"
                 />
-                {t('tasks.deletePayment')}
+                <span className="text-sm">{t('tasks.deletePayment')}</span>
               </label>
-              <label className="flex items-center">
+              <label className="flex items-center gap-2 p-2 rounded hover:bg-muted/50 transition-colors cursor-pointer">
                 <input 
                   type="radio" 
                   name={`main-payment-${payment.id}`}
@@ -147,11 +147,11 @@ const TaskAmountConflictModal: React.FC<TaskAmountConflictModalProps> = ({
                     payment_id: payment.id, 
                     action: 'convert_to_credit'
                   })}
-                  className="mr-2"
+                  className="rounded"
                 />
-                {t('tasks.convertToCredit')}
+                <span className="text-sm">{t('tasks.convertToCredit')}</span>
               </label>
-              <div className="flex items-center">
+              <div className="flex items-center gap-2 p-2 rounded hover:bg-muted/50 transition-colors">
                 <input 
                   type="radio" 
                   name={`main-payment-${payment.id}`}
@@ -160,12 +160,12 @@ const TaskAmountConflictModal: React.FC<TaskAmountConflictModalProps> = ({
                     action: 'reduce_to',
                     new_amount: Math.min(payment.amount, conflictData.calculated_new_main_amount)
                   })}
-                  className="mr-2"
+                  className="rounded"
                 />
-                <label className="mr-2">{t('tasks.reduceTo')}:</label>
+                <label className="text-sm cursor-pointer">{t('tasks.reduceTo')}:</label>
                 <input 
                   type="number" 
-                  className="border rounded px-2 py-1 w-24"
+                  className="border border-border rounded px-2 py-1 w-24 focus:outline-none focus:ring-2 focus:ring-primary text-sm"
                   max={payment.amount}
                   defaultValue={Math.min(payment.amount, conflictData.calculated_new_main_amount)}
                   onChange={(e) => handlePaymentDecision(payment, { 
@@ -174,7 +174,7 @@ const TaskAmountConflictModal: React.FC<TaskAmountConflictModalProps> = ({
                     new_amount: parseFloat(e.target.value)
                   })}
                 />
-                <span className="ml-1">SAR</span>
+                <span className="text-sm">SAR</span>
               </div>
             </div>
           </div>
@@ -184,45 +184,45 @@ const TaskAmountConflictModal: React.FC<TaskAmountConflictModalProps> = ({
   );
 
   const renderAllocationDecisions = () => (
-    <div className="allocation-decisions mb-6">
-      <h3 className="text-lg font-semibold mb-3">{t('tasks.mainReceivableAllocationDecisions')}</h3>
+    <div className="space-y-3">
+      <h3 className="text-lg font-semibold text-black">{t('tasks.mainReceivableAllocationDecisions')}</h3>
       {conflictData.financial_records.allocations.map((allocation) => (
-        <div key={allocation.id} className="allocation-item border p-4 rounded-lg mb-3">
-          <div className="allocation-info mb-3">
+        <div key={allocation.id} className="rounded-lg border border-border bg-card p-4 space-y-3">
+          <div className="space-y-2 text-sm">
             <p><strong>{t('allocations.amount')}:</strong> {allocation.amount.toLocaleString()} SAR</p>
             <p><strong>{t('allocations.allocatedAt')}:</strong> {new Date(allocation.allocated_at).toLocaleDateString()}</p>
             <p><strong>{t('allocations.creditSource')}:</strong> {allocation.credit_description || 'Credit'}</p>
           </div>
           
-          <div className="decision-options">
-            <label className="block mb-2 font-semibold">{t('tasks.chooseAction')}:</label>
+          <div className="space-y-2">
+            <label className="block font-semibold text-sm text-black">{t('tasks.chooseAction')}:</label>
             <div className="space-y-2">
-              <label className="flex items-center">
+              <label className="flex items-center gap-2 p-2 rounded hover:bg-muted/50 transition-colors cursor-pointer">
                 <input 
                   type="radio" 
                   name={`main-allocation-${allocation.id}`}
                   onChange={() => handleAllocationDecision(allocation, { allocation_id: allocation.id, action: 'keep' })}
-                  className="mr-2"
+                  className="rounded"
                 />
-                {t('tasks.keepAllocation')} ({t('tasks.willCreateOverpayment')})
+                <span className="text-sm">{t('tasks.keepAllocation')} ({t('tasks.willCreateOverpayment')})</span>
               </label>
-              <label className="flex items-center">
+              <label className="flex items-center gap-2 p-2 rounded hover:bg-muted/50 transition-colors cursor-pointer">
                 <input 
                   type="radio" 
                   name={`main-allocation-${allocation.id}`}
                   onChange={() => handleAllocationDecision(allocation, { allocation_id: allocation.id, action: 'return_to_credit' })}
-                  className="mr-2"
+                  className="rounded"
                 />
-                {t('tasks.returnToCredit')}
+                <span className="text-sm">{t('tasks.returnToCredit')}</span>
               </label>
-              <label className="flex items-center">
+              <label className="flex items-center gap-2 p-2 rounded hover:bg-muted/50 transition-colors cursor-pointer">
                 <input 
                   type="radio" 
                   name={`main-allocation-${allocation.id}`}
                   onChange={() => handleAllocationDecision(allocation, { allocation_id: allocation.id, action: 'delete_allocation' })}
-                  className="mr-2"
+                  className="rounded"
                 />
-                {t('tasks.deleteAllocation')}
+                <span className="text-sm">{t('tasks.deleteAllocation')}</span>
               </label>
             </div>
           </div>
@@ -236,24 +236,23 @@ const TaskAmountConflictModal: React.FC<TaskAmountConflictModalProps> = ({
       isOpen={true}
       onClose={closeModal}
       title={t('tasks.resolveAmountConflict')}
-      className="large-modal"
     >
-      <div className="task-amount-conflict-modal">
+      <div className="space-y-4 max-h-96 overflow-y-auto">
         {renderConflictSummary()}
         
         {conflictData.financial_records.payments.length > 0 && renderPaymentDecisions()}
         {conflictData.financial_records.allocations.length > 0 && renderAllocationDecisions()}
 
-        <div className="modal-actions flex justify-end gap-3 pt-4 border-t">
+        <div className="flex justify-end gap-2 pt-4 border-t border-border">
           <Button variant="secondary" onClick={closeModal}>
             {t('common.cancel')}
           </Button>
           <Button 
             variant="primary" 
             onClick={handleResolve}
-            disabled={resolveAmountChange.isPending}
+            isLoading={resolveAmountChange.isPending}
           >
-            {resolveAmountChange.isPending ? t('common.processing') : t('tasks.resolveConflict')}
+            {t('tasks.resolveConflict')}
           </Button>
         </div>
       </div>

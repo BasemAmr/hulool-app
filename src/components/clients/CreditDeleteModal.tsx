@@ -1,8 +1,11 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { AlertTriangle } from 'lucide-react';
 import { useModalStore } from '../../stores/modalStore';
 import { useDeleteClientCredit, useResolveCreditDeletion } from '../../queries/clientCreditQueries';
 import type { ClientCredit, CreditDeletionConflictData } from '../../api/types';
+import BaseModal from '../ui/BaseModal';
+import Button from '../ui/Button';
 
 interface CreditDeleteModalProps {
   credit: ClientCredit;
@@ -88,136 +91,132 @@ const CreditDeleteModal = ({ credit }: CreditDeleteModalProps) => {
   };
 
   return (
-    <div className="modal-body">
-      <h5 className="modal-title mb-3">
-        {t('clients.deleteCredit')}
-      </h5>
-
-      {error && (
-        <div className="alert alert-danger">
-          {error}
-        </div>
-      )}
-
-      {!isResolving ? (
-        <>
-          <p>
-            {t('clients.deleteCreditConfirm', {
-              description: credit.description,
-              amount: Number(credit.amount).toLocaleString('ar-SA', { style: 'currency', currency: 'SAR' })
-            })}
-          </p>
-
-          {credit.allocated_amount > 0 && (
-            <div className="alert alert-warning">
-              <strong>{t('clients.warning')}:</strong> {t('clients.creditHasAllocations')}
-            </div>
-          )}
-        </>
-      ) : (
-        <>
-          <div className="alert alert-warning">
-            <h6>{t('clients.creditDeletionConflict')}</h6>
-            <p>
-              {t('clients.creditDeletionConflictMessage', {
-                allocated: Number(conflictData!.allocated_amount).toLocaleString('ar-SA', { style: 'currency', currency: 'SAR' })
-              })}
-            </p>
+    <BaseModal isOpen={true} onClose={closeModal} title={t('clients.deleteCredit')}>
+      <div className="space-y-4">
+        {error && (
+          <div className="rounded-lg border border-destructive bg-destructive/10 p-4 flex gap-3">
+            <AlertTriangle className="text-destructive flex-shrink-0 mt-0.5 h-5 w-5" />
+            <p className="text-destructive text-sm">{error}</p>
           </div>
-
-          <div className="mb-3">
-            <h6>{t('clients.allocationResolutions')}</h6>
-            <div className="table-responsive">
-              <table className="table table-sm">
-                <thead>
-                  <tr>
-                    <th>{t('common.description')}</th>
-                    <th>{t('common.amount')}</th>
-                    <th>{t('clients.resolution')}</th>
-                    <th>{t('clients.paymentMethod')}</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {conflictData!.allocations.map((alloc) => (
-                    <tr key={alloc.id}>
-                      <td>{alloc.description}</td>
-                      <td>
-                        {Number(alloc.amount).toLocaleString('ar-SA', {
-                          style: 'currency',
-                          currency: 'SAR'
-                        })}
-                      </td>
-                      <td>
-                        <select
-                          className="form-select form-select-sm"
-                          value={allocationResolutions[alloc.id] || 'delete_allocation'}
-                          onChange={(e) => handleAllocationResolutionChange(alloc.id, e.target.value as 'keep' | 'reduce_allocation' | 'remove_allocation')}
-                        >
-                          <option value="delete_allocation">{t('common.delete')}</option>
-                          <option value="convert_to_payment">{t('clients.convertToPayment')}</option>
-                        </select>
-                      </td>
-                      <td>
-                        {allocationResolutions[alloc.id] === 'convert_to_payment' && (
-                          <select
-                            className="form-select form-select-sm"
-                            value={paymentMethods[alloc.id] || ''}
-                            onChange={(e) => handlePaymentMethodChange(alloc.id, Number(e.target.value))}
-                          >
-                            <option value="">{t('clients.selectPaymentMethod')}</option>
-                            <option value="1">{t('paymentMethods.cash')}</option>
-                            <option value="2">{t('paymentMethods.bankTransfer')}</option>
-                            <option value="3">{t('paymentMethods.check')}</option>
-                            <option value="4">{t('paymentMethods.creditCard')}</option>
-                          </select>
-                        )}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        </>
-      )}
-
-      <div className="d-flex justify-content-end gap-2">
-        <button className="btn btn-secondary" onClick={closeModal}>
-          {t('common.cancel')}
-        </button>
-        {!isResolving ? (
-          <button
-            className="btn btn-danger"
-            onClick={handleDelete}
-            disabled={deleteCredit.isPending}
-          >
-            {deleteCredit.isPending ? (
-              <>
-                <span className="spinner-border spinner-border-sm me-1" role="status"></span>
-                {t('common.deleting')}
-              </>
-            ) : (
-              t('common.delete')
-            )}
-          </button>
-        ) : (
-          <button
-            className="btn btn-primary"
-            onClick={handleResolution}
-            disabled={!isResolutionComplete() || resolveDeletion.isPending}
-          >
-            {resolveDeletion.isPending ? (
-              <>
-                <span className="spinner-border spinner-border-sm me-1" role="status"></span>
-                {t('common.processing')}
-              </>
-            ) : (
-              t('common.resolve')
-            )}
-          </button>
         )}
+
+        {!isResolving ? (
+          <>
+            {/* Confirmation Message */}
+            <div className="space-y-2">
+              <p className="text-black text-sm">
+                {t('clients.deleteCreditConfirm', {
+                  description: credit.description,
+                  amount: Number(credit.amount).toLocaleString('ar-SA', { style: 'currency', currency: 'SAR' })
+                })}
+              </p>
+
+              {credit.allocated_amount > 0 && (
+                <div className="rounded-lg border border-yellow-600 bg-yellow-50 p-3 flex gap-3">
+                  <AlertTriangle className="text-yellow-600 flex-shrink-0 mt-0.5 h-5 w-5" />
+                  <div>
+                    <p className="font-medium text-yellow-900 text-sm">{t('clients.warning')}:</p>
+                    <p className="text-yellow-800 text-sm">{t('clients.creditHasAllocations')}</p>
+                  </div>
+                </div>
+              )}
+            </div>
+          </>
+        ) : (
+          <>
+            {/* Conflict Alert */}
+            <div className="rounded-lg border border-yellow-600 bg-yellow-50 p-4 space-y-2">
+              <h6 className="font-semibold text-yellow-900">{t('clients.creditDeletionConflict')}</h6>
+              <p className="text-yellow-800 text-sm">
+                {t('clients.creditDeletionConflictMessage', {
+                  allocated: Number(conflictData!.allocated_amount).toLocaleString('ar-SA', { style: 'currency', currency: 'SAR' })
+                })}
+              </p>
+            </div>
+
+            {/* Allocations Resolution Table */}
+            <div className="space-y-2">
+              <h6 className="font-semibold text-black">{t('clients.allocationResolutions')}</h6>
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="border-b border-border">
+                      <th className="text-left px-3 py-2 font-semibold text-black">{t('common.description')}</th>
+                      <th className="text-left px-3 py-2 font-semibold text-black">{t('common.amount')}</th>
+                      <th className="text-left px-3 py-2 font-semibold text-black">{t('clients.resolution')}</th>
+                      <th className="text-left px-3 py-2 font-semibold text-black">{t('clients.paymentMethod')}</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-border">
+                    {conflictData!.allocations.map((alloc) => (
+                      <tr key={alloc.id} className="hover:bg-muted/50">
+                        <td className="px-3 py-2 text-black">{alloc.description}</td>
+                        <td className="px-3 py-2 text-black">
+                          {Number(alloc.amount).toLocaleString('ar-SA', {
+                            style: 'currency',
+                            currency: 'SAR'
+                          })}
+                        </td>
+                        <td className="px-3 py-2">
+                          <select
+                            className="w-full px-2 py-1 border border-border rounded text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+                            value={allocationResolutions[alloc.id] || 'delete_allocation'}
+                            onChange={(e) => handleAllocationResolutionChange(alloc.id, e.target.value as 'keep' | 'reduce_allocation' | 'remove_allocation')}
+                          >
+                            <option value="delete_allocation">{t('common.delete')}</option>
+                            <option value="convert_to_payment">{t('clients.convertToPayment')}</option>
+                          </select>
+                        </td>
+                        <td className="px-3 py-2">
+                          {allocationResolutions[alloc.id] === 'convert_to_payment' && (
+                            <select
+                              className="w-full px-2 py-1 border border-border rounded text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+                              value={paymentMethods[alloc.id] || ''}
+                              onChange={(e) => handlePaymentMethodChange(alloc.id, Number(e.target.value))}
+                            >
+                              <option value="">{t('clients.selectPaymentMethod')}</option>
+                              <option value="1">{t('paymentMethods.cash')}</option>
+                              <option value="2">{t('paymentMethods.bankTransfer')}</option>
+                              <option value="3">{t('paymentMethods.check')}</option>
+                              <option value="4">{t('paymentMethods.creditCard')}</option>
+                            </select>
+                          )}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </>
+        )}
+
+        {/* Action Buttons */}
+        <div className="flex justify-end gap-2 pt-4 border-t border-border">
+          <Button variant="secondary" onClick={closeModal}>
+            {t('common.cancel')}
+          </Button>
+          {!isResolving ? (
+            <Button
+              variant="danger"
+              onClick={handleDelete}
+              isLoading={deleteCredit.isPending}
+            >
+              {t('common.delete')}
+            </Button>
+          ) : (
+            <Button
+              variant="primary"
+              onClick={handleResolution}
+              isLoading={resolveDeletion.isPending}
+              disabled={!isResolutionComplete()}
+            >
+              {t('common.resolve')}
+            </Button>
+          )}
+        </div>
       </div>
-    </div>
+    </BaseModal>
   );
 };
 

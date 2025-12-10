@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { AlertTriangle } from 'lucide-react';
 import { useDeleteAllocation } from '../../queries/allocationQueries';
 import { useModalStore } from '../../stores/modalStore';
 import BaseModal from '../ui/BaseModal';
@@ -42,64 +43,72 @@ const formatCurrency = (amount: number) => new Intl.NumberFormat('en-US', { styl
       onClose={closeModal}
       isOpen={true}
     >
-      <div className="modal-body">
-        <div className="alert alert-warning">
-          <i className="fas fa-exclamation-triangle me-2"></i>
-          {t('allocations.deleteWarning')}
+      <div className="space-y-4">
+        {/* Warning Alert */}
+        <div className="rounded-lg border border-yellow-600 bg-yellow-50 p-4 flex gap-3">
+          <AlertTriangle className="text-yellow-600 flex-shrink-0 mt-0.5 h-5 w-5" />
+          <p className="text-yellow-800 text-sm">{t('allocations.deleteWarning')}</p>
         </div>
 
-        <div className="card">
-          <div className="card-body">
-            <h6 className="card-title">{t('allocations.allocationDetails')}</h6>
-            <dl className="row mb-0">
-              <dt className="col-sm-4">{t('allocations.amount')}:</dt>
-              <dd className="col-sm-8">{formatCurrency(allocation.amount)}</dd>
-              
-              <dt className="col-sm-4">{t('allocations.description')}:</dt>
-              <dd className="col-sm-8">
+        {/* Allocation Details Card */}
+        <div className="rounded-lg border border-border bg-card p-4 space-y-2">
+          <h6 className="font-semibold text-black text-sm">{t('allocations.allocationDetails')}</h6>
+          <dl className="space-y-2">
+            <div className="flex justify-between items-start">
+              <dt className="font-medium text-muted-foreground text-sm">{t('allocations.amount')}:</dt>
+              <dd className="font-semibold text-black">{formatCurrency(allocation.amount)}</dd>
+            </div>
+            
+            <div className="flex justify-between items-start">
+              <dt className="font-medium text-muted-foreground text-sm">{t('allocations.description')}:</dt>
+              <dd className="font-medium text-black text-right">
                 {allocation.description || allocation.credit_description || t('allocations.noDescription')}
               </dd>
-              
-              <dt className="col-sm-4">{t('allocations.date')}:</dt>
-              <dd className="col-sm-8">
+            </div>
+            
+            <div className="flex justify-between items-start">
+              <dt className="font-medium text-muted-foreground text-sm">{t('allocations.date')}:</dt>
+              <dd className="font-medium text-black">
                 {new Date(allocation.allocated_at).toLocaleDateString('ar-SA')}
               </dd>
-            </dl>
-          </div>
+            </div>
+          </dl>
         </div>
 
-        <div className="form-check mt-3">
+        {/* Confirmation Checkbox */}
+        <div className="flex items-center gap-2">
           <input
             type="checkbox"
-            className="form-check-input"
+            className="rounded border-gray-300"
             id="confirmDelete"
             checked={isConfirmed}
             onChange={(e) => setIsConfirmed(e.target.checked)}
           />
-          <label className="form-check-label" htmlFor="confirmDelete">
+          <label className="text-sm font-medium text-black" htmlFor="confirmDelete">
             {t('allocations.confirmDeleteMessage')}
           </label>
         </div>
-      </div>
 
-      <div className="modal-footer">
-        <Button
-          type="button"
-          variant="secondary"
-          onClick={closeModal}
-          disabled={deleteAllocation.isPending}
-        >
-          {t('common.cancel')}
-        </Button>
-        <Button
-          type="button"
-          variant="danger"
-          onClick={handleDelete}
-          isLoading={deleteAllocation.isPending}
-          disabled={!isConfirmed}
-        >
-          {t('common.delete')}
-        </Button>
+        {/* Action Buttons */}
+        <div className="flex justify-end gap-2 pt-4 border-t border-border">
+          <Button
+            type="button"
+            variant="secondary"
+            onClick={closeModal}
+            disabled={deleteAllocation.isPending}
+          >
+            {t('common.cancel')}
+          </Button>
+          <Button
+            type="button"
+            variant="danger"
+            onClick={handleDelete}
+            isLoading={deleteAllocation.isPending}
+            disabled={!isConfirmed}
+          >
+            {t('common.delete')}
+          </Button>
+        </div>
       </div>
     </BaseModal>
   );

@@ -119,33 +119,32 @@ const TaskSelectionModal = () => {
       onClose={closeModal}
       title="اختيار المهام لإدارة العلامة"
     >
-      <div className="task-selection-modal">
+      <div className="task-selection-modal space-y-4">
         {/* Search Input */}
-        <div className="mb-3">
-          <div className="input-group">
-            <span className="input-group-text">
-              <Search size={16} />
-            </span>
-            <input
-              type="text"
-              className="form-control"
-              placeholder="البحث في المهام..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-            />
-          </div>
+        <div className="flex items-center gap-2 border border-border rounded-md">
+          <span className="px-3 text-muted-foreground">
+            <Search size={16} />
+          </span>
+          <input
+            type="text"
+            className="flex-1 px-3 py-2 border-0 focus:outline-none focus:ring-0 bg-transparent"
+            placeholder="البحث في المهام..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+          />
         </div>
 
         {/* Tasks List */}
-        <div className="tasks-list" style={{ maxHeight: '400px', overflowY: 'auto' }}>
+        <div className="space-y-2 max-h-96 overflow-y-auto">
           {isLoading ? (
             <div className="text-center py-4">
-              <div className="spinner-border text-primary" role="status">
-                <span className="visually-hidden">جاري التحميل...</span>
+              <div className="inline-block animate-spin text-primary">
+                <div className="h-6 w-6 border-3 border-primary border-t-transparent rounded-full"></div>
               </div>
+              <p className="text-sm text-muted-foreground mt-2">جاري التحميل...</p>
             </div>
           ) : filteredTasks.length === 0 ? (
-            <div className="text-center py-4 text-muted">
+            <div className="text-center py-4 text-muted-foreground">
               {searchQuery ? 'لا توجد مهام تطابق البحث' : 'لا توجد مهام متاحة'}
             </div>
           ) : (
@@ -156,38 +155,30 @@ const TaskSelectionModal = () => {
               return (
                 <div
                   key={task.id}
-                  className={`task-item p-3 mb-2 border rounded cursor-pointer ${
-                    isSelected ? 'border-primary bg-light' : 'border-secondary'
+                  className={`task-item p-3 rounded-lg border cursor-pointer transition-colors ${
+                    isSelected ? 'border-primary bg-primary/5' : 'border-border hover:bg-muted/50'
                   }`}
                   onClick={() => handleTaskToggle(task.id)}
-                  style={{ 
-                    cursor: 'pointer',
-                    transition: 'all 0.2s'
-                  }}
                 >
-                  <div className="d-flex align-items-center justify-content-between">
-                    <div className="flex-grow-1">
-                      <div className="d-flex align-items-center">
-                        <input
-                          type="checkbox"
-                          checked={isSelected}
-                          onChange={() => handleTaskToggle(task.id)}
-                          className="form-check-input me-3"
-                          onClick={(e) => e.stopPropagation()}
-                        />
-                        <div>
-                          <h6 className="mb-1">{task.task_name}</h6>
-                          <small className="text-muted">
-                            العميل: {task.client?.name || 'غير محدد'} | 
-                            المبلغ: {task.amount} ريال
-                          </small>
-                          <div className="mt-1">
-                            <span className={`badge ${isTagged ? 'bg-success' : 'bg-secondary'}`}>
-                              <Check size={12} className="me-1" />
-                              {isTagged ? 'مرتبط' : 'غير مرتبط'}
-                            </span>
-                          </div>
-                        </div>
+                  <div className="flex items-start gap-3">
+                    <input
+                      type="checkbox"
+                      checked={isSelected}
+                      onChange={() => handleTaskToggle(task.id)}
+                      className="mt-1 rounded cursor-pointer"
+                      onClick={(e) => e.stopPropagation()}
+                    />
+                    <div className="flex-1">
+                      <h6 className="font-semibold text-black text-sm">{task.task_name}</h6>
+                      <small className="text-muted-foreground text-xs block">
+                        العميل: {task.client?.name || 'غير محدد'} | 
+                        المبلغ: {task.amount} ريال
+                      </small>
+                      <div className="mt-2">
+                        <span className={`px-2 py-1 rounded-full text-xs font-semibold text-white ${isTagged ? 'bg-green-600' : 'bg-gray-400'}`}>
+                          <Check size={12} className="inline mr-1" />
+                          {isTagged ? 'مرتبط' : 'غير مرتبط'}
+                        </span>
                       </div>
                     </div>
                   </div>
@@ -198,12 +189,12 @@ const TaskSelectionModal = () => {
         </div>
 
         {/* Footer */}
-        <div className="modal-footer d-flex justify-content-between align-items-center">
-          <div className="text-muted small">
+        <div className="flex justify-between items-center pt-4 border-t border-border">
+          <div className="text-muted-foreground text-xs">
             {selectedTasks.length > 0 && `تم اختيار ${selectedTasks.length} مهمة`}
           </div>
-          <div>
-            <Button variant="secondary" onClick={closeModal} className="me-2">
+          <div className="flex gap-2">
+            <Button variant="secondary" onClick={closeModal}>
               إلغاء
             </Button>
             <Button 
@@ -220,11 +211,7 @@ const TaskSelectionModal = () => {
 
       <style>{`
         .task-item:hover:not(.opacity-50) {
-          background-color: #f8f9fa ;
-        }
-        
-        .task-selection-modal .form-check-input:disabled {
-          opacity: 0.5;
+          background-color: var(--color-muted-50) ;
         }
       `}</style>
     </BaseModal>

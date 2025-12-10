@@ -2,6 +2,7 @@ import React from 'react';
 import { CreditCard, Edit3 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import Button from '../ui/Button';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow, TableFooter } from '../ui/table';
 import { useModalStore } from '../../stores/modalStore';
 import { useGetEmployeeReceivablesSummary, useGetEmployeeReceivablesTotals } from '../../queries/employeeQueries';
 import WhatsAppIcon from '../ui/WhatsAppIcon';
@@ -70,9 +71,9 @@ const EmployeeReceivablesTable: React.FC<EmployeeReceivablesTableProps> = ({
 
   if (isLoading) {
     return (
-      <div className="d-flex justify-content-center align-items-center" style={{ minHeight: '200px' }}>
-        <div className="spinner-border text-primary" role="status">
-          <span className="visually-hidden">جاري التحميل...</span>
+      <div className="flex justify-center items-center" style={{ minHeight: '200px' }}>
+        <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin" role="status">
+          <span className="sr-only">جاري التحميل...</span>
         </div>
       </div>
     );
@@ -86,7 +87,7 @@ const EmployeeReceivablesTable: React.FC<EmployeeReceivablesTableProps> = ({
   if (!clients || clients.length === 0 || filteredClients.length === 0) {
     return (
       <div className="text-center py-5">
-        <p>لا يوجد عملاء لديهم مستحقات لهذا الموظف</p>
+        <p className="text-black">لا يوجد عملاء لديهم مستحقات لهذا الموظف</p>
       </div>
     );
   }
@@ -108,57 +109,57 @@ const EmployeeReceivablesTable: React.FC<EmployeeReceivablesTableProps> = ({
   });
 
   return (
-    <div className="table-responsive" dir="rtl">
+    <div className="overflow-x-auto" dir="rtl">
       {/* Sentinel element for sticky header detection */}
       <div ref={sentinelRef}></div>
       
-      <table className="table table-hover align-middle">
-        <thead className={`table-warning ${isSticky ? 'is-sticky' : ''}`}>
-          <tr className="fw-bold">
-            <th scope="col" className="text-end" style={{ width: '18%', color: '#000', padding: '12px 8px' }}>العميل</th>
-            <th scope="col" className="text-center" style={{ width: '12%', color: '#000', padding: '12px 8px' }}>رقم الجوال</th>
-            <th scope="col" className="text-center" style={{ width: '20%', color: '#000', padding: '12px 8px' }}>إجمالي المدين</th>
-            <th scope="col" className="text-center" style={{ width: '20%', color: '#000', padding: '12px 8px' }}>إجمالي الدائن</th>
-            <th scope="col" className="text-center" style={{ width: '20%', color: '#000', padding: '12px 8px' }}>إجمالي المستحقات</th>
-            <th scope="col" className="text-center" style={{ width: '15%', color: '#000', padding: '12px 8px' }}>الإجراءات</th>
-          </tr>
-        </thead>
-        <tbody>
+      <Table>
+        <TableHeader className={isSticky ? 'sticky top-0 z-10' : ''} style={{ backgroundColor: 'var(--color-primary)' }}>
+          <TableRow>
+            <TableHead className="text-right text-white font-bold" style={{ width: '18%', padding: '12px 8px' }}>العميل</TableHead>
+            <TableHead className="text-center text-white font-bold" style={{ width: '12%', padding: '12px 8px' }}>رقم الجوال</TableHead>
+            <TableHead className="text-center text-white font-bold" style={{ width: '20%', padding: '12px 8px' }}>إجمالي المدين</TableHead>
+            <TableHead className="text-center text-white font-bold" style={{ width: '20%', padding: '12px 8px' }}>إجمالي الدائن</TableHead>
+            <TableHead className="text-center text-white font-bold" style={{ width: '20%', padding: '12px 8px' }}>إجمالي المستحقات</TableHead>
+            <TableHead className="text-center text-white font-bold" style={{ width: '15%', padding: '12px 8px' }}>الإجراءات</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
           {sortedClients.map((client) => (
-            <tr key={client.id}>
-              <td className="text-end" style={{ padding: '12px 8px' }}>
+            <TableRow key={client.id}>
+              <TableCell className="text-right" style={{ padding: '12px 8px' }}>
                 <div
-                  className="fw-bold primary cursor-pointer"
+                  className="font-bold text-primary cursor-pointer hover:underline"
                   onClick={() => handleClientClick(parseInt(client.id))}
                   style={{ cursor: 'pointer' }}
                 >
                   {client.name}
                 </div>
-              </td>
-              <td className="text-center" style={{ padding: '12px 8px' }}>
-                <div className="small d-flex align-items-center justify-content-center">
+              </TableCell>
+              <TableCell className="text-center" style={{ padding: '12px 8px' }}>
+                <div className="text-sm flex items-center justify-center gap-1">
                   <button
-                    className="btn btn-link btn-sm p-0 text-success ms-1"
+                    className="text-green-600 hover:text-green-700 transition-colors p-0 border-0 bg-transparent"
                     onClick={() => handleWhatsApp(client.phone)}
                     title="WhatsApp"
                     style={{ fontSize: '12px' }}
                   >
                     <WhatsAppIcon size={12} />
                   </button>
-                  <span>{client.phone}</span>
+                  <span className="text-black">{client.phone}</span>
                 </div>
-              </td>
-              <td className="text-center fw-bold" style={{ padding: '12px 8px' }}>
+              </TableCell>
+              <TableCell className="text-center font-bold text-black" style={{ padding: '12px 8px' }}>
                 {formatCurrency(Number(client.total_receivables) || 0)}
-              </td>
-              <td className="text-center fw-bold text-success" style={{ padding: '12px 8px' }}>
+              </TableCell>
+              <TableCell className="text-center font-bold text-green-600" style={{ padding: '12px 8px' }}>
                 {formatCurrency(Number(client.total_paid) || 0)}
-              </td>
-              <td className="text-center fw-bold text-danger" style={{ padding: '12px 8px' }}>
+              </TableCell>
+              <TableCell className="text-center font-bold text-red-600" style={{ padding: '12px 8px' }}>
                 {formatCurrency(Math.max(0, Number(client.total_outstanding) || 0))}
-              </td>
-              <td className="text-center" style={{ padding: '12px 8px' }}>
-                <div className="d-flex gap-2 justify-content-center">
+              </TableCell>
+              <TableCell className="text-center" style={{ padding: '12px 8px' }}>
+                <div className="flex gap-2 justify-center">
                   <Button
                     variant="outline-primary"
                     size="sm"
@@ -182,49 +183,49 @@ const EmployeeReceivablesTable: React.FC<EmployeeReceivablesTableProps> = ({
                     onClick={() => handlePayment(parseInt(client.id))}
                     disabled={Number(client.total_outstanding) <= 0}
                   >
-                    <CreditCard size={14} className="me-1" />
+                    <CreditCard size={14} className="mr-1" />
                     سداد
                   </Button>
                 </div>
-              </td>
-            </tr>
+              </TableCell>
+            </TableRow>
           ))}
-        </tbody>
-        <tfoot className="table-warning">
-          <tr className="fw-bold">
-            <td className="text-start" style={{ padding: '12px 8px' }}>الإجمالي</td>
-            <td className="text-start" style={{ padding: '12px 8px' }}></td>
-            <td className="text-center" style={{ padding: '12px 8px' }}>
+        </TableBody>
+        <TableFooter style={{ backgroundColor: 'var(--color-primary)' }}>
+          <TableRow>
+            <TableCell className="text-start text-white font-bold" style={{ padding: '12px 8px' }}>الإجمالي</TableCell>
+            <TableCell className="text-start text-white" style={{ padding: '12px 8px' }}></TableCell>
+            <TableCell className="text-center text-white font-bold" style={{ padding: '12px 8px' }}>
               {isTotalsLoading ? (
-                <div className="spinner-border spinner-border-sm" role="status">
-                  <span className="visually-hidden">جاري التحميل...</span>
+                <div className="inline-block w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" role="status">
+                  <span className="sr-only">جاري التحميل...</span>
                 </div>
               ) : (
                 formatCurrency(displayTotals.totalAmount)
               )}
-            </td>
-            <td className="text-center text-success" style={{ padding: '12px 8px' }}>
+            </TableCell>
+            <TableCell className="text-center text-white font-bold" style={{ padding: '12px 8px' }}>
               {isTotalsLoading ? (
-                <div className="spinner-border spinner-border-sm" role="status">
-                  <span className="visually-hidden">جاري التحميل...</span>
+                <div className="inline-block w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" role="status">
+                  <span className="sr-only">جاري التحميل...</span>
                 </div>
               ) : (
                 formatCurrency(displayTotals.paidAmount)
               )}
-            </td>
-            <td className="text-center text-danger" style={{ padding: '12px 8px' }}>
+            </TableCell>
+            <TableCell className="text-center text-white font-bold" style={{ padding: '12px 8px' }}>
               {isTotalsLoading ? (
-                <div className="spinner-border spinner-border-sm" role="status">
-                  <span className="visually-hidden">جاري التحميل...</span>
+                <div className="inline-block w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" role="status">
+                  <span className="sr-only">جاري التحميل...</span>
                 </div>
               ) : (
                 formatCurrency(displayTotals.remainingAmount)
               )}
-            </td>
-            <td style={{ padding: '12px 8px' }}></td>
-          </tr>
-        </tfoot>
-      </table>
+            </TableCell>
+            <TableCell className="text-white" style={{ padding: '12px 8px' }}></TableCell>
+          </TableRow>
+        </TableFooter>
+      </Table>
     </div>
 
   );

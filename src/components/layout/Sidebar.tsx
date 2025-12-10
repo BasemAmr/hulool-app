@@ -4,8 +4,7 @@ import { useSidebarStore } from '../../stores/sidebarStore';
 import { useTranslation } from 'react-i18next';
 import Logo from '../ui/Logo';
 import NotificationBell from './NotificationBell';
-import styles from './Layout.module.scss';
-import { Banknote, LayoutDashboard, LogOut, NotebookText, Users, Settings, Building, Calculator, Home, Briefcase, Plus, Receipt, ChevronDown, ChevronRight, Tags, CreditCard, AlertTriangle, UserCog } from 'lucide-react';
+import { Banknote, LayoutDashboard, LogOut, NotebookText, Users, Settings, Building, Calculator, Home, Briefcase, Plus, Receipt, ChevronDown, ChevronRight, Tags, CreditCard, AlertTriangle, UserCog, Wallet, FileText, CheckSquare } from 'lucide-react';
 import { useModalStore } from '../../stores/modalStore';
 import { Search } from 'lucide-react';
 import { useState } from 'react';
@@ -28,7 +27,7 @@ const Sidebar = () => {
   };
 
   const handleAddTask = () => openModal('taskForm', {});
-  const handleAddReceivable = () => openModal('manualReceivable', {});
+  const handleAddInvoice = () => openModal('invoiceForm', {});
 
   const handleLogout = () => {
     logout();
@@ -65,6 +64,24 @@ const Sidebar = () => {
       path: '/settings',
       icon: Settings,
       label: t('settings.title') || 'الإعدادات'
+    }
+  ];
+
+  const financialCenterItems = [
+    {
+      path: '/financial-center/accounts',
+      icon: Wallet,
+      label: 'نظرة عامة على الحسابات'
+    },
+    {
+      path: '/financial-center/pending',
+      icon: CheckSquare,
+      label: 'الموافقات المعلقة'
+    },
+    {
+      path: '/financial-center/invoices',
+      icon: FileText,
+      label: 'مركز الفواتير'
     }
   ];
 
@@ -109,21 +126,30 @@ const Sidebar = () => {
 
   return (
     <>
-      <aside className={`${styles.sidebar} ${isCollapsed ? styles.collapsed : ''}`}>
+      <aside 
+        className={`
+          fixed top-0 right-0 h-screen flex flex-col bg-card border-l border-border z-40 
+          transition-all duration-300 ease-in-out overflow-hidden
+          ${isCollapsed ? 'w-0 border-l-0' : 'w-40'}
+        `}
+        style={{
+          direction: 'rtl'
+        }}
+      >
         {/* Collapse Toggle Button - only show when not collapsed */}
         {!isCollapsed && (
           <button 
-            className={styles.collapseToggle}
+            className="absolute top-1/2 -left-3 -translate-y-1/2 w-6 h-6 bg-muted hover:bg-muted/80 border border-border rounded-full flex items-center justify-center cursor-pointer z-10 transition-all duration-200 text-black hover:scale-110"
             onClick={toggleCollapsed}
             title={isCollapsed ? 'توسيع الشريط الجانبي' : 'تصغير الشريط الجانبي'}
           >
-            <ChevronRight className={isCollapsed ? styles.rotated : ''} size={16} />
+            <ChevronRight size={16} />
           </button>
         )}
 
         {/* Header with Logo and Notifications */}
-        <div className={styles.sidebarHeader}>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
+        <div className="px-3 py-3 border-b border-border bg-muted/30 flex items-center gap-2 min-h-[60px]">
+            <div className="flex items-center justify-between w-full">
               <Logo />
               {!isCollapsed && (
                 <NotificationBell className="ml-2" />
@@ -132,30 +158,31 @@ const Sidebar = () => {
         </div>
 
       {/* Navigation */}
-      <nav className={styles.sidebarNav}>
-        <div className={styles.navSection}>
-          <div className={styles.sectionTitle}>القائمة الرئيسية</div>
+      <nav className="flex-1 py-2 overflow-y-auto scrollbar-thin scrollbar-thumb-muted-foreground scrollbar-track-transparent hover:scrollbar-thumb-primary">
+        <div className="mb-4">
+          <div className="text-xs text-black font-bold uppercase tracking-wider px-2 mb-1 text-right">القائمة الرئيسية</div>
           {mainNavigationItems.map((item) => (
             <NavLink
               key={item.path}
               to={item.path}
               className={({ isActive }) =>
-                `${styles.navLink} ${isActive ? styles.active : ''}`
+                `flex items-center gap-2 px-2 py-1.5 mx-1 text-foreground text-xs font-normal no-underline rounded-lg transition-all duration-200 relative overflow-hidden hover:bg-accent hover:text-accent-foreground hover:-translate-x-1 hover:font-bold ${
+                  isActive ? 'bg-primary text-primary-foreground font-bold shadow-md before:content-[""] before:absolute before:top-0 before:right-0 before:w-1 before:h-full before:bg-primary-foreground before:rounded-l-sm' : ''
+                }`
               }
             >
-              <span className={styles.navIcon}>
+              <span className="w-4 h-4 flex items-center justify-center text-sm transition-all duration-200 flex-shrink-0">
                 <item.icon size={16} />
               </span>
-              <span className={styles.navText}>{item.label}</span>
-              <span className={styles.navIndicator}></span>
+              <span className="flex-1 text-right whitespace-nowrap">{item.label}</span>
+              <span className={`w-1.5 h-1.5 rounded-full flex-shrink-0 bg-primary-foreground transition-opacity duration-200 ${location.pathname === item.path ? 'opacity-100' : 'opacity-0'}`}></span>
             </NavLink>
           ))}
         </div>
 
-        <div className={styles.navSection}>
+        <div className="mb-4">
           <div 
-            className={styles.sectionTitle} 
-            style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}
+            className="text-xs text-black font-bold uppercase tracking-wider px-2 mb-1 text-right cursor-pointer flex items-center justify-between"
             onClick={() => setIsActionsOpen(!isActionsOpen)}
           >
             إجراءات
@@ -165,95 +192,116 @@ const Sidebar = () => {
             <>
               <button
                 onClick={handleAddTask}
-                className={`${styles.navLink} ${styles.actionButton}`}
-                style={{ width: '100%', border: 'none', background: 'none', textAlign: 'right' }}
+                className="w-full border-none bg-transparent text-right flex items-center gap-2 px-2 py-1.5 mx-1 text-foreground text-xs font-normal rounded-lg transition-all duration-200 hover:bg-accent hover:text-accent-foreground hover:-translate-x-1 focus:outline-none focus:bg-accent"
               >
-                <span className={styles.navIcon}>
+                <span className="w-4 h-4 flex items-center justify-center text-sm transition-all duration-200 flex-shrink-0">
                   <Plus size={16} />
                 </span>
-                <span className={styles.navText}>إضافة مهمة</span>
+                <span className="flex-1 text-right whitespace-nowrap">إضافة مهمة</span>
               </button>
               <button
-                onClick={handleAddReceivable}
-                className={`${styles.navLink} ${styles.actionButton}`}
-                style={{ width: '100%', border: 'none', background: 'none', textAlign: 'right' }}
+                onClick={handleAddInvoice}
+                className="w-full border-none bg-transparent text-right flex items-center gap-2 px-2 py-1.5 mx-1 text-foreground text-xs font-normal rounded-lg transition-all duration-200 hover:bg-accent hover:text-accent-foreground hover:-translate-x-1 focus:outline-none focus:bg-accent"
               >
-                <span className={styles.navIcon}>
+                <span className="w-4 h-4 flex items-center justify-center text-sm transition-all duration-200 flex-shrink-0">
                   <Receipt size={16} />
                 </span>
-                <span className={styles.navText}>إضافة مستحق</span>
+                <span className="flex-1 text-right whitespace-nowrap">إضافة فاتورة</span>
               </button>
               <button
                 onClick={() => openModal('recordCreditModal', {})}
-                className={`${styles.navLink} ${styles.actionButton}`}
-                style={{ width: '100%', border: 'none', background: 'none', textAlign: 'right' }}
+                className="w-full border-none bg-transparent text-right flex items-center gap-2 px-2 py-1.5 mx-1 text-foreground text-xs font-normal rounded-lg transition-all duration-200 hover:bg-accent hover:text-accent-foreground hover:-translate-x-1 focus:outline-none focus:bg-accent"
               >
-                <span className={styles.navIcon}>
+                <span className="w-4 h-4 flex items-center justify-center text-sm transition-all duration-200 flex-shrink-0">
                   <CreditCard size={16} />
                 </span>
-                <span className={styles.navText}>إضافة دفعة مقدمة</span>
+                <span className="flex-1 text-right whitespace-nowrap">إضافة دفعة مقدمة</span>
               </button>
               <button
                 onClick={() => openModal('urgentAlert', {})}
-                className={`${styles.navLink} ${styles.actionButton}`}
-                style={{ width: '100%', border: 'none', background: 'none', textAlign: 'right' }}
+                className="w-full border-none bg-transparent text-right flex items-center gap-2 px-2 py-1.5 mx-1 text-foreground text-xs font-normal rounded-lg transition-all duration-200 hover:bg-accent hover:text-accent-foreground hover:-translate-x-1 focus:outline-none focus:bg-accent"
               >
-                <span className={styles.navIcon}>
+                <span className="w-4 h-4 flex items-center justify-center text-sm transition-all duration-200 flex-shrink-0">
                   <AlertTriangle size={16} />
                 </span>
-                <span className={styles.navText}>إضافة تنبيه عاجل</span>
+                <span className="flex-1 text-right whitespace-nowrap">إضافة تنبيه عاجل</span>
               </button>
             </>
           )}
         </div>
 
-        <div className={styles.navSection}>
-          <div className={styles.sectionTitle}>إدارة المهام</div>
+        <div className="mb-4">
+          <div className="text-xs text-black font-bold uppercase tracking-wider px-2 mb-1 text-right">المركز المالي</div>
+          {financialCenterItems.map((item) => (
+            <NavLink
+              key={item.path}
+              to={item.path}
+              className={({ isActive }) =>
+                `flex items-center gap-2 px-2 py-1.5 mx-1 text-foreground text-xs font-normal no-underline rounded-lg transition-all duration-200 relative overflow-hidden hover:bg-accent hover:text-accent-foreground hover:-translate-x-1 hover:font-bold ${
+                  isActive ? 'bg-primary text-primary-foreground font-bold shadow-md before:content-[""] before:absolute before:top-0 before:right-0 before:w-1 before:h-full before:bg-primary-foreground before:rounded-l-sm' : ''
+                }`
+              }
+            >
+              <span className="w-4 h-4 flex items-center justify-center text-sm transition-all duration-200 flex-shrink-0">
+                <item.icon size={16} />
+              </span>
+              <span className="flex-1 text-right whitespace-nowrap">{item.label}</span>
+              <span className={`w-1.5 h-1.5 rounded-full flex-shrink-0 bg-primary-foreground transition-opacity duration-200 ${location.pathname === item.path ? 'opacity-100' : 'opacity-0'}`}></span>
+            </NavLink>
+          ))}
+        </div>
+
+        <div className="mb-4">
+          <div className="text-xs text-black font-bold uppercase tracking-wider px-2 mb-1 text-right">إدارة المهام</div>
           {taskNavigationItems.map((item) => (
             <NavLink
               key={item.path}
               to={item.path}
               className={() => 
-                `${styles.navLink} ${isActiveTaskRoute(item.path) ? styles.active : ''}`
+                `flex items-center gap-2 px-2 py-1.5 mx-1 text-foreground text-xs font-normal no-underline rounded-lg transition-all duration-200 relative overflow-hidden hover:bg-accent hover:text-accent-foreground hover:-translate-x-1 hover:font-bold ${
+                  isActiveTaskRoute(item.path) ? 'bg-primary text-primary-foreground font-bold shadow-md before:content-[""] before:absolute before:top-0 before:right-0 before:w-1 before:h-full before:bg-primary-foreground before:rounded-l-sm' : ''
+                }`
               }
             >
-              <span className={styles.navIcon}>
+              <span className="w-4 h-4 flex items-center justify-center text-sm transition-all duration-200 flex-shrink-0">
                 <item.icon size={16} />
               </span>
-              <span className={styles.navText}>{item.label}</span>
-              <span className={styles.navIndicator}></span>
+              <span className="flex-1 text-right whitespace-nowrap">{item.label}</span>
+              <span className={`w-1.5 h-1.5 rounded-full flex-shrink-0 bg-primary-foreground transition-opacity duration-200 ${isActiveTaskRoute(item.path) ? 'opacity-100' : 'opacity-0'}`}></span>
             </NavLink>
           ))}
         </div>
 
-        <div className={styles.sidebarSearch}>
+        <div className="mx-2 mb-2 relative">
           <input
             type="text"
             placeholder={t('globalSearch.placeholder') || 'البحث السريع...'}
-            className={styles.searchInput}
+            className="w-full px-2 pr-8 py-1.5 bg-muted/30 border border-border rounded-lg text-xs font-normal outline-none transition-all duration-200 cursor-pointer placeholder:text-right text-foreground hover:bg-muted/50 hover:border-primary/30 focus:bg-muted focus:border-primary focus:ring-2 focus:ring-primary/20"
             onFocus={handleSearchFocus}
             readOnly // To prevent typing directly, just for triggering modal
           />
-          <Search size={16} className={styles.searchIcon} />
+          <Search size={16} className="absolute right-2 top-1/2 -translate-y-1/2 text-black transition-all duration-200 pointer-events-none" />
         </div>
       </nav>
 
       {/* User Section */}
-      <div className={styles.sidebarFooter}>
-        <div className={styles.userCard}>
-          <div className={styles.userAvatar}>
+      <div className="p-2 border-t border-border bg-muted/30">
+        <div className="flex items-center gap-2 p-1.5 bg-muted/50 rounded-lg transition-all duration-200 hover:bg-muted/70">
+          <div 
+            className="w-9 h-9 rounded-full bg-primary text-primary-foreground flex items-center justify-center font-semibold text-base flex-shrink-0 shadow-sm border-2 border-primary/20"
+          >
             <span>{user?.display_name?.charAt(0).toUpperCase() || 'م'}</span>
           </div>
-          <div className={styles.userDetails}>
-            <div className={styles.userName}>{user?.display_name || 'مستخدم'}</div>
-            <div className={styles.userRole}>محامي</div>
+          <div className="flex-1 text-right overflow-hidden">
+            <div className="text-foreground text-sm font-medium whitespace-nowrap overflow-hidden text-ellipsis mb-0.5">{user?.display_name || 'مستخدم'}</div>
+            <div className="text-black text-xs font-normal">محامي</div>
           </div>
           <button
             onClick={handleLogout}
-            className={styles.logoutButton}
+            className="bg-transparent border-none text-black text-base cursor-pointer p-1.5 rounded transition-all duration-200 flex-shrink-0 hover:text-destructive hover:bg-destructive/10 hover:scale-105 active:scale-95"
             title={t('common.logout') as string || 'تسجيل الخروج'}
           >
-            <LogOut />
+            <LogOut size={18} />
           </button>
         </div>
       </div>
@@ -262,38 +310,11 @@ const Sidebar = () => {
     {/* Collapsed toggle button as portal - always visible when collapsed */}
     {isCollapsed && createPortal(
       <button 
-        className={styles.collapsedTogglePortal}
+        className="fixed top-1/2 -right-5 -translate-y-1/2 w-10 h-10 bg-primary hover:bg-primary/90 text-primary-foreground border-2 border-primary rounded-l-full flex items-center justify-center cursor-pointer z-[9999] shadow-lg transition-all duration-300 ease-in-out hover:-right-2.5 hover:shadow-xl"
         onClick={toggleCollapsed}
         title="توسيع الشريط الجانبي"
-        style={{
-          position: 'fixed',
-          top: '50%',
-          right: '-20px',
-          transform: 'translateY(-50%)',
-          width: '40px',
-          height: '40px',
-          background: 'rgba(212, 175, 55, 0.95)',
-          border: '2px solid rgba(212, 175, 55, 1)',
-          borderRadius: '50% 0 0 50%',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          cursor: 'pointer',
-          zIndex: 9999,
-          boxShadow: '-2px 2px 12px rgba(0,0,0,0.4)',
-          color: 'white',
-          transition: 'all 0.3s ease'
-        }}
-        onMouseEnter={(e) => {
-          e.currentTarget.style.right = '-10px';
-          e.currentTarget.style.background = 'rgba(212, 175, 55, 1)';
-        }}
-        onMouseLeave={(e) => {
-          e.currentTarget.style.right = '-20px';
-          e.currentTarget.style.background = 'rgba(212, 175, 55, 0.95)';
-        }}
       >
-        <ChevronRight className={styles.rotated} size={18} />
+        <ChevronRight className="rotate-180" size={18} />
       </button>,
       document.body
     )}

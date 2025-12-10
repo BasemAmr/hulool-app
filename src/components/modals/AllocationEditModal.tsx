@@ -81,58 +81,54 @@ const AllocationEditModal: React.FC = () => {
       onClose={closeModal}
       isOpen={true}
     >
-      <form onSubmit={handleSubmit(onSubmit)}>
-        <div className="modal-body">
-          <FormField
-            label={t('allocations.amount')}
-            error={errors.amount?.message}
-            required
-          >
-            <Input
-              type="number"
-              step="0.01"
-              min="0.01"
-              {...register('amount', {
-                required: t('validation.required'),
-                min: { value: 0.01, message: t('validation.minAmount') },
-                validate: (value) => {
-                  if (value <= 0) return t('validation.positiveAmount');
-                  return true;
-                }
-              })}
-              placeholder={t('allocations.enterAmount')}
-            />
-          </FormField>
+      <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+        <FormField
+          label={t('allocations.amount')}
+          error={errors.amount?.message}
+          required
+        >
+          <Input
+            type="number"
+            step="0.01"
+            min="0.01"
+            {...register('amount', {
+              required: t('validation.required'),
+              min: { value: 0.01, message: t('validation.minAmount') },
+              validate: (value) => {
+                if (value <= 0) return t('validation.positiveAmount');
+                return true;
+              }
+            })}
+            placeholder={t('allocations.enterAmount')}
+          />
+        </FormField>
 
-          <div className="mb-3">
-            <small className="text-dark">
-              {t('allocations.currentAllocation')}: <SaudiRiyalIcon amount={allocation.amount} />
-            </small>
-          </div>
-
-          <FormField
-            label={t('allocations.description')}
-            error={errors.description?.message}
-          >
-            <Input
-              type="text"
-              {...register('description', {
-                maxLength: { value: 255, message: t('validation.maxLength', { count: 255 }) }
-              })}
-              placeholder={t('allocations.enterDescription')}
-            />
-          </FormField>
-
-          {clientCredits && (
-            <div className="alert alert-info text-dark">
-              <small>
-                {t('allocations.availableCredit')}: <SaudiRiyalIcon amount={clientCredits.balance} />
-              </small>
-            </div>
-          )}
+        <div className="text-xs text-muted-foreground">
+          {t('allocations.currentAllocation')}: <SaudiRiyalIcon amount={allocation.amount} />
         </div>
 
-        <div className="modal-footer">
+        <FormField
+          label={t('allocations.description')}
+          error={errors.description?.message}
+        >
+          <Input
+            type="text"
+            {...register('description', {
+              maxLength: { value: 255, message: t('validation.maxLength', { count: 255 }) }
+            })}
+            placeholder={t('allocations.enterDescription')}
+          />
+        </FormField>
+
+        {clientCredits && (
+          <div className="rounded-lg border border-blue-600 bg-blue-50 p-3">
+            <small className="text-blue-800">
+              {t('allocations.availableCredit')}: <SaudiRiyalIcon amount={clientCredits.balance} />
+            </small>
+          </div>
+        )}
+
+        <div className="flex justify-end gap-2 pt-4 border-t border-border">
           <Button
             type="button"
             variant="danger"
@@ -182,12 +178,12 @@ interface FormFieldProps {
 }
 
 const FormField: React.FC<FormFieldProps> = ({ label, error, required, children }) => (
-  <div className="mb-3">
-    <label className="form-label">
+  <div className="space-y-2">
+    <label className="font-semibold text-black text-sm block">
       {label}
-      {required && <span className="text-danger ms-1">*</span>}
+      {required && <span className="text-destructive ml-1">*</span>}
     </label>
     {children}
-    {error && <div className="text-danger mt-1" role="alert">{error}</div>}
+    {error && <div className="text-destructive text-sm" role="alert">{error}</div>}
   </div>
 );

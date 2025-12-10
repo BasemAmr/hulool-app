@@ -1,15 +1,11 @@
-// import type { ReactNode } from 'react';
 import { Outlet, useLocation } from 'react-router-dom';
 import { useMemo } from 'react';
-import Sidebar from './Sidebar';
+import Navbar from './Navbar';
 import ModalManager from '../shared/ModalManager';
 import TaskFollowUpPanel from '../tasks/followup/TaskFollowUpPanel';
-import { useSidebarStore } from '../../stores/sidebarStore';
-import styles from './Layout.module.scss';
 
 const PageWrapper = () => {
   const location = useLocation();
-  const { isCollapsed } = useSidebarStore();
   
   // Determine page type from current route
   const pageType = useMemo(() => {
@@ -24,19 +20,19 @@ const PageWrapper = () => {
   }, [location.pathname]);
 
   return (
-    <div className={styles.appLayout} data-page={pageType}>
-      <main 
-        className={styles.mainContent} 
+    <div className="flex flex-col h-screen overflow-hidden bg-gray-50 rtl" data-page={pageType}>
+      <Navbar />
+       <main 
+        className="flex-1 overflow-y-auto bg-gray-50 ltr"
         style={{ 
-          marginRight: isCollapsed ? '0px' : '160px',
-          transition: 'margin-right 0.3s ease'
+          scrollbarWidth: 'thin',
+          scrollbarColor: 'hsl(var(--muted-foreground)) hsl(var(--secondary))'
         }}
       >
-        <div className={styles.contentInner}>
+        <div className="[direction:rtl] p-6 min-h-full max-w-[1920px] mx-auto w-full">
           <Outlet /> {/* Child routes will be rendered here */}
-        </div>
-      </main>
-      <Sidebar />
+         </div>
+      </main> 
       <ModalManager />
       <TaskFollowUpPanel />
     </div>

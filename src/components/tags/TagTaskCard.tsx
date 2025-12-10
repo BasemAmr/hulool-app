@@ -51,6 +51,12 @@ const TagTaskCard = ({ task, index = 0 }: TagTaskCardProps) => {
     const borderColor = isUrgent ? '#f87171' : '#e2e8f0';
     const borderWidth = isUrgent ? '2px' : '1px';
 
+    // Safety check - if client data is missing, return null or loading state
+    if (!task.client) {
+        console.warn('Task missing client data:', task);
+        return null;
+    }
+
     return (
         <div 
             className="tag-task-card"
@@ -64,16 +70,16 @@ const TagTaskCard = ({ task, index = 0 }: TagTaskCardProps) => {
             }}
         >
             {/* Header - Client Info */}
-            <div className="task-header p-2 border-bottom" style={{ borderColor: '#e5e7eb' }}>
-                <div className="d-flex justify-content-between align-items-center">
+            <div className="task-header p-2 border-b" style={{ borderColor: '#e5e7eb' }}>
+                <div className="flex justify-between items-center">
                     <div className="client-info flex-1">
-                        <h6 className="client-name mb-1 fw-semibold" style={{ 
+                        <h6 className="client-name mb-1 font-semibold" style={{ 
                             fontSize: '14px',
                             color: '#374151'
                         }}>
                             {task.client.name}
                         </h6>
-                        <div className="d-flex align-items-center gap-2">
+                        <div className="flex items-center gap-2">
                             <span style={{ 
                                 fontSize: '11px',
                                 color: '#6b7280'
@@ -82,16 +88,15 @@ const TagTaskCard = ({ task, index = 0 }: TagTaskCardProps) => {
                             </span>
                         </div>
                     </div>
-                    <div className="client-actions d-flex gap-1">
+                    <div className="client-actions flex gap-1">
                         <Link 
                             to={`/clients/${task.client.id}`} 
-                            className="btn btn-sm p-1"
+                            className="p-1 rounded hover:bg-blue-50 transition-colors"
                             style={{ 
                                 fontSize: '10px',
                                 backgroundColor: '#f0f9ff',
                                 color: '#3b82f6',
-                                border: '1px solid #e0f2fe',
-                                borderRadius: '6px'
+                                border: '1px solid #e0f2fe'
                             }}
                             title="ملف العميل"
                         >
@@ -102,13 +107,12 @@ const TagTaskCard = ({ task, index = 0 }: TagTaskCardProps) => {
                                 href={getWhatsAppLink(task.client.phone)} 
                                 target="_blank" 
                                 rel="noopener noreferrer"
-                                className="btn btn-sm p-1"
+                                className="p-1 rounded hover:bg-green-50 transition-colors"
                                 style={{ 
                                     fontSize: '10px',
                                     backgroundColor: '#f0f9ff',
                                     color: '#25D366',
-                                    border: '1px solid #e0f2fe',
-                                    borderRadius: '6px'
+                                    border: '1px solid #e0f2fe'
                                 }}
                                 title="واتساب"
                             >
@@ -120,14 +124,14 @@ const TagTaskCard = ({ task, index = 0 }: TagTaskCardProps) => {
             </div>
 
             {/* Body - Task Details */}
-            <div className="task-body p-2 border-bottom" style={{ borderColor: '#e5e7eb' }}>
-                <h6 className="task-title mb-1 fw-medium" style={{ 
+            <div className="task-body p-2 border-b" style={{ borderColor: '#e5e7eb' }}>
+                <h6 className="task-title mb-1 font-medium" style={{ 
                     fontSize: '13px',
                     color: '#374151'
                 }}>
                     {task.task_name || t(`type.${task.type}`)}
                 </h6>
-                <div className="task-meta d-flex align-items-center gap-2 mb-1">
+                <div className="task-meta flex items-center gap-2 mb-1">
                     <span style={{ 
                         fontSize: '11px',
                         color: '#6b7280'
@@ -141,7 +145,7 @@ const TagTaskCard = ({ task, index = 0 }: TagTaskCardProps) => {
                         {task.amount} ر.س
                     </span>
                     {isUrgent && (
-                        <span className="badge bg-danger" style={{ fontSize: '9px' }}>
+                        <span className="px-2 py-0.5 rounded bg-red-600 text-white text-xs">
                             عاجل
                         </span>
                     )}
@@ -161,17 +165,16 @@ const TagTaskCard = ({ task, index = 0 }: TagTaskCardProps) => {
 
             {/* Footer - Actions */}
             <div className="task-footer p-2">
-                <div className="d-flex gap-1">
+                <div className="flex gap-1">
                     <button
                         onClick={handleComplete}
-                        className="flex-1 d-flex align-items-center justify-content-center gap-1"
+                        className="flex-1 flex items-center justify-center gap-1 rounded hover:bg-green-100 transition-colors"
                         style={{ 
                             fontSize: '11px', 
                             padding: '6px 8px',
                             backgroundColor: '#f0fdf7',
                             color: '#22c55e',
-                            border: '1px solid #d1fae5',
-                            borderRadius: '6px'
+                            border: '1px solid #d1fae5'
                         }}
                         title="إكمال المهمة"
                     >
@@ -180,14 +183,13 @@ const TagTaskCard = ({ task, index = 0 }: TagTaskCardProps) => {
                     </button>
                     <button
                         onClick={handleDefer}
-                        className="flex-1 d-flex align-items-center justify-content-center gap-1"
+                        className="flex-1 flex items-center justify-center gap-1 rounded hover:bg-gray-100 transition-colors"
                         style={{ 
                             fontSize: '11px', 
                             padding: '6px 8px',
                             backgroundColor: '#fafafa',
                             color: '#71717a',
-                            border: '1px solid #e4e4e7',
-                            borderRadius: '6px'
+                            border: '1px solid #e4e4e7'
                         }}
                         title="تأجيل المهمة"
                     >
@@ -196,14 +198,13 @@ const TagTaskCard = ({ task, index = 0 }: TagTaskCardProps) => {
                     </button>
                     <button
                         onClick={handleShowRequirements}
-                        className=""
+                        className="rounded hover:bg-yellow-100 transition-colors"
                         style={{ 
                             fontSize: '11px',
                             padding: '6px 8px',
                             backgroundColor: '#fffbeb',
                             color: '#f59e0b',
-                            border: '1px solid #fde68a',
-                            borderRadius: '6px'
+                            border: '1px solid #fde68a'
                         }}
                         title="المتطلبات"
                     >

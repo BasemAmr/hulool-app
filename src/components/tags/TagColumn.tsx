@@ -16,9 +16,9 @@ const TagColumn = ({ tagCollection, isLoading = false }: TagColumnProps) => {
 
     if (isLoading) {
         return (
-            <div className="col-lg-3">
-                <div className="card h-100 shadow-sm" style={{ borderRadius: '8px' }}>
-                    <div className="card-header d-flex justify-content-center align-items-center py-3">
+            <div>
+                <div className="rounded-lg border border-border bg-card shadow-sm h-full">
+                    <div className="flex justify-center items-center py-3">
                         <div className="loading-spinner"></div>
                     </div>
                 </div>
@@ -29,15 +29,15 @@ const TagColumn = ({ tagCollection, isLoading = false }: TagColumnProps) => {
     // Add safety check for tag object
     if (!tag || !tag.name) {
         return (
-            <div className="col-lg-3">
-                <div className="card h-100 shadow-sm" style={{ borderRadius: '8px' }}>
-                    <div className="card-header bg-secondary text-white py-2">
-                        <div className="d-flex justify-content-center align-items-center">
-                            <span className="text-muted">علامة غير صالحة</span>
+            <div>
+                <div className="rounded-lg border border-border bg-card shadow-sm h-full">
+                    <div className="bg-gray-500 text-white py-2 rounded-t-lg">
+                        <div className="flex justify-center items-center">
+                            <span className="text-black">علامة غير صالحة</span>
                         </div>
                     </div>
-                    <div className="card-body d-flex align-items-center justify-content-center">
-                        <p className="text-muted mb-0">خطأ في تحميل بيانات العلامة</p>
+                    <div className="flex items-center justify-center p-4">
+                        <p className="text-black mb-0">خطأ في تحميل بيانات العلامة</p>
                     </div>
                 </div>
             </div>
@@ -45,56 +45,47 @@ const TagColumn = ({ tagCollection, isLoading = false }: TagColumnProps) => {
     }
 
     return (
-        <div className="col-lg-3">
-            <div className="card h-100 shadow-sm" style={{ borderRadius: '8px' }}>
+        <div>
+            <div className="rounded-lg border border-border bg-card shadow-sm h-full">
                 <div 
-                    className="card-header text-white py-2"
-                    style={{ 
-                        backgroundColor: tag.color,
-                        borderTopLeftRadius: '8px',
-                        borderTopRightRadius: '8px'
-                    }}
+                    className="text-white py-2 rounded-t-lg"
+                    style={{ backgroundColor: tag.color }}
                 >
-                    <div className="d-flex justify-content-between align-items-center mb-2">
-                        <div className="d-flex align-items-center">
-                            <TagIcon size={16} className="me-2" style={{ color: '#fff' }} />
+                    <div className="flex justify-between items-center mb-2 px-3">
+                        <div className="flex items-center">
+                            <TagIcon size={16} className="mr-2" style={{ color: '#fff' }} />
                             <Link 
                                 to={`/tasks?tag=${tag.id}`} 
-                                className="text-white text-decoration-none"
+                                className="text-white no-underline"
                             >
-                                <h6 className="mb-0 fw-medium" style={{ fontSize: '14px' }}>
+                                <h6 className="mb-0 font-medium" style={{ fontSize: '14px' }}>
                                     {tag.name}
                                 </h6>
                             </Link>
                         </div>
                         <span 
-                            className="badge rounded-pill px-2 py-1"
+                            className="px-2 py-1 rounded-full text-xs font-semibold"
                             style={{ 
                                 backgroundColor: 'rgba(255, 255, 255, 0.2)',
-                                color: '#fff',
-                                fontSize: '11px'
+                                color: '#fff'
                             }}
                         >
                             {tasks?.length || 0}
                         </span>
                     </div>
-                    <div className="d-flex justify-content-center">
+                    <div className="flex justify-center">
                         <button
                             onClick={handleSelectTasks}
-                            className="btn btn-sm text-white border-white"
-                            style={{
-                                backgroundColor: 'rgba(255, 255, 255, 0.1)',
-                                fontSize: '11px',
-                                padding: '4px 8px'
-                            }}
+                            className="text-white border border-white text-xs px-2 py-1 rounded hover:bg-white/20 transition-colors"
+                            style={{ backgroundColor: 'rgba(255, 255, 255, 0.1)' }}
                             title="اختيار مهام لربطها أو فك ربطها بهذه العلامة"
                         >
-                            <Plus size={12} className="me-1" />
+                            <Plus size={12} className="inline mr-1" />
                             إدارة المهام
                         </button>
                     </div>
                 </div>
-                <div className="card-body p-0" style={{ minHeight: '200px', maxHeight: '600px', overflowY: 'auto' }}>
+                <div className="p-0" style={{ minHeight: '200px', maxHeight: '600px', overflowY: 'auto' }}>
                     {tasks && tasks.length > 0 ? (
                         <div className="p-2">
                             {tasks.map((task, index) => (
@@ -110,21 +101,19 @@ const TagColumn = ({ tagCollection, isLoading = false }: TagColumnProps) => {
                             <div className="empty-icon mb-2">
                                 <TagIcon size={32} style={{ color: '#9ca3af' }} />
                             </div>
-                            <p className="empty-description text-muted mb-0" style={{ fontSize: '12px' }}>
+                            <p className="empty-description text-black mb-0" style={{ fontSize: '12px' }}>
                                 لا توجد مهام لهذه العلامة
                             </p>
                         </div>
                     )}
                 </div>
-                <div className="card-footer py-2">
+                <div className="py-2 px-2 border-t border-border">
                     <Link
                         to={`/tasks?tag=${tag.id}`}
-                        className="btn btn-sm w-100 fw-medium"
+                        className="block w-full text-center py-2 rounded font-medium text-xs"
                         style={{
                             backgroundColor: tag.color,
-                            color: '#fff',
-                            border: 'none',
-                            fontSize: '11px'
+                            color: '#fff'
                         }}
                     >
                         عرض جميع المهام

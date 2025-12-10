@@ -121,57 +121,57 @@ const fetchAllClientReceivables = async (clientId: number): Promise<{ receivable
 };
 
 // Fetch Clients Receivables Summary
+// Uses new /accounts/clients/balances endpoint instead of deprecated /receivables/clients-summary
 
 // UPDATE THIS FUNCTION
 const fetchClientsReceivablesSummary = async (): Promise<{ clients: ClientSummary[] }> => {
-  const { data } = await apiClient.get<ApiResponse<{ clients: any[] }>>('/receivables/clients-summary');
-  if (!data.success) {
-    throw new Error(data.message || 'Failed to fetch clients receivables summary.');
-  }
+  const response = await apiClient.get<ApiResponse<{ clients: any[] }>>('/accounts/clients/balances');
   
   // Transform API response fields to match ClientSummary interface
-  const transformedClients: ClientSummary[] = data.data.clients.map(client => ({
+  // API returns: total_debit, total_credit, total_outstanding
+  const clients = response.data?.data?.clients || [];
+  const transformedClients: ClientSummary[] = clients.map((client: any) => ({
     client_id: Number(client.client_id || 0),
     client_name: client.client_name || '',
     client_phone: client.client_phone || '',
-    total_amount: Number(client.total_receivables || 0),
-    paid_amount: Number(client.total_paid || 0),
+    total_amount: Number(client.total_debit || client.total_receivables || 0),
+    paid_amount: Number(client.total_credit || client.total_paid || 0),
     remaining_amount: Number(client.total_outstanding || 0),
-    receivables_count: Number(client.receivables_count || 0)
+    receivables_count: Number(client.transaction_count || client.receivables_count || 0)
   }));
   
   return { clients: transformedClients };
 };
 
 // New paginated fetch function for clients receivables summary (infinite queries)
+// Uses new /accounts/clients/balances endpoint
 export const fetchPaginatedClientsReceivablesSummary = async ({ pageParam = 1, search = '' }: { pageParam?: number; search?: string }): Promise<{ clients: ClientSummary[]; pagination: any }> => {
   const params: any = { page: pageParam, per_page: CLIENTS_SUMMARY_PER_PAGE };
   if (search) {
     params.search = search;
   }
   
-  const { data } = await apiClient.get<ApiResponse<{ clients: any[]; pagination: any }>>('/receivables/clients-summary', {
+  const { data } = await apiClient.get<{ clients: any[]; pagination: any }>('/accounts/clients/balances', {
     params
   });
-  if (!data.success) {
-    throw new Error(data.message || 'Failed to fetch clients receivables summary.');
-  }
   
   // Transform API response fields to match ClientSummary interface
-  const transformedClients: ClientSummary[] = data.data.clients.map(client => ({
+  // API returns: total_debit, total_credit, total_outstanding
+  const transformedClients: ClientSummary[] = (data.clients || []).map((client: any) => ({
     client_id: Number(client.client_id || 0),
     client_name: client.client_name || '',
     client_phone: client.client_phone || '',
-    total_amount: Number(client.total_receivables || 0),
-    paid_amount: Number(client.total_paid || 0),
+    total_amount: Number(client.total_debit || client.total_receivables || 0),
+    paid_amount: Number(client.total_credit || client.total_paid || 0),
     remaining_amount: Number(client.total_outstanding || 0),
-    receivables_count: Number(client.receivables_count || 0)
+    receivables_count: Number(client.transaction_count || client.receivables_count || 0)
   }));
   
-  return { clients: transformedClients, pagination: data.data.pagination };
+  return { clients: transformedClients, pagination: data.pagination };
 };
 
 // New function to fetch totals only
+// Uses new /accounts/clients/totals endpoint
 const fetchClientsReceivablesTotals = async (): Promise<{
   total_amount: number;
   total_paid: number;
@@ -181,19 +181,16 @@ const fetchClientsReceivablesTotals = async (): Promise<{
   clients_with_credit: number;
   balanced_clients: number;
 }> => {
-  const { data } = await apiClient.get<ApiResponse<any>>('/receivables/clients-summary/totals');
-  if (!data.success) {
-    throw new Error(data.message || 'Failed to fetch clients receivables totals.');
-  }
+  const { data } = await apiClient.get<any>('/accounts/clients/totals');
   
   return {
-    total_amount: Number(data.data.total_amount || 0),
-    total_paid: Number(data.data.total_paid || 0),
-    total_unpaid: Number(data.data.total_unpaid || 0),
-    clients_count: Number(data.data.clients_count || 0),
-    clients_with_debt: Number(data.data.clients_with_debt || 0),
-    clients_with_credit: Number(data.data.clients_with_credit || 0),
-    balanced_clients: Number(data.data.balanced_clients || 0)
+    total_amount: Number(data.total_amount || 0),
+    total_paid: Number(data.total_paid || 0),
+    total_unpaid: Number(data.total_unpaid || 0),
+    clients_count: Number(data.clients_count || 0),
+    clients_with_debt: Number(data.clients_with_debt || 0),
+    clients_with_credit: Number(data.clients_with_credit || 0),
+    balanced_clients: Number(data.balanced_clients || 0)
   };
 };
 

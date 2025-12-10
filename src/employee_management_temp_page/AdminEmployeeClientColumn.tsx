@@ -1,8 +1,8 @@
 // Admin view of employee client column
 import { useState, useCallback } from 'react';
-import AdminEmployeeDashboardClientCard from './AdminEmployeeDashboardClientCard';
 import { useGetAdminEmployeeDashboardClients } from './employeeManagementQueries';
 import { FloatingCardWrapper } from '../components/common/FloatingCardWrapper';
+import { AdminEmployeeClientCard } from '../components/common/BaseClientCard';
 
 interface AdminEmployeeClientColumnProps {
   employeeId: number;
@@ -38,16 +38,14 @@ const AdminEmployeeClientColumn = ({ employeeId }: AdminEmployeeClientColumnProp
   if (isLoading) {
     return (
       <div className="p-4 text-center">
-        <div className="spinner-border spinner-border-sm" role="status">
-          <span className="visually-hidden">Loading...</span>
-        </div>
+        <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary mx-auto"></div>
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="alert alert-danger" role="alert">
+      <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded" role="alert">
         Error loading clients: {error.message}
       </div>
     );
@@ -55,20 +53,20 @@ const AdminEmployeeClientColumn = ({ employeeId }: AdminEmployeeClientColumnProp
 
   if (!clients || clients.length === 0) {
     return (
-      <div className="p-4 text-center text-muted">
+      <div className="p-4 text-center text-muted-foreground">
         لا توجد مهام نشطة لهذا الموظف
       </div>
     );
   }
 
   return (
-    <div className="d-flex flex-column gap-3 p-3">
+    <div className="flex flex-col gap-3 p-3">
       {clients.map((clientData, index) => (
         <FloatingCardWrapper 
           key={clientData.client.id}
           dynamicWidth={dynamicWidths[clientData.client.id]}
         >
-          <AdminEmployeeDashboardClientCard
+          <AdminEmployeeClientCard
             data={clientData}
             index={index}
             alternatingColors={alternatingColors}

@@ -142,54 +142,52 @@ const EditManualReceivableModal = () => {
   <BaseModal isOpen={true} onClose={closeModal} title={t('receivables.editReceivable')}>
     {conflictData ? (
       // Enhanced Conflict Resolution Mode
-      <div className="p-4">
-        <div className="alert alert-warning mb-4">
-          <h5 className="alert-heading mb-2">
-            <i className="bi bi-exclamation-triangle-fill me-2"></i>
+      <div className="p-4 space-y-4">
+        <div className="rounded-lg border border-yellow-600 bg-yellow-50 p-4">
+          <h5 className="flex items-center gap-2 font-semibold text-yellow-900 mb-2">
+            <i className="bi bi-exclamation-triangle-fill"></i>
             {t('receivables.overpaymentDetected')}
           </h5>
-          <p className="mb-0">
+          <p className="text-yellow-800 text-sm mb-0">
             The new amount ({conflictData.new_amount} SAR) is less than the total already paid ({conflictData.total_paid} SAR). 
             Please choose how to resolve the surplus of {conflictData.surplus} SAR.
           </p>
         </div>
 
         {/* Resolution Options */}
-        <div className="mb-4">
-          <h6 className="mb-3">
-            <i className="bi bi-gear-fill me-2"></i>
+        <div>
+          <h6 className="flex items-center gap-2 font-semibold text-black mb-3">
+            <i className="bi bi-gear-fill"></i>
             Choose Resolution Method
           </h6>
           
           {Object.entries(conflictData.resolution_options).map(([key, option]) => (
-            <div key={key} className={`card mb-2 ${selectedResolution === key ? 'border-primary' : ''}`}>
-              <div className="card-body p-3">
-                <div className="form-check">
-                  <input
-                    className="form-check-input"
-                    type="radio"
-                    name="resolutionMethod"
-                    id={key}
-                    value={key}
-                    checked={selectedResolution === key}
-                    onChange={(e) => setSelectedResolution(e.target.value)}
-                    disabled={option.available === false}
-                  />
-                  <label className="form-check-label w-100" htmlFor={key}>
-                    <div className="d-flex justify-content-between align-items-start">
-                      <div>
-                        <strong className={option.recommended ? 'text-success' : ''}>
-                          {option.label}
-                          {option.recommended && <span className="badge bg-success ms-2">Recommended</span>}
-                        </strong>
-                        <div className="text-muted small mt-1">{option.description}</div>
-                      </div>
-                      {option.available === false && (
-                        <span className="badge bg-secondary">Not Available</span>
-                      )}
+            <div key={key} className={`rounded-lg border p-3 mb-2 ${selectedResolution === key ? 'border-primary bg-primary/5' : 'border-border'}`}>
+              <div className="flex items-start gap-2">
+                <input
+                  className="rounded mt-1"
+                  type="radio"
+                  name="resolutionMethod"
+                  id={key}
+                  value={key}
+                  checked={selectedResolution === key}
+                  onChange={(e) => setSelectedResolution(e.target.value)}
+                  disabled={option.available === false}
+                />
+                <label className="flex-1 cursor-pointer" htmlFor={key}>
+                  <div className="flex justify-between items-start">
+                    <div>
+                      <strong className={option.recommended ? 'text-green-600' : 'text-black'}>
+                        {option.label}
+                        {option.recommended && <span className="ml-2 inline-block px-2 py-1 rounded-full bg-green-600 text-white text-xs">Recommended</span>}
+                      </strong>
+                      <div className="text-muted-foreground text-sm mt-1">{option.description}</div>
                     </div>
-                  </label>
-                </div>
+                    {option.available === false && (
+                      <span className="px-2 py-1 rounded-full bg-gray-400 text-white text-xs">Not Available</span>
+                    )}
+                  </div>
+                </label>
               </div>
             </div>
           ))}
@@ -197,26 +195,26 @@ const EditManualReceivableModal = () => {
 
         {/* Manual Resolution Details */}
         {selectedResolution === 'manual_resolution' && (
-          <div className="border rounded p-3 mb-4">
-            <h6 className="mb-3">Manual Resolution Details</h6>
+          <div className="border border-border rounded-lg p-3 space-y-4">
+            <h6 className="font-semibold text-black mb-3">Manual Resolution Details</h6>
             
             {/* Payment Decisions */}
             {conflictData.payments.length > 0 && (
-              <div className="mb-4">
-                <h6 className="mb-3">
-                  <i className="bi bi-cash-coin me-2"></i>
+              <div>
+                <h6 className="flex items-center gap-2 font-semibold text-black mb-3">
+                  <i className="bi bi-cash-coin"></i>
                   Payment Actions
                 </h6>
                 
                 {conflictData.payments.map((payment) => (
-                  <div key={payment.id} className="row align-items-center mb-3 p-3 border rounded">
-                    <div className="col-md-4">
-                      <div className="fw-bold">{payment.amount} SAR</div>
-                      <small className="text-muted">{payment.paid_at}</small>
+                  <div key={payment.id} className="grid grid-cols-1 md:grid-cols-2 gap-4 items-center mb-3 p-3 border border-border rounded-lg">
+                    <div>
+                      <div className="font-semibold text-black">{payment.amount} SAR</div>
+                      <small className="text-muted-foreground text-xs">{payment.paid_at}</small>
                     </div>
-                    <div className="col-md-8">
+                    <div>
                       <select
-                        className="form-select"
+                        className="w-full px-3 py-2 border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
                         value={paymentDecisions.find(d => d.payment_id === payment.id)?.action || 'keep'}
                         onChange={(e) => handlePaymentActionChange(payment.id, e.target.value as PaymentDecision['action'])}
                       >
@@ -232,21 +230,21 @@ const EditManualReceivableModal = () => {
 
             {/* Allocation Decisions */}
             {conflictData.allocations.length > 0 && (
-              <div className="mb-4">
-                <h6 className="mb-3">
-                  <i className="bi bi-arrow-left-right me-2"></i>
+              <div>
+                <h6 className="flex items-center gap-2 font-semibold text-black mb-3">
+                  <i className="bi bi-arrow-left-right"></i>
                   Allocation Actions
                 </h6>
                 
                 {conflictData.allocations.map((allocation) => (
-                  <div key={allocation.id} className="row align-items-center mb-3 p-3 border rounded">
-                    <div className="col-md-4">
-                      <div className="fw-bold">{allocation.amount} SAR</div>
-                      <small className="text-muted">{allocation.description || t('common.noDescription')}</small>
+                  <div key={allocation.id} className="grid grid-cols-1 md:grid-cols-2 gap-4 items-center mb-3 p-3 border border-border rounded-lg">
+                    <div>
+                      <div className="font-semibold text-black">{allocation.amount} SAR</div>
+                      <small className="text-muted-foreground text-xs">{allocation.description || t('common.noDescription')}</small>
                     </div>
-                    <div className="col-md-8">
+                    <div>
                       <select
-                        className="form-select"
+                        className="w-full px-3 py-2 border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
                         value={allocationDecisions.find(d => d.allocation_id === allocation.id)?.action || 'keep'}
                         onChange={(e) => handleAllocationActionChange(allocation.id, e.target.value as AllocationDecision['action'])}
                       >
@@ -262,7 +260,7 @@ const EditManualReceivableModal = () => {
           </div>
         )}
 
-        <div className="d-flex justify-content-end gap-2">
+        <div className="flex justify-end gap-2">
           <Button type="button" variant="secondary" onClick={closeModal}>
             {t('common.cancel')}
           </Button>
@@ -280,106 +278,92 @@ const EditManualReceivableModal = () => {
     ) : (
       // Edit Mode
       <form onSubmit={handleSubmit(onSubmit)}>
-        <div className="p-4">
+        <div className="p-4 space-y-4">
           {/* Client and Task Info */}
-          <div className="row mb-4">
-            <div className="col-12">
-              <div className="alert alert-info">
-                <div className="d-flex align-items-center">
-                  <i className="bi bi-info-circle me-2"></i>
-                  <div>
-                    <strong>{t('receivables.client')}: </strong> {receivable.client_name}
-                    {isTiedToTask && (
-                      <>
-                        <br />
-                        <strong>{t('receivables.task')}: </strong> {receivable.task_name}
-                        <br />
-                        <small className="text-muted">{t('receivables.tiedToTaskNotice')}</small>
-                      </>
-                    )}
-                  </div>
-                </div>
+          <div className="rounded-lg border border-blue-600 bg-blue-50 p-4">
+            <div className="flex items-start gap-2">
+              <i className="bi bi-info-circle text-blue-600"></i>
+              <div className="text-sm text-blue-800">
+                <strong>{t('receivables.client')}: </strong> {receivable.client_name}
+                {isTiedToTask && (
+                  <>
+                    <br />
+                    <strong>{t('receivables.task')}: </strong> {receivable.task_name}
+                    <br />
+                    <small className="text-blue-700">{t('receivables.tiedToTaskNotice')}</small>
+                  </>
+                )}
               </div>
             </div>
           </div>
 
           {/* Type Field */}
-          <div className="row mb-3">
-            <div className="col-12">
-              <label className="form-label fw-semibold">{t('receivables.chooseType')}</label>
-              <select
-                className="form-select"
-                {...register('type', { required: true })}
-                value={watch('type') || ''}
-                onChange={(e) => {
-                  setValue('type', e.target.value as TaskType);
-                }}
-              >
-                <option value="">{t('common.selectType')}</option>
-                {taskTypes.map(type => (
-                  <option key={type} value={type}>{t(`receivables.type.${type}`)}</option>
-                ))}
-              </select>
-              {errors.type && <div className="text-danger small">{t('common.required')}</div>}
-            </div>
+          <div>
+            <label className="font-semibold text-black text-sm block mb-2">{t('receivables.chooseType')}</label>
+            <select
+              className="w-full px-3 py-2 border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
+              {...register('type', { required: true })}
+              value={watch('type') || ''}
+              onChange={(e) => {
+                setValue('type', e.target.value as TaskType);
+              }}
+            >
+              <option value="">{t('common.selectType')}</option>
+              {taskTypes.map(type => (
+                <option key={type} value={type}>{t(`receivables.type.${type}`)}</option>
+              ))}
+            </select>
+            {errors.type && <div className="text-destructive text-xs mt-1">{t('common.required')}</div>}
           </div>
 
           {/* Description Field */}
-          <div className="row mb-3">
-            <div className="col-12">
-              <Input
-                label={t('receivables.tableHeaderDescription')}
-                {...register('description', { required: true })}
-                error={errors.description && t('common.required')}
-              />
-            </div>
+          <div>
+            <Input
+              label={t('receivables.tableHeaderDescription')}
+              {...register('description', { required: true })}
+              error={errors.description && t('common.required')}
+            />
           </div>
 
           {/* Amount Field */}
-          <div className="row mb-3">
-            <div className="col-12">
-              <Input
-                label={t('receivables.tableHeaderTotal')}
-                type="number"
-                step="0.01"
-                {...register('amount', {
-                  required: true,
-                  valueAsNumber: true,
-                  validate: (value) => {
-                    const detailsSum = watch('amount_details')?.reduce((sum, item) => sum + (Number(item?.amount) || 0), 0) || 0;
-                    return (value || 0) >= detailsSum || t('receivables.amountLessThanDetails', { sum: detailsSum });
-                  }
-                })}
-                error={errors.amount ? errors.amount.message || t('common.required') : undefined}
-              />
-            </div>
+          <div>
+            <Input
+              label={t('receivables.tableHeaderTotal')}
+              type="number"
+              step="0.01"
+              {...register('amount', {
+                required: true,
+                valueAsNumber: true,
+                validate: (value) => {
+                  const detailsSum = watch('amount_details')?.reduce((sum, item) => sum + (Number(item?.amount) || 0), 0) || 0;
+                  return (value || 0) >= detailsSum || t('receivables.amountLessThanDetails', { sum: detailsSum });
+                }
+              })}
+              error={errors.amount ? errors.amount.message || t('common.required') : undefined}
+            />
           </div>
 
           {/* Due Date Field */}
-          <div className="row mb-3">
-            <div className="col-12">
-              <Input
-                label={t('receivables.tableHeaderDueDate')}
-                type="date"
-                {...register('due_date', { required: true })}
-                error={errors.due_date && t('common.required')}
-              />
-            </div>
+          <div>
+            <Input
+              label={t('receivables.tableHeaderDueDate')}
+              type="date"
+              {...register('due_date', { required: true })}
+              error={errors.due_date && t('common.required')}
+            />
           </div>
 
           {/* Amount Details */}
-          <div className="row mb-3">
-            <div className="col-12">
-              <AmountDetailsInput
-                control={control}
-                register={register}
-                totalAmount={totalAmount}
-              />
-            </div>
+          <div>
+            <AmountDetailsInput
+              control={control}
+              register={register}
+              totalAmount={totalAmount}
+            />
           </div>
 
           {/* Notes Field */}
-          <div className="row mb-4">
+          <div>
             <div className="col-12">
               <label className="form-label fw-semibold">{t('receivables.notes')}</label>
               <textarea

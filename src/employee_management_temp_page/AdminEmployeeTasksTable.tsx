@@ -1,4 +1,4 @@
-// Admin Employee Tasks Table with Filters
+// Admin Employee Tasks Table with Filters - Tailwind version
 import { useState, Fragment } from 'react';
 import type { Task } from '../api/types';
 import { useTranslation } from 'react-i18next';
@@ -14,7 +14,8 @@ import {
   ClipboardCheck, 
   RotateCcw,
   Upload,
-  Filter
+  Filter,
+  X
 } from 'lucide-react';
 import { useDeferTask, useResumeTask, useRestoreTask } from '../queries/taskQueries';
 import { useToast } from '../hooks/useToast';
@@ -24,6 +25,8 @@ import { useStickyHeader } from '../hooks/useStickyHeader';
 import { useAdminSubmitTaskForReview } from './employeeManagementQueries';
 import { useGetAdminEmployeeTasks, type EmployeeTasksFilters } from './employeeManagementQueries';
 import Input from '../components/ui/Input';
+import { Badge } from '../components/ui/badge';
+import { cn } from '@/lib/utils';
 
 interface AdminEmployeeTasksTableProps {
   employeeId: number;
@@ -200,16 +203,16 @@ const AdminEmployeeTasksTable = ({ employeeId }: AdminEmployeeTasksTableProps) =
   };
 
   // Helper function to get type background color
-  const getTypeRowStyle = (type: string) => {
+  const getTypeRowClass = (type: string) => {
     switch (type) {
       case 'Government':
-        return { backgroundColor: 'rgba(74, 162, 255, 0.01)' };
+        return 'bg-blue-50/50 hover:bg-blue-100/50';
       case 'RealEstate':
-        return { backgroundColor: 'rgba(90, 175, 110, 0.1)' };
+        return 'bg-green-50/50 hover:bg-green-100/50';
       case 'Accounting':
-        return { backgroundColor: 'rgba(248, 220, 61, 0.1)' };
+        return 'bg-yellow-50/50 hover:bg-yellow-100/50';
       default:
-        return { backgroundColor: 'rgba(206, 208, 209, 0.1)' };
+        return 'bg-gray-50/50 hover:bg-gray-100/50';
     }
   };
 
@@ -221,10 +224,12 @@ const AdminEmployeeTasksTable = ({ employeeId }: AdminEmployeeTasksTableProps) =
   };
 
   if (isLoading) {
-    return <div className="p-4 text-center">
-      <div className="w-10 h-10 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto"></div>
-      <span className="text-black mt-2 block">جاري تحميل المهام...</span>
-    </div>;
+    return (
+      <div className="p-4 text-center">
+        <div className="w-10 h-10 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto"></div>
+        <span className="text-black mt-2 block">جاري تحميل المهام...</span>
+      </div>
+    );
   }
 
   // Sort tasks: Newest Urgent first, then Urgent, then newest normal tasks
@@ -249,25 +254,27 @@ const AdminEmployeeTasksTable = ({ employeeId }: AdminEmployeeTasksTableProps) =
     return statusOrder.indexOf(a.status) - statusOrder.indexOf(b.status);
   });
 
+  const activeFiltersCount = appliedStatuses.length + (appliedType ? 1 : 0) + (appliedDateFrom || appliedDateTo ? 1 : 0);
+
   return (
     <div className="w-full">
       {/* Filter Toggle Button */}
-      <div className="p-3 bg-light border-bottom d-flex justify-content-between align-items-center">
-        <div className="d-flex gap-2">
+      <div className="p-3 bg-gray-50 border-b flex justify-between items-center">
+        <div className="flex gap-2">
           <Button
-            variant="outline-primary"
+            variant="outline-secondary"
             size="sm"
             onClick={openFiltersModal}
           >
-            <Filter size={16} className="me-1" />
+            <Filter size={16} className="ml-1" />
             تصفية المهام
-            {(appliedStatuses.length > 0 || appliedType || appliedDateFrom || appliedDateTo) && (
-              <span className="badge bg-primary ms-2">
-                {appliedStatuses.length + (appliedType ? 1 : 0) + (appliedDateFrom || appliedDateTo ? 1 : 0)}
-              </span>
+            {activeFiltersCount > 0 && (
+              <Badge className="bg-primary text-white mr-2">
+                {activeFiltersCount}
+              </Badge>
             )}
           </Button>
-          {(appliedStatuses.length > 0 || appliedType || appliedDateFrom || appliedDateTo) && (
+          {activeFiltersCount > 0 && (
             <Button
               variant="outline-danger"
               size="sm"
@@ -277,229 +284,241 @@ const AdminEmployeeTasksTable = ({ employeeId }: AdminEmployeeTasksTableProps) =
             </Button>
           )}
         </div>
-        <small className="text-muted">
+        <small className="text-muted-foreground">
           عرض {sortedTasks.length} من أصل {total} مهمة
-          {(appliedStatuses.length > 0 || appliedType || appliedDateFrom || appliedDateTo) && ' (مفلترة)'}
+          {activeFiltersCount > 0 && ' (مفلترة)'}
         </small>
       </div>
 
       {/* Filters Modal */}
       {showFiltersModal && (
         <div 
-          className="modal show d-block" 
-          style={{ backgroundColor: 'rgba(0,0,0,0.5)' }}
+          className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center"
           onClick={() => setShowFiltersModal(false)}
         >
           <div 
-            className="modal-dialog modal-dialog-centered modal-lg"
+            className="bg-white rounded-lg shadow-xl w-full max-w-2xl mx-4"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="modal-content">
-              <div className="modal-header">
-                <h5 className="modal-title">تصفية المهام</h5>
-                <button 
-                  type="button" 
-                  className="btn-close" 
-                  onClick={() => setShowFiltersModal(false)}
-                ></button>
-              </div>
-              <div className="modal-body">
-                {/* Status Filter */}
-                <div className="mb-4">
-                  <label className="form-label fw-bold">الحالة</label>
-                  <div className="d-flex flex-wrap gap-2">
-                    {['New', 'Pending Review', 'Deferred', 'Completed', 'Cancelled'].map(status => (
-                      <Fragment key={status}>
+            <div className="flex justify-between items-center p-4 border-b">
+              <h5 className="font-semibold text-lg">تصفية المهام</h5>
+              <button 
+                className="p-1 hover:bg-gray-100 rounded"
+                onClick={() => setShowFiltersModal(false)}
+              >
+                <X size={20} />
+              </button>
+            </div>
+            <div className="p-4">
+              {/* Status Filter */}
+              <div className="mb-4">
+                <label className="block font-bold mb-2">الحالة</label>
+                <div className="flex flex-wrap gap-2">
+                  {['New', 'Pending Review', 'Deferred', 'Completed', 'Cancelled'].map(status => (
+                    <Fragment key={status}>
+                      <label 
+                        className={cn(
+                          "px-3 py-1.5 rounded border cursor-pointer transition-colors",
+                          tempStatuses.includes(status) 
+                            ? "bg-primary text-white border-primary" 
+                            : "bg-white border-gray-300 hover:bg-gray-50"
+                        )}
+                      >
                         <input
                           type="checkbox"
-                          className="btn-check"
-                          id={`modal-status-${status}`}
+                          className="sr-only"
                           checked={tempStatuses.includes(status)}
                           onChange={() => handleTempStatusChange(status)}
                         />
-                        <label className="btn btn-outline-primary" htmlFor={`modal-status-${status}`}>
-                          {t(`status.${status}`)}
-                        </label>
-                      </Fragment>
-                    ))}
+                        {t(`status.${status}`)}
+                      </label>
+                    </Fragment>
+                  ))}
+                </div>
+              </div>
+
+              {/* Type Filter */}
+              <div className="mb-4">
+                <label className="block font-bold mb-2">النوع</label>
+                <select
+                  value={tempType}
+                  onChange={(e) => handleTempTypeChange(e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-primary/50"
+                >
+                  <option value="">جميع الأنواع</option>
+                  <option value="Government">حكومي</option>
+                  <option value="RealEstate">عقاري</option>
+                  <option value="Accounting">محاسبي</option>
+                  <option value="Other">أخرى</option>
+                </select>
+              </div>
+
+              {/* Date Range */}
+              <div className="mb-4">
+                <label className="block font-bold mb-2">نطاق التاريخ</label>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm text-muted-foreground mb-1">من تاريخ</label>
+                    <Input
+                      type="date"
+                      value={tempDateFrom}
+                      onChange={handleTempDateFromChange}
+                    />
                   </div>
-                </div>
-
-                {/* Type Filter */}
-                <div className="mb-4">
-                  <label className="form-label fw-bold">النوع</label>
-                  <select
-                    value={tempType}
-                    onChange={(e) => handleTempTypeChange(e.target.value)}
-                    className="form-select"
-                  >
-                    <option value="">جميع الأنواع</option>
-                    <option value="Government">حكومي</option>
-                    <option value="RealEstate">عقاري</option>
-                    <option value="Accounting">محاسبي</option>
-                    <option value="Other">أخرى</option>
-                  </select>
-                </div>
-
-                {/* Date Range */}
-                <div className="mb-4">
-                  <label className="form-label fw-bold">نطاق التاريخ</label>
-                  <div className="row g-3">
-                    <div className="col-md-6">
-                      <label className="form-label text-muted small">من تاريخ</label>
-                      <Input
-                        type="date"
-                        value={tempDateFrom}
-                        onChange={handleTempDateFromChange}
-                        className="form-control"
-                      />
-                    </div>
-                    <div className="col-md-6">
-                      <label className="form-label text-muted small">إلى تاريخ</label>
-                      <Input
-                        type="date"
-                        value={tempDateTo}
-                        onChange={handleTempDateToChange}
-                        className="form-control"
-                      />
-                    </div>
+                  <div>
+                    <label className="block text-sm text-muted-foreground mb-1">إلى تاريخ</label>
+                    <Input
+                      type="date"
+                      value={tempDateTo}
+                      onChange={handleTempDateToChange}
+                    />
                   </div>
                 </div>
               </div>
-              <div className="modal-footer">
-                <Button
-                  variant="outline-secondary"
-                  onClick={() => setShowFiltersModal(false)}
-                >
-                  إلغاء
-                </Button>
-                <Button
-                  variant="outline-danger"
-                  onClick={clearFilters}
-                >
-                  مسح الكل
-                </Button>
-                <Button
-                  variant="primary"
-                  onClick={applyFilters}
-                >
-                  تطبيق الفلاتر
-                </Button>
-              </div>
+            </div>
+            <div className="flex justify-end gap-2 p-4 border-t">
+              <Button
+                variant="outline-secondary"
+                onClick={() => setShowFiltersModal(false)}
+              >
+                إلغاء
+              </Button>
+              <Button
+                variant="outline-danger"
+                onClick={clearFilters}
+              >
+                مسح الكل
+              </Button>
+              <Button
+                variant="primary"
+                onClick={applyFilters}
+              >
+                تطبيق الفلاتر
+              </Button>
             </div>
           </div>
         </div>
       )}
 
       {/* Tasks Table */}
-      <div className="table-responsive" style={{ fontSize: '1.2em' }}>
+      <div className="overflow-x-auto text-lg">
         <div ref={sentinelRef}></div>
         
-        <table className={`table table-sm table-hover ${isSticky ? 'sticky-header' : ''}`}>
-          <thead className="table-light">
+        <table className={cn("w-full text-sm", isSticky && "sticky-header")}>
+          <thead className="bg-gray-100">
             <tr>
-              <th className="text-end text-black fw-bold">‏{t('tasks.tableHeaderClient')}</th>
-              <th className="text-end text-black fw-bold">‏{t('tasks.tableHeaderClientPhone')}</th>
-              <th className="text-end text-black fw-bold">‏{t('tasks.tableHeaderService')}</th>
-              <th className="text-end text-black fw-bold">‏{t('tasks.tableHeaderType')}</th>
-              <th className="text-end text-black fw-bold">‏{t('tasks.tableHeaderNotes')}</th>
-              <th className="text-end text-black fw-bold">‏{t('tasks.tableHeaderStatus')}</th>
-              <th className="text-start text-black fw-bold">{t('tasks.tableHeaderActions')}</th>
+              <th className="text-right text-black font-bold px-4 py-3">‏{t('tasks.tableHeaderClient')}</th>
+              <th className="text-right text-black font-bold px-4 py-3">‏{t('tasks.tableHeaderClientPhone')}</th>
+              <th className="text-right text-black font-bold px-4 py-3">‏{t('tasks.tableHeaderService')}</th>
+              <th className="text-right text-black font-bold px-4 py-3">‏{t('tasks.tableHeaderType')}</th>
+              <th className="text-right text-black font-bold px-4 py-3">‏{t('tasks.tableHeaderNotes')}</th>
+              <th className="text-right text-black font-bold px-4 py-3">‏{t('tasks.tableHeaderStatus')}</th>
+              <th className="text-left text-black font-bold px-4 py-3">{t('tasks.tableHeaderActions')}</th>
             </tr>
           </thead>
           <tbody>
             {sortedTasks.length === 0 ? (
               <tr>
-                <td colSpan={7} className="text-center text-muted py-4">
+                <td colSpan={7} className="text-center text-muted-foreground py-8">
                   لا توجد مهام
                 </td>
               </tr>
             ) : (
               sortedTasks.map((task) => {
                 const isUrgent = task.tags?.some((tag: any) => tag.name === 'قصوى');
-                const typeStyle = getTypeRowStyle(task.type);
+                const typeClass = getTypeRowClass(task.type);
                 
                 return (
                   <tr 
                     key={task.id} 
-                    style={typeStyle}
-                    className={`task-row-${task.type.toLowerCase()} ${isUrgent ? 'border-danger border-2' : ''}`}
+                    className={cn(
+                      typeClass,
+                      "border-b transition-colors",
+                      isUrgent && "border-2 border-red-500"
+                    )}
                   >
                     {/* Client */}
-                    <td>
-                      <div className="d-flex justify-content-between align-items-center">
+                    <td className="px-4 py-3">
+                      <div className="flex justify-between items-center">
                         <div>
                           {task.client ? (
                             <Link 
                               to={`/clients/${task.client.id}`}
-                              className="fw-medium text-black text-decoration-none"
+                              className="font-medium text-black no-underline hover:underline"
                             >
                               {task.client.name}
                             </Link>
                           ) : (
-                            <span className="text-muted">—</span>
+                            <span className="text-muted-foreground">—</span>
                           )}
                         </div>
                       </div>
                     </td>
 
                     {/* Phone */}
-                    <td className='text-center'>
-                      <div className="d-flex align-items-center justify-content-center gap-1">
+                    <td className="px-4 py-3 text-center">
+                      <div className="flex items-center justify-center gap-1">
                         {task.client ? (
                           <>
                             <a
                               href={getWhatsAppUrl(task.client.phone)}
                               target="_blank"
                               rel="noopener noreferrer"
-                              className="text-success"
+                              className="text-green-600"
                               title="فتح واتساب"
                             >
                               <WhatsAppIcon />
                             </a>
-                            <span className="text-sm text-muted">{task.client.phone}</span>
+                            <span className="text-sm text-muted-foreground">{task.client.phone}</span>
                           </>
                         ) : (
-                          <span className="text-muted">—</span>
+                          <span className="text-muted-foreground">—</span>
                         )}
                       </div>
                     </td>
 
                     {/* Service/Task name */}
-                    <td>
-                      <div className="fw-medium text-black">
+                    <td className="px-4 py-3">
+                      <div className="font-medium text-black">
                         {task.task_name || t(`type.${task.type}`)}
                       </div>
                     </td>
 
                     {/* Type */}
-                    <td>
-                      <span className="fw-medium text-black">{t(`type.${task.type}`)}</span>
+                    <td className="px-4 py-3">
+                      <span className="font-medium text-black">{t(`type.${task.type}`)}</span>
                     </td>
 
                     {/* Notes */}
-                    <td>
-                      <div className="text-sm text-black text-truncate" style={{ maxWidth: '200px' }}>
+                    <td className="px-4 py-3">
+                      <div className="text-sm text-black truncate max-w-[200px]">
                         {task.notes || '—'}
                       </div>
                     </td>
 
                     {/* Status */}
-                    <td>
-                      <span className={`badge ${
-                        task.status === 'New' ? 'bg-warning text-dark' :
-                        task.status === 'Deferred' ? 'bg-danger' :
-                        task.status === 'Completed' ? 'bg-success' :
-                        task.status === 'Pending Review' ? 'bg-info text-dark' :
-                        'bg-secondary'
-                      }`}>
+                    <td className="px-4 py-3">
+                      <Badge
+                        variant={
+                          task.status === 'New' ? 'default' :
+                          task.status === 'Deferred' ? 'destructive' :
+                          task.status === 'Pending Review' ? 'secondary' :
+                          task.status === 'Completed' ? 'default' :
+                          'outline'
+                        }
+                        className={cn(
+                          task.status === 'New' && "bg-yellow-500 text-black hover:bg-yellow-500",
+                          task.status === 'Pending Review' && "bg-blue-400 text-black hover:bg-blue-400",
+                          task.status === 'Completed' && "bg-green-500 text-white hover:bg-green-500"
+                        )}
+                      >
                         {t(`status.${task.status}`)}
-                      </span>
+                      </Badge>
                     </td>
 
                     {/* Actions */}
-                    <td className="text-start">
-                      <div className="d-flex justify-content-start gap-1 flex-wrap">
+                    <td className="px-4 py-3 text-left">
+                      <div className="flex justify-start gap-1 flex-wrap">
                         {/* Google Drive Link */}
                         {task.client?.google_drive_link && (
                           <Button 
@@ -562,7 +581,7 @@ const AdminEmployeeTasksTable = ({ employeeId }: AdminEmployeeTasksTableProps) =
                           </Button>
                         ) : task.status === 'Deferred' ? (
                           <Button
-                            variant="outline-info"
+                            variant="outline-primary"
                             size="sm"
                             onClick={() => handleResume(task)}
                             title="استئناف المهمة"
@@ -590,37 +609,6 @@ const AdminEmployeeTasksTable = ({ employeeId }: AdminEmployeeTasksTableProps) =
             )}
           </tbody>
         </table>
-
-        {/* Custom styles for row type backgrounds */}
-        <style>{`
-          .task-row-government > td {
-            background-color: rgba(74, 162, 255, 0.08) !important;
-          }
-          .task-row-government:hover > td {
-            background-color: rgba(74, 162, 255, 0.15) !important;
-          }
-          
-          .task-row-realestate > td {
-            background-color: rgba(90, 175, 110, 0.08) !important;
-          }
-          .task-row-realestate:hover > td {
-            background-color: rgba(90, 175, 110, 0.15) !important;
-          }
-          
-          .task-row-accounting > td {
-            background-color: rgba(248, 220, 61, 0.08) !important;
-          }
-          .task-row-accounting:hover > td {
-            background-color: rgba(248, 220, 61, 0.15) !important;
-          }
-          
-          .task-row-other > td {
-            background-color: rgba(206, 208, 209, 0.08) !important;
-          }
-          .task-row-other:hover > td {
-            background-color: rgba(206, 208, 209, 0.15) !important;
-          }
-        `}</style>
       </div>
 
       {/* Pagination */}

@@ -84,10 +84,10 @@ const MessageList: React.FC<MessageListProps> = ({
 
   if (isLoading) {
     return (
-      <div className="d-flex align-items-center justify-content-center h-100 p-4">
+      <div className="flex items-center justify-center h-full p-4">
         <div className="text-center">
-          <Loader2 className="text-primary mb-2" size={24} />
-          <p className="small text-muted mb-0">جاري تحميل التعليقات...</p>
+          <Loader2 className="text-primary mb-2 animate-spin" size={24} />
+          <p className="text-sm text-black mb-0">جاري تحميل التعليقات...</p>
         </div>
       </div>
     );
@@ -95,15 +95,15 @@ const MessageList: React.FC<MessageListProps> = ({
 
   if (error) {
     return (
-      <div className="d-flex align-items-center justify-content-center h-100 p-4">
+      <div className="flex items-center justify-center h-full p-4">
         <div className="text-center">
-          <AlertCircle className="text-danger mb-3" size={32} />
-          <h6 className="text-dark mb-1">خطأ في تحميل التعليقات</h6>
-          <p className="small text-muted mb-3">
+          <AlertCircle className="text-red-600 mb-3" size={32} />
+          <h6 className="text-black mb-1 font-semibold">خطأ في تحميل التعليقات</h6>
+          <p className="text-sm text-black mb-3">
             {error?.message || 'حدث خطأ غير متوقع'}
           </p>
           <button 
-            className="btn btn-outline-primary btn-sm"
+            className="px-4 py-2 text-sm border border-primary text-primary rounded-md hover:bg-primary/10 transition-colors"
             onClick={() => window.location.reload()}
           >
             إعادة المحاولة
@@ -117,11 +117,11 @@ const MessageList: React.FC<MessageListProps> = ({
 
   if (allMessages.length === 0) {
     return (
-      <div className="d-flex align-items-center justify-content-center h-100 p-4">
+      <div className="flex items-center justify-center h-full p-4">
         <div className="text-center">
-          <MessageSquare className="text-muted mb-3" size={48} />
-          <h6 className="text-dark mb-1">لا توجد تعليقات بعد</h6>
-          <p className="small text-muted mb-0">
+          <MessageSquare className="text-black mb-3" size={48} />
+          <h6 className="text-black mb-1 font-semibold">لا توجد تعليقات بعد</h6>
+          <p className="text-sm text-black mb-0">
             ابدأ بإضافة تعليق حول هذه المهمة
           </p>
         </div>
@@ -132,19 +132,19 @@ const MessageList: React.FC<MessageListProps> = ({
   return (
     <div 
       ref={scrollContainerRef}
-      className="h-100 overflow-auto"
+      className="h-full overflow-auto"
     >
       {/* Load More Button (at top for older messages) */}
       {hasNextPage && (
-        <div className="text-center p-3 border-bottom">
+        <div className="text-center p-3 border-b border-border">
           <button
-            className="btn btn-outline-secondary btn-sm"
+            className="px-4 py-2 text-sm border border-border rounded-md hover:bg-muted transition-colors disabled:opacity-50"
             onClick={onLoadMore}
             disabled={isFetchingNextPage}
           >
             {isFetchingNextPage ? (
               <>
-                <Loader2 size={12} className="me-1" />
+                <Loader2 size={12} className="inline mr-1 animate-spin" />
                 جاري التحميل...
               </>
             ) : (
@@ -182,10 +182,10 @@ const MessageItem = React.forwardRef<HTMLDivElement, MessageItemProps>(({ messag
   if (isSystemMessage) {
     return (
       <div ref={ref} className="text-center mb-2">
-        <div className="d-inline-block bg-light rounded px-2 py-1">
-          <div className="d-flex align-items-center">
-            <Bot size={12} className="text-muted me-1" />
-            <small className="text-muted">{message.message_content}</small>
+        <div className="inline-block bg-muted rounded px-2 py-1">
+          <div className="flex items-center">
+            <Bot size={12} className="text-black mr-1" />
+            <small className="text-black">{message.message_content}</small>
           </div>
         </div>
       </div>
@@ -193,26 +193,26 @@ const MessageItem = React.forwardRef<HTMLDivElement, MessageItemProps>(({ messag
   }
 
   return (
-    <div ref={ref} className="d-flex mb-2">
+    <div ref={ref} className="flex mb-2">
       {/* Avatar */}
-      <div className="flex-shrink-0 me-2">
-        <div className="bg-primary bg-opacity-10 rounded-circle d-flex align-items-center justify-content-center" style={{ width: '28px', height: '28px' }}>
+      <div className="flex-shrink-0 mr-2">
+        <div className="bg-primary/10 rounded-full flex items-center justify-center" style={{ width: '28px', height: '28px' }}>
           <User size={14} className="text-primary" />
         </div>
       </div>
 
       {/* Message Content */}
-      <div className="flex-grow-1 min-w-0">
-        <div className="bg-light rounded p-2">
-          <div className="d-flex align-items-center justify-content-between mb-1">
-            <small className="fw-medium text-dark mb-0">
+      <div className="flex-1 min-w-0">
+        <div className="bg-muted rounded p-2">
+          <div className="flex items-center justify-between mb-1">
+            <small className="font-medium text-black mb-0">
               {message.employee_name}
             </small>
-            <small className="text-muted">
+            <small className="text-black">
               {message.created_at_formatted}
             </small>
           </div>
-          <p className="small mb-0 text-dark" style={{ lineHeight: '1.3' }}>
+          <p className="text-sm mb-0 text-black" style={{ lineHeight: '1.3' }}>
             {message.message_content}
           </p>
         </div>

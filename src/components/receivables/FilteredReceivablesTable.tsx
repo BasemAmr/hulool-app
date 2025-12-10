@@ -6,6 +6,7 @@ import { ChevronRight, ChevronDown, FileText, CreditCard, MessageSquare, Edit3, 
 import { useModalStore } from '../../stores/modalStore';
 import { formatDate } from '../../utils/dateUtils';
 import { useStickyHeader } from '../../hooks/useStickyHeader';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../ui/table';
 
 interface FilteredReceivablesTableProps {
   receivables: Receivable[];
@@ -25,9 +26,9 @@ const FilteredReceivablesTable: React.FC<FilteredReceivablesTableProps> = ({
 
   if (isLoading) {
     return (
-      <div className="d-flex justify-content-center align-items-center p-5">
-        <div className="spinner-border text-primary" role="status">
-          <span className="visually-hidden">Loading...</span>
+      <div className="flex justify-center items-center p-5">
+        <div className="w-10 h-10 border-4 border-primary border-t-transparent rounded-full animate-spin" role="status">
+          <span className="sr-only">Loading...</span>
         </div>
       </div>
     );
@@ -35,7 +36,7 @@ const FilteredReceivablesTable: React.FC<FilteredReceivablesTableProps> = ({
 
   if (!receivables.length) {
     return (
-      <div className="text-center p-5 text-muted">
+      <div className="text-center p-5 text-black">
         <FileText size={48} className="mb-3 opacity-50" />
         <p className="mb-0">
           {filterType === 'paid' ? 'لا توجد مستحقات مسددة' : 'لا توجد مستحقات غير مسددة'}
@@ -63,10 +64,10 @@ const FilteredReceivablesTable: React.FC<FilteredReceivablesTableProps> = ({
 
   const getTypeBadge = (type: string) => {
     const badgeClasses = {
-      'Accounting': 'badge bg-warning text-dark fw-semibold',
-      'RealEstate': 'badge bg-success text-white fw-semibold',
-      'Government': 'badge bg-primary text-white fw-semibold',
-      'Other': 'badge bg-secondary text-white fw-semibold'
+      'Accounting': 'px-2.5 py-1 rounded-full bg-yellow-500 text-white font-semibold text-sm',
+      'RealEstate': 'px-2.5 py-1 rounded-full bg-green-600 text-white font-semibold text-sm',
+      'Government': 'px-2.5 py-1 rounded-full bg-primary text-white font-semibold text-sm',
+      'Other': 'px-2.5 py-1 rounded-full bg-gray-500 text-white font-semibold text-sm'
     };
 
     const badgeText = {
@@ -115,91 +116,89 @@ const FilteredReceivablesTable: React.FC<FilteredReceivablesTableProps> = ({
   );
 
   return (
-    <div className="table-responsive" dir="rtl">
+    <div className="w-full overflow-x-auto" dir="rtl">
       {/* Sentinel element for sticky header detection */}
       <div ref={sentinelRef} ></div>
       
-      <table className="table table-hover align-middle">
-        <thead className={`${filterType === 'paid' ? 'table-success' : 'table-danger'} ${isSticky ? 'is-sticky' : ''}`}>
-          <tr className="fw-bold">
-            <th scope="col" className="text-center" style={{ width: '5%', color: '#000' }}></th>
-            <th scope="col" className="text-center" style={{ width: '8%', color: '#000' }}>العميل</th>
-            <th scope="col" className="text-center" style={{ width: '7%', color: '#000' }}>رقم الهاتف</th>
-            <th scope="col" className="text-center" style={{ width: '20%', color: '#000' }}>الوصف</th>
-            <th scope="col" className="text-center" style={{ width: '10%', color: '#000' }}>النوع</th>
-            <th scope="col" className="text-center" style={{ width: '12%', color: '#000' }}>المبلغ</th>
-            <th scope="col" className="text-center" style={{ width: '12%', color: '#000' }}>المدفوع</th>
-            <th scope="col" className="text-center" style={{ width: '12%', color: '#000' }}>المتبقي</th>
-            <th scope="col" className="text-center" style={{ width: '10%', color: '#000' }}>تاريخ الأمر</th>
-            <th scope="col" className="text-center" style={{ width: '4%', color: '#000' }}>الإجراءات</th>
-          </tr>
-        </thead>
-        <tbody>
+      <Table>
+        <TableHeader className={isSticky ? 'is-sticky' : ''}>
+          <TableRow style={{ backgroundColor: filterType === 'paid' ? '#22c55e' : '#dc2626', color: 'white' }}>
+            <TableHead className="text-center text-white font-bold" style={{ width: '5%' }}></TableHead>
+            <TableHead className="text-center text-white font-bold" style={{ width: '8%' }}>‏العميل</TableHead>
+            <TableHead className="text-center text-white font-bold" style={{ width: '7%' }}>‏رقم الهاتف</TableHead>
+            <TableHead className="text-center text-white font-bold" style={{ width: '20%' }}>‏الوصف</TableHead>
+            <TableHead className="text-center text-white font-bold" style={{ width: '10%' }}>‏النوع</TableHead>
+            <TableHead className="text-center text-white font-bold" style={{ width: '12%' }}>‏المبلغ</TableHead>
+            <TableHead className="text-center text-white font-bold" style={{ width: '12%' }}>‏المدفوع</TableHead>
+            <TableHead className="text-center text-white font-bold" style={{ width: '12%' }}>‏المتبقي</TableHead>
+            <TableHead className="text-center text-white font-bold" style={{ width: '10%' }}>‏تاريخ الأمر</TableHead>
+            <TableHead className="text-center text-white font-bold" style={{ width: '4%' }}>‏الإجراءات</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
           {sortedReceivables.map((receivable) => {
             const isExpanded = expandedRows.has(receivable.id);
             const hasPayments = receivable.payments && receivable.payments.length > 0;
             
             return (
               <React.Fragment key={receivable.id}>
-                <tr>
-                  <td className="text-center">
+                <TableRow className="hover:bg-muted/30 transition-colors">
+                  <TableCell className="text-center">
                     {hasPayments && (
                       <button
-                        className="btn btn-sm btn-link p-0 text-primary"
+                        className="p-0 text-primary hover:text-primary/80 transition-colors"
                         onClick={() => toggleRow(receivable.id)}
-                        style={{ fontSize: '14px' }}
                       >
                         {isExpanded ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
                       </button>
                     )}
-                  </td>
-                  <td className="text-start">
-                    <div className="d-flex align-items-center justify-content-between" style={{ direction: 'rtl' }}>
+                  </TableCell>
+                  <TableCell className="text-right">
+                    <div className="flex items-center justify-between" style={{ direction: 'rtl' }}>
                       <div
-                        className="fw-bold text-primary cursor-pointer"
+                        className="font-bold text-primary cursor-pointer"
                         onClick={() => handleClientClick(Number(receivable.client_id))}
                         style={{ cursor: 'pointer' }}
                       >
                         {receivable.client?.name}
                       </div>
                     </div>
-                  </td>
-                  <td>
-                    <div className="text-muted small d-flex justify-content-center align-items-center justify-content-end">
+                  </TableCell>
+                  <TableCell>
+                    <div className="text-black text-sm flex justify-center items-center justify-end">
                         <button
-                          className="btn btn-link btn-sm p-0 text-success ms-1"
+                          className="p-0 text-green-600 hover:text-green-700 transition-colors ml-1"
                           onClick={() => handleWhatsApp(receivable.client?.phone || '')}
                           title="WhatsApp"
-                          style={{ fontSize: '12px' }}
                         >
                           <MessageSquare size={12} />
                         </button>
-                        <span>{receivable.client?.phone}</span>
+                        <span className="text-black">{receivable.client?.phone}</span>
                       </div>
-                  </td>
-                  <td className="text-center">
-                    <div className="text-truncate" style={{ maxWidth: '200px' }} title={receivable.description}>
+                  </TableCell>
+                  <TableCell className="text-center">
+                    <div className="truncate" style={{ maxWidth: '200px' }} title={receivable.description}>
                       {receivable.description}
                     </div>
-                  </td>
-                  <td className="text-center">
+                  </TableCell>
+                  <TableCell className="text-center">
                     {getTypeBadge(receivable.type)}
-                  </td>
-                  <td className="text-center fw-bold text-danger">
+                  </TableCell>
+                  <TableCell className="text-center font-bold text-red-600">
                     {formatCurrency(receivable.amount)}
-                  </td>
-                  <td className="text-center fw-bold text-success">
+                  </TableCell>
+                  <TableCell className="text-center font-bold text-green-600">
                     {formatCurrency(receivable.total_paid)}
-                  </td>
-                  <td className="text-center fw-bold text-primary">
+                  </TableCell>
+                  <TableCell className="text-center font-bold text-primary">
                     {formatCurrency(receivable.remaining_amount)}
-                  </td>
-                  <td className="text-center">
-                    <small className={new Date(receivable.due_date) < new Date() ? 'text-danger fw-bold' : 'text-muted'}>
+                  </TableCell>
+                  <TableCell className="text-center">
+                    <small className={new Date(receivable.due_date) < new Date() ? 'text-red-600 font-bold' : 'text-black'}>
                       {formatDate(receivable.due_date)}
                     </small>
-                  </td>
-                  <td className="text-center">
+                  </TableCell>
+                  <TableCell className="text-center">
                     {receivable.remaining_amount > 0 && (
                       <Button
                         variant="primary"
@@ -210,95 +209,92 @@ const FilteredReceivablesTable: React.FC<FilteredReceivablesTableProps> = ({
                         سداد
                       </Button>
                     )}
-                  </td>
-                </tr>
+                  </TableCell>
+                </TableRow>
                 
                 {/* Expanded row for payments */}
                 {isExpanded && hasPayments && (
-                  <tr>
-                    <td colSpan={9}>
-                      <div className="bg-light p-3 rounded">
-                        <h6 className="mb-3 text-primary">تفاصيل المدفوعات</h6>
-                        <div className="table-responsive">
-                          <table className="table table-sm mb-0">
-                            <thead>
-                              <tr>
-                                <th className="text-center">المبلغ</th>
-                                <th className="text-center">طريقة الدفع</th>
-                                <th className="text-center">تاريخ الدفع</th>
-                                <th className="text-center">الملاحظات</th>
-                                <th className="text-center">الإجراءات</th>
-                              </tr>
-                            </thead>
-                            <tbody>
-                              {receivable.payments.map((payment) => (
-                                <tr key={payment.id}>
-                                  <td className="text-center fw-bold text-success">
-                                    {formatCurrency(payment.amount)}
-                                  </td>
-                                  <td className="text-center">
-                                    {payment.payment_method?.name_ar || 'غير محدد'}
-                                  </td>
-                                  <td className="text-center">
-                                    {formatDate(payment.paid_at)}
-                                  </td>
-                                  <td className="text-center">
-                                    {payment.note || '-'}
-                                  </td>
-                                  <td className="text-center">
-                                    <Button
-                                      variant="outline-primary"
-                                      size="sm"
-                                      className="me-1"
-                                      onClick={(e) => {
-                                        e.stopPropagation();
-                                        openModal('paymentEdit', { payment, receivable });
-                                      }}
-                                      title="تعديل"
-                                    >
-                                      <Edit3 size={14} />
-                                    </Button>
-                                    <Button
-                                      variant="danger"
-                                      size="sm"
-                                      onClick={(e) => {
-                                        e.stopPropagation();
-                                        openModal('paymentDelete', { payment });
-                                      }}
-                                      title="حذف"
-                                    >
-                                      <Trash2 size={14} />
-                                    </Button>
-                                  </td>
-                                </tr>
-                              ))}
-                            </tbody>
-                          </table>
+                  <TableRow>
+                    <TableCell colSpan={9}>
+                      <div className="bg-muted/30 p-3 rounded-lg">
+                        <h6 className="mb-3 text-primary font-semibold">تفاصيل المدفوعات</h6>
+                        <div className="w-full overflow-x-auto">
+                          <div className="grid grid-cols-5 gap-2 divide-y divide-border">
+                            {/* Header */}
+                            <div className="col-span-5 grid grid-cols-5 gap-2 bg-muted/50 p-2 rounded font-bold text-black text-sm">
+                              <div className="text-center">المبلغ</div>
+                              <div className="text-center">طريقة الدفع</div>
+                              <div className="text-center">تاريخ الدفع</div>
+                              <div className="text-center">الملاحظات</div>
+                              <div className="text-center">الإجراءات</div>
+                            </div>
+                            {/* Rows */}
+                            {receivable.payments.map((payment) => (
+                              <div key={payment.id} className="col-span-5 grid grid-cols-5 gap-2 p-2 hover:bg-muted/20 transition-colors">
+                                <div className="text-center font-bold text-green-600">
+                                  {formatCurrency(payment.amount)}
+                                </div>
+                                <div className="text-center text-black">
+                                  {payment.payment_method?.name_ar || 'غير محدد'}
+                                </div>
+                                <div className="text-center text-black">
+                                  {formatDate(payment.paid_at)}
+                                </div>
+                                <div className="text-center text-black">
+                                  {payment.note || '-'}
+                                </div>
+                                <div className="text-center flex gap-1 justify-center">
+                                  <Button
+                                    variant="outline-primary"
+                                    size="sm"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      openModal('paymentEdit', { payment, receivable });
+                                    }}
+                                    title="تعديل"
+                                  >
+                                    <Edit3 size={14} />
+                                  </Button>
+                                  <Button
+                                    variant="danger"
+                                    size="sm"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      openModal('paymentDelete', { payment });
+                                    }}
+                                    title="حذف"
+                                  >
+                                    <Trash2 size={14} />
+                                  </Button>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
                         </div>
                       </div>
-                    </td>
-                  </tr>
+                    </TableCell>
+                  </TableRow>
                 )}
               </React.Fragment>
             );
           })}
-        </tbody>
-        <tfoot className={filterType === 'paid' ? 'table-success' : 'table-danger'}>
-          <tr className="fw-bold">
-            <td colSpan={4} className="text-start">الإجمالي</td>
-            <td className="text-center text-danger">
+        </TableBody>
+        <TableHeader>
+          <TableRow style={{ backgroundColor: filterType === 'paid' ? '#22c55e' : '#dc2626', color: 'white' }}>
+            <TableCell colSpan={4} className="text-right text-white font-bold">الإجمالي</TableCell>
+            <TableCell className="text-center text-white font-bold">
               {formatCurrency(totals.totalDebit)}
-            </td>
-            <td className="text-center text-success">
+            </TableCell>
+            <TableCell className="text-center text-white font-bold">
               {formatCurrency(totals.totalCredit)}
-            </td>
-            <td className="text-center text-primary">
+            </TableCell>
+            <TableCell className="text-center text-white font-bold">
               {formatCurrency(totals.totalNet)}
-            </td>
-            <td colSpan={2}></td>
-          </tr>
-        </tfoot>
-      </table>
+            </TableCell>
+            <TableCell colSpan={2}></TableCell>
+          </TableRow>
+        </TableHeader>
+      </Table>
     </div>
   );
 };

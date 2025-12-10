@@ -65,45 +65,37 @@ const EmployeeTasksPage = () => {
   };
 
   return (
-    <div className="container-fluid p-3">
+    <div className="w-full p-3">
       {/* Page Header with Filters in Same Row */}
-      <div className="row mb-4">
-        <div className="col-md-4">
-          <div>
-            <h1 className="h3 mb-1">مهامي</h1>
-          </div>
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+        <div>
+          <h1 className="text-xl font-bold mb-1 text-black">مهامي</h1>
         </div>
-        <div className="col-md-4">
-          <div className="input-group input-group-sm">
-            <span className="input-group-text bg-light border-end-0">
-              <Search size={16} className="text-muted" />
+        <div>
+          <div className="flex items-center border border-border rounded-md overflow-hidden">
+            <span className="px-3 py-2 bg-muted border-r border-border">
+              <Search size={16} className="text-black" />
             </span>
             <input
               type="text"
-              className="form-control border-start-0"
+              className="flex-1 px-3 py-2 text-sm border-0 focus:outline-none focus:ring-0"
               placeholder="البحث في المهام..."
               value={searchTerm}
               onChange={handleSearchChange}
-              style={{ 
-                backgroundColor: 'transparent',
-                fontSize: 'var(--font-size-sm)'
-              }}
+              style={{ backgroundColor: 'transparent' }}
             />
           </div>
         </div>
-        <div className="col-md-4">
-          <div className="input-group input-group-sm">
-            <span className="input-group-text bg-light border-end-0">
-              <Filter size={16} className="text-muted" />
+        <div>
+          <div className="flex items-center border border-border rounded-md overflow-hidden">
+            <span className="px-3 py-2 bg-muted border-r border-border">
+              <Filter size={16} className="text-black" />
             </span>
             <select
-              className="form-select border-start-0"
+              className="flex-1 px-3 py-2 text-sm border-0 focus:outline-none focus:ring-0"
               value={statusFilter}
               onChange={handleStatusFilterChange}
-              style={{ 
-                backgroundColor: 'transparent',
-                fontSize: 'var(--font-size-sm)'
-              }}
+              style={{ backgroundColor: 'transparent' }}
             >
               <option value="">جميع الحالات</option>
               <option value="New">جديد</option>
@@ -118,16 +110,14 @@ const EmployeeTasksPage = () => {
       </div>
 
       {/* Tasks Table */}
-      <div className="row">
-        <div className="col-12">
-          <EmployeeOwnTasksTable
-            searchTerm={searchTerm}
-            statusFilter={statusFilter}
-            highlightTaskId={highlightTaskId || undefined}
-            getTypeRowStyle={getTypeRowStyle}
-            getStatusBadgeStyle={getStatusBadgeStyle}
-          />
-        </div>
+      <div>
+        <EmployeeOwnTasksTable
+          searchTerm={searchTerm}
+          statusFilter={statusFilter}
+          highlightTaskId={highlightTaskId || undefined}
+          getTypeRowStyle={getTypeRowStyle}
+          getStatusBadgeStyle={getStatusBadgeStyle}
+        />
       </div>
     </div>
   );

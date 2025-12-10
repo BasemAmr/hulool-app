@@ -1,21 +1,49 @@
 import React from 'react';
-import { ChevronDown, Check, X } from 'lucide-react';
-import { 
-  useGetNotifications, 
-  useMarkNotificationAsRead, 
+import { Check, CheckCheck, X, Inbox } from 'lucide-react';
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '../ui/tabs';
+import {
+  useGetGroupedNotifications,
+  useMarkNotificationAsRead,
+  useMarkGroupAsRead,
   useMarkAllNotificationsAsRead,
-  type Notification 
+  type NotificationGroup,
+  type GroupedNotification,
 } from '../../queries/notificationQueries';
 import { useToast } from '../../hooks/useToast';
 
 interface NotificationDropdownProps {
-  onNotificationClick: (taskId: number, eventId?: number | null) => void;
+  onNotificationClick: (entityId: number, entityType?: string) => void;
   onClose: () => void;
 }
 
+// Tab configuration with icons
+const TAB_CONFIG: { key: NotificationGroup; icon?: string }[] = [
+  { key: 'task_submissions' },
+  { key: 'messages' },
+  { key: 'task_approvals' },
+  { key: 'task_rejections' },
+  { key: 'assignments' },
+];
+
+// Time ago helper - database stores timestamps in UTC
+const getTimeAgo = (dateString: string): string => {
+  const now = new Date();
+  // Parse as UTC by replacing space with T and adding Z suffix
+  const utcDateString = dateString.replace(' ', 'T') + 'Z';
+  const created = new Date(utcDateString);
+  const diffInMinutes = Math.floor((now.getTime() - created.getTime()) / (1000 * 60));
+
+  if (diffInMinutes < 1) return 'الآن';
+  if (diffInMinutes < 60) return `${diffInMinutes} د`;
+  const diffInHours = Math.floor(diffInMinutes / 60);
+  if (diffInHours < 24) return `${diffInHours} س`;
+  const diffInDays = Math.floor(diffInHours / 24);
+  return `${diffInDays} ي`;
+};
+
 interface NotificationItemProps {
-  notification: Notification;
-  onNotificationClick: (taskId: number, eventId?: number | null) => void;
+  notification: GroupedNotification;
+  onNotificationClick: (entityId: number, entityType?: string) => void;
   onMarkAsRead: (id: number) => void;
   isMarkingAsRead: boolean;
 }
@@ -24,13 +52,13 @@ const NotificationItem: React.FC<NotificationItemProps> = ({
   notification,
   onNotificationClick,
   onMarkAsRead,
-  isMarkingAsRead
+  isMarkingAsRead,
 }) => {
   const handleClick = () => {
     if (!notification.is_read) {
       onMarkAsRead(notification.id);
     }
-    onNotificationClick(notification.task_id, notification.event_id);
+    onNotificationClick(notification.related_entity_id, notification.related_entity_type);
   };
 
   const handleMarkAsReadOnly = (e: React.MouseEvent) => {
@@ -38,282 +66,192 @@ const NotificationItem: React.FC<NotificationItemProps> = ({
     onMarkAsRead(notification.id);
   };
 
-  // Simple time ago calculation
-  const timeAgo = (() => {
-    const now = new Date();
-    const created = new Date(notification.created_at);
-    const diffInMinutes = Math.floor((now.getTime() - created.getTime()) / (1000 * 60));
-    
-    if (diffInMinutes < 1) return 'الآن';
-    if (diffInMinutes < 60) return `قبل ${diffInMinutes} دقيقة`;
-    
-    const diffInHours = Math.floor(diffInMinutes / 60);
-    if (diffInHours < 24) return `قبل ${diffInHours} ساعة`;
-    
-    const diffInDays = Math.floor(diffInHours / 24);
-    return `قبل ${diffInDays} يوم`;
-  })();
-
   return (
     <div
-      className={`position-relative px-3 py-3 border-bottom cursor-pointer notification-item ${
-        !notification.is_read ? 'bg-light unread' : 'bg-white'
+      dir="rtl"
+      className={`relative flex items-start gap-3 px-3 py-2.5 border-b border-border/30 cursor-pointer transition-colors ${
+        !notification.is_read ? 'bg-primary/5' : 'bg-transparent hover:bg-muted/50'
       }`}
-      style={{
-        transition: 'all 0.2s ease-in-out',
-        cursor: 'pointer'
-      }}
       onClick={handleClick}
-      onMouseEnter={(e) => {
-        e.currentTarget.style.backgroundColor = '#f8f9fa';
-      }}
-      onMouseLeave={(e) => {
-        e.currentTarget.style.backgroundColor = !notification.is_read ? '#f8f9fa' : '#ffffff';
-      }}
     >
       {/* Unread indicator */}
       {!notification.is_read && (
-        <div 
-          className="position-absolute bg-primary rounded-circle"
-          style={{
-            top: '12px',
-            right: '12px',
-            width: '8px',
-            height: '8px'
-          }}
-        />
+        <span className="absolute top-3 right-2 w-1.5 h-1.5 rounded-full bg-primary" />
       )}
+
+      <div className="flex-1 min-w-0 pr-2">
+        {/* Message - main content */}
+        <p className="text-sm text-foreground leading-relaxed line-clamp-2 text-right">
+          {notification.message}
+        </p>
+
+        {/* Time */}
+        <span className="text-xs text-muted-foreground mt-1 block text-right">
+          {getTimeAgo(notification.created_at)}
+        </span>
+      </div>
 
       {/* Mark as read button */}
       {!notification.is_read && (
         <button
           onClick={handleMarkAsReadOnly}
           disabled={isMarkingAsRead}
-          className="btn btn-sm btn-outline-light position-absolute p-1 border-0"
-          style={{
-            top: '8px',
-            left: '8px',
-            width: '24px',
-            height: '24px',
-            transition: 'all 0.2s ease'
-          }}
+          className="shrink-0 p-1 rounded hover:bg-muted transition-colors"
           title="وضع علامة كمقروء"
         >
           {isMarkingAsRead ? (
-            <div 
-              className="spinner-border text-primary"
-              style={{ width: '12px', height: '12px' }}
-              role="status"
-            >
-              <span className="visually-hidden">Loading...</span>
-            </div>
+            <div className="w-3 h-3 border-2 border-primary border-t-transparent rounded-full animate-spin" />
           ) : (
-            <Check size={12} className="text-muted" />
+            <Check size={12} className="text-muted-foreground" />
           )}
         </button>
       )}
-
-      <div className="pe-4 ps-5">
-        {/* Notification content */}
-        <p className="small text-dark mb-1 lh-sm">
-          {notification.content}
-        </p>
-
-        {/* Task and client info */}
-        <div className="d-flex align-items-center gap-2 small text-muted mb-1">
-          <span className="fw-medium">{notification.task_name}</span>
-          {notification.client_name && (
-            <>
-              <span>•</span>
-              <span>{notification.client_name}</span>
-            </>
-          )}
-        </div>
-
-        {/* Timestamp */}
-        <div className="small text-muted">
-          {timeAgo}
-        </div>
-      </div>
     </div>
   );
 };
 
 const NotificationDropdown: React.FC<NotificationDropdownProps> = ({
-  onNotificationClick
+  onNotificationClick,
 }) => {
-  const { success, error: showError } = useToast();
-  
-  const {
-    data,
-    fetchNextPage,
-    hasNextPage,
-    isFetchingNextPage,
-    isLoading,
-    error,
-  } = useGetNotifications();
-
+  const { error: showError } = useToast();
+  const { data, isLoading, error } = useGetGroupedNotifications();
   const markAsReadMutation = useMarkNotificationAsRead();
-  const markAllAsReadMutation = useMarkAllNotificationsAsRead();
-
-  // Flatten all pages into a single notifications array
-  const notifications = data?.pages.flatMap(page => page.notifications) || [];
-  const hasUnreadNotifications = notifications.some(n => !n.is_read);
+  const markGroupMutation = useMarkGroupAsRead();
+  const markAllMutation = useMarkAllNotificationsAsRead();
 
   const handleMarkAsRead = (notificationId: number) => {
     markAsReadMutation.mutate(notificationId);
   };
 
+  const handleMarkGroupAsRead = (group: NotificationGroup) => {
+    markGroupMutation.mutate(group);
+  };
+
   const handleMarkAllAsRead = () => {
-    markAllAsReadMutation.mutate();
+    markAllMutation.mutate();
   };
 
-  // Track toast shown state to prevent spam
-  const toastShownRef = React.useRef<{ markAll: boolean }>({ markAll: false });
-
-  // Show success/error toasts for mutations
+  // Error toast
   React.useEffect(() => {
-    if (markAsReadMutation.isError) {
-      showError('فشل في وضع علامة للإشعار كمقروء');
+    if (markAsReadMutation.isError || markGroupMutation.isError || markAllMutation.isError) {
+      showError('حدث خطأ أثناء تحديث الإشعارات');
     }
-  }, [markAsReadMutation.isError, showError]);
-
-  React.useEffect(() => {
-    if (markAllAsReadMutation.isSuccess && !toastShownRef.current.markAll) {
-      success('تم وضع علامة لجميع الإشعارات كمقروءة');
-      toastShownRef.current.markAll = true;
-    } else if (markAllAsReadMutation.isError && !toastShownRef.current.markAll) {
-      showError('فشل في وضع علامة لجميع الإشعارات كمقروءة');
-      toastShownRef.current.markAll = true;
-    }
-    
-    // Reset the flag when mutation is idle for next time
-    if (markAllAsReadMutation.isIdle) {
-      toastShownRef.current.markAll = false;
-    }
-  }, [markAllAsReadMutation.isSuccess, markAllAsReadMutation.isError, markAllAsReadMutation.isIdle, success, showError]);
-
-  const loadMore = () => {
-    if (hasNextPage && !isFetchingNextPage) {
-      fetchNextPage();
-    }
-  };
-
+  }, [markAsReadMutation.isError, markGroupMutation.isError, markAllMutation.isError, showError]);
 
   if (isLoading) {
     return (
-      <div className="p-4">
-        <div className="d-flex align-items-center justify-content-center py-5">
-          <div 
-            className="spinner-border text-primary me-2"
-            style={{ width: '20px', height: '20px' }}
-            role="status"
-          >
-            <span className="visually-hidden">Loading...</span>
-          </div>
-          <span className="text-muted">جاري التحميل...</span>
-        </div>
+      <div className="flex items-center justify-center py-8">
+        <div className="w-5 h-5 border-2 border-primary border-t-transparent rounded-full animate-spin" />
       </div>
     );
   }
 
-  if (error && !isLoading) {
+  if (error) {
     return (
-      <div className="p-4">
-        <div className="d-flex align-items-center justify-content-center py-5 text-danger">
-          <X size={18} className="me-2" />
-          <span>فشل في تحميل الإشعارات</span>
-        </div>
+      <div className="flex flex-col items-center justify-center py-8 text-destructive gap-2">
+        <X size={20} />
+        <span className="text-sm">فشل في تحميل الإشعارات</span>
       </div>
     );
   }
+
+  if (!data) return null;
+
+  const { groups, total_unread, group_labels } = data;
+
+  // Find first tab with notifications
+  const firstActiveTab = TAB_CONFIG.find(tab => groups[tab.key]?.total_count > 0)?.key || 'task_submissions';
 
   return (
-    <div className="d-flex flex-column h-100">
+    <div dir="rtl" className="flex flex-col w-full">
       {/* Header */}
-      <div className="d-flex align-items-center justify-content-between p-3 border-bottom bg-light">
-        <h6 className="mb-0 fw-semibold text-dark">
-          الإشعارات
-        </h6>
-        
-        {hasUnreadNotifications && (
+      <div className="flex items-center justify-between px-3 py-2 border-b border-border/50">
+        <h3 className="text-sm font-semibold text-foreground">الإشعارات</h3>
+        {total_unread > 0 && (
           <button
             onClick={handleMarkAllAsRead}
-            disabled={markAllAsReadMutation.isPending}
-            className="btn btn-link btn-sm text-primary p-0 text-decoration-none"
-            style={{ fontSize: '12px' }}
+            disabled={markAllMutation.isPending}
+            className="flex items-center gap-1 text-xs text-primary hover:text-primary/80 transition-colors disabled:opacity-50"
           >
-            {markAllAsReadMutation.isPending ? (
-              <div className="d-flex align-items-center gap-2">
-                <div 
-                  className="spinner-border text-primary"
-                  style={{ width: '12px', height: '12px' }}
-                  role="status"
-                >
-                  <span className="visually-hidden">Loading...</span>
-                </div>
-                <span>جاري الحفظ...</span>
-              </div>
+            {markAllMutation.isPending ? (
+              <div className="w-3 h-3 border-2 border-primary border-t-transparent rounded-full animate-spin" />
             ) : (
-              'وضع علامة للكل كمقروء'
+              <CheckCheck size={14} />
             )}
+            <span>قراءة الكل</span>
           </button>
         )}
       </div>
 
-      {/* Notifications list */}
-      {notifications.length === 0 ? (
-        <div className="d-flex align-items-center justify-content-center py-5 text-muted">
-          <span>لا توجد إشعارات</span>
-        </div>
-      ) : (
-        <div className="flex-grow-1 overflow-hidden">
-          <div 
-            className="overflow-auto"
-            style={{ maxHeight: '350px' }}
-          >
-            {notifications.map((notification) => (
-              <NotificationItem
-                key={notification.id}
-                notification={notification}
-                onNotificationClick={onNotificationClick}
-                onMarkAsRead={handleMarkAsRead}
-                isMarkingAsRead={markAsReadMutation.isPending}
-              />
-            ))}
-          </div>
-          
-          {/* Load more button */}
-          {hasNextPage && (
-            <div className="p-3 border-top bg-light">
-              <button
-                onClick={loadMore}
-                disabled={isFetchingNextPage}
-                className="btn btn-outline-primary btn-sm w-100 d-flex align-items-center justify-content-center gap-2"
-                style={{ transition: 'all 0.2s ease' }}
+      {/* Tabs */}
+      <Tabs defaultValue={firstActiveTab} className="w-full">
+        <TabsList className="w-full h-auto p-1 bg-muted/50 rounded-none border-b border-border/30 flex justify-start gap-0.5 overflow-x-auto">
+          {TAB_CONFIG.map(({ key }) => {
+            const groupData = groups[key];
+            const unreadCount = groupData?.unread_count || 0;
+            const label = group_labels[key];
+
+            return (
+              <TabsTrigger
+                key={key}
+                value={key}
+                className="relative text-xs px-2 py-1.5 rounded-md data-[state=active]:bg-background data-[state=active]:shadow-sm whitespace-nowrap"
               >
-                {isFetchingNextPage ? (
-                  <>
-                    <div 
-                      className="spinner-border text-primary"
-                      style={{ width: '12px', height: '12px' }}
-                      role="status"
-                    >
-                      <span className="visually-hidden">Loading...</span>
-                    </div>
-                    <span>جاري التحميل...</span>
-                  </>
-                ) : (
-                  <>
-                    <ChevronDown size={14} />
-                    <span>تحميل المزيد</span>
-                  </>
+                {label}
+                {unreadCount > 0 && (
+                  <span className="mr-1 px-1 py-0.5 text-[10px] font-medium bg-primary text-primary-foreground rounded-full min-w-[16px] text-center">
+                    {unreadCount}
+                  </span>
                 )}
-              </button>
-            </div>
-          )}
-        </div>
-      )}
+              </TabsTrigger>
+            );
+          })}
+        </TabsList>
+
+        {TAB_CONFIG.map(({ key }) => {
+          const groupData = groups[key];
+          const notifications = groupData?.notifications || [];
+          const unreadCount = groupData?.unread_count || 0;
+
+          return (
+            <TabsContent key={key} value={key} className="mt-0">
+              {/* Group mark as read button */}
+              {unreadCount > 0 && (
+                <div className="px-3 py-1.5 border-b border-border/30 bg-muted/30">
+                  <button
+                    onClick={() => handleMarkGroupAsRead(key)}
+                    disabled={markGroupMutation.isPending}
+                    className="text-xs text-muted-foreground hover:text-foreground transition-colors disabled:opacity-50 flex items-center gap-1"
+                  >
+                    <Check size={12} />
+                    <span>قراءة الكل في هذه المجموعة</span>
+                  </button>
+                </div>
+              )}
+
+              {/* Notifications list */}
+              <div className="max-h-[280px] overflow-y-auto">
+                {notifications.length === 0 ? (
+                  <div className="flex flex-col items-center justify-center py-8 text-muted-foreground gap-2">
+                    <Inbox size={24} />
+                    <span className="text-sm">لا توجد إشعارات</span>
+                  </div>
+                ) : (
+                  notifications.map((notification) => (
+                    <NotificationItem
+                      key={notification.id}
+                      notification={notification}
+                      onNotificationClick={onNotificationClick}
+                      onMarkAsRead={handleMarkAsRead}
+                      isMarkingAsRead={markAsReadMutation.isPending}
+                    />
+                  ))
+                )}
+              </div>
+            </TabsContent>
+          );
+        })}
+      </Tabs>
     </div>
   );
 };

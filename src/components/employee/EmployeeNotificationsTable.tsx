@@ -2,7 +2,7 @@ import React from 'react';
 import { formatDate } from '../../utils/dateUtils';
 import { useStickyHeader } from '../../hooks/useStickyHeader';
 import { Bell, MessageSquare, CheckCircle, UserCheck, UserX, RotateCcw, DollarSign } from 'lucide-react';
-import { Badge } from 'react-bootstrap';
+import { Badge } from '../ui/badge';
 import { useNavigate } from 'react-router-dom';
 import { useMarkNotificationAsRead } from '../../queries/employeeNotificationQueries';
 import { useDrawerStore } from '../../stores/drawerStore';
@@ -24,7 +24,7 @@ const EmployeeNotificationsTable: React.FC<EmployeeNotificationsTableProps> = ({
 
   if (isLoading) {
     return (
-      <div className="d-flex justify-content-center align-items-center p-5">
+      <div className="flex justify-center items-center p-5">
         <div className="spinner-border text-primary" role="status">
           <span className="visually-hidden">جاري التحميل...</span>
         </div>
@@ -34,7 +34,7 @@ const EmployeeNotificationsTable: React.FC<EmployeeNotificationsTableProps> = ({
 
   if (!notifications.length) {
     return (
-      <div className="text-center p-5 text-muted">
+      <div className="text-center p-5 text-muted-foreground">
         <Bell size={48} className="mb-3 opacity-50" />
         <p className="mb-0">لا توجد إشعارات</p>
       </div>
@@ -63,19 +63,19 @@ const EmployeeNotificationsTable: React.FC<EmployeeNotificationsTableProps> = ({
   const getEventTypeBadge = (eventType: string) => {
     switch (eventType) {
       case 'TaskAssigned':
-        return <Badge bg="primary">تكليف مهمة</Badge>;
+        return <Badge variant="default">تكليف مهمة</Badge>;
       case 'TaskUnassigned':
-        return <Badge bg="danger">إلغاء تكليف</Badge>;
+        return <Badge variant="destructive">إلغاء تكليف</Badge>;
       case 'TaskReassigned':
-        return <Badge bg="warning">إعادة تكليف</Badge>;
+        return <Badge variant="secondary">إعادة تكليف</Badge>;
       case 'TaskApproved':
-        return <Badge bg="success">موافقة على مهمة</Badge>;
+        return <Badge variant="default">موافقة على مهمة</Badge>;
       case 'NewMessage':
-        return <Badge bg="info">رسالة جديدة</Badge>;
+        return <Badge variant="secondary">رسالة جديدة</Badge>;
       case 'CommissionEarned':
-        return <Badge bg="success">عمولة مكتسبة</Badge>;
+        return <Badge variant="default">عمولة مكتسبة</Badge>;
       default:
-        return <Badge bg="secondary">{eventType}</Badge>;
+        return <Badge variant="outline">{eventType}</Badge>;
     }
   };
 
@@ -125,83 +125,80 @@ const EmployeeNotificationsTable: React.FC<EmployeeNotificationsTableProps> = ({
   };
 
   return (
-    <div className="table-responsive" dir="rtl">
+    <div className="w-full overflow-x-auto" dir="rtl">
       {/* Sentinel element for sticky header detection */}
       <div ref={sentinelRef}></div>
       
-      <table className="table table-hover align-middle">
-        <thead className={`table-info ${isSticky ? 'is-sticky' : ''}`}>
-          <tr className="fw-bold">
-            <th scope="col" className="text-center" style={{ width: '5%', color: '#000' }}>النوع</th>
-            <th scope="col" className="text-center" style={{ width: '50%', color: '#000' }}>المحتوى</th>
-            <th scope="col" className="text-center" style={{ width: '15%', color: '#000' }}>اسم المهمة</th>
-            <th scope="col" className="text-center" style={{ width: '15%', color: '#000' }}>العميل</th>
-            <th scope="col" className="text-center" style={{ width: '10%', color: '#000' }}>التاريخ</th>
-            <th scope="col" className="text-center" style={{ width: '5%', color: '#000' }}>الحالة</th>
+      <table className="w-full">
+        <thead className={`bg-blue-500 text-white ${isSticky ? 'is-sticky' : ''}`}>
+          <tr className="font-bold">
+            <th scope="col" className="text-center py-3 px-2" style={{ width: '5%' }}>النوع</th>
+            <th scope="col" className="text-center py-3 px-2" style={{ width: '50%' }}>المحتوى</th>
+            <th scope="col" className="text-center py-3 px-2" style={{ width: '15%' }}>اسم المهمة</th>
+            <th scope="col" className="text-center py-3 px-2" style={{ width: '15%' }}>العميل</th>
+            <th scope="col" className="text-center py-3 px-2" style={{ width: '10%' }}>التاريخ</th>
+            <th scope="col" className="text-center py-3 px-2" style={{ width: '5%' }}>الحالة</th>
           </tr>
         </thead>
         <tbody>
           {notifications.map((notification) => (
             <tr
               key={notification.id}
-              className={`${!notification.is_read ? 'table-warning' : ''} cursor-pointer`}
-              style={{
-                backgroundColor: !notification.is_read ? 'rgba(255, 193, 7, 0.1)' : 'transparent',
-                cursor: 'pointer'
-              }}
+              className={`${!notification.is_read ? 'bg-yellow-100/50' : ''} cursor-pointer hover:bg-muted/50 transition-colors`}
+              style={{ cursor: 'pointer' }}
               onClick={() => handleNotificationClick(notification)}
             >
-              <td className="text-center">
-                <div className="d-flex flex-column align-items-center gap-1">
+              <td className="text-center py-3 px-2">
+                <div className="flex flex-col items-center gap-1">
                   {getNotificationIcon(notification.event_type)}
                   {getEventTypeBadge(notification.event_type)}
                 </div>
               </td>
-              <td>
-                <div className="d-flex align-items-start gap-2">
-                  <div className="flex-grow-1">
-                    <p className="mb-1 fw-medium" style={{ lineHeight: '1.4' }}>
+              <td className="py-3 px-2">
+                <div className="flex items-start gap-2">
+                  <div className="flex-1">
+                    <p className="mb-1 font-medium" style={{ lineHeight: '1.4' }}>
                       {notification.content}
                     </p>
                     {!notification.is_read && (
-                      <div className="d-flex align-items-center gap-1">
+                      <div className="flex items-center gap-1">
                         <div 
-                          className="bg-primary rounded-circle" 
+                          className="bg-primary rounded-full" 
                           style={{ width: '6px', height: '6px' }}
                         ></div>
-                        <small className="text-primary fw-bold">جديد</small>
+                        <small className="text-primary font-bold">جديد</small>
                       </div>
                     )}
                   </div>
                 </div>
               </td>
-              <td className="text-center">
-                <span className="fw-medium">
+              <td className="text-center py-3 px-2">
+                <span className="font-medium">
                   {notification.task_name || '—'}
                 </span>
               </td>
-              <td className="text-center">
-                <span className="text-muted">
+              <td className="text-center py-3 px-2">
+                <span className="text-muted-foreground">
                   {notification.client_name || '—'}
                 </span>
               </td>
-              <td className="text-center">
-                <div className="d-flex flex-column align-items-center">
-                  <span className="text-muted small">
+              <td className="text-center py-3 px-2">
+                <div className="flex flex-col items-center">
+                  <span className="text-muted-foreground text-sm">
                     {formatDate(notification.created_at)}
                   </span>
                   {notification.read_at && (
-                    <span className="text-success small">
+                    <span className="text-green-600 text-sm">
                       قُرئ: {formatDate(notification.read_at)}
                     </span>
                   )}
                 </div>
               </td>
-              <td className="text-center">
+              <td className="text-center py-3 px-2">
                 {notification.is_read ? (
-                  <Badge bg="success" className="small">مقروء</Badge>
+                  <Badge variant="default" className="text-sm">مقروء</Badge>
                 ) : (
-                  <Badge bg="warning" className="small">غير مقروء</Badge>
+                  <Badge variant="secondary" className="text-sm">غير مقروء</Badge>
                 )}
               </td>
             </tr>

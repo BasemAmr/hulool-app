@@ -163,6 +163,10 @@ export const useAssignTask = () => {
       
       // Also invalidate recent tasks in case they're displayed
       queryClient.invalidateQueries({ queryKey: ['tasks', 'recent'] });
+      
+      // Invalidate dashboard queries since task assignment affects active tasks
+      queryClient.invalidateQueries({ queryKey: ['dashboard', 'clientsWithActiveTasks'] });
+      queryClient.invalidateQueries({ queryKey: ['dashboard', 'employee', 'clientsWithActiveTasks'] });
     },
   });
 };
@@ -291,12 +295,13 @@ export const useGetEmployeeReceivablesSummary = (
   params?: { page?: number; per_page?: number }
 ) => {
   return useQuery({
-    queryKey: ['employees', employeeId, 'receivables', params],
+    queryKey: ['employees', employeeId, 'client-balances', params],
     queryFn: async (): Promise<ApiResponse<EmployeeReceivablesData>> => {
       // We need to get employee details first to get the user_id
       const employeeResponse = await apiClient.get<ApiResponse<Employee>>(`/employees/${employeeId}`);
       const employee = employeeResponse.data.data;
-      const response = await apiClient.get<ApiResponse<EmployeeReceivablesData>>(`/receivables/clients-summary`, { 
+      // Use new accounts endpoint instead of deprecated receivables
+      const response = await apiClient.get<ApiResponse<EmployeeReceivablesData>>(`/accounts/clients/balances`, { 
         params: { 
           employee_user_id: employee.user_id,
           ...params 
@@ -314,12 +319,13 @@ export const useGetEmployeeReceivablesSummary = (
  */
 export const useGetEmployeeReceivablesTotals = (employeeId: number) => {
   return useQuery({
-    queryKey: ['employees', employeeId, 'receivables-totals'],
+    queryKey: ['employees', employeeId, 'client-balance-totals'],
     queryFn: async () => {
       // We need to get employee details first to get the user_id
       const employeeResponse = await apiClient.get<ApiResponse<Employee>>(`/employees/${employeeId}`);
       const employee = employeeResponse.data.data;
-      const response = await apiClient.get('/receivables/clients-summary/totals', { 
+      // Use new accounts endpoint instead of deprecated receivables
+      const response = await apiClient.get('/accounts/clients/totals', { 
         params: { 
           employee_user_id: employee.user_id
         }
@@ -381,27 +387,63 @@ export const useAddEmployeeBorrow = () => {
   });
 };
 
+// Types for employee financial summary
+export interface EmployeeFinancialSummary {
+  total_earned: number;
+  total_expenses: number;
+  total_paid_out?: number;
+  balance_due: number;
+  total_transactions: number;
+  last_payout_date: string | null;
+}
+
+export interface EmployeeTransactionData {
+  id: string;
+  transaction_name: string;
+  direction: 'CREDIT' | 'DEBIT';
+  amount: string | null;
+  related_task_id: string | null;
+  task_amount: string | null;
+  notes: string;
+  transaction_date: string;
+  task_name: string | null;
+  client_name: string | null;
+  balance?: string | null;
+  is_pending?: boolean;
+  source?: 'new_ledger' | 'legacy';
+}
+
+export interface EmployeeLedgerResponse {
+  success: boolean;
+  data: {
+    pending_commissions: EmployeeTransactionData[];
+    transactions: EmployeeTransactionData[];
+    summary?: EmployeeFinancialSummary;
+    source?: 'new_ledger' | 'legacy';
+  };
+  pagination?: {
+    total: number;
+    page: number;
+    per_page: number;
+    total_pages: number;
+  };
+}
+
 /**
- * Add manual credit to employee (admin adds credit to employee's account)
+ * Get employee ledger with transactions and summary
+ * Uses the admin endpoint to get full transaction history with summary
  */
-export const useAddEmployeeManualCredit = () => {
-  const queryClient = useQueryClient();
-  
-  return useMutation({
-    mutationFn: async ({ 
-      employeeUserId, 
-      creditData 
-    }: { 
-      employeeUserId: number;
-      creditData: { amount: number; reason?: string; notes?: string; }
-    }) => {
-      // The POST API endpoint expects user_id in the URL
-      const response = await apiClient.post(`/employees/${employeeUserId}/manual-credit`, creditData);
+export const useGetEmployeeLedger = (
+  employeeId: number,
+  params?: { page?: number; per_page?: number }
+) => {
+  return useQuery({
+    queryKey: ['employees', employeeId, 'ledger', params],
+    queryFn: async (): Promise<EmployeeLedgerResponse> => {
+      const response = await apiClient.get(`/employees/${employeeId}/payouts`, { params });
       return response.data;
     },
-    onSuccess: (_, { employeeUserId }) => {
-      // Invalidate employee transactions query
-      queryClient.invalidateQueries({ queryKey: ['employees', employeeUserId, 'transactions'] });
-    },
+    enabled: !!employeeId,
+    staleTime: 30 * 1000, // Keep fresh for 30 seconds
   });
 };

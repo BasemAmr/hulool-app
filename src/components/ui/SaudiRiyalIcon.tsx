@@ -24,7 +24,7 @@ const SaudiRiyalIcon: React.FC<SaudiRiyalIconProps> = ({
     }).format(amount) : null;
 
   return (
-    <span className="d-inline-flex align-items-center" style={{ color: 'black' }}>
+    <span className="inline-flex items-center" style={{ color: 'black' }}>
       {displayAmount ? (
         <span className="me-1">{displayAmount}</span>
       ) : null}

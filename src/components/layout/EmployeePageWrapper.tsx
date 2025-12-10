@@ -1,22 +1,19 @@
 import { Outlet, useLocation } from 'react-router-dom';
 import { useMemo } from 'react';
-import EmployeeSidebar from './EmployeeSidebar';
+import EmployeeNavbar from './EmployeeNavbar';
 import ModalManager from '../shared/ModalManager';
 import TaskFollowUpPanel from '../tasks/followup/TaskFollowUpPanel';
-import { useSidebarStore } from '../../stores/sidebarStore';
-import styles from './Layout.module.scss';
 
 /**
  * EmployeePageWrapper - Main layout wrapper for employee pages
  * 
  * Similar to PageWrapper but with employee-specific:
- * - Sidebar navigation
+ * - Navbar navigation (horizontal)
  * - Employee-focused modals
  * - Employee role context
  */
 const EmployeePageWrapper = () => {
   const location = useLocation();
-  const { isCollapsed } = useSidebarStore();
 
   // Determine page type for background styling (if needed)
   const pageType = useMemo(() => {
@@ -24,28 +21,31 @@ const EmployeePageWrapper = () => {
     if (path.includes('/employee/dashboard')) return 'employee-dashboard';
     if (path.includes('/employee/tasks')) return 'employee-tasks';
     if (path.includes('/employee/clients')) return 'employee-clients';
+    if (path.includes('/employee/receivables')) return 'employee-receivables';
     if (path.includes('/employee/financials')) return 'employee-financials';
     if (path.includes('/employee/notifications')) return 'employee-notifications';
     return 'employee-default';
   }, [location.pathname]);
 
   return (
-    <>
-      <div className={styles.appLayout} data-page-type={pageType}>
-        <EmployeeSidebar />
-        <main className={`${styles.mainContent}`}
-         style={{ 
-          marginRight: isCollapsed ? '0px' : '160px',
-          transition: 'margin-right 0.3s ease'
+    <div className="flex flex-col h-screen overflow-hidden bg-gray-50" data-page-type={pageType}>
+      <EmployeeNavbar />
+      <main
+        className="flex-1 overflow-y-auto h-full bg-gray-50"
+        style={{
+          scrollbarWidth: 'thin',
+          scrollbarColor: 'hsl(var(--muted-foreground)) hsl(var(--secondary))'
         }}
-        >
+      >
+        <div className="p-6 min-h-full" dir="rtl">
           <Outlet />
-        </main>
-      </div>
+        </div>
+      </main>
       <ModalManager />
       <TaskFollowUpPanel />
-    </>
+    </div>
   );
 };
 
 export default EmployeePageWrapper;
+

@@ -5,17 +5,17 @@ const ClientCreditBalance = ({ clientId }: { clientId: number }) => {
   const { data, isLoading } = useGetClientCredits(clientId);
 
   if (isLoading) {
-    return <div className="text-muted small">Loading credit...</div>;
+    return <div className="text-black text-sm">Loading credit...</div>;
   }
 
   const balance = data?.balance || 0;
 
   return (
-    <div className="card bg-light border-warning mb-3">
-      <div className="card-body text-center">
-        <h6 className="card-title text-warning">الرصيد المتاح</h6>
-        <p className="card-text fs-4 fw-bold text-dark d-flex align-items-center justify-content-center">
-          <SaudiRiyalIcon size={24} className="me-2" />
+    <div className="rounded-lg bg-yellow-50 border-2 border-yellow-400 shadow-sm mb-3">
+      <div className="text-center p-4">
+        <h6 className="text-yellow-600 font-bold text-lg mb-2">الرصيد المتاح</h6>
+        <p className="text-black text-3xl font-bold flex items-center justify-center">
+          <SaudiRiyalIcon size={28} className="me-2" />
           {balance.toLocaleString('ar-SA', { style: 'currency', currency: 'SAR' })}
         </p>
       </div>

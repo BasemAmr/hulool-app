@@ -72,14 +72,12 @@ const ClientTaskSummaryCards = ({ tasks, isLoading, clientId }: ClientTaskSummar
 
     if (isLoading) {
         return (
-            <div className="row g-3 mb-4">
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
                 {[1, 2, 3, 4].map(i => (
-                    <div className="col-md-3" key={i}>
-                        <div className="card card-body border-0 shadow-sm p-4 text-center">
-                            <div className="skeleton skeleton-title mx-auto mb-3" style={{ width: '60px', height: '60px', borderRadius: '50%' }}></div>
-                            <div className="skeleton skeleton-title mx-auto" style={{ width: '70px', height: '36px' }}></div>
-                            <div className="skeleton skeleton-text mx-auto" style={{ width: '100px' }}></div>
-                        </div>
+                    <div key={i} className="rounded-lg border border-border bg-card shadow-sm p-6 text-center">
+                        <div className="w-16 h-16 rounded-full bg-muted/30 animate-pulse mx-auto mb-3"></div>
+                        <div className="h-9 w-20 bg-muted/30 animate-pulse rounded mx-auto mb-2"></div>
+                        <div className="h-4 w-24 bg-muted/30 animate-pulse rounded mx-auto"></div>
                     </div>
                 ))}
             </div>
@@ -87,21 +85,19 @@ const ClientTaskSummaryCards = ({ tasks, isLoading, clientId }: ClientTaskSummar
     }
 
     return (
-        <div className="row g-3 mb-4">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
             {cardData.map(card => (
-                <div className="col-md-3" key={card.label}>
-                    <Link to={card.to} className="text-decoration-none">
-                        <div className={`card border-2 shadow-lg hover-shadow h-100 ${card.className}`} style={{boxShadow: '0 4px 15px rgba(212, 175, 55, 0.2)'}}>
-                            <div className="card-body text-center p-4">
-                                <div className="stats-icon mb-3">
-                                    <card.icon className={card.iconClass} size={40} strokeWidth={1.5} />
-                                </div>
-                                <h2 className={`stats-number mb-1 ${card.textClass}`}>{card.value}</h2>
-                                <p className="stats-label text-muted mb-0">{card.label}</p>
+                <Link to={card.to} key={card.label} className="no-underline hover:-translate-y-1 transition-transform duration-200">
+                    <div className={`rounded-lg border-2 shadow-lg h-full ${card.className}`} style={{boxShadow: '0 4px 15px rgba(59, 130, 246, 0.15)'}}>
+                        <div className="text-center p-6">
+                            <div className="mb-3">
+                                <card.icon className={card.iconClass} size={48} strokeWidth={1.5} />
                             </div>
+                            <h2 className={`text-4xl font-bold mb-1 ${card.textClass}`}>{card.value}</h2>
+                            <p className="text-black mb-0">{card.label}</p>
                         </div>
-                    </Link>
-                </div>
+                    </div>
+                </Link>
             ))}
         </div>
     );

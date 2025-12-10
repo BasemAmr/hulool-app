@@ -133,74 +133,70 @@ const SubmitForReviewModal = () => {
       onClose={closeModal}
       title={t('tasks.submitForReview', { taskName: task.task_name || t(`type.${task.type}`) })}
     >
-      <div className="alert alert-info py-2">
-        <div className="d-flex justify-content-between">
-          <span>المبلغ الإجمالي للمهمة:</span>
-          <span className="fw-bold">{task.amount.toLocaleString()} ريال</span>
+      <div className="rounded-lg border border-blue-600 bg-blue-50 p-3 flex flex-col gap-2">
+        <div className="flex justify-between items-start">
+          <span className="text-sm">المبلغ الإجمالي للمهمة:</span>
+          <span className="font-semibold text-sm">{task.amount.toLocaleString()} ريال</span>
         </div>
-        <div className="d-flex justify-content-between">
-          <span>المدفوع مقدماً:</span>
-          <span className="fw-bold">{(task.prepaid_amount || 0).toLocaleString()} ريال</span>
+        <div className="flex justify-between items-start">
+          <span className="text-sm">المدفوع مقدماً:</span>
+          <span className="font-semibold text-sm">{(task.prepaid_amount || 0).toLocaleString()} ريال</span>
         </div>
-        <hr className="my-1" />
-        <div className="d-flex justify-content-between fw-bold">
-          <span>المبلغ المتبقي:</span>
-          <span>{remainingAmount.toLocaleString()} ريال</span>
+        <div className="border-t border-blue-600 my-1 pt-2"></div>
+        <div className="flex justify-between items-start">
+          <span className="font-semibold text-sm">المبلغ المتبقي:</span>
+          <span className="font-semibold text-sm">{remainingAmount.toLocaleString()} ريال</span>
         </div>
       </div>
 
-      <div className="alert alert-warning py-2">
-        <h6 className="alert-heading">{t('tasks.submitForReviewModal.title')}</h6>
-        <p className="mb-2">{t('tasks.submitForReviewModal.taskWillBeSubmitted', { taskName: task.task_name || `#${task.id}` })}</p>
-        <p className="mb-0">{t('tasks.submitForReviewModal.askAboutPayment')}</p>
+      <div className="rounded-lg border border-yellow-600 bg-yellow-50 p-3 flex flex-col gap-2">
+        <h6 className="font-semibold text-yellow-800 text-sm">{t('tasks.submitForReviewModal.title')}</h6>
+        <p className="text-yellow-700 text-sm mb-2">{t('tasks.submitForReviewModal.taskWillBeSubmitted', { taskName: task.task_name || `#${task.id}` })}</p>
+        <p className="text-yellow-700 text-sm mb-0">{t('tasks.submitForReviewModal.askAboutPayment')}</p>
       </div>
 
-      <form onSubmit={handleSubmit(onSubmit)}>
-        <div className="mb-3">
-          <div className="form-check">
-            <Controller
-              name="is_paid"
-              control={control}
-              render={({ field }) => (
-                <input
-                  type="checkbox"
-                  className="form-check-input"
-                  id="is_paid"
-                  checked={field.value}
-                  onChange={(e) => {
-                    field.onChange(e.target.checked);
-                  }}
-                />
-              )}
-            />
-            <label className="form-check-label" htmlFor="is_paid">
-              {t('tasks.submitForReviewModal.paymentReceived')}
-            </label>
-          </div>
+      <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+        <div className="flex items-center gap-2">
+          <Controller
+            name="is_paid"
+            control={control}
+            render={({ field }) => (
+              <input
+                type="checkbox"
+                className="rounded cursor-pointer"
+                id="is_paid"
+                checked={field.value}
+                onChange={(e) => {
+                  field.onChange(e.target.checked);
+                }}
+              />
+            )}
+          />
+          <label className="cursor-pointer text-sm" htmlFor="is_paid">
+            {t('tasks.submitForReviewModal.paymentReceived')}
+          </label>
         </div>
 
         {watchIsPaid ? (
           // Payment fields
-          <div className="payment-section">
-            <div className="mb-3">
-              <div className="form-check">
-                <Controller
-                  name="is_full_payment"
-                  control={control}
-                  render={({ field }) => (
-                    <input
-                      type="checkbox"
-                      className="form-check-input"
-                      id="is_full_payment"
-                      checked={field.value}
-                      onChange={field.onChange}
-                    />
-                  )}
-                />
-                <label className="form-check-label" htmlFor="is_full_payment">
-                  {t('payments.fullPayment')}
-                </label>
-              </div>
+          <div className="space-y-4 pl-6 border-l-2 border-primary">
+            <div className="flex items-center gap-2">
+              <Controller
+                name="is_full_payment"
+                control={control}
+                render={({ field }) => (
+                  <input
+                    type="checkbox"
+                    className="rounded cursor-pointer"
+                    id="is_full_payment"
+                    checked={field.value}
+                    onChange={field.onChange}
+                  />
+                )}
+              />
+              <label className="cursor-pointer text-sm" htmlFor="is_full_payment">
+                {t('payments.fullPayment')}
+              </label>
             </div>
 
             <Input
@@ -221,8 +217,8 @@ const SubmitForReviewModal = () => {
               error={errors.payment_amount ? (errors.payment_amount.message || t('payments.amountRequired')) : undefined}
             />
 
-            <div className="mb-3">
-              <label className="form-label">{t('payments.methodLabel')}</label>
+            <div className="space-y-2">
+              <label className="font-semibold text-black text-sm block">{t('payments.methodLabel')}</label>
               <Controller
                 name="payment_method_id"
                 control={control}
@@ -230,7 +226,7 @@ const SubmitForReviewModal = () => {
                 render={({ field }) => (
                   <select 
                     {...field} 
-                    className={`form-select ${errors.payment_method_id ? 'is-invalid' : ''}`} 
+                    className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary ${errors.payment_method_id ? 'border-destructive bg-destructive/5' : 'border-border'}`} 
                     disabled={isLoadingMethods}
                   >
                     <option value="">{t('payments.selectMethod')}</option>
@@ -241,7 +237,7 @@ const SubmitForReviewModal = () => {
                 )}
               />
               {errors.payment_method_id && (
-                <div className="invalid-feedback d-block">{t('payments.methodRequired')}</div>
+                <div className="text-destructive text-sm">{t('payments.methodRequired')}</div>
               )}
             </div>
 
@@ -267,7 +263,7 @@ const SubmitForReviewModal = () => {
           />
         )}
 
-        <footer className="modal-footer">
+        <div className="flex justify-end gap-2 pt-4 border-t border-border">
           <Button 
             type="button" 
             variant="secondary" 
@@ -280,7 +276,7 @@ const SubmitForReviewModal = () => {
           >
             {watchIsPaid ? t('tasks.submitForReviewModal.submitWithPayment') : t('tasks.submitForReviewModal.submitWithoutPayment')}
           </Button>
-        </footer>
+        </div>
       </form>
     </BaseModal>
   );

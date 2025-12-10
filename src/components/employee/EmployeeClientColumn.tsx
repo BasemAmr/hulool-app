@@ -1,6 +1,6 @@
 // src/components/employee/EmployeeClientColumn.tsx
 import type { ClientWithTasksAndStats } from '../../queries/dashboardQueries';
-import SortableEmployeeClientCard from './SortableEmployeeClientCard';
+import { SortableBaseClientCard } from '../common/BaseClientCard';
 import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable';
 
 interface EmployeeClientColumnProps {
@@ -18,8 +18,8 @@ const EmployeeClientColumn = ({ clients }: EmployeeClientColumnProps) => {
       className="employee-client-column"
       style={{
         position: 'relative',
-        overflow: 'visible', // Allow cards to expand beyond boundaries
-        isolation: 'isolate', // Create new stacking context
+        overflow: 'visible',
+        isolation: 'isolate',
       }}
     >
 
@@ -27,7 +27,7 @@ const EmployeeClientColumn = ({ clients }: EmployeeClientColumnProps) => {
         className="clients-list"
         style={{
           position: 'relative',
-          overflow: 'visible', // Allow expansion
+          overflow: 'visible',
         }}
       >
         {clients.length > 0 ? (
@@ -36,15 +36,19 @@ const EmployeeClientColumn = ({ clients }: EmployeeClientColumnProps) => {
             strategy={verticalListSortingStrategy}
           >
             {clients.map((clientData) => (
-              <SortableEmployeeClientCard
+              <SortableBaseClientCard
                 key={`employee-${clientData.client.id}`}
-                clientData={clientData}
+                data={clientData}
+                role="employee"
+                context="employee-dashboard"
+                sortableId={`employee-${clientData.client.id}`}
                 alternatingColors={alternatingColors}
+                showAmount={true}
               />
             ))}
           </SortableContext>
         ) : (
-          <div className="text-center py-4 text-muted">
+          <div className="text-center py-4 text-black">
             <small>لا توجد مهام نشطة</small>
           </div>
         )}

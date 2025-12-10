@@ -65,100 +65,93 @@ const EmployeeClientsPage = () => {
     openModal('taskForm', { client });
   };
 
-  const handleAddReceivable = (client: Client) => {
-    openModal('manualReceivable', { client });
+  const handleAddInvoice = (client: Client) => {
+    openModal('invoiceForm', { client_id: client.id, client });
   };
 
   if (error) {
     return (
-      <div className="container-fluid p-3">
-        <div className="alert alert-danger" role="alert">
-          خطأ في تحميل العملاء. يرجى المحاولة مرة أخرى.
+      <div className="w-full p-3">
+        <div className="rounded-lg border border-destructive bg-destructive/10 p-4" role="alert">
+          <span className="text-destructive">خطأ في تحميل العملاء. يرجى المحاولة مرة أخرى.</span>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="container-fluid p-3">
+    <div className="w-full p-3">
       {/* Page Header with Search in Same Row */}
-      <div className="row mb-4">
-        <div className="col-md-6">
-          <div>
-            <h1 className="h3 mb-1">عملائي</h1>
-            <p className="text-muted mb-0" style={{ fontSize: 'var(--font-size-sm)' }}>
-              العملاء المرتبطين بمهامك
-            </p>
-          </div>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+        <div>
+          <h1 className="text-xl font-bold mb-1 text-black">عملائي</h1>
+          <p className="text-black mb-0 text-sm">
+            العملاء المرتبطين بمهامك
+          </p>
         </div>
-        <div className="col-md-6">
-          <div className="input-group input-group-sm">
-            <span className="input-group-text bg-light border-end-0">
-              <Search size={16} className="text-muted" />
+        <div>
+          <div className="flex items-center border border-border rounded-md overflow-hidden">
+            <span className="px-3 py-2 bg-muted border-r border-border">
+              <Search size={16} className="text-black" />
             </span>
             <input
               type="text"
-              className="form-control border-start-0"
+              className="flex-1 px-3 py-2 text-sm border-0 focus:outline-none focus:ring-0"
               placeholder="البحث في العملاء..."
               value={searchTerm}
               onChange={handleSearchChange}
-              style={{ 
-                backgroundColor: 'transparent',
-                fontSize: 'var(--font-size-sm)'
-              }}
+              style={{ backgroundColor: 'transparent' }}
             />
           </div>
         </div>
       </div>
 
       {/* Clients Table */}
-      <div className="row">
-        <div className="col-12">
-          <div className="card border-0 shadow-sm">
-            <div className="card-body p-0">
-              <ClientsTable
-                clients={clients}
-                isLoading={isLoading}
-                onEdit={handleEditClient}
-                onAddTask={handleAddTask}
-                onAddReceivable={handleAddReceivable}
-                linkBasePath="/employee/clients"
-              />
-              
-              {/* Infinite scroll trigger */}
-              {(hasNextPage || isFetchingNextPage) && (
-                <div ref={ref} className="text-center p-3">
-                  {isFetchingNextPage ? (
-                    <div className="spinner-border spinner-border-sm text-primary" role="status">
-                      <span className="visually-hidden">جاري تحميل المزيد...</span>
-                    </div>
-                  ) : (
-                    <div className="text-muted" style={{ fontSize: 'var(--font-size-sm)' }}>
-                      عرض {clients.length} عميل
-                    </div>
-                  )}
-                </div>
-              )}
-              
-              {/* Show total when no more data */}
-              {!hasNextPage && clients.length > 0 && (
-                <div className="text-center p-3 border-top">
-                  <small className="text-muted">
-                    تم عرض جميع العملاء ({clients.length} عميل)
-                  </small>
-                </div>
-              )}
-              
-              {/* Empty state */}
-              {!isLoading && clients.length === 0 && (
-                <div className="text-center p-5">
-                  <h5 className="text-muted mb-2">لا يوجد عملاء</h5>
-                  <p className="text-muted" style={{ fontSize: 'var(--font-size-sm)' }}>
-                    {searchTerm ? 'لا توجد نتائج للبحث المحدد.' : 'لا توجد عملاء مرتبطين بمهامك حالياً.'}
-                  </p>
-                </div>
-              )}
-            </div>
+      <div>
+        <div className="rounded-lg border-0 bg-card shadow-sm">
+          <div className="p-0">
+            <ClientsTable
+              clients={clients}
+              isLoading={isLoading}
+              onEdit={handleEditClient}
+              onAddTask={handleAddTask}
+              onAddInvoice={handleAddInvoice}
+              linkBasePath="/employee/clients"
+            />
+            
+            {/* Infinite scroll trigger */}
+            {(hasNextPage || isFetchingNextPage) && (
+              <div ref={ref} className="text-center p-3">
+                {isFetchingNextPage ? (
+                  <div className="spinner-border spinner-border-sm text-primary" role="status">
+                    <span className="visually-hidden">جاري تحميل المزيد...</span>
+                  </div>
+                ) : (
+                  <div className="text-black text-sm">
+                    عرض {clients.length} عميل
+                  </div>
+                )}
+              </div>
+            )}
+            
+            {/* Show total when no more data */}
+            {!hasNextPage && clients.length > 0 && (
+              <div className="text-center p-3 border-t border-border">
+                <small className="text-black">
+                  تم عرض جميع العملاء ({clients.length} عميل)
+                </small>
+              </div>
+            )}
+            
+            {/* Empty state */}
+            {!isLoading && clients.length === 0 && (
+              <div className="text-center p-5">
+                <h5 className="text-black mb-2 font-bold">لا يوجد عملاء</h5>
+                <p className="text-black text-sm">
+                  {searchTerm ? 'لا توجد نتائج للبحث المحدد.' : 'لا توجد عملاء مرتبطين بمهامك حالياً.'}
+                </p>
+              </div>
+            )}
           </div>
         </div>
       </div>

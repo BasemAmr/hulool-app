@@ -105,28 +105,24 @@ const ReceivablesPage = () => {
 
   // Show permission denied message if user doesn't have access
   if (isPermissionsLoading) {
-    return <div className="d-flex justify-content-center p-4">Loading permissions...</div>;
+    return <div className="flex justify-center p-4">Loading permissions...</div>;
   }
 
   if (!hasViewAllReceivablesPermission) {
     return (
-      <div className="alert alert-warning text-center">
-        <h4>Access Denied</h4>
-        <p>You don't have permission to view receivables.</p>
+      <div className="rounded-lg border border-yellow-500 bg-yellow-500/10 p-4 text-center">
+        <h4 className="text-lg font-bold text-black mb-2">Access Denied</h4>
+        <p className="text-black">You don't have permission to view receivables.</p>
       </div>
     );
   }
 
   return (
     <div>
-      <header className="d-flex justify-content-between align-items-center mb-1 py-1">
+      <header className="flex justify-between items-center mb-1 py-1">
         {/* Title and Add buttons */}
-        <div className="d-flex align-items-center gap-2">
-          <h5 className="mb-0" style={{
-            background: 'linear-gradient(135deg, #d4af37 0%, #b8941f 100%)',
-            WebkitBackgroundClip: 'text',
-            WebkitTextFillColor: 'transparent',
-            backgroundClip: 'text',
+        <div className="flex items-center gap-2">
+          <h5 className="mb-0 text-primary" style={{
             fontWeight: 'bold',
             fontSize: '1.1rem'
           }}>{t('receivables.title')}</h5>
@@ -136,33 +132,33 @@ const ReceivablesPage = () => {
             إضافة دفعة للرصيد
           </Button>
           
-          <Button onClick={() => openModal('manualReceivable', {})} size="sm">
+          <Button onClick={() => openModal('invoiceForm', {})} size="sm">
             <PlusCircle size={14} className="me-1" />
-            {t('receivables.addNewManual')}
+            إضافة فاتورة يدوية
           </Button>
         </div>
         
         {/* Search and Export */}
-        <div className="d-flex align-items-center gap-2">
+        <div className="flex items-center gap-2">
           {/* Compact Search */}
-          <div className="position-relative" style={{ minWidth: '250px' }}>
+          <div className="relative" style={{ minWidth: '250px' }}>
             <Search 
               size={14} 
-              className="position-absolute text-muted" 
+              className="absolute text-black" 
               style={{ left: '8px', top: '50%', transform: 'translateY(-50%)' }}
             />
             <input
               type="text"
-              className="form-control form-control-sm ps-4"
+              className="w-full px-3 py-1.5 text-sm border border-input rounded-md bg-background text-black focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-colors"
               placeholder="البحث بالاسم أو رقم الهاتف..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              style={{ paddingLeft: '32px', fontSize: '0.875rem' }}
+              style={{ paddingLeft: '32px' }}
             />
             {search && (
               <button
                 type="button"
-                className="btn btn-link position-absolute text-muted p-0"
+                className="absolute text-black p-0 hover:text-foreground transition-colors"
                 style={{ right: '8px', top: '50%', transform: 'translateY(-50%)' }}
                 onClick={handleClearSearch}
                 title="مسح البحث"
@@ -174,7 +170,7 @@ const ReceivablesPage = () => {
           
           {/* Search results indicator */}
           {debouncedSearch && data && (
-            <small className="text-muted" style={{ minWidth: 'fit-content' }}>
+            <small className="text-black" style={{ minWidth: 'fit-content' }}>
               ({data.pages[0]?.pagination?.total || 0} نتيجة)
             </small>
           )}
@@ -191,14 +187,14 @@ const ReceivablesPage = () => {
         </div>
       </header>
 
-      <div className="card">
-        <div className="card-body p-0">
+      <div className="rounded-lg border border-border bg-card shadow-sm">
+        <div className="p-0">
           {/* Show search results or no results message */}
           {debouncedSearch && allClients.length === 0 && !isLoading ? (
             <div className="text-center p-4">
-              <Search size={32} className="text-muted mb-2" />
-              <h6 className="text-muted mb-1">لا توجد نتائج</h6>
-              <p className="text-muted mb-2" style={{ fontSize: '0.875rem' }}>
+              <Search size={32} className="text-black mb-2" />
+              <h6 className="text-black font-semibold mb-1">لا توجد نتائج</h6>
+              <p className="text-black mb-2" style={{ fontSize: '0.875rem' }}>
                 لم يتم العثور على عملاء يحتوون على "{debouncedSearch}" في الاسم أو رقم الهاتف
               </p>
               <Button variant="outline-primary" size="sm" onClick={handleClearSearch}>
@@ -226,7 +222,7 @@ const ReceivablesPage = () => {
                   </Button>
                 )}
                 {!hasNextPage && !isLoading && allClients.length > 0 && (
-                  <p className="text-muted mb-0">
+                  <p className="text-black mb-0">
                     {debouncedSearch ? 'وصلت إلى نهاية نتائج البحث' : 'وصلت إلى نهاية القائمة'}
                   </p>
                 )}

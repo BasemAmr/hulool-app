@@ -1,4 +1,5 @@
 import { useTranslation } from 'react-i18next';
+import { AlertTriangle } from 'lucide-react';
 import { useModalStore } from '../../stores/modalStore';
 import { useDeletePayment, useGetPayment } from '../../queries/paymentQueries';
 import BaseModal from '../ui/BaseModal';
@@ -34,28 +35,32 @@ const PaymentDeleteModal = () => {
       title={t('payments.deletePayment')}
     >
       {isLoading ? (
-        <div className="text-center">{t('common.loading')}</div>
+        <div className="text-center text-muted-foreground py-8">{t('common.loading')}</div>
       ) : (
-        <>
-          <div className="text-center">
-            <div className="mb-4">
-              <i className="fas fa-exclamation-triangle text-warning" style={{ fontSize: '3rem' }}></i>
-            </div>
-            <h5 className="mb-3">{t('payments.confirmDeletePayment')}</h5>
-            <p className="text-muted">
+        <div className="space-y-4">
+          {/* Icon & Heading */}
+          <div className="text-center space-y-2">
+            <AlertTriangle className="h-12 w-12 text-yellow-600 mx-auto" />
+            <h5 className="text-lg font-semibold text-black">{t('payments.confirmDeletePayment')}</h5>
+            <p className="text-muted-foreground text-sm">
               {t('payments.deletePaymentMessage', {
                 amount: payment.amount,
                 description: receivableDescription
               })}
             </p>
-            <div className="alert alert-warning">
-              <small>
-                <strong>{t('common.warning')}:</strong> {t('payments.deletePaymentWarning')}
-              </small>
+          </div>
+
+          {/* Warning Alert */}
+          <div className="rounded-lg border border-yellow-600 bg-yellow-50 p-3 flex gap-3">
+            <AlertTriangle className="text-yellow-600 flex-shrink-0 mt-0.5 h-5 w-5" />
+            <div>
+              <p className="font-medium text-yellow-900 text-sm">{t('common.warning')}:</p>
+              <p className="text-yellow-800 text-sm">{t('payments.deletePaymentWarning')}</p>
             </div>
           </div>
 
-          <footer className="modal-footer justify-content-center">
+          {/* Buttons */}
+          <div className="flex justify-center gap-2 pt-4 border-t border-border">
             <Button 
               type="button" 
               variant="secondary" 
@@ -72,8 +77,8 @@ const PaymentDeleteModal = () => {
             >
               {t('common.delete')}
             </Button>
-          </footer>
-        </>
+          </div>
+        </div>
       )}
     </BaseModal>
   );

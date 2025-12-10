@@ -225,78 +225,65 @@ const TaskSubtasksModal = () => {
       title={`المهام الفرعية - ${task.task_name || `مهمة ${task.type}`}`}
       className="task-subtasks-modal"
     >
-      <div className="modal-content-wrapper">
+      <div className="max-h-screen overflow-y-auto space-y-4">
         {/* Header Edit Button */}
-        <div className="d-flex justify-end mb-3">
+        <div className="flex justify-end">
           <Button
             variant="outline-success"
             size="sm"
             onClick={handleHeaderEdit}
-            className="d-flex align-items-center gap-1"
+            className="flex items-center gap-1"
           >
             <Edit size={16} />
             تحرير المهمة
           </Button>
         </div>
         {hasValidSubtasks && (
-          <div 
-            className="p-3 rounded mb-4"
-            style={{ 
-              background: 'linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%)',
-              border: '1px solid #dee2e6'
-            }}
-          >
-            <div className="row">
-              <div className="col-md-8">
-                <div className="fw-bold mb-2 d-flex align-items-center">
+          <div className="bg-gradient-to-r from-gray-100 to-gray-200 rounded-lg border border-gray-300 p-4 space-y-3">
+            <div className="grid grid-cols-2 gap-6">
+              <div>
+                <div className="font-semibold mb-3 flex items-center gap-2">
                   <div 
-                    className="me-2"
+                    className="w-3 h-3 rounded-full"
                     style={{
-                      width: '12px',
-                      height: '12px',
-                      borderRadius: '50%',
                       backgroundColor: progress.percentage === 100 ? '#28a745' : progress.percentage > 0 ? '#ffc107' : '#6c757d'
                     }}
                   ></div>
                   تقدم إنجاز المهام الفرعية
                 </div>
-                <div className="progress mb-2" style={{ height: '8px' }}>
+                <div className="w-full h-2 bg-gray-300 rounded-full overflow-hidden">
                   <div 
-                    className="progress-bar" 
-                    role="progressbar" 
+                    className="h-full transition-all duration-300 ease-out"
                     style={{ 
                       width: `${progress.percentage}%`,
                       backgroundColor: progress.percentage === 100 ? '#28a745' : progress.percentage > 0 ? '#ffc107' : '#6c757d'
                     }}
-                    aria-valuenow={progress.percentage} 
-                    aria-valuemin={0} 
-                    aria-valuemax={100}
                   ></div>
                 </div>
-                <small className="text-muted">
+                <small className="text-muted-foreground text-sm mt-2 block">
                   {progress.completed} من {progress.total} مهام مكتملة ({progress.percentage}%)
                 </small>
               </div>
-              <div className="col-md-4 text-end">
-                <div className="fw-bold fs-5 d-flex align-items-center justify-content-end">
-                  <DollarSign size={20} className="me-1" style={{ color: '#d4af37' }} />
+              <div className="text-right">
+                <div className="font-semibold text-lg flex items-center justify-end gap-1">
+                  <DollarSign size={20} className="text-yellow-600" />
                   {calculateTotal().toLocaleString()} ريال
                 </div>
-                <small className="text-muted">المجموع الإجمالي</small>
+                <small className="text-muted-foreground text-sm">المجموع الإجمالي</small>
                 {hasSubtasks() && (
-                  <div className="mt-1">
-                    <span className="badge bg-info text-dark small">
+                  <div className="mt-2">
+                    <span className="inline-block bg-blue-100 text-blue-900 text-xs px-2 py-1 rounded">
                       محسوب من المهام الفرعية
                     </span>
                   </div>
                 )}
                 {shouldDisableAmount() && (
-                  <small className="text-muted mt-1 d-block">
+                  <small className="text-muted-foreground text-xs mt-1 block">
                     المبلغ محسوب تلقائياً من المهام الفرعية ({localSubtasks.length} مهمة)
                   </small>
                 )}
                 {hasSubtasks() && !shouldDisableAmount() && (
-                  <small className="text-info mt-1 d-block">
+                  <small className="text-blue-600 text-xs mt-1 block">
                     هذه المهمة تحتوي على {localSubtasks.length} مهام فرعية
                   </small>
                 )}
@@ -306,125 +293,112 @@ const TaskSubtasksModal = () => {
         )}
 
         {/* Instructions */}
-        <div className="alert alert-info mb-4">
-          <div className="d-flex align-items-start">
-            <Layers size={18} className="me-2 mt-1" style={{ color: '#0ea5e9' }} />
-            <div>
-              <div className="fw-bold mb-1">إدارة المهام الفرعية</div>
-              <small className="text-muted">
-                يمكنك تتبع وإدارة المهام الفرعية، وتحديد حالة الإنجاز لكل مهمة. اضغط على "تحرير المهمة" للوصول للتحرير الكامل.
-              </small>
-            </div>
+        <div className="rounded-lg border border-blue-600 bg-blue-50 p-4 flex gap-3">
+          <Layers size={18} className="text-blue-600 flex-shrink-0 mt-1" />
+          <div>
+            <div className="font-semibold mb-1">إدارة المهام الفرعية</div>
+            <small className="text-muted-foreground text-sm">
+              يمكنك تتبع وإدارة المهام الفرعية، وتحديد حالة الإنجاز لكل مهمة. اضغط على "تحرير المهمة" للوصول للتحرير الكامل.
+            </small>
           </div>
         </div>
 
         {/* Subtasks List */}
-        <div className="subtasks-list mb-4">
+        <div className="space-y-3 max-h-96 overflow-y-auto">
           {localSubtasks.map((subtask, index) => (
             <div 
               key={index} 
-              className="subtask-item card mb-3"
+              className="rounded-lg border border-gray-200 p-4 transition-all duration-200 hover:shadow-md"
               style={{ 
-                border: '1px solid #e9ecef',
                 backgroundColor: subtask.is_completed ? '#f8f9fa' : 'white'
               }}
             >
-              <div className="card-body">
-                <div className="row align-items-center">
-                  {/* Completion Status */}
-                  <div className="col-md-1 text-center">
-                    <div 
-                      className="form-check"
-                      style={{ display: 'flex', justifyContent: 'center' }}
+              <div className="grid grid-cols-6 gap-4 items-start">
+                {/* Completion Status */}
+                <div className="flex justify-center">
+                  <input
+                    type="checkbox"
+                    checked={subtask.is_completed}
+                    onChange={(e) => handleSubtaskChange(index, 'is_completed', e.target.checked)}
+                    className="w-5 h-5 rounded cursor-pointer accent-green-600"
+                  />
+                </div>
+                
+                {/* Description */}
+                <div className="col-span-2">
+                  <label className="font-medium text-black text-sm block mb-2">وصف المهمة الفرعية</label>
+                  <Input
+                    value={subtask.description}
+                    onChange={(e) => handleSubtaskChange(index, 'description', e.target.value)}
+                    placeholder="مثال: تصميم الواجهة"
+                    className={errors[index]?.description ? 'border-destructive bg-destructive/5' : ''}
+                    style={{
+                      textDecoration: subtask.is_completed ? 'line-through' : 'none',
+                      opacity: subtask.is_completed ? 0.7 : 1
+                    }}
+                  />
+                  {errors[index]?.description && (
+                    <div className="text-destructive text-xs mt-1">{errors[index].description}</div>
+                  )}
+                </div>
+                
+                {/* Amount */}
+                <div>
+                  <label className="font-medium text-black text-sm block mb-2">المبلغ (ريال)</label>
+                  <Input
+                    type="number"
+                    value={subtask.amount}
+                    onChange={(e) => handleSubtaskChange(index, 'amount', Number(e.target.value))}
+                    placeholder="0"
+                    min="0"
+                    step="0.01"
+                    className={errors[index]?.amount ? 'border-destructive bg-destructive/5' : ''}
+                    style={{
+                      opacity: subtask.is_completed ? 0.7 : 1
+                    }}
+                  />
+                  {errors[index]?.amount && (
+                    <div className="text-destructive text-xs mt-1">{errors[index].amount}</div>
+                  )}
+                </div>
+                
+                {/* Status Badge */}
+                <div className="flex justify-center">
+                  {subtask.description.trim() && subtask.amount > 0 && (
+                    <span 
+                      className={`inline-flex items-center gap-1 text-xs px-2 py-1 rounded ${
+                        subtask.is_completed 
+                          ? 'bg-green-100 text-green-900' 
+                          : 'bg-yellow-100 text-yellow-900'
+                      }`}
                     >
-                      <input
-                        className="form-check-input"
-                        type="checkbox"
-                        checked={subtask.is_completed}
-                        onChange={(e) => handleSubtaskChange(index, 'is_completed', e.target.checked)}
-                        style={{
-                          backgroundColor: subtask.is_completed ? '#28a745' : 'white',
-                          borderColor: subtask.is_completed ? '#28a745' : '#ced4da'
-                        }}
-                      />
-                    </div>
-                  </div>
-                  
-                  {/* Description */}
-                  <div className="col-md-5">
-                    <label className="form-label small fw-bold">وصف المهمة الفرعية</label>
-                    <Input
-                      value={subtask.description}
-                      onChange={(e) => handleSubtaskChange(index, 'description', e.target.value)}
-                      placeholder="مثال: تصميم الواجهة"
-                      className={errors[index]?.description ? 'is-invalid' : ''}
-                      style={{
-                        textDecoration: subtask.is_completed ? 'line-through' : 'none',
-                        opacity: subtask.is_completed ? 0.7 : 1
-                      }}
-                    />
-                    {errors[index]?.description && (
-                      <div className="invalid-feedback">{errors[index].description}</div>
-                    )}
-                  </div>
-                  
-                  {/* Amount */}
-                  <div className="col-md-3">
-                    <label className="form-label small fw-bold">المبلغ (ريال)</label>
-                    <Input
-                      type="number"
-                      value={subtask.amount}
-                      onChange={(e) => handleSubtaskChange(index, 'amount', Number(e.target.value))}
-                      placeholder="0"
-                      min="0"
-                      step="0.01"
-                      className={errors[index]?.amount ? 'is-invalid' : ''}
-                      style={{
-                        opacity: subtask.is_completed ? 0.7 : 1
-                      }}
-                    />
-                    {errors[index]?.amount && (
-                      <div className="invalid-feedback">{errors[index].amount}</div>
-                    )}
-                  </div>
-                  
-                  {/* Status Badge */}
-                  <div className="col-md-2">
-                    <div className="text-center">
-                      {subtask.description.trim() && subtask.amount > 0 && (
-                        <span 
-                          className={`badge ${subtask.is_completed ? 'bg-success' : 'bg-warning'}`}
-                          style={{ fontSize: '0.75rem' }}
-                        >
-                          {subtask.is_completed ? (
-                            <>
-                              <Check size={12} className="me-1" />
-                              مكتملة
-                            </>
-                          ) : (
-                            <>
-                              <AlertTriangle size={12} className="me-1" />
-                              قيد العمل
-                            </>
-                          )}
-                        </span>
+                      {subtask.is_completed ? (
+                        <>
+                          <Check size={12} />
+                          مكتملة
+                        </>
+                      ) : (
+                        <>
+                          <AlertTriangle size={12} />
+                          قيد العمل
+                        </>
                       )}
-                    </div>
-                  </div>
-                  
-                  {/* Delete Button */}
-                  <div className="col-md-1 text-end">
-                    <Button
-                      variant="outline-danger"
-                      size="sm"
-                      onClick={() => removeSubtask(index)}
-                      disabled={localSubtasks.length <= 1}
-                      className="d-flex align-items-center gap-1"
-                      style={{ fontSize: '0.75rem' }}
-                    >
-                      <XCircle size={14} />
-                    </Button>
-                  </div>
+                    </span>
+                  )}
+                </div>
+                
+                {/* Delete Button */}
+                <div className="flex justify-end">
+                  <Button
+                    variant="outline-danger"
+                    size="sm"
+                    onClick={() => removeSubtask(index)}
+                    disabled={localSubtasks.length <= 1}
+                    className="flex items-center gap-1"
+                    style={{ fontSize: '0.75rem' }}
+                  >
+                    <XCircle size={14} />
+                  </Button>
                 </div>
               </div>
             </div>
@@ -432,11 +406,11 @@ const TaskSubtasksModal = () => {
         </div>
 
         {/* Add Subtask Button */}
-        <div className="text-center mb-4">
+        <div className="flex justify-center">
           <Button
             variant="outline-primary"
             onClick={addSubtask}
-            className="d-flex align-items-center gap-2 mx-auto"
+            className="flex items-center gap-2"
             style={{ borderColor: '#d4af37', color: '#d4af37' }}
           >
             <Plus size={18} />
@@ -445,9 +419,9 @@ const TaskSubtasksModal = () => {
         </div>
 
         {/* Footer Actions */}
-        <div className="d-flex justify-content-end gap-2 pt-3" style={{ borderTop: '1px solid #e9ecef' }}>
+        <div className="flex justify-end gap-2 pt-4 border-t border-gray-200">
           <Button variant="secondary" onClick={closeModal}>
-            <X size={16} className="me-1" />
+            <X size={16} />
             إغلاق
           </Button>
           <Button 
@@ -456,7 +430,7 @@ const TaskSubtasksModal = () => {
             disabled={updateTaskMutation.isPending}
             style={{ backgroundColor: '#d4af37', borderColor: '#d4af37' }}
           >
-            <Save size={16} className="me-1" />
+            <Save size={16} />
             {updateTaskMutation.isPending ? 'جارٍ الحفظ...' : 'حفظ التغييرات'}
           </Button>
         </div>
@@ -466,28 +440,6 @@ const TaskSubtasksModal = () => {
       <style>{`
         .task-subtasks-modal .modal-dialog {
           max-width: 1000px;
-        }
-        
-        .subtask-item {
-          transition: all 0.2s ease;
-        }
-        
-        .subtask-item:hover {
-          box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-        }
-        
-        .modal-content-wrapper {
-          max-height: 80vh;
-          overflow-y: auto;
-        }
-        
-        .form-check-input:checked {
-          background-color: #28a745;
-          border-color: #28a745;
-        }
-
-        .progress-bar {
-          transition: width 0.3s ease;
         }
       `}</style>
     </BaseModal>

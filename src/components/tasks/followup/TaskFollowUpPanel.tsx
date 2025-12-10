@@ -55,37 +55,33 @@ const TaskFollowUpPanel: React.FC = () => {
     <>
       {/* Backdrop */}
       <div 
-        className="modal-backdrop fade show"
+        className="fixed inset-0 bg-black/50 transition-opacity"
         style={{ 
-          zIndex: 1040,
-          transition: 'opacity 0.3s ease-in-out'
+          zIndex: 1040
         }}
+        onClick={handleClose}
       />
       
-      {/* Offcanvas Panel */}
+      {/* Drawer Panel */}
       <div 
-        className="offcanvas offcanvas-end show" 
-        tabIndex={-1} 
+        className="fixed right-0 top-0 h-full w-96 bg-card shadow-xl transition-transform flex flex-col"
         style={{ 
-          zIndex: 1045, 
-          width: '400px',
-          transition: 'transform 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94)',
-          transform: 'translateX(0)',
-          boxShadow: '-2px 0 10px rgba(0, 0, 0, 0.1)'
+          zIndex: 1045,
+          transform: 'translateX(0)'
         }}
       >
         {/* Header */}
-        <div className="offcanvas-header border-bottom bg-light">
-          <div className="d-flex align-items-center">
-            <div className="bg-primary bg-opacity-10 rounded p-2 me-3">
+        <div className="border-b border-border bg-muted/30 px-4 py-3">
+          <div className="flex items-center">
+            <div className="bg-primary/10 rounded p-2 mr-3">
               <MessageSquare className="text-primary" size={20} />
             </div>
-            <div>
-              <h5 className="offcanvas-title mb-0">المتابعة والتعليقات</h5>
-              <div className="small text-muted">
-                <div className="text-truncate" style={{ maxWidth: '250px' }}>{taskInfo.task_name}</div>
-                <div className="d-flex align-items-center mt-1">
-                  <User size={12} className="me-1" />
+            <div className="flex-1 min-w-0">
+              <h5 className="text-lg font-bold text-black mb-0">المتابعة والتعليقات</h5>
+              <div className="text-sm text-black">
+                <div className="truncate" style={{ maxWidth: '250px' }}>{taskInfo.task_name}</div>
+                <div className="flex items-center mt-1">
+                  <User size={12} className="mr-1" />
                   <span>{taskInfo.client_name}</span>
                   {totalMessages > 0 && (
                     <>
@@ -96,22 +92,25 @@ const TaskFollowUpPanel: React.FC = () => {
                 </div>
               </div>
             </div>
+            <button 
+              type="button" 
+              className="text-black hover:text-foreground transition-colors p-2"
+              onClick={handleClose}
+              aria-label="Close"
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
           </div>
-          <button 
-            type="button" 
-            className="btn-close" 
-            onClick={handleClose}
-            aria-label="Close"
-          ></button>
         </div>
 
         {/* Content Area */}
-        <div className="offcanvas-body p-0 d-flex flex-column">
+        <div className="flex-1 flex flex-col overflow-hidden">
           {/* Messages List */}
           <div 
-            className="flex-grow-1 overflow-auto"
+            className="flex-1 overflow-auto transition-opacity"
             style={{
-              transition: 'opacity 0.2s ease-in-out',
               opacity: isLoading ? 0.7 : 1
             }}
           >
@@ -132,9 +131,8 @@ const TaskFollowUpPanel: React.FC = () => {
 
           {/* Message Input */}
           <div 
-            className="border-top bg-white"
+            className="border-t border-border bg-white transition-transform"
             style={{
-              transition: 'transform 0.2s ease-in-out',
               transform: isLoading ? 'translateY(5px)' : 'translateY(0)'
             }}
           >
