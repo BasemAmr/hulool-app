@@ -21,7 +21,7 @@ const CollapsibleTaskStatusCards: React.FC<CollapsibleTaskStatusCardsProps> = ({
   totalPaidAmount,
   isLoading
 }) => {
-  const [isCollapsed, setIsCollapsed] = useState(false);
+  const [isCollapsed, setIsCollapsed] = useState(true);
 
   return (
     <div

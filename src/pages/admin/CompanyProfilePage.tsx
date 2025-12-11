@@ -82,18 +82,7 @@ const CompanyProfilePage = () => {
 
   // Handle new transaction
   const handleNewTransaction = () => {
-    openModal('manualTransaction', {
-      preselectedAccount: {
-        id: companyAccountId,
-        type: 'company' as const,
-        name: 'حساب الشركة',
-        balance: currentBalance,
-        email: '',
-        last_activity: null,
-        pending_count: 0,
-        pending_amount: 0,
-      },
-    });
+    openModal('manualTransaction');
   };
 
   // Format date

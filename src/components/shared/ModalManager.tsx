@@ -291,9 +291,8 @@ const ModalManager = () => {
             key="manualTransaction"
             isOpen={isOpen}
             onClose={closeModal}
-            preselectedAccount={props.preselectedAccount}
-            preselectedToAccount={props.preselectedToAccount}
-            direction={props.direction}
+            preselectedAccount={props?.preselectedAccount}
+            direction={props?.direction}
           />
         );
 

@@ -29,7 +29,8 @@ const PageWrapper = () => {
           scrollbarColor: 'hsl(var(--muted-foreground)) hsl(var(--secondary))'
         }}
       >
-        <div className="[direction:rtl] p-6 min-h-full max-w-[1920px] mx-auto w-full">
+        <div className="[direction:rtl] p-6 min-h-full w-full">
+
           <Outlet /> {/* Child routes will be rendered here */}
          </div>
       </main> 

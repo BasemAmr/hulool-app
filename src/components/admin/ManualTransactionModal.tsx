@@ -1,9 +1,10 @@
 /**
  * ManualTransactionModal
  * 
- * Modal for admin to create manual transactions
- * - Double-entry transfers between accounts
- * - Always creates linked transactions for double-entry accounting
+ * Modal for admin to create manual transactions:
+ * - Transfers: Double-entry between two accounts
+ * - Payout (Sarf): Company pays employee/client
+ * - Repayment (Qabd): Employee/client pays company back
  */
 
 import { useState, useEffect } from 'react';
@@ -14,99 +15,104 @@ import { Card, CardContent } from '../ui/card';
 import ClientSearchCombobox from '../ui/ClientSearchCombobox';
 import { useCreateManualTransaction, useGetAccountsByType } from '../../queries/financialCenterQueries';
 import { useToast } from '../../hooks/useToast';
-import { ArrowRight, AlertCircle, User, Building, Briefcase } from 'lucide-react';
+import { ArrowRight, AlertCircle, User, Building, Briefcase, TrendingUp, TrendingDown, ArrowLeftRight } from 'lucide-react';
 import type { 
   AccountType, 
-  UnifiedAccount 
+  UnifiedAccount,
+  ManualTransactionType 
 } from '../../api/types';
 
 interface ManualTransactionModalProps {
   isOpen: boolean;
   onClose: () => void;
   preselectedAccount?: UnifiedAccount;
-  preselectedToAccount?: UnifiedAccount;
-  direction?: 'credit' | 'debit';
+  direction?: 'payout' | 'repayment'; // Optional: sarf or qabd
 }
 
 const ManualTransactionModal = ({
   isOpen,
   onClose,
   preselectedAccount,
-  preselectedToAccount,
+  direction: initialDirection,
 }: ManualTransactionModalProps) => {
   const { showToast } = useToast();
   const createTransaction = useCreateManualTransaction();
   
-  // Fetch only employees and company accounts (not all)
+  // Fetch accounts
   const { data: employeesData } = useGetAccountsByType('employee', {}, isOpen);
+  const { data: clientsData } = useGetAccountsByType('client', {}, isOpen);
   const { data: companyData } = useGetAccountsByType('company', {}, isOpen);
 
-  // Form state - always use transfer (double-entry)
-  const [fromAccountType, setFromAccountType] = useState<AccountType>(
+  // Direction selector state (if not preselected)
+  const [direction, setDirection] = useState<'payout' | 'repayment'>(initialDirection || 'payout');
+  
+  // Transaction mode is always payout or repayment
+  const transactionMode: ManualTransactionType = direction;
+  
+  // Form state for single-account transactions (payout/repayment only)
+  const [accountType, setAccountType] = useState<AccountType>(
     preselectedAccount?.type || 'employee'
   );
-  const [fromAccountId, setFromAccountId] = useState<string>(
+  const [accountId, setAccountId] = useState<string>(
     (preselectedAccount?.id && preselectedAccount.id !== 0) ? preselectedAccount.id.toString() : ''
   );
-  const [toAccountType, setToAccountType] = useState<AccountType>(
-    preselectedToAccount?.type || 'company'
-  );
-  const [toAccountId, setToAccountId] = useState<string>(
-    (preselectedToAccount?.id && preselectedToAccount.id !== 0) ? preselectedToAccount.id.toString() : ''
-  );
+  
+  // Common fields
   const [amount, setAmount] = useState<string>('');
   const [description, setDescription] = useState<string>('');
+  // Category is always 'other' by default and not shown in form
+  const category = 'other';
   const [effectiveDate, setEffectiveDate] = useState<string>(
     new Date().toISOString().split('T')[0]
   );
   const [notes, setNotes] = useState<string>('');
 
-  // Reset form when modal opens with preselected values
+  // Reset form when modal opens
   useEffect(() => {
     if (isOpen) {
+      // Set preselected account
       if (preselectedAccount) {
-        setFromAccountType(preselectedAccount.type);
-        setFromAccountId(preselectedAccount.id !== 0 ? preselectedAccount.id.toString() : '');
-      }
-      if (preselectedToAccount) {
-        setToAccountType(preselectedToAccount.type);
-        setToAccountId(preselectedToAccount.id !== 0 ? preselectedToAccount.id.toString() : '');
+        setAccountType(preselectedAccount.type);
+        setAccountId(preselectedAccount.id !== 0 ? preselectedAccount.id.toString() : '');
       }
     }
-  }, [isOpen, preselectedAccount, preselectedToAccount]);
+  }, [isOpen, preselectedAccount]);
 
-  // Get accounts by type from fetched data
+  // Get accounts by type
   const getAccountsByType = (type: AccountType) => {
     if (type === 'employee') return employeesData?.accounts || [];
+    if (type === 'client') return clientsData?.accounts || [];
     if (type === 'company') return companyData?.accounts || [];
-    return []; // Clients handled by combobox
+    return [];
   };
 
-  // Get selected accounts for preview
+  // Get all accounts for lookups
   const allAccounts = [
     ...(employeesData?.accounts || []),
+    ...(clientsData?.accounts || []),
     ...(companyData?.accounts || []),
   ];
-  const selectedFromAccount = allAccounts.find(
-    (a) => a.type === fromAccountType && String(a.id) === fromAccountId
-  );
-  const selectedToAccount = toAccountId && toAccountId !== '' 
-    ? allAccounts.find((a) => a.type === toAccountType && String(a.id) === toAccountId)
-    : null;
 
-  // Calculate preview
+  // Get selected accounts for preview
+  const getSelectedAccount = (type: AccountType, id: string): UnifiedAccount | null => {
+    if (!id || id === '') return null;
+    const accounts = getAccountsByType(type);
+    return accounts.find((a) => String(a.id) === id) || null;
+  };
+
+  // Get account based on form input
+  const selectedAccount = getSelectedAccount(accountType, accountId);
+
+  // For payout/repayment, company is always the other side
+  const companyAccount = companyData?.accounts?.[0] || null;
+
+  // Calculate preview balances
   const amountNum = parseFloat(amount) || 0;
-  const fromNewBalance = selectedFromAccount
-    ? selectedFromAccount.balance - amountNum
-    : 0;
-  const toNewBalance = selectedToAccount
-    ? selectedToAccount.balance + amountNum
-    : 0;
-
-  // Format currency
+  
+  // Format currency (English numbers, bold)
   const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('ar-SA', {
-      minimumFractionDigits: 0,
+    return new Intl.NumberFormat('en-US', {
+      minimumFractionDigits: 2,
       maximumFractionDigits: 2,
     }).format(amount);
   };
@@ -115,32 +121,85 @@ const ManualTransactionModal = ({
   const getTypeIcon = (type: AccountType) => {
     switch (type) {
       case 'employee':
-        return <User size={14} />;
+        return <User size={16} />;
       case 'client':
-        return <Briefcase size={14} />;
+        return <Briefcase size={16} />;
       case 'company':
-        return <Building size={14} />;
+        return <Building size={16} />;
     }
   };
+
+  // Get mode icon
+  const getModeIcon = () => {
+    switch (transactionMode) {
+      case 'payout':
+        return <TrendingDown size={18} className="text-red-600" />;
+      case 'repayment':
+        return <TrendingUp size={18} className="text-green-600" />;
+    }
+  };
+
+  // Calculate new balances (only payout/repayment)
+  const calculateBalances = () => {
+    if (!selectedAccount || amountNum === 0) {
+      return null;
+    }
+
+    if (transactionMode === 'payout') {
+      // Payout: Company pays account
+      // Employee: CREDIT employee (balance decreases - company owes less)
+      // Client: DEBIT client (balance increases - client owes us more)
+      const isEmployee = accountType === 'employee';
+      const accountNewBalance = isEmployee
+        ? selectedAccount.balance - amountNum  // Employee: CREDIT reduces balance
+        : selectedAccount.balance + amountNum; // Client: DEBIT increases balance
+      
+      return {
+        accountCurrent: selectedAccount.balance,
+        accountNew: accountNewBalance,
+        companyCurrent: companyAccount?.balance || 0,
+        companyNew: (companyAccount?.balance || 0) + (isEmployee ? amountNum : -amountNum),
+      };
+    } else if (transactionMode === 'repayment') {
+      // Repayment: Account pays company
+      // Employee: DEBIT employee (balance increases - employee owes more)
+      // Client: CREDIT client (balance decreases - client owes us less)
+      const isEmployee = accountType === 'employee';
+      const accountNewBalance = isEmployee
+        ? selectedAccount.balance + amountNum  // Employee: DEBIT increases balance
+        : selectedAccount.balance - amountNum; // Client: CREDIT decreases balance
+      
+      return {
+        accountCurrent: selectedAccount.balance,
+        accountNew: accountNewBalance,
+        companyCurrent: companyAccount?.balance || 0,
+        companyNew: (companyAccount?.balance || 0) + (isEmployee ? -amountNum : amountNum),
+      };
+    }
+
+    return null;
+  };
+
+  const balances = calculateBalances();
 
   // Handle submit
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!fromAccountId || !toAccountId || !amount || !description) {
+    if (!amount || !description || !accountId) {
       showToast({ type: 'error', title: 'يرجى ملء جميع الحقول المطلوبة' });
       return;
     }
 
     try {
+      // Payout or Repayment
       await createTransaction.mutateAsync({
-        type: 'transfer',
-        from_account_type: fromAccountType,
-        from_account_id: Number(fromAccountId),
-        to_account_type: toAccountType,
-        to_account_id: Number(toAccountId),
+        type: transactionMode,
+        account_type: accountType,
+        account_id: Number(accountId),
         amount: parseFloat(amount),
         description,
+        category: category as 'salary' | 'commission' | 'loan' | 'expense' | 'advance_repayment' | 'loan_repayment' | 'other',
         effective_date: `${effectiveDate}T12:00:00`,
         notes: notes || undefined,
       });
@@ -159,10 +218,9 @@ const ManualTransactionModal = ({
 
   // Reset form
   const resetForm = () => {
-    setFromAccountType('employee');
-    setFromAccountId('');
-    setToAccountType('company');
-    setToAccountId('');
+    setDirection(initialDirection || 'payout');
+    setAccountType('employee');
+    setAccountId('');
     setAmount('');
     setDescription('');
     setEffectiveDate(new Date().toISOString().split('T')[0]);
@@ -173,106 +231,89 @@ const ManualTransactionModal = ({
     <BaseModal
       isOpen={isOpen}
       onClose={onClose}
-      title="إنشاء معاملة"
+      title={
+        transactionMode === 'payout'
+          ? 'سند صرف'
+          : 'سند قبض'
+      }
     >
       <form onSubmit={handleSubmit} className="space-y-4">
-        {/* From Account */}
-        <div className="grid grid-cols-2 gap-4">
-          <div>
-            <label className="block text-sm font-medium text-black mb-1">
-              من حساب
-            </label>
-            <select
-              value={fromAccountType}
-              onChange={(e) => {
-                setFromAccountType(e.target.value as AccountType);
-                setFromAccountId('');
-              }}
-              className="w-full px-3 py-2 text-sm border border-input rounded-md bg-background"
+        {/* Direction Selector (if no preselectedAccount) */}
+        {!preselectedAccount && (
+          <div className="grid grid-cols-2 gap-2 mb-4">
+            <button
+              type="button"
+              onClick={() => setDirection('payout')}
+              className={`p-3 rounded-lg border-2 text-sm font-medium transition-all ${
+                direction === 'payout'
+                  ? 'border-red-500 bg-red-50 text-red-700'
+                  : 'border-gray-200 hover:border-gray-300'
+              }`}
             >
-              <option value="employee">موظف</option>
-              <option value="client">عميل</option>
-              <option value="company">شركة</option>
-            </select>
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-black mb-1">
-              اختر الحساب
-            </label>
-            {fromAccountType === 'client' ? (
-              <ClientSearchCombobox
-                value={fromAccountId}
-                onChange={setFromAccountId}
-                placeholder="ابحث عن عميل..."
-              />
-            ) : (
-              <select
-                value={fromAccountId}
-                onChange={(e) => setFromAccountId(e.target.value)}
-                className="w-full px-3 py-2 text-sm border border-input rounded-md bg-background"
-                required
-              >
-                <option value="">اختر...</option>
-                {getAccountsByType(fromAccountType).map((account) => (
-                  <option key={account.id} value={account.id}>
-                    {account.name} ({formatCurrency(account.balance)} ر.س)
-                  </option>
-                ))}
-              </select>
-            )}
-          </div>
-        </div>
-
-        {/* To Account */}
-        <div className="grid grid-cols-2 gap-4">
-          <div>
-            <label className="block text-sm font-medium text-black mb-1">
-              إلى حساب
-            </label>
-            <select
-              value={toAccountType}
-              onChange={(e) => {
-                setToAccountType(e.target.value as AccountType);
-                setToAccountId('');
-              }}
-              className="w-full px-3 py-2 text-sm border border-input rounded-md bg-background"
+              <TrendingDown size={16} className="mx-auto mb-1" />
+              سند صرف
+            </button>
+            <button
+              type="button"
+              onClick={() => setDirection('repayment')}
+              className={`p-3 rounded-lg border-2 text-sm font-medium transition-all ${
+                direction === 'repayment'
+                  ? 'border-green-500 bg-green-50 text-green-700'
+                  : 'border-gray-200 hover:border-gray-300'
+              }`}
             >
-              <option value="employee">موظف</option>
-              <option value="client">عميل</option>
-              <option value="company">شركة</option>
-            </select>
+              <TrendingUp size={16} className="mx-auto mb-1" />
+              سند قبض
+            </button>
           </div>
-          <div>
-            <label className="block text-sm font-medium text-black mb-1">
-              اختر الحساب المستلم
-            </label>
-            {toAccountType === 'client' ? (
-              <ClientSearchCombobox
-                value={toAccountId}
-                onChange={setToAccountId}
-                placeholder="ابحث عن عميل..."
-              />
-            ) : (
-              <select
-                value={toAccountId}
-                onChange={(e) => setToAccountId(e.target.value)}
-                className="w-full px-3 py-2 text-sm border border-input rounded-md bg-background"
-                required
-              >
-                <option value="">اختر...</option>
-                {getAccountsByType(toAccountType)
-                  .filter(
-                    (a) =>
-                      !(a.type === fromAccountType && String(a.id) === fromAccountId)
-                  )
-                  .map((account) => (
-                    <option key={account.id} value={account.id}>
-                      {account.name} ({formatCurrency(account.balance)} ر.س)
-                    </option>
-                  ))}
-              </select>
-            )}
-          </div>
+        )}
+        {/* Account Type and Selection */}
+        <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-black mb-1">
+                  نوع الحساب
+                </label>
+                <select
+                  value={accountType}
+                  onChange={(e) => {
+                    setAccountType(e.target.value as AccountType);
+                    setAccountId('');
+                  }}
+                  className="w-full px-3 py-2 text-sm border border-input rounded-md bg-background"
+                >
+                  <option value="employee">موظف</option>
+                  <option value="client">عميل</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-black mb-1">
+                  اختر {accountType === 'employee' ? 'الموظف' : 'العميل'}
+                </label>
+                {accountType === 'client' ? (
+                  <ClientSearchCombobox
+                    value={accountId}
+                    onChange={(newValue) => {
+                      console.log('Account client selected:', newValue);
+                      setAccountId(newValue);
+                    }}
+                    placeholder="ابحث عن عميل..."
+                  />
+                ) : (
+                  <select
+                    value={accountId}
+                    onChange={(e) => setAccountId(e.target.value)}
+                    className="w-full px-3 py-2 text-sm border border-input rounded-md bg-background"
+                    required
+                  >
+                    <option value="">اختر...</option>
+                    {getAccountsByType(accountType).map((account) => (
+                      <option key={account.id} value={account.id}>
+                        {account.name} ({formatCurrency(account.balance)} SAR)
+                      </option>
+                    ))}
+                  </select>
+                )}
+              </div>
         </div>
 
         {/* Amount */}
@@ -308,7 +349,7 @@ const ManualTransactionModal = ({
             value={description}
             onChange={(e) => setDescription(e.target.value)}
             className="w-full px-3 py-2 text-sm border border-input rounded-md bg-background"
-            placeholder="مثال: مكافأة أداء، سلفة مستردة..."
+            placeholder="مثال: راتب شهر ديسمبر، سلفة مستردة..."
             required
           />
         </div>
@@ -340,70 +381,110 @@ const ManualTransactionModal = ({
           />
         </div>
 
-        {/* Preview */}
-        {selectedFromAccount && selectedToAccount && amountNum > 0 && (
-          <Card className="bg-muted/50">
-            <CardContent className="p-4">
+        {/* PREVIEW */}
+        {balances && selectedAccount && companyAccount && (
+          <Card className="bg-gradient-to-br from-blue-50 to-purple-50 border-2 border-blue-200">
+            <CardContent className="p-5">
               <div className="flex items-center gap-2 mb-4">
-                <AlertCircle size={16} className="text-primary" />
-                <span className="font-medium text-sm">معاينة المعاملة</span>
+                {getModeIcon()}
+                <span className="font-bold text-base text-black">معاينة المعاملة</span>
               </div>
 
-              {/* Transfer Preview */}
-              <div className="flex items-center gap-3 text-sm">
-                {/* From Account */}
-                <div className="flex-1 p-3 bg-background rounded-md border border-red-200">
-                  <div className="flex items-center gap-2 mb-2">
-                    {getTypeIcon(selectedFromAccount.type)}
-                    <span className="font-medium">{selectedFromAccount.name}</span>
+              {/* Payout/Repayment Preview */}
+              <div className="flex items-center gap-3">
+                {/* Account */}
+                <div className={`flex-1 p-4 bg-white rounded-lg border-2 shadow-sm ${
+                  transactionMode === 'payout' 
+                    ? (accountType === 'employee' ? 'border-red-300' : 'border-green-300')
+                    : (accountType === 'employee' ? 'border-green-300' : 'border-red-300')
+                }`}>
+                  <div className="flex items-center gap-2 mb-3">
+                    {getTypeIcon(selectedAccount.type)}
+                    <span className="font-bold text-base text-black">{selectedAccount.name}</span>
                   </div>
-                  <div className="text-xs text-black/60 mb-2">
-                    <span className="block">الرصيد الحالي: {formatCurrency(selectedFromAccount.balance)} ر.س</span>
+                  <div className="space-y-2">
+                    <div className="flex justify-between items-center">
+                      <span className="text-sm font-medium text-gray-700">Current Balance:</span>
+                      <span className="text-base font-bold text-black">{formatCurrency(balances.accountCurrent)} SAR</span>
+                    </div>
+                    <div className="flex justify-between items-center pt-2 border-t-2 border-gray-200">
+                      <span className="text-sm font-medium text-gray-700">New Balance:</span>
+                      <span className={`text-lg font-black ${
+                        balances.accountNew > balances.accountCurrent ? 'text-green-600' : 'text-red-600'
+                      }`}>
+                        {formatCurrency(balances.accountNew)} SAR
+                      </span>
+                    </div>
+                    <div className="text-center">
+                      <span className={`inline-block px-3 py-1 font-bold text-sm rounded-full ${
+                        balances.accountNew > balances.accountCurrent 
+                          ? 'bg-green-100 text-green-700' 
+                          : 'bg-red-100 text-red-700'
+                      }`}>
+                        {balances.accountNew > balances.accountCurrent ? '+' : ''}{formatCurrency(balances.accountNew - balances.accountCurrent)} SAR
+                      </span>
+                    </div>
                   </div>
-                  <div className="flex items-center justify-between border-t border-red-200 pt-2">
-                    <span className="text-black/60">الرصيد الجديد:</span>
-                    <span className="font-bold text-red-600">{formatCurrency(fromNewBalance)} ر.س</span>
-                  </div>
-                  <span className="text-red-600 text-xs font-medium mt-2 block">-{formatCurrency(amountNum)} ر.س</span>
                 </div>
 
                 {/* Arrow */}
-                <ArrowRight size={20} className="text-primary flex-shrink-0" />
+                <ArrowRight size={24} className="text-blue-600 flex-shrink-0 font-bold" />
 
-                {/* To Account */}
-                <div className="flex-1 p-3 bg-background rounded-md border border-green-200">
-                  <div className="flex items-center gap-2 mb-2">
-                    {getTypeIcon(selectedToAccount.type)}
-                    <span className="font-medium">{selectedToAccount.name}</span>
+                {/* Company */}
+                <div className={`flex-1 p-4 bg-white rounded-lg border-2 shadow-sm ${
+                  transactionMode === 'payout'
+                    ? (accountType === 'employee' ? 'border-green-300' : 'border-red-300')
+                    : (accountType === 'employee' ? 'border-red-300' : 'border-green-300')
+                }`}>
+                  <div className="flex items-center gap-2 mb-3">
+                    {getTypeIcon('company')}
+                    <span className="font-bold text-base text-black">{companyAccount.name}</span>
                   </div>
-                  <div className="text-xs text-black/60 mb-2">
-                    <span className="block">الرصيد الحالي: {formatCurrency(selectedToAccount.balance)} ر.س</span>
+                  <div className="space-y-2">
+                    <div className="flex justify-between items-center">
+                      <span className="text-sm font-medium text-gray-700">Current Balance:</span>
+                      <span className="text-base font-bold text-black">{formatCurrency(balances.companyCurrent)} SAR</span>
+                    </div>
+                    <div className="flex justify-between items-center pt-2 border-t-2 border-gray-200">
+                      <span className="text-sm font-medium text-gray-700">New Balance:</span>
+                      <span className={`text-lg font-black ${
+                        balances.companyNew > balances.companyCurrent ? 'text-green-600' : 'text-red-600'
+                      }`}>
+                        {formatCurrency(balances.companyNew)} SAR
+                      </span>
+                    </div>
+                    <div className="text-center">
+                      <span className={`inline-block px-3 py-1 font-bold text-sm rounded-full ${
+                        balances.companyNew > balances.companyCurrent 
+                          ? 'bg-green-100 text-green-700' 
+                          : 'bg-red-100 text-red-700'
+                      }`}>
+                        {balances.companyNew > balances.companyCurrent ? '+' : ''}{formatCurrency(balances.companyNew - balances.companyCurrent)} SAR
+                      </span>
+                    </div>
                   </div>
-                  <div className="flex items-center justify-between border-t border-green-200 pt-2">
-                    <span className="text-black/60">الرصيد الجديد:</span>
-                    <span className="font-bold text-green-600">{formatCurrency(toNewBalance)} ر.س</span>
-                  </div>
-                  <span className="text-green-600 text-xs font-medium mt-2 block">+{formatCurrency(amountNum)} ر.س</span>
                 </div>
               </div>
             </CardContent>
           </Card>
         )}
 
-        {/* Missing Recipient Alert */}
-        {selectedFromAccount && !selectedToAccount && amountNum > 0 && (
-          <Card className="bg-amber-50 border border-amber-200">
+        {/* Missing Recipient Warning */}
+        {selectedAccount && !balances && amountNum > 0 && (
+          <Card className="bg-amber-50 border-2 border-amber-400">
             <CardContent className="p-4">
-              <div className="flex items-center gap-2">
-                <AlertCircle size={16} className="text-amber-600" />
-                <span className="text-sm text-amber-700">يرجى تحديد الحساب المستلم لعرض المعاينة الكاملة</span>
+              <div className="flex items-center gap-3">
+                <AlertCircle size={20} className="text-amber-600 flex-shrink-0" />
+                <span className="text-sm font-bold text-amber-900">
+                  يرجى إدخال مبلغ صحيح لعرض المعاينة
+                </span>
               </div>
             </CardContent>
           </Card>
         )}
 
         {/* Actions */}
-        <div className="flex justify-end gap-2 pt-4 border-t border-border">
+        <div className="flex justify-end gap-2 pt-4 border-t-2 border-gray-200">
           <Button type="button" variant="outline-primary" onClick={onClose}>
             إلغاء
           </Button>

@@ -1310,7 +1310,7 @@ export interface UnifiedAccountsResponse {
 /**
  * Manual transaction types
  */
-export type ManualTransactionType = 'adjustment' | 'transfer';
+export type ManualTransactionType = 'adjustment' | 'transfer' | 'payout' | 'repayment';
 
 /**
  * Create manual transaction payload
@@ -1326,6 +1326,8 @@ export interface CreateManualTransactionPayload {
   from_account_id?: number;
   to_account_type?: AccountType;
   to_account_id?: number;
+  // For payout/repayment (single account transactions)
+  category?: 'salary' | 'commission' | 'loan' | 'expense' | 'advance_repayment' | 'loan_repayment' | 'other';
   // Common fields
   amount: number;
   description: string;

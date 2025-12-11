@@ -31,6 +31,7 @@ import {
   LayoutGrid,
   LayoutList,
   Filter,
+  DollarSign,
 } from 'lucide-react';
 import { useDebounce } from '../../hooks/useDebounce';
 import { useInView } from 'react-intersection-observer';
@@ -152,7 +153,7 @@ const InvoicesHubPage = () => {
   ];
 
   return (
-    <div className="w-full p-4 h-[calc(100vh-80px)] overflow-hidden flex flex-col">
+    <div className="w-full p-4 h-[calc(100vh-80px)] max-w-full overflow-hidden flex flex-col">
       {/* Header with Title and Aging Stats */}
       <div className="flex flex-wrap justify-between items-center gap-4 mb-4 flex-shrink-0">
         <h1 className="text-lg font-bold text-black flex items-center gap-2">
@@ -367,15 +368,28 @@ const InvoicesHubPage = () => {
                           )}
                         </TableCell>
                         <TableCell className="border border-gray-300 px-3 py-2">
-                          <Button
-                            variant="outline-secondary"
-                            size="sm"
-                            className="opacity-0 group-hover:opacity-100 transition-opacity"
-                            onClick={() => openModal('invoiceDetails', { invoiceId: invoice.id })}
-                            title="تفاصيل"
-                          >
-                            <FileText size={16} className="text-primary" />
-                          </Button>
+                          <div className="flex justify-between gap-1 p-1 ">
+                            <Button
+                              variant="outline-secondary"
+                              size="sm"
+                              onClick={() => openModal('invoiceDetails', { invoiceId: invoice.id })}
+                              title="تفاصيل"
+                            >
+                              <FileText size={16} className="text-primary" />
+                            </Button>
+                            <Button
+                              variant="outline-secondary"
+                              size="sm"
+                              onClick={() => openModal('recordPayment', {
+                                invoiceId: invoice.id,
+                                amountDue: invoice.remaining_amount,
+                                clientName: invoice.client?.name
+                              })}
+                              title="دفع"
+                            >
+                              <DollarSign size={16} className="text-primary" />
+                            </Button>
+                          </div>
                         </TableCell>
                       </TableRow>
                     ))}

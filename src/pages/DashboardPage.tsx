@@ -197,7 +197,7 @@ const DashboardPage = () => {
     }
 
     return (
-        <div className="relative pb-[200px]">
+        <div className="relative pb-[20px]">
             {/* Task Type Filter - Floating Component */}
             <DashboardTaskTypeFilter 
                 value={taskTypeFilter}

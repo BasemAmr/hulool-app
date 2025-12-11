@@ -47,13 +47,18 @@ const ClientSearchCombobox = ({
     'client',
     {
       search: debouncedSearch,
-      per_page: 10,
+      per_page: 50, // Increased to ensure selected client is in results
     },
-    open // Only fetch when dropdown is open
+    true // Always fetch to ensure selected client is available
   );
 
   const clients = clientsData?.accounts || [];
   const selectedClient = clients.find((c) => String(c.id) === value);
+
+  // Keep selected client in list even when searching
+  const displayClients = selectedClient && !clients.find(c => String(c.id) === value)
+    ? [selectedClient, ...clients]
+    : clients;
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
@@ -84,18 +89,21 @@ const ClientSearchCombobox = ({
                 <Loader2 className="mx-auto h-4 w-4 animate-spin text-black/50" />
                 <p className="mt-2 text-xs text-black/50">جاري البحث...</p>
               </div>
-            ) : clients.length === 0 ? (
+            ) : displayClients.length === 0 ? (
               <CommandEmpty>
                 {search ? 'لا توجد نتائج' : 'ابدأ بالكتابة للبحث'}
               </CommandEmpty>
             ) : (
               <CommandGroup>
-                {clients.map((client) => (
+                {displayClients.map((client) => (
                   <CommandItem
                     key={client.id}
                     value={String(client.id)}
                     onSelect={(currentValue) => {
-                      onChange(currentValue === value ? '' : currentValue);
+                      // Only toggle if clicking the same value, otherwise always select
+                      const newValue = currentValue === value ? '' : currentValue;
+                      console.log('Client selected:', { currentValue, value, newValue });
+                      onChange(newValue);
                       setOpen(false);
                       setSearch('');
                     }}
@@ -104,7 +112,7 @@ const ClientSearchCombobox = ({
                     <div className="flex-1">
                       <div className="font-medium">{client.name}</div>
                       <div className="text-xs text-black/50">
-                        الرصيد: {new Intl.NumberFormat('en-US').format(client.balance)} ر.س
+                        Balance: {new Intl.NumberFormat('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(client.balance)} SAR
                       </div>
                     </div>
                     <Check

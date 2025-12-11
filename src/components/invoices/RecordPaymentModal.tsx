@@ -7,6 +7,7 @@
 
 import { useForm, Controller } from 'react-hook-form';
 import { useTranslation } from 'react-i18next';
+import { useEffect } from 'react';
 import { useRecordInvoicePayment } from '../../queries/invoiceQueries';
 import { useGetPaymentMethods } from '../../queries/paymentQueries';
 import { useModalStore } from '../../stores/modalStore';
@@ -39,15 +40,22 @@ const RecordPaymentModal = () => {
   // Fetch available payment methods
   const { data: paymentMethods, isLoading: methodsLoading } = useGetPaymentMethods();
   
-  const { register, handleSubmit, formState: { errors }, control, watch, setValue } = useForm<RecordInvoicePaymentPayload>({
+  const { handleSubmit, formState: { errors }, control, watch, setValue } = useForm<RecordInvoicePaymentPayload>({
     defaultValues: {
-      amount: remainingAmount,
+      amount: Number(remainingAmount) || 0,
       payment_method_id: undefined,
       paid_at: new Date().toISOString().split('T')[0],
       note: '',
       reference_number: ''
     }
   });
+
+  // Sync form amount when remainingAmount changes (handles async prop updates)
+  useEffect(() => {
+    if (typeof remainingAmount !== 'undefined') {
+      setValue('amount', Number(remainingAmount), { shouldValidate: true, shouldDirty: false });
+    }
+  }, [remainingAmount, setValue]);
   
   const recordPaymentMutation = useRecordInvoicePayment();
   const watchedAmount = watch('amount');
@@ -71,7 +79,7 @@ const RecordPaymentModal = () => {
   };
 
   const setFullAmount = () => {
-    setValue('amount', remainingAmount);
+    setValue('amount', Number(remainingAmount), { shouldValidate: true, shouldDirty: true });
   };
 
   const isOverpayment = watchedAmount > remainingAmount;
@@ -151,23 +159,25 @@ const RecordPaymentModal = () => {
         <div className="mb-4">
           <div className="d-flex justify-content-between align-items-center mb-1">
             <label className="form-label font-medium mb-0">المبلغ المدفوع</label>
-            <button 
-              type="button" 
-              className="btn btn-link btn-sm p-0 text-decoration-none"
-              onClick={setFullAmount}
-            >
-              دفع المبلغ كاملاً
-            </button>
           </div>
-          <Input
-            type="number"
-            step="0.01"
-            {...register('amount', {
+          <Controller
+            name="amount"
+            control={control}
+            rules={{
               required: t('common.required'),
-              valueAsNumber: true,
-              min: { value: 0.01, message: 'المبلغ يجب أن يكون أكبر من صفر' },
-            })}
-            error={errors.amount?.message}
+              min: { value: 0.01, message: 'المبلغ يجب أن يكون أكبر من صفر' }
+            }}
+            defaultValue={Number(remainingAmount) || 0}
+            render={({ field }) => (
+              <Input
+                type="number"
+                step="0.01"
+                {...field}
+                value={field.value || ''}
+                onChange={(e) => field.onChange(e.target.value ? Number(e.target.value) : '')}
+                error={errors.amount?.message}
+              />
+            )}
           />
           
           {/* Payment Preview */}
@@ -191,34 +201,56 @@ const RecordPaymentModal = () => {
         </div>
 
         {/* Payment Date */}
-        <Input
-          label="تاريخ الدفع"
-          type="date"
-          {...register('paid_at', { required: t('common.required') })}
-          error={errors.paid_at?.message}
+        <Controller
+          name="paid_at"
+          control={control}
+          rules={{ required: t('common.required') }}
+          defaultValue={new Date().toISOString().split('T')[0]}
+          render={({ field }) => (
+            <Input
+              label="تاريخ الدفع"
+              type="date"
+              {...field}
+              error={errors.paid_at?.message}
+            />
+          )}
         />
 
         {/* Reference Number (for non-cash payments) */}
         {!isCashMethod && selectedMethod && (
-          <Input
-            label="رقم المرجع / العملية"
-            {...register('reference_number')}
-            placeholder={
-              selectedMethod?.code === 'bank_transfer' ? 'رقم الحوالة البنكية' :
-              selectedMethod?.code === 'card' ? 'آخر 4 أرقام من البطاقة' :
-              selectedMethod?.code === 'check' ? 'رقم الشيك' : 'رقم المرجع'
-            }
+          <Controller
+            name="reference_number"
+            control={control}
+            defaultValue=""
+            render={({ field }) => (
+              <Input
+                label="رقم المرجع / العملية"
+                {...field}
+                placeholder={
+                  selectedMethod?.code === 'bank_transfer' ? 'رقم الحوالة البنكية' :
+                  selectedMethod?.code === 'card' ? 'آخر 4 أرقام من البطاقة' :
+                  selectedMethod?.code === 'check' ? 'رقم الشيك' : 'رقم المرجع'
+                }
+              />
+            )}
           />
         )}
 
         {/* Notes */}
         <div className="mb-4">
           <label className="form-label">ملاحظات</label>
-          <textarea
-            className="form-control"
-            rows={2}
-            placeholder="أي ملاحظات على الدفعة..."
-            {...register('note')}
+          <Controller
+            name="note"
+            control={control}
+            defaultValue=""
+            render={({ field }) => (
+              <textarea
+                className="form-control"
+                rows={2}
+                placeholder="أي ملاحظات على الدفعة..."
+                {...field}
+              />
+            )}
           />
         </div>
 

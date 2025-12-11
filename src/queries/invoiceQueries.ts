@@ -571,34 +571,34 @@ export const useRecordInvoicePayment = () => {
 
   return useMutation({
     mutationFn: recordInvoicePayment,
-    onSuccess: async (response) => {
+    onSuccess: (response) => {
       // Invalidate specific invoice
-      await queryClient.invalidateQueries({ queryKey: ['invoice', response.invoice_id], refetchType: 'active' });
-      await queryClient.invalidateQueries({ queryKey: ['invoices', response.invoice_id, 'payments'], refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: ['invoice', response.invoice_id], refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: ['invoices', response.invoice_id, 'payments'], refetchType: 'active' });
 
       // Invalidate invoice lists - must refetch immediately
-      await queryClient.invalidateQueries({ queryKey: ['invoices'], refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: ['invoices'], refetchType: 'active' });
 
       // Invalidate payable invoices specifically
-      await queryClient.invalidateQueries({ queryKey: ['invoices', 'payable'], refetchType: 'all' });
+      queryClient.invalidateQueries({ queryKey: ['invoices', 'payable'], refetchType: 'all' });
 
       // Invalidate account/ledger data
-      await queryClient.invalidateQueries({ queryKey: ['account'], refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: ['account'], refetchType: 'active' });
 
       // Invalidate summary data
-      await queryClient.invalidateQueries({ queryKey: ['clients'], refetchType: 'active' });
-      await queryClient.invalidateQueries({ queryKey: ['client'], refetchType: 'active' });
-      await queryClient.invalidateQueries({ queryKey: ['dashboard'], refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: ['clients'], refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: ['client'], refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: ['dashboard'], refetchType: 'active' });
 
       // Invalidate tasks (payment affects task completion status)
-      await queryClient.invalidateQueries({ queryKey: ['tasks'], refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: ['tasks'], refetchType: 'active' });
 
       // Invalidate employee data
-      await queryClient.invalidateQueries({ queryKey: ['employee'], refetchType: 'active' });
-      await queryClient.invalidateQueries({ queryKey: ['employees'], refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: ['employee'], refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: ['employees'], refetchType: 'active' });
 
       // Invalidate receivables (for old system compatibility)
-      await queryClient.invalidateQueries({ queryKey: ['receivables'], refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: ['receivables'], refetchType: 'active' });
     },
   });
 };

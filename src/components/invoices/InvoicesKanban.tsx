@@ -62,7 +62,7 @@ const KanbanColumn = ({
     };
 
     return (
-        <div className={`${bgClass} rounded-lg p-3 flex flex-col max-h-full`}>
+        <div className={`${bgClass} rounded-lg p-3 flex flex-col h-full min-h-0`}>
             <div className="flex items-center justify-between mb-3 flex-shrink-0">
                 <h3 className="font-semibold text-black flex items-center gap-2">
                     <Icon size={16} className={colorClass} />
@@ -73,7 +73,7 @@ const KanbanColumn = ({
                 </Badge>
             </div>
 
-            <div className="space-y-2 flex-1 overflow-y-auto pr-1 min-h-0">
+            <div className="space-y-2 flex-1 overflow-y-auto pr-2 min-h-0">
                 {isLoading && invoices.length === 0 ? (
                     <div className="flex justify-center py-4">
                         <Spinner size="sm" />
@@ -138,7 +138,7 @@ const KanbanColumn = ({
 
 const InvoicesKanban = ({ search, clientId }: InvoicesKanbanProps) => {
     return (
-        <div className="grid grid-cols-4 gap-4 h-full items-start">
+        <div className="grid grid-cols-4 gap-4 w-full h-full p-4 overflow-hidden">
             <KanbanColumn
                 title="معلقة"
                 icon={Clock}

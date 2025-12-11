@@ -98,7 +98,9 @@ const AccountsOverviewPage = () => {
 
   // Handle new transaction
   const handleNewTransaction = () => {
-    openModal('manualTransaction', { preselectedAccount: selectedAccount });
+    // if (!selectedAccount) return;
+    // Default to payout when no button context - user can change in modal if needed
+    openModal('manualTransaction');
   };
 
   // Handle account click
@@ -321,31 +323,39 @@ const AccountsOverviewPage = () => {
                               </div>
                             </div>
                             <div className="flex gap-2">
-                              <Button
-                                variant="outline-primary"
-                                size="sm"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  openModal('manualTransaction', {
-                                    preselectedAccount: account,
-                                  });
-                                }}
-                              >
-                                <Plus size={14} className="me-1" />
-                                إضافة رصيد
-                              </Button>
-                              <Button
-                                variant="outline-primary"
-                                size="sm"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  openModal('manualTransaction', {
-                                    preselectedAccount: account,
-                                  });
-                                }}
-                              >
-                                خصم رصيد
-                              </Button>
+                              {
+                                account.type !== 'company' && (
+                                  <>
+                                    <Button
+                                      variant="outline-primary"
+                                      size="sm"
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        openModal('manualTransaction', {
+                                          preselectedAccount: account,
+                                          direction: 'payout'
+                                        });
+                                      }}
+                                    >
+                                      <Plus size={14} className="me-1" />
+                                     سند صرف
+                                    </Button>
+                                    <Button
+                                      variant="outline-primary"
+                                      size="sm"
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        openModal('manualTransaction', {
+                                          preselectedAccount: account,
+                                          direction: 'repayment'
+                                        });
+                                      }}
+                                    >
+                                      سند قبض
+                                    </Button>
+                                  </>
+                                )
+                              }
                               <Button
                                 variant="primary"
                                 size="sm"

@@ -202,35 +202,29 @@ TypeBadgeCell.displayName = 'TypeBadgeCell';
 // Actions Cell
 interface ActionsColumnData {
   client: Client;
-  payableInvoices: Invoice[] | undefined;
+  payableMap: Map<string, Invoice>;
   openModal: (modal: string, data: any) => void;
 }
 
-const ActionsCell = React.memo(({ rowData, columnData }: CellProps<FinancialTransaction, ActionsColumnData>) => {
-  const { client, payableInvoices, openModal } = columnData || {};
+const ActionsCell = React.memo(({ rowData, columnData }: CellProps<FinancialTransaction & { is_payable?: boolean }, ActionsColumnData>) => {
+  const { client, payableMap, openModal } = columnData || {};
 
-  if (!columnData) return null;
-
-  const matchesInvoiceId = (tx: FinancialTransaction, invoiceId: number): boolean => {
-    const relatedId = tx.related_object_id;
-    if (relatedId === undefined || relatedId === null) return false;
-    const numRelatedId = Number(relatedId);
-    return !isNaN(numRelatedId) && numRelatedId === invoiceId;
-  };
+  if (!columnData || !rowData.is_payable) return null;
 
   const handlePayInvoice = (e: React.MouseEvent) => {
     e.stopPropagation();
     e.preventDefault();
     
-    const invoice = payableInvoices?.find(inv => matchesInvoiceId(rowData, inv.id));
+    const relatedId = rowData.related_object_id ?? (rowData as any).related_id;
+    const invoice = payableMap?.get(String(relatedId));
     
     if (invoice && client) {
       openModal?.('recordPayment', { invoice, clientName: client.name });
     } else if (client) {
       // Fallback: create minimal invoice object from transaction
-      const relatedId = Number(rowData.related_object_id);
+      const relatedIdNum = Number(relatedId);
       const pseudoInvoice: Partial<Invoice> = {
-        id: relatedId,
+        id: relatedIdNum,
         client_id: client.id,
         description: rowData.description,
         amount: getDebitAmount(rowData),
@@ -241,15 +235,6 @@ const ActionsCell = React.memo(({ rowData, columnData }: CellProps<FinancialTran
       openModal?.('recordPayment', { invoice: pseudoInvoice as Invoice, clientName: client.name });
     }
   };
-
-  // CRITICAL: Check both that invoice exists in payableInvoices AND that it's actually still payable
-  // This prevents showing pay button after invoice is fully paid
-  const isPayable = (rowData.transaction_type === 'INVOICE_CREATED' || 
-                     rowData.transaction_type === 'INVOICE_GENERATED') && 
-                    rowData.related_object_type === 'invoice' && 
-                    payableInvoices?.some(inv => matchesInvoiceId(rowData, inv.id));
-
-  if (!isPayable) return null;
 
   return (
     <div 
@@ -344,6 +329,42 @@ const AccountLedgerTable: React.FC<AccountLedgerTableProps> = ({
     return { totalDebit, totalCredit, balance };
   }, [filteredTransactions, balanceData]);
 
+  // Create a map of payable invoices for O(1) lookup
+  const payableMap = useMemo(() => {
+    const map = new Map<string, Invoice>();
+    (payableInvoices ?? []).forEach(inv => {
+      if (inv?.id != null && (Number(inv.remaining_amount) ?? 0) > 0) {
+        map.set(String(inv.id), inv);
+      }
+    });
+    return map;
+  }, [payableInvoices]);
+
+  // Pre-calculate is_payable flag for each transaction to ensure grid updates
+  const transactionsWithFlags = useMemo(() => {
+    return filteredTransactions.map(tx => {
+      const relatedId = tx.related_object_id ?? (tx as any).related_id ?? (tx as any).related_object_reference;
+      const relatedType = String(tx.related_object_type ?? '').toLowerCase();
+      const key = String(relatedId ?? '');
+      
+      const isInvoiceType = 
+        tx.transaction_type === 'INVOICE_CREATED' || 
+        tx.transaction_type === 'INVOICE_GENERATED';
+        
+      const isPayable = isInvoiceType && 
+                        relatedType === 'invoice' && 
+                        payableMap.has(key);
+
+      return { ...tx, is_payable: isPayable };
+    });
+  }, [filteredTransactions, payableMap]);
+
+  // Generate a version key to force grid re-render when payable status changes
+  const payableVersion = useMemo(() => {
+    if (!payableInvoices) return '0';
+    return payableInvoices.map(inv => `${inv.id}:${inv.remaining_amount}`).join('|');
+  }, [payableInvoices]);
+
   // Define columns - order is right-to-left for RTL
   const columns = useMemo((): HuloolGridColumn<FinancialTransaction>[] => [
     {
@@ -412,11 +433,11 @@ const AccountLedgerTable: React.FC<AccountLedgerTableProps> = ({
       title: 'الإجراءات',
       type: 'custom',
       component: ActionsCell as React.ComponentType<CellProps<FinancialTransaction>>,
-      columnData: { client, payableInvoices, openModal },
+      columnData: { client, payableMap, openModal },
       width: 100,
       grow: 0,
     },
-  ], [hideAmounts, client, payableInvoices, openModal]);
+  ], [hideAmounts, client, payableMap, openModal]);
 
   if (historyError) {
     return (
@@ -463,7 +484,8 @@ const AccountLedgerTable: React.FC<AccountLedgerTableProps> = ({
 
       {/* Transactions Grid */}
       <HuloolDataGrid
-        data={filteredTransactions}
+        key={payableVersion}
+        data={transactionsWithFlags}
         columns={columns}
         isLoading={isLoading}
         emptyMessage="لا توجد حركات مالية"

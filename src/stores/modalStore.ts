@@ -117,8 +117,7 @@ interface ModalProps {
   // FINANCIAL CENTER MODALS
   manualTransaction: {
     preselectedAccount?: UnifiedAccount;
-    preselectedToAccount?: UnifiedAccount;
-    direction?: TransactionDirection
+    direction?: 'payout' | 'repayment'
   };
   createInvoice: { client?: Client; client_id?: number };
   journalEntryDetails: { transactionId: number; accountType: string; accountId: number };
@@ -131,7 +130,7 @@ interface ModalState {
 }
 
 interface ModalActions {
-  openModal: <T extends ModalType>(type: T, props: ModalProps[T]) => void;
+  openModal: <T extends ModalType>(type: T, props?: ModalProps[T]) => void;
   closeModal: () => void;
 }
 

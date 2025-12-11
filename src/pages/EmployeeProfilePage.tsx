@@ -173,16 +173,7 @@ const EmployeeProfilePage = () => {
         pending_count: 0,
         pending_amount: 0
       },
-      preselectedToAccount: {
-        type: 'company',
-        id: 0,
-        name: 'الشركة',
-        email: null,
-        balance: 0,
-        last_activity: null,
-        pending_count: 0,
-        pending_amount: 0
-      }
+      direction: 'payout'
     });
   };
 
@@ -190,16 +181,6 @@ const EmployeeProfilePage = () => {
     if (!employee) return;
     openModal('manualTransaction', { 
       preselectedAccount: { 
-        type: 'company', 
-        id: 0, 
-        name: 'الشركة',
-        email: null,
-        balance: 0,
-        last_activity: null,
-        pending_count: 0,
-        pending_amount: 0
-      },
-      preselectedToAccount: {
         type: 'employee',
         id: employeeTableId,
         name: employee.display_name,
@@ -208,7 +189,8 @@ const EmployeeProfilePage = () => {
         last_activity: null,
         pending_count: 0,
         pending_amount: 0
-      }
+      },
+      direction: 'repayment'
     });
   };
 
