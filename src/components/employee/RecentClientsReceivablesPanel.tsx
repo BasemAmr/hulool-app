@@ -1,6 +1,6 @@
 // src/components/employee/RecentClientsReceivablesPanel.tsx
 import React from 'react';
-import { Edit3, MoreHorizontal, RotateCcw } from 'lucide-react';
+import { CreditCard, Edit3, MoreHorizontal, RotateCcw } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useModalStore } from '../../stores/modalStore';
 import WhatsAppIcon from '../ui/WhatsAppIcon';
@@ -172,7 +172,7 @@ const RecentClientsReceivablesPanel: React.FC<RecentClientsReceivablesPanelProps
       </div>
 
       {/* Body - Invoices Table */}
-      <div className="p-0" style={{ flex: 1, overflow: 'visible', position: 'relative' }}>
+      <div className="p-0" style={{ flex: 1, overflow: 'hidden', position: 'relative' }}>
         {filteredReceivables.length === 0 ? (
           <div className="flex justify-center items-center h-full">
             <div className="text-center">
@@ -182,55 +182,61 @@ const RecentClientsReceivablesPanel: React.FC<RecentClientsReceivablesPanelProps
             </div>
           </div>
         ) : (
-          <div className="w-full overflow-x-auto h-full" style={{ overflow: 'visible', position: 'relative', zIndex: 10 }}>
+          <div className="w-full h-full" style={{ overflow: 'auto', position: 'relative' }}>
             <table className="w-full text-sm mb-0" style={{ position: 'relative', zIndex: 10 }}>
               <thead
                 style={{
                   position: 'sticky',
                   top: 0,
-                  backgroundColor: 'var(--color-gray-50)'
+                  backgroundColor: '#f0f0f0'
                 }}
               >
                 <tr>
                   <th style={{
                     fontSize: '0.75rem',
                     padding: '8px',
-                    borderBottom: '2px solid var(--color-gray-100)',
-                    textAlign: 'start'
+                    border: '1px solid #ddd',
+                    textAlign: 'start',
+                    fontWeight: 'bold'
                   }}>العميل</th>
                   <th style={{
                     fontSize: '0.75rem',
                     padding: '8px',
-                    borderBottom: '2px solid var(--color-gray-100)',
-                    textAlign: 'center'
+                    border: '1px solid #ddd',
+                    textAlign: 'center',
+                    fontWeight: 'bold'
                   }}>الوصف</th>
                   <th style={{
                     fontSize: '0.75rem',
                     padding: '8px',
-                    borderBottom: '2px solid var(--color-gray-100)',
-                    textAlign: 'center'
+                    border: '1px solid #ddd',
+                    textAlign: 'center',
+                    fontWeight: 'bold'
                   }}>المستحق</th>
                   <th style={{
                     fontSize: '0.75rem',
                     padding: '8px',
-                    borderBottom: '2px solid var(--color-gray-100)',
+                    border: '1px solid #ddd',
                     textAlign: 'end',
-                    minWidth: '80px'
+                    minWidth: '80px',
+                    fontWeight: 'bold'
                   }}>إجراءات</th>
                 </tr>
               </thead>
               <tbody>
-                {filteredReceivables.map((invoice: DisplayInvoice, index: number) => (
+                {filteredReceivables.map((invoice: DisplayInvoice, index: number) => {
+                  const bgColor = index % 2 === 0 ? '#fff3cd' : '#ffe69c';
+                  return (
                   <tr
                     key={invoice.id}
-                    className="hover:bg-muted/50 transition-colors cursor-pointer"
+                    className="hover:opacity-80 transition-opacity cursor-pointer"
                   >
                     <td style={{
                       fontSize: '0.75rem',
                       padding: '6px',
                       textAlign: 'start',
-                      borderBottom: '1px solid var(--color-gray-100)',
-                      backgroundColor: index % 2 === 0 ? '#fff8e1' : '#ffecb3'
+                      border: '1px solid #ddd',
+                      backgroundColor: bgColor
                     }}>
                       <span 
                         className="font-bold text-black" 
@@ -248,8 +254,8 @@ const RecentClientsReceivablesPanel: React.FC<RecentClientsReceivablesPanelProps
                       fontSize: '0.8rem',
                       padding: '6px',
                       textAlign: 'start',
-                      borderBottom: '1px solid var(--color-gray-100)',
-                      backgroundColor: index % 2 === 0 ? '#fff8e1' : '#ffecb3'
+                      border: '1px solid #ddd',
+                      backgroundColor: bgColor
                     }} className='font-semibold'>
                       <span>
                         {invoice.description || invoice.task_name}
@@ -259,8 +265,8 @@ const RecentClientsReceivablesPanel: React.FC<RecentClientsReceivablesPanelProps
                       fontSize: '0.75rem',
                       padding: '6px',
                       textAlign: 'center',
-                      borderBottom: '1px solid var(--color-gray-100)',
-                      backgroundColor: index % 2 === 0 ? '#fff8e1' : '#ffecb3'
+                      border: '1px solid #ddd',
+                      backgroundColor: bgColor
                     }}>
                       <span className="font-bold text-red-600">
                         {formatCurrency(invoice.remaining_amount)} ر.س
@@ -269,9 +275,9 @@ const RecentClientsReceivablesPanel: React.FC<RecentClientsReceivablesPanelProps
                     <td style={{
                       padding: '6px',
                       textAlign: 'end',
-                      borderBottom: '1px solid var(--color-gray-100)',
+                      border: '1px solid #ddd',
                       minWidth: '80px',
-                      backgroundColor: index % 2 === 0 ? '#fff8e1' : '#ffecb3'
+                      backgroundColor: bgColor
                     }}>
                       <div className="flex justify-center gap-1">
                         <button
@@ -289,6 +295,20 @@ const RecentClientsReceivablesPanel: React.FC<RecentClientsReceivablesPanelProps
                           title="تعديل المستحق"
                         >
                           <Edit3 size={10} />
+                        </button>
+
+                        <button
+                          className="px-1.5 py-1 text-xs border border-purple-600 text-purple-600 rounded hover:bg-purple-600 hover:text-white transition-colors"
+                          onClick={() => openModal('recordPayment', {
+                            invoiceId: invoice.id,
+                            clientId: invoice.client_id,
+                            clientName: invoice.client_name,
+                            amountDue: invoice.remaining_amount
+                          })}
+                          disabled={invoice.remaining_amount <= 0}
+                          title="تسجيل دفعة"
+                        >
+                          <CreditCard size={10} />
                         </button>
 
                         <button
@@ -314,7 +334,8 @@ const RecentClientsReceivablesPanel: React.FC<RecentClientsReceivablesPanelProps
                       </div>
                     </td>
                   </tr>
-                ))}
+                  );
+                })}
               </tbody>
             </table>
           </div>

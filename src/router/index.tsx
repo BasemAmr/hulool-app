@@ -103,7 +103,7 @@ const routes: RouteObject[] = [
             element: <PageWrapper />, // Admin layout wrapper
             children: [
               { index: true, element: <EmployeeManagementPage /> },
-              { path: ':id', element: <EmployeeProfilePage /> },
+              { path: ':id/:mode?', element: <EmployeeProfilePage /> },
             ],
           },
         ],

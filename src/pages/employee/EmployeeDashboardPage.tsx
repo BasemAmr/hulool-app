@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { applyPageBackground } from '../../utils/backgroundUtils';
 import { useAuthStore } from '../../stores/authStore';
 import { useEmployeeDashboard } from '../../queries/employeeDashboardQueries';
@@ -14,12 +14,14 @@ import { Receipt, FileText, CreditCard } from 'lucide-react';
  * EmployeeDashboardPage - Main dashboard for employee users
  * 
  * Features:
- * - 3-panel layout: Recent Tasks, Recent Receivables, Recent Transactions
+ * - 3-panel layout: Recent Tasks (0.25), Recent Receivables (0.25), Recent Transactions (0.5)
  * - Quick actions for task management
  */
 const EmployeeDashboardPage = () => {
   const user = useAuthStore((state) => state.user);
-  const { data: dashboardData, isLoading, error } = useEmployeeDashboard();
+  const [selectedMonth, setSelectedMonth] = useState<number | undefined>(undefined);
+  const [selectedYear, setSelectedYear] = useState<number | undefined>(undefined);
+  const { data: ledgerData, isLoading, error } = useEmployeeDashboard(selectedMonth, selectedYear);
   const openModal = useModalStore(state => state.openModal);
 
   useEffect(() => {
@@ -92,25 +94,34 @@ const EmployeeDashboardPage = () => {
       </div>
 
       {/* Main Dashboard Panels */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-2" style={{ height: 'calc(100vh - 120px)', overflow: 'visible', position: 'relative' }}>
-        {/* Recent Tasks Panel */}
+      <div 
+        className="grid gap-2" 
+        style={{ 
+          height: 'calc(100vh - 120px)', 
+          overflow: 'visible', 
+          position: 'relative',
+          gridTemplateColumns: '1fr 1fr 2fr' // 0.25, 0.25, 0.5
+        }}
+      >
+        {/* Recent Tasks Panel - 1 fraction */}
         <div className="mb-2" style={{ height: '100%', overflow: 'visible', position: 'relative', zIndex: 10 }}>
-          {dashboardData?.recent_tasks && (
-            <RecentTasksPanel tasks={dashboardData.recent_tasks} />
+          {ledgerData && (
+            <RecentTasksPanel tasks={ledgerData.recent_tasks || []} />
           )}
         </div>
 
-        {/* Recent Receivables Panel */}
-        <div className="mb-2" style={{ height: '100%', overflow: 'visible' }}>
+        {/* Recent Receivables Panel - 1 fraction */}
+        <div className="mb-2" style={{ height: '100%', overflow: 'hidden', border: '1px solid #ddd' }}>
           <RecentClientsReceivablesPanel />
         </div>
 
-        {/* Recent Transactions Panel */}
-        <div className="mb-2" style={{ height: '100%', overflow: 'visible' }}>
-          {dashboardData?.recent_transactions && dashboardData?.financial_summary && (
+        {/* Recent Transactions Panel - 2 fractions */}
+        <div className="mb-2" style={{ height: '100%', overflow: 'hidden', border: '1px solid #ddd' }}>
+          {ledgerData && (
             <RecentTransactionsPanel
-              transactions={dashboardData.recent_transactions}
-              financialSummary={dashboardData.financial_summary}
+              ledgerData={ledgerData}
+              onMonthChange={setSelectedMonth}
+              onYearChange={setSelectedYear}
             />
           )}
         </div>

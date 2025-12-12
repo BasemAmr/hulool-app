@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
-import { useParams } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import { User, DollarSign, FileText, Users as UsersIcon, CreditCard, Activity, HandCoins, Clock, TrendingUp, TrendingDown, LayoutDashboard } from 'lucide-react';
 import Button from '../components/ui/Button';
 import { useModalStore } from '../stores/modalStore';
-import { useGetEmployee, useGetEmployeeLedger } from '../queries/employeeQueries';
+import { useGetEmployee, useGetEmployeeLedger, type EmployeeLedgerResponse } from '../queries/employeeQueries';
 import { formatCurrency } from '../utils/formatUtils';
 import { Card, CardHeader, CardContent } from '../components/ui/card';
 
@@ -16,6 +16,8 @@ import EmployeeReceivablesTable from '../components/employees/EmployeeReceivable
 // Import admin employee management components
 import AdminEmployeeClientColumn from '../employee_management_temp_page/AdminEmployeeClientColumn';
 import AdminEmployeeTasksTable from '../employee_management_temp_page/AdminEmployeeTasksTable';
+import AdminEmployeeInvoicesPanel from '../components/employees/AdminEmployeeInvoicesPanel';
+import AdminEmployeeTransactionsPanel from '../components/employees/AdminEmployeeTransactionsPanel';
 
 type ViewMode = 'dashboard' | 'transactions' | 'tasks' | 'clients' | 'receivables';
 
@@ -30,56 +32,35 @@ interface FinancialSummaryCardProps {
   };
   pendingCount: number;
 }
-
 const FinancialSummaryCard: React.FC<FinancialSummaryCardProps> = ({ summary, pendingCount }) => {
   if (!summary) return null;
-  
+
   const totalPaidOut = summary.total_paid_out ?? summary.total_expenses ?? 0;
-  
+
   return (
-    <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+    <div className="flex gap-4 items-center bg-gray-50 p-2 rounded-md">
       {/* Total Earned */}
-      <div className="bg-green-50 border border-green-200 rounded-lg p-4">
-        <div className="flex items-center gap-2 mb-2">
-          <TrendingUp size={20} className="text-green-600" />
-          <span className="text-sm text-green-700 font-medium">إجمالي المستحق</span>
-        </div>
-        <p className="text-2xl font-bold text-green-600">
-          {formatCurrency(summary.total_earned)} <span className="text-sm">ر.س</span>
-        </p>
+      <div className="flex items-center gap-1">
+        <span className="text-sm font-medium text-gray-700">إجمالي المستحق:</span>
+        <span className="text-sm font-bold text-gray-900">{formatCurrency(summary.total_earned)}</span>
       </div>
-      
+
       {/* Total Paid Out */}
-      <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-        <div className="flex items-center gap-2 mb-2">
-          <TrendingDown size={20} className="text-red-600" />
-          <span className="text-sm text-red-700 font-medium">إجمالي المصروف</span>
-        </div>
-        <p className="text-2xl font-bold text-red-600">
-          {formatCurrency(totalPaidOut)} <span className="text-sm">ر.س</span>
-        </p>
+      <div className="flex items-center gap-1">
+        <span className="text-sm font-medium text-gray-700">إجمالي المصروف:</span>
+        <span className="text-sm font-bold text-gray-900">{formatCurrency(totalPaidOut)}</span>
       </div>
-      
+
       {/* Balance Due */}
-      <div className={`${summary.balance_due > 0 ? 'bg-blue-50 border-blue-200' : 'bg-gray-50 border-gray-200'} border rounded-lg p-4`}>
-        <div className="flex items-center gap-2 mb-2">
-          <DollarSign size={20} className={summary.balance_due > 0 ? 'text-blue-600' : 'text-gray-600'} />
-          <span className={`text-sm font-medium ${summary.balance_due > 0 ? 'text-blue-700' : 'text-gray-700'}`}>الرصيد المتبقي</span>
-        </div>
-        <p className={`text-2xl font-bold ${summary.balance_due > 0 ? 'text-blue-600' : 'text-gray-600'}`}>
-          {formatCurrency(summary.balance_due)} <span className="text-sm">ر.س</span>
-        </p>
+      <div className="flex items-center gap-1">
+        <span className="text-sm font-medium text-gray-700">الرصيد المتبقي:</span>
+        <span className="text-sm font-bold text-gray-900">{formatCurrency(summary.balance_due)}</span>
       </div>
-      
+
       {/* Pending Commissions */}
-      <div className={`${pendingCount > 0 ? 'bg-amber-50 border-amber-200' : 'bg-gray-50 border-gray-200'} border rounded-lg p-4`}>
-        <div className="flex items-center gap-2 mb-2">
-          <Clock size={20} className={pendingCount > 0 ? 'text-amber-600' : 'text-gray-600'} />
-          <span className={`text-sm font-medium ${pendingCount > 0 ? 'text-amber-700' : 'text-gray-700'}`}>عمولات معلقة</span>
-        </div>
-        <p className={`text-2xl font-bold ${pendingCount > 0 ? 'text-amber-600' : 'text-gray-600'}`}>
-          {pendingCount} <span className="text-sm">معاملة</span>
-        </p>
+      <div className="flex items-center gap-1">
+        <span className="text-sm font-medium text-gray-700">عمولات معلقة:</span>
+        <span className="text-sm font-bold text-gray-900">{pendingCount} معاملة</span>
       </div>
     </div>
   );
@@ -91,35 +72,55 @@ interface EmployeePageHeader {
   onQabd: () => void;
   activeMode: ViewMode;
   onModeChange: (mode: ViewMode) => void;
-  modeOptions: ReadonlyArray<{key: ViewMode; label: string; icon: any}>;
+  modeOptions: ReadonlyArray<{ key: ViewMode; label: string; icon: any }>;
+  ledgerData?: EmployeeLedgerResponse;
+  pendingCount: number;
 }
 
-const EmployeeHeader: React.FC<EmployeePageHeader> = ({ employee, onSarf, onQabd, activeMode, onModeChange, modeOptions }) => {
+const EmployeeHeader: React.FC<EmployeePageHeader> = ({ employee, onSarf, onQabd, activeMode, onModeChange, modeOptions, ledgerData, pendingCount }) => {
   return (
-    <div className="flex flex-wrap justify-between items-center gap-4 mb-6">
-      <div className="flex items-center gap-3">
-        <div className="w-12 h-12 bg-primary text-white rounded-full flex items-center justify-center">
-          <User size={24} />
+    <div className="flex flex-wrap justify-around items-center gap-4 mb-6">
+      {/* Employee Name and Status */}
+      <div className="flex justify-around items-center gap-4 flex-1">
+        <div className="flex items-center gap-3">
+          <div className="w-12 h-12 bg-primary text-white rounded-full flex items-center justify-center">
+            <User size={24} />
+          </div>
+          <div>
+            <h1 className="text-2xl font-bold text-black">{employee.display_name}</h1>
+          </div>
         </div>
-        <div>
-          <h1 className="text-2xl font-bold text-black">{employee.display_name}</h1>
-        </div>
+        <FinancialSummaryCard
+          summary={ledgerData?.data?.summary}
+          pendingCount={pendingCount}
+        />
+
       </div>
+
+      {/* Mode Selection Cards */}
       <div className="flex items-center gap-2">
-        <select 
-          className="px-3 py-1.5 text-sm border rounded-md focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
-          style={{ width: 'auto' }}
-          value={activeMode}
-          onChange={(e) => onModeChange(e.target.value as ViewMode)}
-        >
-          {modeOptions.map(({ key, label }) => (
-            <option key={key} value={key}>{label}</option>
-          ))}
-        </select>
+        {modeOptions.map(({ key, label, icon: Icon }) => (
+          <button
+            key={key}
+            onClick={() => onModeChange(key)}
+            className={`px-4 py-2 rounded-md font-bold text-lg transition-colors ${activeMode === key
+                ? 'bg-primary text-white shadow-md'
+                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+              }`}
+          >
+            <Icon size={20} className="mr-2 inline" />
+            {label}
+          </button>
+        ))}
+      </div>
+
+      {/* Action Buttons */}
+      <div className="flex items-center gap-2">
         <Button
           variant="outline-primary"
           size="sm"
           onClick={onQabd}
+          className='font-bold text-lg rounded-md px-4 py-2'
         >
           <HandCoins size={16} className="mr-1" />
           قبض
@@ -128,6 +129,7 @@ const EmployeeHeader: React.FC<EmployeePageHeader> = ({ employee, onSarf, onQabd
           variant="primary"
           size="sm"
           onClick={onSarf}
+          className='font-bold text-lg rounded-md px-4 py-2'
         >
           <DollarSign size={16} className="mr-1" />
           صرف
@@ -136,35 +138,35 @@ const EmployeeHeader: React.FC<EmployeePageHeader> = ({ employee, onSarf, onQabd
     </div>
   );
 };
-
 const EmployeeProfilePage = () => {
-  const { id } = useParams<{ id: string }>();
+  const { id, mode } = useParams<{ id: string; mode?: string }>();
+  const navigate = useNavigate();
   const { openModal } = useModalStore();
-  
-  const [activeMode, setActiveMode] = useState<ViewMode>('dashboard');
+  const activeMode = (mode as ViewMode) || 'dashboard';
+
   const [currentPage, setCurrentPage] = useState(1);
   const perPage = 20;
 
   const employeeTableId = parseInt(id || '0', 10);
   const { data: employee, isLoading, error: employeeError } = useGetEmployee(employeeTableId);
-  
+
   // Fetch ledger data for summary
   const { data: ledgerData } = useGetEmployeeLedger(employeeTableId, { page: 1, per_page: 100 });
-  
+
   // Calculate pending commissions count
-  const pendingCount = ledgerData?.data?.pending_commissions?.length || 
-    (ledgerData?.data?.transactions || []).filter(t => 
-      t.is_pending || 
-      (t.direction === 'CREDIT' && 
-        (parseFloat(t.amount || '0') === 0 || 
-         t.transaction_name?.startsWith('Pending:')))
+  const pendingCount = ledgerData?.data?.pending_commissions?.length ||
+    (ledgerData?.data?.transactions || []).filter(t =>
+      t.is_pending ||
+      (t.direction === 'CREDIT' &&
+        (parseFloat(t.amount || '0') === 0 ||
+          t.transaction_name?.startsWith('Pending:')))
     ).length;
 
   const handleSarf = () => {
     if (!employee) return;
-    openModal('manualTransaction', { 
-      preselectedAccount: { 
-        type: 'employee', 
+    openModal('manualTransaction', {
+      preselectedAccount: {
+        type: 'employee',
         id: employeeTableId,
         name: employee.display_name,
         email: employee.user_email,
@@ -179,8 +181,8 @@ const EmployeeProfilePage = () => {
 
   const handleQabd = () => {
     if (!employee) return;
-    openModal('manualTransaction', { 
-      preselectedAccount: { 
+    openModal('manualTransaction', {
+      preselectedAccount: {
         type: 'employee',
         id: employeeTableId,
         name: employee.display_name,
@@ -195,7 +197,7 @@ const EmployeeProfilePage = () => {
   };
 
   const handleModeChange = (mode: ViewMode) => {
-    setActiveMode(mode);
+    navigate(`/employees/${employeeTableId}/${mode}`);
     setCurrentPage(1); // Reset to first page when changing modes
   };
 
@@ -222,46 +224,47 @@ const EmployeeProfilePage = () => {
 
   return (
     <div className="p-6">
-      <EmployeeHeader 
-        employee={employee} 
+      <EmployeeHeader
+        employee={employee}
         onSarf={handleSarf}
         onQabd={handleQabd}
         activeMode={activeMode}
         onModeChange={handleModeChange}
         modeOptions={modeOptions}
-      />
-
-      {/* Financial Summary Cards */}
-      <FinancialSummaryCard 
-        summary={ledgerData?.data?.summary}
+        ledgerData={ledgerData}
         pendingCount={pendingCount}
       />
 
-      {/* Dashboard View - Admin Employee Management */}
+
+      {/* Dashboard View - Admin Employee Management - 3 Panel Layout */}
       {activeMode === 'dashboard' && (
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
-          {/* Left column: Client cards */}
-          <div className="lg:col-span-4">
-            <Card className="shadow-sm">
-              <CardHeader className="bg-primary text-white rounded-t-lg py-3">
-                <h6 className="mb-0 font-medium">العملاء ذوي المهام النشطة</h6>
+        <div
+          className="grid gap-2"
+          style={{
+            height: 'calc(100vh - 280px)',
+            gridTemplateColumns: '1fr 1fr 2fr'
+          }}
+        >
+          {/* Tasks Panel - 0.25 fraction */}
+          <div style={{ height: '100%', overflow: 'hidden' }}>
+            <Card className="shadow-sm h-full flex flex-col">
+              <CardHeader className="bg-primary text-white rounded-t-lg py-2 flex-shrink-0">
+                <h6 className="mb-0 font-medium text-sm">العملاء ذوي المهام النشطة</h6>
               </CardHeader>
-              <CardContent className="p-0 max-h-[calc(100vh-200px)] overflow-y-auto">
+              <CardContent className="p-0 flex-1 overflow-y-auto">
                 <AdminEmployeeClientColumn employeeId={employeeTableId} />
               </CardContent>
             </Card>
           </div>
 
-          {/* Right column: Tasks table with filters */}
-          <div className="lg:col-span-8">
-            <Card className="shadow-sm">
-              <CardHeader className="bg-primary text-white rounded-t-lg py-3">
-                <h6 className="mb-0 font-medium">جميع مهام الموظف</h6>
-              </CardHeader>
-              <CardContent className="p-0">
-                <AdminEmployeeTasksTable employeeId={employeeTableId} />
-              </CardContent>
-            </Card>
+          {/* Invoices Panel - 0.25 fraction */}
+          <div style={{ height: '100%', overflow: 'hidden' }}>
+            <AdminEmployeeInvoicesPanel employeeId={employeeTableId} />
+          </div>
+
+          {/* Transactions Panel - 0.5 fraction */}
+          <div style={{ height: '100%', overflow: 'hidden' }}>
+            <AdminEmployeeTransactionsPanel employeeId={employeeTableId} />
           </div>
         </div>
       )}
@@ -277,7 +280,7 @@ const EmployeeProfilePage = () => {
               onPageChange={setCurrentPage}
             />
           )}
-          
+
           {activeMode === 'tasks' && (
             <EmployeeTasksTable
               employeeId={employeeTableId}
@@ -286,7 +289,7 @@ const EmployeeProfilePage = () => {
               onPageChange={setCurrentPage}
             />
           )}
-          
+
           {activeMode === 'clients' && (
             <EmployeeClientsTable
               employeeId={employeeTableId}
@@ -294,7 +297,7 @@ const EmployeeProfilePage = () => {
               perPage={perPage}
             />
           )}
-          
+
           {activeMode === 'receivables' && (
             <EmployeeReceivablesTable
               employeeId={employeeTableId}

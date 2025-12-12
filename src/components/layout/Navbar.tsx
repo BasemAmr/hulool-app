@@ -7,7 +7,7 @@ import {
   Banknote, LayoutDashboard, LogOut, NotebookText, Users, Settings, 
   Building, Calculator, Home, Briefcase, Plus, Receipt, 
   Tags, CreditCard, AlertTriangle, UserCog, Wallet, FileText, CheckSquare,
-  Search, ChevronDown, Menu
+  Search, ChevronDown, Menu, Loader
 } from 'lucide-react';
 import { useModalStore } from '../../stores/modalStore';
 import { 
@@ -20,6 +20,7 @@ import {
 } from '../ui/dropdown-menu';
 import Button from '../ui/Button';
 import { useState } from 'react';
+import { useGetEmployeesForSelection } from '../../queries/employeeQueries';
 
 const Navbar = () => {
   const user = useAuthStore((state) => state.user);
@@ -28,6 +29,7 @@ const Navbar = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const openModal = useModalStore((state) => state.openModal);
+  const { data: employees = [], isLoading: employeesLoading } = useGetEmployeesForSelection();
 
   const handleSearchFocus = () => {
     openModal('clientSearch', {});
@@ -41,11 +43,12 @@ const Navbar = () => {
   const mainNavigationItems = [
     { path: '/dashboard', icon: LayoutDashboard, label: t('dashboard.title') || 'لوحة التحكم' },
     { path: '/clients', icon: Users, label: t('clients.title') || 'العملاء' },
-    { path: '/employees', icon: UserCog, label: 'الموظفين' },
     { path: '/receivables', icon: Banknote, label: t('receivables.title') || 'المستحقات' },
     { path: '/tags', icon: Tags, label: 'العلامات' },
     { path: '/settings', icon: Settings, label: t('settings.title') || 'الإعدادات' }
   ];
+
+  const isEmployeesActive = location.pathname.startsWith('/employees');
 
   const financialCenterItems = [
     { path: '/financial-center/accounts', icon: Wallet, label: 'نظرة عامة' },
@@ -101,7 +104,48 @@ const Navbar = () => {
             </NavLink>
           ))}
 
-          {/* Financial Center Dropdown */}
+          {/* Employees Dropdown */}
+          <DropdownMenu>
+            <DropdownMenuTrigger className={`flex items-center gap-2 px-3 py-2 text-sm font-medium rounded-md transition-colors outline-none ${isEmployeesActive ? 'bg-primary/10 text-primary' : 'text-muted-foreground hover:bg-accent hover:text-accent-foreground'}`}>
+              <UserCog size={16} />
+              <span>الموظفين</span>
+              <ChevronDown size={14} className="opacity-50" />
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-56 text-right max-h-96 overflow-y-auto">
+              <DropdownMenuLabel className="text-right">إدارة الموظفين</DropdownMenuLabel>
+              <DropdownMenuItem asChild>
+                <NavLink to="/employees" className="flex items-center gap-2 w-full cursor-pointer flex-row-reverse justify-end font-semibold">
+                  <span>صفحة ادارة الموظفين</span>
+                  <UserCog size={16} />
+                </NavLink>
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              {employeesLoading ? (
+                <div className="flex items-center justify-center py-4 gap-2 text-muted-foreground">
+                  <Loader size={16} className="animate-spin" />
+                  <span className="text-sm">جاري التحميل...</span>
+                </div>
+              ) : employees.length === 0 ? (
+                <div className="py-4 text-center text-sm text-muted-foreground">
+                  لا توجد موظفين
+                </div>
+              ) : (
+                employees.map((employee) => (
+                  <DropdownMenuItem key={employee.id} asChild>
+                    <NavLink 
+                      to={`/employees/${employee.id}/dashboard`} 
+                      className="flex font-bold items-center gap-2 w-full cursor-pointer flex-row-reverse justify-end"
+                    >
+                      <span>{employee.display_name}</span>
+                      <div className="w-5 h-5 rounded-full bg-primary/20 text-primary text-xs flex items-center justify-center flex-shrink-0">
+                        {employee.display_name?.charAt(0).toUpperCase()}
+                      </div>
+                    </NavLink>
+                  </DropdownMenuItem>
+                ))
+              )}
+            </DropdownMenuContent>
+          </DropdownMenu>
           <DropdownMenu>
             <DropdownMenuTrigger className={`flex items-center gap-2 px-3 py-2 text-sm font-medium rounded-md transition-colors outline-none ${isFinancialActive ? 'bg-primary/10 text-primary' : 'text-muted-foreground hover:bg-accent hover:text-accent-foreground'}`}>
               <Wallet size={16} />

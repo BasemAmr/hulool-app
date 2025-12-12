@@ -2,7 +2,54 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import apiClient from '../api/apiClient';
 import type { ApiResponse, TaskType } from '../api/types';
 
-// Employee dashboard data types
+// Employee dashboard data types - Monthly Ledger Response
+export interface MonthlyTransaction {
+  id: number;
+  date: string;
+  description: string;
+  from_account: string;
+  to_account: string;
+  amount: number;
+  running_balance: number;
+  direction: 'income' | 'expense' | null;
+  transaction_type: string;
+  reference_type: string | null;
+  reference_id: string | null;
+}
+
+export interface OpeningBalance {
+  total_debit: number;
+  total_credit: number;
+  balance: number;
+  description: string;
+}
+
+export interface PeriodInfo {
+  month: number;
+  year: number;
+  month_name: string;
+}
+
+export interface MonthlySummary {
+  period_income: number;
+  period_expenses: number;
+  net_change: number;
+  closing_balance: number;
+  total_to_date_income: number;
+  total_to_date_expenses: number;
+  balance_due: number;
+}
+
+export interface MonthlyLedgerData {
+  period: PeriodInfo;
+  opening_balance: OpeningBalance;
+  transactions: MonthlyTransaction[];
+  summary: MonthlySummary;
+  task_stats?: TaskStats;
+  recent_tasks?: EmployeeDashboardTask[];
+}
+
+// Legacy types for backwards compatibility
 export interface EmployeeTransaction {
   id: string;
   employee_user_id?: string;
@@ -17,7 +64,6 @@ export interface EmployeeTransaction {
   task_name: string | null;
   client_id?: string | null;
   client_name: string | null;
-  // New ledger fields
   balance?: string | null;
   is_pending?: boolean;
   source?: 'new_ledger' | 'legacy';
@@ -84,18 +130,19 @@ export interface EmployeeDashboardData {
 }
 
 /**
- * Fetch employee dashboard data
+ * Fetch employee monthly ledger (new API)
  * Uses the /employees/me/dashboard endpoint
  */
-export const useEmployeeDashboard = () => {
+export const useEmployeeDashboard = (month?: number, year?: number) => {
   return useQuery({
-    queryKey: ['employee', 'dashboard'],
-    queryFn: async (): Promise<EmployeeDashboardData> => {
-      const response = await apiClient.get<ApiResponse<EmployeeDashboardData>>('/employees/me/dashboard');
-      if (!response.data.success) {
-        throw new Error(response.data.message || 'Failed to fetch employee dashboard data');
-      }
-      return response.data.data;
+    queryKey: ['employee', 'dashboard', month, year],
+    queryFn: async (): Promise<MonthlyLedgerData> => {
+      const params: any = {};
+      if (month) params.month = month;
+      if (year) params.year = year;
+      
+      const response = await apiClient.get<MonthlyLedgerData>('/employees/me/dashboard', { params });
+      return response.data;
     },
     staleTime: 1 * 60 * 1000, // Keep fresh for 1 minute
     refetchInterval: 20 * 1000, // Auto-refetch every 20 seconds
