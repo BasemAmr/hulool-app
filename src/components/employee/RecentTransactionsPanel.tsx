@@ -1,6 +1,6 @@
 // src/components/employee/RecentTransactionsPanel.tsx
-import React, { useState, useEffect } from 'react';
-import { MoreHorizontal } from 'lucide-react';
+import React, { useState, useEffect, useRef } from 'react';
+import { MoreHorizontal, Loader2 } from 'lucide-react';
 import { formatDate } from '../../utils/dateUtils';
 import type { MonthlyLedgerData } from '../../queries/employeeDashboardQueries';
 import {
@@ -10,6 +10,40 @@ import {
   ShadcnSelectTrigger as SelectTrigger,
   ShadcnSelectValue as SelectValue,
 } from '../ui/shadcn-select';
+
+interface MonthlyTransaction {
+  id: number;
+  date: string;
+  description: string;
+  from_account: string;
+  to_account: string;
+  amount: number;
+  running_balance: number;
+  direction: 'income' | 'expense';
+  transaction_type: string;
+  reference_type?: string;
+  reference_id?: number;
+  client_name?: string;
+  client_phone?: string;
+}
+
+interface OpeningBalance {
+  description: string;
+  total_debit: number;
+  total_credit: number;
+  balance: number;
+}
+
+interface MonthlySummary {
+  total_to_date_income: number;
+  total_to_date_expenses: number;
+  balance_due: number;
+}
+
+interface Period {
+  month: number;
+  year: number;
+}
 
 interface RecentTransactionsPanelProps {
   ledgerData: MonthlyLedgerData;
@@ -23,11 +57,73 @@ const RecentTransactionsPanel: React.FC<RecentTransactionsPanelProps> = ({
   onYearChange 
 }) => {
   const [visibleTransactions, setVisibleTransactions] = useState(20);
+  const [isAutoLoading, setIsAutoLoading] = useState(false);
+  const [maxClientWidth, setMaxClientWidth] = useState(120);
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const tableRef = useRef<HTMLTableElement>(null);
+  const clientCellsRef = useRef<Map<number, HTMLTableCellElement>>(new Map());
+  const loadingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
-  // Reset visible count when ledger data changes (month/year changed)
+  const { transactions = [], summary = { total_to_date_income: 0, total_to_date_expenses: 0, balance_due: 0 }, opening_balance = { description: 'الرصيد الافتتاحي', total_debit: 0, total_credit: 0, balance: 0 }, period } = ledgerData || {};
+
+  // Reset visible count when ledger data changes
   useEffect(() => {
     setVisibleTransactions(20);
-  }, [ledgerData.period.month, ledgerData.period.year]);
+    setIsAutoLoading(false);
+    setMaxClientWidth(120);
+    clientCellsRef.current.clear();
+    if (loadingTimeoutRef.current) clearTimeout(loadingTimeoutRef.current);
+  }, [period?.month, period?.year]);
+
+  // Reset loading state after visible transactions change
+  useEffect(() => {
+    if (isAutoLoading && loadingTimeoutRef.current === null) {
+      loadingTimeoutRef.current = setTimeout(() => {
+        setIsAutoLoading(false);
+        loadingTimeoutRef.current = null;
+      }, 200);
+    }
+    return () => {
+      if (loadingTimeoutRef.current) clearTimeout(loadingTimeoutRef.current);
+    };
+  }, [visibleTransactions, isAutoLoading]);
+
+  // Auto-load checker effect with proper timing
+  useEffect(() => {
+    const checkAndLoadMore = () => {
+      if (!scrollContainerRef.current) return;
+      const scrollContainer = scrollContainerRef.current;
+      const scrollPos = scrollContainer.scrollHeight - scrollContainer.scrollTop;
+      const threshold = 200;
+      const hasSpace = scrollContainer.clientHeight < scrollContainer.scrollHeight;
+
+      if ((scrollPos < threshold || !hasSpace) && visibleTransactions < transactions.length && !isAutoLoading) {
+        setIsAutoLoading(true);
+        setVisibleTransactions(prev => Math.min(prev + 20, transactions.length));
+      }
+    };
+
+    const container = scrollContainerRef.current;
+    if (!container) return;
+
+    const debounceTimer = setTimeout(checkAndLoadMore, 300);
+    container.addEventListener('scroll', checkAndLoadMore);
+    
+    // Initial check on mount
+    setTimeout(checkAndLoadMore, 100);
+
+    return () => {
+      clearTimeout(debounceTimer);
+      container.removeEventListener('scroll', checkAndLoadMore);
+    };
+  }, [visibleTransactions, transactions.length, isAutoLoading]);
+
+  // Dynamic width effect for client column
+  useEffect(() => {
+    const maxWidth = Array.from(clientCellsRef.current.values())
+      .reduce((max, cell) => Math.max(max, cell.offsetWidth), 120);
+    setMaxClientWidth(Math.min(maxWidth + 30, 330));
+  }, [visibleTransactions, transactions.length]);
 
   const arabicMonths = [
     'يناير', 'فبراير', 'مارس', 'أبريل', 'مايو', 'يونيو',
@@ -39,6 +135,12 @@ const RecentTransactionsPanel: React.FC<RecentTransactionsPanelProps> = ({
       minimumFractionDigits: 0,
       maximumFractionDigits: 2
     }).format(Math.abs(amount));
+  };
+
+  const getTransactionTypeLabel = (type: string, direction: 'income' | 'expense'): string => {
+    if (direction === 'income') return 'سند قبض';
+    if (direction === 'expense') return 'سند صرف';
+    return type;
   };
 
   const handleMonthChange = (value: string) => {
@@ -56,37 +158,19 @@ const RecentTransactionsPanel: React.FC<RecentTransactionsPanelProps> = ({
   };
 
   const handleShowMore = () => {
-    setVisibleTransactions(prev => prev + 20);
+    setVisibleTransactions(prev => Math.min(prev + 20, transactions.length));
   };
 
-  const { transactions, summary, opening_balance, period } = ledgerData;
   const displayedTransactions = transactions.slice(0, visibleTransactions);
   const hasMoreTransactions = transactions.length > visibleTransactions;
 
   // Generate year options (2020-2030)
   const yearOptions = Array.from({ length: 11 }, (_, i) => 2020 + i);
 
-
   return (
-    <div 
-      className="rounded-lg border border-border bg-card shadow-sm h-full"
-      style={{
-        overflow: 'visible',
-        position: 'relative',
-        display: 'flex',
-        flexDirection: 'column',
-        zIndex: 1
-      }}
-    >
+    <div className="rounded-lg border border-border bg-card shadow-sm h-full flex flex-col">
       {/* Header */}
-      <div
-        className="px-4 py-2 border-b border-border"
-        style={{
-          backgroundColor: '#28a745',
-          color: '#fff',
-          flexShrink: 0
-        }}
-      >
+      <div className="px-4 py-2 border-b border-border bg-green-600 text-white flex-shrink-0">
         <div className="flex justify-between items-center">
           <div className="flex items-center gap-2">
             <h6 className="mb-0 font-bold text-white text-base">
@@ -124,7 +208,7 @@ const RecentTransactionsPanel: React.FC<RecentTransactionsPanelProps> = ({
       </div>
 
       {/* Body - Transactions Table */}
-      <div className="p-0" style={{ flex: 1, overflow: 'hidden', position: 'relative' }}>
+      <div className="flex-1 overflow-hidden p-0">
         {transactions.length === 0 ? (
           <div className="flex justify-center items-center h-full">
             <div className="text-center">
@@ -134,247 +218,121 @@ const RecentTransactionsPanel: React.FC<RecentTransactionsPanelProps> = ({
             </div>
           </div>
         ) : (
-          <div className="w-full h-full" style={{ overflow: 'auto', position: 'relative' }}>
-            <table className="w-full text-sm mb-0" style={{ position: 'relative', zIndex: 10 }}>
-              <thead
-                style={{
-                  position: 'sticky',
-                  top: 0,
-                  zIndex: 1,
-                  backgroundColor: '#f0f0f0'
-                }}
-              >
+          <div ref={scrollContainerRef} className="w-full h-full overflow-auto">
+            <table ref={tableRef} className="w-full text-sm mb-0 border-collapse">
+              <thead className="sticky top-0 z-10 bg-gray-100">
                 <tr>
-                  <th style={{
-                    fontSize: '0.75rem',
-                    padding: '8px',
-                    border: '1px solid #ddd',
-                    textAlign: 'start',
-                    fontWeight: 'bold'
-                  }}>البيان</th>
-                  <th style={{
-                    fontSize: '0.75rem',
-                    padding: '8px',
-                    border: '1px solid #ddd',
-                    textAlign: 'center',
-                    fontWeight: 'bold'
-                  }}>المدين</th>
-                  <th style={{
-                    fontSize: '0.75rem',
-                    padding: '8px',
-                    border: '1px solid #ddd',
-                    textAlign: 'center',
-                    fontWeight: 'bold'
-                  }}>الدائن</th>
-                  <th style={{
-                    fontSize: '0.75rem',
-                    padding: '8px',
-                    border: '1px solid #ddd',
-                    textAlign: 'center',
-                    fontWeight: 'bold'
-                  }}>الرصيد</th>
-                  <th style={{
-                    fontSize: '0.75rem',
-                    padding: '8px',
-                    border: '1px solid #ddd',
-                    textAlign: 'center',
-                    fontWeight: 'bold'
-                  }}>التاريخ</th>
+                  <th className="px-2 py-2 border border-gray-300 text-start font-bold text-base text-black" style={{ width: `${maxClientWidth}px`, minWidth: `${maxClientWidth}px` }}>اسم العميل</th>
+                  <th className="px-2 py-2 border border-gray-300 text-start font-bold text-base text-black">البيان</th>
+                  <th className="px-2 py-2 border border-gray-300 text-center font-bold text-base text-black" style={{ width: '70px', minWidth: '70px' }}>المدين</th>
+                  <th className="px-2 py-2 border border-gray-300 text-center font-bold text-base text-black" style={{ width: '70px', minWidth: '70px' }}>الدائن</th>
+                  <th className="px-2 py-2 border border-gray-300 text-center font-bold text-base text-black" style={{ width: '80px', minWidth: '80px' }}>الرصيد</th>
+                  <th className="px-2 py-2 border border-gray-300 text-center font-bold text-base text-black" style={{ width: '60px', minWidth: '60px' }}>التاريخ</th>
                 </tr>
               </thead>
               <tbody>
                 {/* Opening Balance Row */}
-                <tr style={{
-                  backgroundColor: '#e8f5e9',
-                  fontWeight: 'bold'
-                }}>
-                  <td style={{
-                    fontSize: '0.75rem',
-                    padding: '8px',
-                    border: '1px solid #ddd',
-                    textAlign: 'start',
-                    fontWeight: 'bold'
-                  }}>
+                <tr className="bg-green-50 font-bold">
+                  <td className="px-2 py-2 border border-gray-300 text-start font-bold text-base text-black" style={{ width: `${maxClientWidth}px`, minWidth: `${maxClientWidth}px` }}>-</td>
+                  <td className="px-2 py-2 border border-gray-300 text-start font-bold text-base text-black">
                     {opening_balance.description}
                   </td>
-                  <td style={{
-                    fontSize: '0.75rem',
-                    padding: '8px',
-                    border: '1px solid #ddd',
-                    textAlign: 'center',
-                    fontWeight: 'bold'
-                  }}>
+                  <td className="px-2 py-2 border border-gray-300 text-center font-bold text-base">
                     <span className="text-green-600">
-                      {opening_balance.total_debit > 0 ? `${formatCurrency(opening_balance.total_debit)} ر.س` : '-'}
+                      {opening_balance.total_debit > 0 ? formatCurrency(opening_balance.total_debit) : '-'}
                     </span>
                   </td>
-                  <td style={{
-                    fontSize: '0.75rem',
-                    padding: '8px',
-                    border: '1px solid #ddd',
-                    textAlign: 'center',
-                    fontWeight: 'bold'
-                  }}>
+                  <td className="px-2 py-2 border border-gray-300 text-center font-bold text-base">
                     <span className="text-red-600">
-                      {opening_balance.total_credit > 0 ? `${formatCurrency(opening_balance.total_credit)} ر.س` : '-'}
+                      {opening_balance.total_credit > 0 ? formatCurrency(opening_balance.total_credit) : '-'}
                     </span>
                   </td>
-                  <td style={{
-                    fontSize: '0.75rem',
-                    padding: '8px',
-                    border: '1px solid #ddd',
-                    textAlign: 'center',
-                    fontWeight: 'bold'
-                  }}>
+                  <td className="px-2 py-2 border border-gray-300 text-center font-bold text-base">
                     <span className={opening_balance.balance >= 0 ? 'text-green-600' : 'text-red-600'}>
-                      {formatCurrency(opening_balance.balance)} ر.س
+                      {formatCurrency(opening_balance.balance)}
                     </span>
                   </td>
-                  <td style={{
-                    fontSize: '0.75rem',
-                    padding: '8px',
-                    border: '1px solid #ddd',
-                    textAlign: 'center'
-                  }}>
-                    -
-                  </td>
+                  <td className="px-2 py-2 border border-gray-300 text-center font-bold text-base text-black" style={{ width: '60px', minWidth: '60px' }}>-</td>
                 </tr>
                 {/* Transaction Rows */}
                 {displayedTransactions.map((transaction, index) => {
-                  const bgColor = index % 2 === 0 ? '#c8e6c9' : '#e8f5e9';
+                  const bgColor = index % 2 === 0 ? 'bg-green-100' : 'bg-green-50';
+                  const clientDisplay = transaction.client_name || getTransactionTypeLabel(transaction.transaction_type, (transaction.direction as 'income' | 'expense') || 'income');
                   return (
-                  <tr
-                    key={transaction.id}
-                    className="hover:opacity-80 transition-opacity"
-                  >
-                    <td style={{
-                      fontSize: '0.75rem',
-                      padding: '6px',
-                      textAlign: 'start',
-                      border: '1px solid #ddd',
-                      backgroundColor: bgColor
-                    }}>
-                      <div className="text-start">
-                        <span className="font-semibold">
+                    <tr key={transaction.id} className={`${bgColor} hover:opacity-80 transition-opacity`}>
+                      <td 
+                        ref={(el) => {
+                          if (el) clientCellsRef.current.set(transaction.id, el);
+                        }}
+                        className="px-2 py-1.5 border border-gray-300 text-start font-bold text-base text-black" 
+                        style={{ width: `${maxClientWidth}px`, minWidth: `${maxClientWidth}px` }}
+                      >
+                        {clientDisplay}
+                      </td>
+                      <td className="px-2 py-1.5 border border-gray-300 text-start font-bold text-base text-black">
+                        <div className="text-start">
                           {transaction.description}
+                        </div>
+                      </td>
+                      <td className="px-2 py-1.5 border border-gray-300 text-center font-bold text-base">
+                        <span className="text-green-600">
+                          {transaction.direction === 'income' ? (
+                            formatCurrency(transaction.amount)
+                          ) : (
+                            <span className="text-black">-</span>
+                          )}
                         </span>
-                      </div>
-                    </td>
-                    <td style={{
-                      fontSize: '0.75rem',
-                      padding: '6px',
-                      textAlign: 'center',
-                      border: '1px solid #ddd',
-                      backgroundColor: bgColor
-                    }}>
-                      <span className="text-green-600">
-                        {transaction.direction === 'income' ? (
-                          <>
-                            {formatCurrency(transaction.amount)} ر.س
-                          </>
-                        ) : (
-                          <span className="text-black">-</span>
-                        )}
-                      </span>
-                    </td>
-                    <td style={{
-                      fontSize: '0.75rem',
-                      padding: '6px',
-                      textAlign: 'center',
-                      border: '1px solid #ddd',
-                      backgroundColor: bgColor
-                    }}>
-                      <span className="text-red-600">
-                        {transaction.direction === 'expense' ? (
-                          <>
-                            {formatCurrency(transaction.amount)} ر.س
-                          </>
-                        ) : (
-                          <span className="text-black">-</span>
-                        )}
-                      </span>
-                    </td>
-                    <td style={{
-                      fontSize: '0.75rem',
-                      padding: '6px',
-                      textAlign: 'center',
-                      border: '1px solid #ddd',
-                      backgroundColor: bgColor,
-                      fontWeight: '600'
-                    }}>
-                      <span className={transaction.running_balance >= 0 ? 'text-green-600' : 'text-red-600'}>
-                        {formatCurrency(transaction.running_balance)} ر.س
-                      </span>
-                    </td>
-                    <td style={{
-                      fontSize: '0.75rem',
-                      padding: '6px',
-                      textAlign: 'center',
-                      border: '1px solid #ddd',
-                      backgroundColor: bgColor
-                    }}>
-                      <span style={{ fontSize: '10px' }}>
+                      </td>
+                      <td className="px-2 py-1.5 border border-gray-300 text-center font-bold text-base">
+                        <span className="text-red-600">
+                          {transaction.direction === 'expense' ? (
+                            formatCurrency(transaction.amount)
+                          ) : (
+                            <span className="text-black">-</span>
+                          )}
+                        </span>
+                      </td>
+                      <td className="px-2 py-1.5 border border-gray-300 text-center font-bold text-base">
+                        <span className={transaction.running_balance >= 0 ? 'text-green-600' : 'text-red-600'}>
+                          {formatCurrency(transaction.running_balance)}
+                        </span>
+                      </td>
+                      <td className="px-2 py-1.5 border border-gray-300 text-center font-bold text-base text-black" style={{ width: '60px', minWidth: '60px' }}>
                         {formatDate(transaction.date).replace(/\/20/, '/')}
-                      </span>
-                    </td>
-                  </tr>
+                      </td>
+                    </tr>
                   );
                 })}
+                {/* Loading Row */}
+                {isAutoLoading && (
+                  <tr className="bg-gray-50">
+                    <td colSpan={6} className="px-2 py-4 text-center">
+                      <Loader2 className="inline animate-spin text-green-600" size={20} />
+                    </td>
+                  </tr>
+                )}
                 {/* Totals Footer Row */}
-                <tr style={{
-                  backgroundColor: '#f0f0f0',
-                  borderTop: '2px solid #999',
-                  fontWeight: 'bold'
-                }}>
-                  <td style={{
-                    fontSize: '0.75rem',
-                    padding: '8px',
-                    textAlign: 'center',
-                    fontWeight: 'bold',
-                    border: '1px solid #ddd'
-                  }}>
+                <tr className="bg-gray-100 border-t-2 border-gray-400">
+                  <td className="px-2 py-2 border border-gray-300 text-center font-bold text-base text-black" style={{ width: `${maxClientWidth}px`, minWidth: `${maxClientWidth}px` }}>-</td>
+                  <td className="px-2 py-2 border border-gray-300 text-center font-bold text-base text-black">
                     الإجماليات
                   </td>
-                  <td style={{
-                    fontSize: '0.75rem',
-                    padding: '8px',
-                    textAlign: 'center',
-                    fontWeight: 'bold',
-                    border: '1px solid #ddd'
-                  }}>
+                  <td className="px-2 py-2 border border-gray-300 text-center font-bold text-base">
                     <span className="text-green-600">
-                      {formatCurrency(summary.total_to_date_income)} ر.س
+                      {formatCurrency(summary.total_to_date_income)}
                     </span>
                   </td>
-                  <td style={{
-                    fontSize: '0.75rem',
-                    padding: '8px',
-                    textAlign: 'center',
-                    fontWeight: 'bold',
-                    border: '1px solid #ddd'
-                  }}>
+                  <td className="px-2 py-2 border border-gray-300 text-center font-bold text-base">
                     <span className="text-red-600">
-                      {formatCurrency(summary.total_to_date_expenses)} ر.س
+                      {formatCurrency(summary.total_to_date_expenses)}
                     </span>
                   </td>
-                  <td style={{
-                    fontSize: '0.75rem',
-                    padding: '8px',
-                    textAlign: 'center',
-                    fontWeight: 'bold',
-                    border: '1px solid #ddd'
-                  }}>
+                  <td className="px-2 py-2 border border-gray-300 text-center font-bold text-base">
                     <span className={summary.balance_due >= 0 ? 'text-green-600' : 'text-red-600'}>
-                      {formatCurrency(summary.balance_due)} ر.س
+                      {formatCurrency(summary.balance_due)}
                     </span>
                   </td>
-                  <td style={{
-                    fontSize: '0.75rem',
-                    padding: '8px',
-                    border: '1px solid #ddd'
-                  }}>
-                    -
-                  </td>
+                  <td className="px-2 py-2 border border-gray-300 text-center font-bold text-base text-black" style={{ width: '60px', minWidth: '60px' }}>-</td>
                 </tr>
               </tbody>
             </table>
@@ -383,14 +341,11 @@ const RecentTransactionsPanel: React.FC<RecentTransactionsPanelProps> = ({
       </div>
 
       {/* Footer - Show More Button */}
-      <div 
-        className="px-4 py-2 bg-muted/30 border-t border-border text-center"
-        style={{ flexShrink: 0 }}
-      >
+      <div className="px-4 py-2 bg-gray-50 border-t border-border text-center flex-shrink-0">
         {hasMoreTransactions && (
           <button
             onClick={handleShowMore}
-            className="text-primary p-0 flex items-center justify-center gap-1 w-full hover:text-primary/80 transition-colors text-sm"
+            className="text-green-600 p-0 flex items-center justify-center gap-1 w-full hover:text-green-700 transition-colors text-sm font-bold"
           >
             <MoreHorizontal size={16} />
             <span>عرض المزيد ({transactions.length - visibleTransactions} متبقي)</span>

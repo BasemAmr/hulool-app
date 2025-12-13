@@ -100,7 +100,7 @@ const AdminEmployeeTransactionsPanel: React.FC<AdminEmployeeTransactionsPanelPro
     const maxWidth = Array.from(clientCellsRef.current.values()).reduce((max, cell) => {
       return Math.max(max, cell.offsetWidth);
     }, 100);
-    setMaxClientWidth(Math.min(maxWidth, 300)); // Cap at 300px
+    setMaxClientWidth(Math.min(maxWidth + 30, 330)); // Cap at 330px (max + 30px)
   }, [visibleTransactions]);
 
   // Auto-load more when scrolled to bottom or table doesn't fill container
@@ -260,16 +260,16 @@ const AdminEmployeeTransactionsPanel: React.FC<AdminEmployeeTransactionsPanelPro
                   <th className="px-1.5 py-1.5 border border-gray-300 text-start font-bold text-base" style={{ width: '280px', minWidth: '280px' }}>
                     البيان
                   </th>
-                  <th className="text-base px-1.5 py-1.5 border border-gray-300 text-center font-bold">
+                  <th className="text-base px-1.5 py-1.5 border border-gray-300 text-center font-bold" style={{ width: '70px', minWidth: '70px' }}>
                     المدين
                   </th>
-                  <th className="text-base px-1.5 py-1.5 border border-gray-300 text-center font-bold">
+                  <th className="text-base px-1.5 py-1.5 border border-gray-300 text-center font-bold" style={{ width: '70px', minWidth: '70px' }}>
                     الدائن
                   </th>
-                  <th className="text-base px-1.5 py-1.5 border border-gray-300 text-center font-bold">
+                  <th className="text-base px-1.5 py-1.5 border border-gray-300 text-center font-bold" style={{ width: '80px', minWidth: '80px' }}>
                     الرصيد
                   </th>
-                  <th className="text-base px-1.5 py-1.5 border border-gray-300 text-center font-bold">
+                  <th className="px-1.5 py-1.5 border border-gray-300 text-center font-bold" style={{ fontSize: '1rem', width: '60px', minWidth: '60px' }}>
                     التاريخ
                   </th>
                 </tr>
@@ -296,7 +296,7 @@ const AdminEmployeeTransactionsPanel: React.FC<AdminEmployeeTransactionsPanelPro
                       {formatCurrency(opening_balance.balance)}
                     </span>
                   </td>
-                  <td className="text-base px-1.5 py-1.5 border border-gray-300 text-center">-</td>
+                  <td className="text-base px-1.5 py-1.5 border border-gray-300 text-center" style={{ width: '60px', minWidth: '60px' }}>-</td>
                 </tr>
 
                 {/* Transaction Rows */}
@@ -335,7 +335,7 @@ const AdminEmployeeTransactionsPanel: React.FC<AdminEmployeeTransactionsPanelPro
                           {formatCurrency(transaction.running_balance)}
                         </span>
                       </td>
-                      <td className="text-base px-1.5 py-1 border border-gray-300 text-center font-bold">
+                      <td className="text-base px-1.5 py-1 border border-gray-300 text-center font-bold" style={{ width: '60px', minWidth: '60px' }}>
                         <span className="text-[10px]">
                           {formatDate(transaction.date)}
                         </span>
@@ -377,7 +377,7 @@ const AdminEmployeeTransactionsPanel: React.FC<AdminEmployeeTransactionsPanelPro
                       {formatCurrency(summary.balance_due)}
                     </span>
                   </td>
-                  <td className="text-base px-1.5 py-1.5 border border-gray-300">-</td>
+                  <td className="text-base px-1.5 py-1.5 border border-gray-300" style={{ width: '60px', minWidth: '60px' }}>-</td>
                 </tr>
               </tbody>
             </table>

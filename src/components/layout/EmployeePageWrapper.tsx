@@ -28,7 +28,7 @@ const EmployeePageWrapper = () => {
   }, [location.pathname]);
 
   return (
-    <div className="flex flex-col h-screen overflow-hidden bg-gray-50" data-page-type={pageType}>
+    <div className="rtl flex flex-col h-screen overflow-hidden bg-gray-50" data-page-type={pageType}>
       <EmployeeNavbar />
       <main
         className="flex-1 overflow-y-auto h-full bg-gray-50"
