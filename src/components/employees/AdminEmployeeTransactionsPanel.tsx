@@ -299,7 +299,7 @@ const AdminEmployeeTransactionsPanel: React.FC<AdminEmployeeTransactionsPanelPro
                       </td>
                       <td className="text-base px-1.5 py-1 border border-gray-300 text-center font-bold">
                         <span className="text-[10px]">
-                          {formatDate(transaction.date).replace(/\/20/, '/')}
+                          {formatDate(transaction.date)}
                         </span>
                       </td>
                     </tr>
