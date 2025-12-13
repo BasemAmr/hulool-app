@@ -22,7 +22,7 @@ interface MonthlyTransaction {
   direction: 'income' | 'expense';
   transaction_type: string;
   reference_type?: string;
-  reference_id?: number;
+  reference_id?: string | null;
   client_name?: string;
   client_phone?: string;
 }
@@ -257,7 +257,9 @@ const RecentTransactionsPanel: React.FC<RecentTransactionsPanelProps> = ({
                 {/* Transaction Rows */}
                 {displayedTransactions.map((transaction, index) => {
                   const bgColor = index % 2 === 0 ? 'bg-green-100' : 'bg-green-50';
-                  const clientDisplay = transaction.client_name || getTransactionTypeLabel(transaction.transaction_type, (transaction.direction as 'income' | 'expense') || 'income');
+                  const t = transaction;
+                  const direction = (t.direction as 'income' | 'expense') ?? 'income';
+                  const clientDisplay = t.client_name || getTransactionTypeLabel(t.transaction_type, direction);
                   return (
                     <tr key={transaction.id} className={`${bgColor} hover:opacity-80 transition-opacity`}>
                       <td 

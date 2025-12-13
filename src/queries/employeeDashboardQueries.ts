@@ -15,6 +15,8 @@ export interface MonthlyTransaction {
   transaction_type: string;
   reference_type: string | null;
   reference_id: string | null;
+  client_name: string | null;
+  client_phone: string | null;
 }
 
 export interface OpeningBalance {
