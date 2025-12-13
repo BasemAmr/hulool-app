@@ -111,7 +111,7 @@ const AdminEmployeeInvoicesPanel: React.FC<AdminEmployeeInvoicesPanelProps> = ({
           <h6 className="mb-0 font-bold text-base">
             فواتير الموظف
           </h6>
-          <span className="text-sm font-bold">
+          <span className="text-base font-bold">
             {invoices.length} فاتورة
           </span>
         </div>
@@ -122,14 +122,14 @@ const AdminEmployeeInvoicesPanel: React.FC<AdminEmployeeInvoicesPanelProps> = ({
         {invoices.length === 0 ? (
           <div className="flex justify-center items-center h-full">
             <div className="text-center">
-              <p className="text-black mb-0 text-sm">
+              <p className="text-black mb-0 text-base">
                 لا توجد فواتير غير مدفوعة
               </p>
             </div>
           </div>
         ) : (
           <div className="w-full h-full" style={{ overflow: 'auto' }}>
-            <table className="w-full text-sm mb-0">
+            <table className="w-full text-base mb-0">
               <thead
                 style={{
                   position: 'sticky',
@@ -192,7 +192,7 @@ const AdminEmployeeInvoicesPanel: React.FC<AdminEmployeeInvoicesPanelProps> = ({
                   return (
                     <tr key={invoice.id}>
                       <td style={{
-                        fontSize: '0.7rem',
+                        fontSize: '1rem',
                         padding: '4px 6px',
                         border: '1px solid #ddd',
                         textAlign: 'start',
@@ -201,7 +201,7 @@ const AdminEmployeeInvoicesPanel: React.FC<AdminEmployeeInvoicesPanelProps> = ({
                         {clientName}
                       </td>
                       <td style={{
-                        fontSize: '0.7rem',
+                        fontSize: '1rem',
                         padding: '4px 6px',
                         border: '1px solid #ddd',
                         textAlign: 'start',
@@ -210,7 +210,7 @@ const AdminEmployeeInvoicesPanel: React.FC<AdminEmployeeInvoicesPanelProps> = ({
                         {invoice.description || invoice.task_name || `فاتورة #${invoice.id}`}
                       </td>
                       <td style={{
-                        fontSize: '0.7rem',
+                        fontSize: '1rem',
                         padding: '4px 6px',
                         border: '1px solid #ddd',
                         textAlign: 'center',
@@ -219,7 +219,7 @@ const AdminEmployeeInvoicesPanel: React.FC<AdminEmployeeInvoicesPanelProps> = ({
                         {formatCurrency(invoice.amount)}
                       </td>
                       <td style={{
-                        fontSize: '0.7rem',
+                        fontSize: '1rem',
                         padding: '4px 6px',
                         border: '1px solid #ddd',
                         textAlign: 'center',
@@ -229,7 +229,7 @@ const AdminEmployeeInvoicesPanel: React.FC<AdminEmployeeInvoicesPanelProps> = ({
                         {formatCurrency(invoice.paid_amount)}
                       </td>
                       <td style={{
-                        fontSize: '0.7rem',
+                        fontSize: '1rem',
                         padding: '4px 6px',
                         border: '1px solid #ddd',
                         textAlign: 'center',
@@ -240,7 +240,7 @@ const AdminEmployeeInvoicesPanel: React.FC<AdminEmployeeInvoicesPanelProps> = ({
                         {formatCurrency(remaining)}
                       </td>
                       <td style={{
-                        fontSize: '0.7rem',
+                        fontSize: '1rem',
                         padding: '4px 6px',
                         border: '1px solid #ddd',
                         textAlign: 'center',
@@ -279,7 +279,7 @@ const AdminEmployeeInvoicesPanel: React.FC<AdminEmployeeInvoicesPanelProps> = ({
         className="px-4 py-2 bg-muted/30 border-t border-border text-center"
         style={{ flexShrink: 0 }}
       >
-        <span className="text-xs text-muted-foreground">
+        <span className="text-base text-muted-foreground">
           إجمالي المتبقي: {formatCurrency(invoices.reduce((sum, inv) => sum + (inv.remaining_amount || (inv.amount - inv.paid_amount)), 0))} ر.س
         </span>
       </div>

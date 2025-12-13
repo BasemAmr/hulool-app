@@ -112,12 +112,12 @@ const TaskModal = () => {
 
   useEffect(() => {
     if (taskToEdit) {
-      setLocalRequirements(taskToEdit.requirements.map(req => ({
+      setLocalRequirements(taskToEdit?.requirements?.map(req => ({
         ...req,
         id: req.id,
         is_provided: typeof req.is_provided === 'string' ? req.is_provided === '1' : Boolean(req.is_provided),
         temp_id: req.id ? String(req.id) : uuidv4()
-      })));
+      })) || []);
       setValue('client_id', taskToEdit.client_id);
       setValue('task_name', taskToEdit.task_name || '');
       setValue('type', taskToEdit.type);
@@ -126,7 +126,7 @@ const TaskModal = () => {
       setValue('end_date', taskToEdit.end_date || undefined);
       setValue('prepaid_amount', taskToEdit.prepaid_amount || 0);
       setValue('notes', taskToEdit.notes || '');
-      setValue('tags', taskToEdit.tags ? taskToEdit.tags.map(tag => typeof tag === 'object' ? String(tag.id || tag) : String(tag)) : []);
+      setValue('tags', taskToEdit?.tags ? taskToEdit.tags.map(tag => typeof tag === 'object' ? String(tag.id || tag) : String(tag)) : []);
       setValue('amount_details', taskToEdit.amount_details || []);
       // If existing task has subtasks use them, otherwise for legacy tasks create a virtual subtask representing the main amount
       const existingSubtasks = taskToEdit.subtasks && taskToEdit.subtasks.length > 0 ? taskToEdit.subtasks : [];
@@ -167,11 +167,11 @@ const TaskModal = () => {
 
   // Effect to update amount when subtasks change
   useEffect(() => {
-    if (localSubtasks.length > 0) {
+    if (localSubtasks?.length > 0) {
       const validSubtasks = localSubtasks.filter(subtask => 
         subtask.description && subtask.description.trim() && subtask.amount >= 0
       );
-      if (validSubtasks.length > 0) {
+      if (validSubtasks?.length > 0) {
         const total = calculateTotal();
         setValue('amount', total);
       }
@@ -283,7 +283,7 @@ const TaskModal = () => {
     const validSubtasks = localSubtasks.filter(subtask => 
       subtask.description && subtask.description.trim() && subtask.amount >= 0
     );
-    const finalAmount = validSubtasks.length > 0 ? calculateTotal() : Number(data.amount);
+    const finalAmount = validSubtasks?.length > 0 ? calculateTotal() : Number(data.amount);
     
     if (isEditMode && taskToEdit) {
       const updatePayload: UpdateTaskPayload = {
@@ -363,7 +363,7 @@ const TaskModal = () => {
           // Play notification sound when task is created successfully
           playNotificationSound();
           
-          if (validRequirements.length > 0) {
+          if (validRequirements?.length > 0) {
             // console.log('Creating requirements for task:', createdTask.id);
             
             createRequirementsMutation.mutate(
@@ -442,7 +442,7 @@ const TaskModal = () => {
   };
 
   const removeSubtask = (index: number) => {
-    if (localSubtasks.length > 1) {
+    if (localSubtasks?.length > 1) {
       const updatedSubtasks = localSubtasks.filter((_, i) => i !== index);
       setLocalSubtasks(updatedSubtasks);
       // Update the amount field when subtasks change
@@ -474,17 +474,17 @@ const TaskModal = () => {
       subtask.description && subtask.description.trim() && subtask.amount >= 0
     );
     
-    if (validSubtasks.length === 0) return { completed: 0, total: 0, percentage: 0 };
+    if (validSubtasks?.length === 0) return { completed: 0, total: 0, percentage: 0 };
     
     const completed = validSubtasks.filter(subtask => subtask.is_completed).length;
-    const total = validSubtasks.length;
+    const total = validSubtasks?.length;
     const percentage = total > 0 ? Math.round((completed / total) * 100) : 0;
     
     return { completed, total, percentage };
   };
 
   const hasSubtasks = () => {
-    return localSubtasks && localSubtasks.length > 0 && localSubtasks.some(s => s.description && s.description.trim());
+    return localSubtasks && localSubtasks?.length > 0 && localSubtasks.some(s => s.description && s.description.trim());
   };
 
   const taskTypes: TaskType[] = ['Government', 'RealEstate', 'Accounting', 'Other'];
@@ -698,11 +698,11 @@ const TaskModal = () => {
 
                   {/* Subtasks List */}
                   <div className="border border-blue-600 border-t-0 rounded-b">
-                    {localSubtasks.map((subtask, index) => (
+                    {localSubtasks?.map((subtask, index) => (
                       <div 
                         key={index} 
                         className={`grid grid-cols-12 py-2 items-center ${index % 2 === 0 ? 'bg-gray-50' : 'bg-white'}`}
-                        style={{ borderBottom: index === localSubtasks.length - 1 ? 'none' : '1px solid #e9ecef' }}
+                        style={{ borderBottom: index === localSubtasks?.length - 1 ? 'none' : '1px solid #e9ecef' }}
                       >
                         <div className="col-span-6 px-2">
                           <input
@@ -749,7 +749,7 @@ const TaskModal = () => {
                     <div 
                       className="py-2 text-center bg-gray-50"
                       style={{ 
-                        borderTop: localSubtasks.length > 0 ? '1px solid #e9ecef' : 'none'
+                        borderTop: localSubtasks?.length > 0 ? '1px solid #e9ecef' : 'none'
                       }}
                     >
                       <button
@@ -763,7 +763,7 @@ const TaskModal = () => {
                     </div>
 
                     {/* Total Row */}
-                    {localSubtasks.length > 0 && (
+                    {localSubtasks?.length > 0 && (
                       <div 
                         className="grid grid-cols-12 py-2 font-semibold text-center text-white bg-blue-600"
                       >
@@ -840,7 +840,7 @@ const TaskModal = () => {
                           </div>
                         ) : (
                           <div className="requirements-list">
-                            {localRequirements.map((req, index) => (
+                            {localRequirements?.map((req, index) => (
                               <div key={req.temp_id || String(req.id)} className="requirement-item mb-2">
                                 <div className="flex items-center gap-2">
                                   <div>
