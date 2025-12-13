@@ -59,7 +59,7 @@ const AdminEmployeeClientCard = ({
       taskActions={mergedTaskActions}
       clientActions={clientActions}
       onWidthCalculated={onWidthCalculated}
-      showAmount={false} // Don't show amount in employee task view
+      showAmount={true} 
       showEmployeePrefix={false}
     />
   );

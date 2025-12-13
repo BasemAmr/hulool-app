@@ -47,7 +47,7 @@ const EmployeeDashboardClientCard = ({
       taskActions={taskActions}
       clientActions={clientActions}
       onWidthCalculated={onWidthCalculated}
-      showAmount={false} // Employees don't see amounts by default
+      showAmount={true} 
       showEmployeePrefix={false}
     />
   );
