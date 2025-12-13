@@ -126,6 +126,7 @@ const TaskModal = () => {
       setValue('end_date', taskToEdit.end_date || undefined);
       setValue('prepaid_amount', taskToEdit.prepaid_amount || 0);
       setValue('notes', taskToEdit.notes || '');
+      setValue('assigned_to_id', taskToEdit.assigned_to_id || undefined);
       setValue('tags', taskToEdit?.tags ? taskToEdit.tags.map(tag => typeof tag === 'object' ? String(tag.id || tag) : String(tag)) : []);
       setValue('amount_details', taskToEdit.amount_details || []);
       // If existing task has subtasks use them, otherwise for legacy tasks create a virtual subtask representing the main amount

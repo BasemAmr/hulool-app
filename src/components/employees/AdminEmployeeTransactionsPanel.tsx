@@ -28,6 +28,8 @@ interface MonthlyTransaction {
   transaction_type: string;
   reference_type: string | null;
   reference_id: string | null;
+  client_name: string | null;
+  client_phone: string | null;
 }
 
 interface OpeningBalance {
@@ -147,6 +149,15 @@ const AdminEmployeeTransactionsPanel: React.FC<AdminEmployeeTransactionsPanelPro
     }).format(Math.abs(amount));
   };
 
+  const getTransactionTypeLabel = (transactionType: string | null | undefined, direction: 'income' | 'expense' | null): string => {
+    if (!transactionType) return direction === 'income' ? 'سند قبض' : 'سند صرف';
+    
+    // All types map to either سند صرف (payout) or سند قبض (repayment) based on direction
+    // Income direction = سند قبض (company paying employee)
+    // Expense direction = سند صرف (employee paying company)
+    return direction === 'income' ? 'سند قبض' : 'سند صرف';
+  };
+
   const handleMonthChange = (value: string) => {
     setSelectedMonth(parseInt(value, 10));
   };
@@ -234,6 +245,9 @@ const AdminEmployeeTransactionsPanel: React.FC<AdminEmployeeTransactionsPanelPro
               <thead className="sticky top-0 bg-gray-100 z-10">
                 <tr>
                   <th className="text-base px-1.5 py-1.5 border border-gray-300 text-start font-bold">
+                    اسم العميل
+                  </th>
+                  <th className="text-base px-1.5 py-1.5 border border-gray-300 text-start font-bold">
                     البيان
                   </th>
                   <th className="text-base px-1.5 py-1.5 border border-gray-300 text-center font-bold">
@@ -253,6 +267,7 @@ const AdminEmployeeTransactionsPanel: React.FC<AdminEmployeeTransactionsPanelPro
               <tbody>
                 {/* Opening Balance Row */}
                 <tr className="bg-green-50 font-bold">
+                  <td className="text-base px-1.5 py-1.5 border border-gray-300 text-start">-</td>
                   <td className="text-base px-1.5 py-1.5 border border-gray-300 text-start font-bold">
                     {opening_balance.description}
                   </td>
@@ -277,8 +292,15 @@ const AdminEmployeeTransactionsPanel: React.FC<AdminEmployeeTransactionsPanelPro
                 {/* Transaction Rows */}
                 {displayedTransactions.map((transaction, index) => {
                   const bgColor = index % 2 === 0 ? 'bg-green-100' : 'bg-green-50';
+                  
+                  // Determine what to show in client name column (first column)
+                  let clientDisplay = transaction.client_name || getTransactionTypeLabel(transaction.transaction_type, transaction.direction);
+
                   return (
                     <tr key={transaction.id} className={bgColor}>
+                      <td className="text-base px-1.5 py-1 border border-gray-300 text-start font-normal">
+                        {clientDisplay}
+                      </td>
                       <td className="text-base px-1.5 py-1 border border-gray-300 text-start font-bold">
                         {transaction.description}
                       </td>
@@ -309,7 +331,7 @@ const AdminEmployeeTransactionsPanel: React.FC<AdminEmployeeTransactionsPanelPro
                 {/* Auto-load indicator */}
                 {isAutoLoading && (
                   <tr className="bg-blue-50">
-                    <td colSpan={5} className="text-base px-1.5 py-2 text-center border border-gray-300">
+                    <td colSpan={6} className="text-base px-1.5 py-2 text-center border border-gray-300">
                       <div className="flex items-center justify-center gap-2">
                         <div className="animate-spin h-3 w-3 border-b-2 border-blue-600 rounded-full"></div>
                         <span className="text-gray-600">جاري التحميل...</span>
@@ -320,6 +342,7 @@ const AdminEmployeeTransactionsPanel: React.FC<AdminEmployeeTransactionsPanelPro
 
                 {/* Totals Footer Row */}
                 <tr className="bg-gray-100 border-t-2 border-gray-400 font-bold">
+                  <td className="text-base px-1.5 py-1.5 border border-gray-300">-</td>
                   <td className="text-base px-1.5 py-1.5 border border-gray-300 text-center font-bold">
                     الإجماليات
                   </td>
