@@ -90,23 +90,9 @@ const AdminEmployeeInvoicesPanel: React.FC<AdminEmployeeInvoicesPanelProps> = ({
   }
 
   return (
-    <div 
-      className="rounded-lg border border-border bg-card shadow-sm h-full"
-      style={{
-        overflow: 'hidden',
-        display: 'flex',
-        flexDirection: 'column'
-      }}
-    >
-      {/* Header */}
-      <div
-        className="px-4 py-2 border-b border-border"
-        style={{
-          backgroundColor: '#ffc107',
-          color: '#000',
-          flexShrink: 0
-        }}
-      >
+    <div className="rounded-lg border border-border bg-card shadow-sm h-full flex flex-col overflow-hidden">
+      {/* Header - Yellow with bold text */}
+      <div className="px-4 py-2 border-b border-border bg-amber-400 text-black flex-shrink-0">
         <div className="flex justify-between items-center">
           <h6 className="mb-0 font-bold text-base">
             فواتير الموظف
@@ -118,134 +104,52 @@ const AdminEmployeeInvoicesPanel: React.FC<AdminEmployeeInvoicesPanelProps> = ({
       </div>
 
       {/* Body - Invoices Table */}
-      <div className="p-0" style={{ flex: 1, overflow: 'hidden' }}>
+      <div className="flex-1 overflow-hidden p-0">
         {invoices.length === 0 ? (
           <div className="flex justify-center items-center h-full">
             <div className="text-center">
-              <p className="text-black mb-0 text-base">
+              <p className="text-black mb-0 text-base font-bold">
                 لا توجد فواتير غير مدفوعة
               </p>
             </div>
           </div>
         ) : (
-          <div className="w-full h-full" style={{ overflow: 'auto' }}>
-            <table className="w-full text-base mb-0">
-              <thead
-                style={{
-                  position: 'sticky',
-                  top: 0,
-                  backgroundColor: '#f0f0f0',
-                  zIndex: 1
-                }}
-              >
+          <div className="w-full h-full overflow-auto">
+            <table className="w-full text-base border-collapse">
+              <thead className="sticky top-0 bg-gray-100 z-10">
                 <tr>
-                  <th style={{
-                    fontSize: '0.7rem',
-                    padding: '6px',
-                    border: '1px solid #ddd',
-                    textAlign: 'start',
-                    fontWeight: 'bold'
-                  }}>العميل</th>
-                  <th style={{
-                    fontSize: '0.7rem',
-                    padding: '6px',
-                    border: '1px solid #ddd',
-                    textAlign: 'start',
-                    fontWeight: 'bold'
-                  }}>الفاتورة</th>
-                  <th style={{
-                    fontSize: '0.7rem',
-                    padding: '6px',
-                    border: '1px solid #ddd',
-                    textAlign: 'center',
-                    fontWeight: 'bold'
-                  }}>المبلغ</th>
-                  <th style={{
-                    fontSize: '0.7rem',
-                    padding: '6px',
-                    border: '1px solid #ddd',
-                    textAlign: 'center',
-                    fontWeight: 'bold'
-                  }}>المدفوع</th>
-                  <th style={{
-                    fontSize: '0.7rem',
-                    padding: '6px',
-                    border: '1px solid #ddd',
-                    textAlign: 'center',
-                    fontWeight: 'bold'
-                  }}>المتبقي</th>
-                  <th style={{
-                    fontSize: '0.7rem',
-                    padding: '6px',
-                    border: '1px solid #ddd',
-                    textAlign: 'center',
-                    fontWeight: 'bold'
-                  }}>إجراءات</th>
+                  <th className="text-sm px-1.5 py-1.5 border border-gray-300 text-start font-bold">العميل</th>
+                  <th className="text-sm px-1.5 py-1.5 border border-gray-300 text-start font-bold">الفاتورة</th>
+                  <th className="text-sm px-1.5 py-1.5 border border-gray-300 text-center font-bold">المبلغ</th>
+                  <th className="text-sm px-1.5 py-1.5 border border-gray-300 text-center font-bold">المدفوع</th>
+                  <th className="text-sm px-1.5 py-1.5 border border-gray-300 text-center font-bold">المتبقي</th>
+                  <th className="text-sm px-1.5 py-1.5 border border-gray-300 text-center font-bold">إجراءات</th>
                 </tr>
               </thead>
               <tbody>
                 {invoices.map((invoice, index) => {
-                  const bgColor = index % 2 === 0 ? '#fff8e1' : '#ffecb3';
+                  const bgColor = index % 2 === 0 ? 'bg-amber-50' : 'bg-amber-100';
                   const clientName = invoice.client?.name || invoice.client_name || 'غير معروف';
                   const remaining = invoice.remaining_amount || (invoice.amount - invoice.paid_amount);
                   
                   return (
                     <tr key={invoice.id}>
-                      <td style={{
-                        fontSize: '1rem',
-                        padding: '4px 6px',
-                        border: '1px solid #ddd',
-                        textAlign: 'start',
-                        backgroundColor: bgColor
-                      }}>
+                      <td className={`text-base px-1.5 py-1 border border-gray-300 text-start font-bold ${bgColor}`}>
                         {clientName}
                       </td>
-                      <td style={{
-                        fontSize: '1rem',
-                        padding: '4px 6px',
-                        border: '1px solid #ddd',
-                        textAlign: 'start',
-                        backgroundColor: bgColor
-                      }}>
+                      <td className={`text-base px-1.5 py-1 border border-gray-300 text-start font-bold ${bgColor}`}>
                         {invoice.description || invoice.task_name || `فاتورة #${invoice.id}`}
                       </td>
-                      <td style={{
-                        fontSize: '1rem',
-                        padding: '4px 6px',
-                        border: '1px solid #ddd',
-                        textAlign: 'center',
-                        backgroundColor: bgColor
-                      }}>
+                      <td className={`text-base px-1.5 py-1 border border-gray-300 text-center font-bold ${bgColor}`}>
                         {formatCurrency(invoice.amount)}
                       </td>
-                      <td style={{
-                        fontSize: '1rem',
-                        padding: '4px 6px',
-                        border: '1px solid #ddd',
-                        textAlign: 'center',
-                        backgroundColor: bgColor,
-                        color: invoice.paid_amount > 0 ? '#16a34a' : '#666'
-                      }}>
+                      <td className={`text-base px-1.5 py-1 border border-gray-300 text-center font-bold ${bgColor} ${invoice.paid_amount > 0 ? 'text-green-600' : 'text-gray-600'}`}>
                         {formatCurrency(invoice.paid_amount)}
                       </td>
-                      <td style={{
-                        fontSize: '1rem',
-                        padding: '4px 6px',
-                        border: '1px solid #ddd',
-                        textAlign: 'center',
-                        backgroundColor: bgColor,
-                        fontWeight: '600',
-                        color: remaining > 0 ? '#dc2626' : '#16a34a'
-                      }}>
+                      <td className={`text-base px-1.5 py-1 border border-gray-300 text-center font-bold ${bgColor} ${remaining > 0 ? 'text-red-600' : 'text-green-600'}`}>
                         {formatCurrency(remaining)}
                       </td>
-                      <td style={{
-                        fontSize: '1rem',
-                        padding: '4px 6px',
-                        border: '1px solid #ddd',
-                        textAlign: 'center',
-                        backgroundColor: bgColor
-                      }}>
+                      <td className={`text-base px-1.5 py-1 border border-gray-300 text-center font-bold ${bgColor}`}>
                         <div className="flex items-center justify-center gap-1">
                           <button
                             onClick={() => handleRecordPayment(invoice)}
@@ -275,11 +179,8 @@ const AdminEmployeeInvoicesPanel: React.FC<AdminEmployeeInvoicesPanelProps> = ({
       </div>
 
       {/* Footer */}
-      <div 
-        className="px-4 py-2 bg-muted/30 border-t border-border text-center"
-        style={{ flexShrink: 0 }}
-      >
-        <span className="text-base text-muted-foreground">
+      <div className="px-4 py-2 bg-gray-100 border-t border-border text-center flex-shrink-0">
+        <span className="text-base text-gray-700 font-bold">
           إجمالي المتبقي: {formatCurrency(invoices.reduce((sum, inv) => sum + (inv.remaining_amount || (inv.amount - inv.paid_amount)), 0))} ر.س
         </span>
       </div>

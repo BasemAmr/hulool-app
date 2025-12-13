@@ -65,8 +65,10 @@ const AdminEmployeeTransactionsPanel: React.FC<AdminEmployeeTransactionsPanelPro
   const [selectedYear, setSelectedYear] = useState<number>(new Date().getFullYear());
   const [visibleTransactions, setVisibleTransactions] = useState(20);
   const [isAutoLoading, setIsAutoLoading] = useState(false);
+  const [maxClientWidth, setMaxClientWidth] = useState(100);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const tableRef = useRef<HTMLTableElement>(null);
+  const clientCellsRef = useRef<Map<number, HTMLTableCellElement>>(new Map());
 
   const arabicMonths = [
     'يناير', 'فبراير', 'مارس', 'أبريل', 'مايو', 'يونيو',
@@ -92,6 +94,14 @@ const AdminEmployeeTransactionsPanel: React.FC<AdminEmployeeTransactionsPanelPro
   useEffect(() => {
     setVisibleTransactions(20);
   }, [selectedMonth, selectedYear]);
+
+  // Calculate max client column width dynamically
+  useEffect(() => {
+    const maxWidth = Array.from(clientCellsRef.current.values()).reduce((max, cell) => {
+      return Math.max(max, cell.offsetWidth);
+    }, 100);
+    setMaxClientWidth(Math.min(maxWidth, 300)); // Cap at 300px
+  }, [visibleTransactions]);
 
   // Auto-load more when scrolled to bottom or table doesn't fill container
   useEffect(() => {
@@ -244,10 +254,10 @@ const AdminEmployeeTransactionsPanel: React.FC<AdminEmployeeTransactionsPanelPro
             <table ref={tableRef} className="w-full text-sm border-collapse">
               <thead className="sticky top-0 bg-gray-100 z-10">
                 <tr>
-                  <th className="text-base px-1.5 py-1.5 border border-gray-300 text-start font-bold">
+                  <th className="px-1.5 py-1.5 border border-gray-300 text-start font-bold text-base" style={{ width: `${maxClientWidth}px`, minWidth: `${maxClientWidth}px` }}>
                     اسم العميل
                   </th>
-                  <th className="text-base px-1.5 py-1.5 border border-gray-300 text-start font-bold">
+                  <th className="px-1.5 py-1.5 border border-gray-300 text-start font-bold text-base" style={{ width: '280px', minWidth: '280px' }}>
                     البيان
                   </th>
                   <th className="text-base px-1.5 py-1.5 border border-gray-300 text-center font-bold">
@@ -267,8 +277,8 @@ const AdminEmployeeTransactionsPanel: React.FC<AdminEmployeeTransactionsPanelPro
               <tbody>
                 {/* Opening Balance Row */}
                 <tr className="bg-green-50 font-bold">
-                  <td className="text-base px-1.5 py-1.5 border border-gray-300 text-start">-</td>
-                  <td className="text-base px-1.5 py-1.5 border border-gray-300 text-start font-bold">
+                  <td className="px-1.5 py-1.5 border border-gray-300 text-start" style={{ width: `${maxClientWidth}px`, minWidth: `${maxClientWidth}px` }}>-</td>
+                  <td className="px-1.5 py-1.5 border border-gray-300 text-start font-bold text-base" style={{ width: '280px', minWidth: '280px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                     {opening_balance.description}
                   </td>
                   <td className="text-base px-1.5 py-1.5 border border-gray-300 text-center font-bold">
@@ -298,10 +308,16 @@ const AdminEmployeeTransactionsPanel: React.FC<AdminEmployeeTransactionsPanelPro
 
                   return (
                     <tr key={transaction.id} className={bgColor}>
-                      <td className="text-base px-1.5 py-1 border border-gray-300 text-start font-normal">
+                      <td 
+                        ref={(el) => {
+                          if (el) clientCellsRef.current.set(transaction.id, el);
+                        }}
+                        className="px-1.5 py-1 border border-gray-300 text-start font-bold text-base" 
+                        style={{ width: `${maxClientWidth}px`, minWidth: `${maxClientWidth}px` }}
+                      >
                         {clientDisplay}
                       </td>
-                      <td className="text-base px-1.5 py-1 border border-gray-300 text-start font-bold">
+                      <td className="px-1.5 py-1 border border-gray-300 text-start font-bold text-base" style={{ width: '280px', minWidth: '280px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                         {transaction.description}
                       </td>
                       <td className="text-base px-1.5 py-1 border border-gray-300 text-center font-bold">
@@ -342,8 +358,8 @@ const AdminEmployeeTransactionsPanel: React.FC<AdminEmployeeTransactionsPanelPro
 
                 {/* Totals Footer Row */}
                 <tr className="bg-gray-100 border-t-2 border-gray-400 font-bold">
-                  <td className="text-base px-1.5 py-1.5 border border-gray-300">-</td>
-                  <td className="text-base px-1.5 py-1.5 border border-gray-300 text-center font-bold">
+                  <td className="px-1.5 py-1.5 border border-gray-300" style={{ width: `${maxClientWidth}px`, minWidth: `${maxClientWidth}px` }}>-</td>
+                  <td className="px-1.5 py-1.5 border border-gray-300 text-center font-bold text-base" style={{ width: '280px', minWidth: '280px' }}>
                     الإجماليات
                   </td>
                   <td className="text-base px-1.5 py-1.5 border border-gray-300 text-center font-bold">
