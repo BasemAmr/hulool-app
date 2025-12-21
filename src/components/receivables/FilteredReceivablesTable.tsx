@@ -102,7 +102,12 @@ const FilteredReceivablesTable: React.FC<FilteredReceivablesTableProps> = ({
   };
 
   const handlePayment = (receivable: Receivable) => {
-    openModal('paymentForm', { receivable });
+    openModal('recordPayment', {
+      invoiceId: receivable.id,
+      amountDue: receivable.remaining_amount,
+      clientId: Number(receivable.client_id),
+      clientName: receivable.client_name
+    });
   };
 
   // Calculate totals
@@ -165,7 +170,7 @@ const FilteredReceivablesTable: React.FC<FilteredReceivablesTableProps> = ({
                     </div>
                   </TableCell>
                   <TableCell>
-                    <div className="text-black text-sm flex justify-center items-center justify-end">
+                    <div className="text-black text-sm flex justify-center items-center">
                         <button
                           className="p-0 text-green-600 hover:text-green-700 transition-colors ml-1"
                           onClick={() => handleWhatsApp(receivable.client?.phone || '')}

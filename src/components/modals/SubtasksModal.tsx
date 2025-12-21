@@ -299,10 +299,7 @@ const SubtasksModal = (directProps?: SubtasksModalProps) => {
         .subtask-item {
           transition: all 0.2s ease;
         }
-        
-        .modal-content-wrapper {
-          max-height: 80vh;
-        }
+
       `}</style>
     </BaseModal>
   );

@@ -31,7 +31,7 @@ import { useModalStore } from '../../stores/modalStore';
 import { useCurrentUserCapabilities } from '../../queries/userQueries';
 import { useDrawerStore } from '../../stores/drawerStore';
 import type { CellProps } from 'react-datasheet-grid';
-import { X } from 'lucide-react';
+import { X, DollarSign, CreditCard, RotateCcw } from 'lucide-react';
 // Button removed - using GridActionBar for all actions
 
 interface AllTasksTableProps {
@@ -236,6 +236,7 @@ interface TaskActionsCellData {
   handleRestore: (task: Task) => void;
   handleApproveTask: (task: Task) => void;
   openDrawer: (drawer: string, data: any) => void;
+  openModal: (modal: string, data: any) => void;
   isUserEmployee: (id: number | null) => boolean;
   shouldShowCompleteButton: (task: Task) => boolean;
   canDeleteTasks: boolean;
@@ -255,6 +256,7 @@ const ActionsCell = React.memo(({ rowData, rowIndex, columnData }: CellProps<Tas
     handleRestore,
     handleApproveTask,
     openDrawer,
+    openModal,
     shouldShowCompleteButton,
     canDeleteTasks,
   } = columnData || {};
@@ -289,6 +291,15 @@ const ActionsCell = React.memo(({ rowData, rowIndex, columnData }: CellProps<Tas
   if (task.amount_details && task.amount_details.length > 0 && onViewAmountDetails) {
     actions.push(createViewAmountAction<Task>(onViewAmountDetails));
   }
+
+  // Edit Amount & Prepaid (Admin Actions) - Combined Modal
+  actions.push({
+    type: 'custom',
+    onClick: () => openModal?.('taskAmountEdit', { task }),
+    title: 'تعديل المبالغ',
+    icon: <DollarSign size={16} />,
+    variant: 'outline-primary',
+  });
 
   // Status-based actions
   if (task.status === 'New') {
@@ -332,13 +343,14 @@ const ActionsCell = React.memo(({ rowData, rowIndex, columnData }: CellProps<Tas
     });
   }
 
-  // Restore completed
-  if (task.status === 'Completed') {
+  // Restore completed or cancelled
+  if (task.status === 'Completed' || task.status === 'Cancelled') {
     actions.push({
       type: 'restore',
       onClick: () => handleRestore?.(task),
       title: 'استعادة',
       className: 'bg-green-700 hover:bg-green-800 border-green-700 text-white',
+      icon: <RotateCcw size={16} />,
     });
   }
 
@@ -391,7 +403,6 @@ const AllTasksTable: React.FC<AllTasksTableProps> = ({
   const { t } = useTranslation();
   const deferTaskMutation = useDeferTask();
   const resumeTaskMutation = useResumeTask();
-  const restoreTaskMutation = useRestoreTask();
   const { data: currentCapabilities } = useCurrentUserCapabilities();
   const { success, error } = useToast();
   const { openDrawer } = useDrawerStore();
@@ -450,14 +461,7 @@ const AllTasksTable: React.FC<AllTasksTableProps> = ({
   };
 
   const handleRestore = (task: Task) => {
-    restoreTaskMutation.mutate({ id: task.id }, {
-      onSuccess: () => {
-        success('تمت الاستعادة', `تم استعادة المهمة "${task.task_name || t(`type.${task.type}`)}" إلى حالة جديدة`);
-      },
-      onError: (err: any) => {
-        error(t('common.error'), err.message || 'حدث خطأ أثناء استعادة المهمة');
-      }
-    });
+    openModal('taskRestore', { task });
   };
 
   const canDeleteTasks = currentCapabilities?.tm_delete_any_task || false;
@@ -579,6 +583,7 @@ const AllTasksTable: React.FC<AllTasksTableProps> = ({
             handleRestore,
             handleApproveTask,
             openDrawer,
+            openModal,
             isUserEmployee,
             shouldShowCompleteButton,
             canDeleteTasks,
@@ -587,7 +592,7 @@ const AllTasksTable: React.FC<AllTasksTableProps> = ({
       }
       return col;
     });
-  }, [columns, t, getEmployeeName, onEdit, onComplete, onViewAmountDetails, onDelete, onShowRequirements, onAssign, canDeleteTasks]);
+  }, [columns, t, getEmployeeName, onEdit, onComplete, onViewAmountDetails, onDelete, onShowRequirements, onAssign, canDeleteTasks, openModal]);
 
   return (
     <HuloolDataGrid

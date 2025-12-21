@@ -18,6 +18,8 @@ import type {
   InvoicePayment,
   CreateInvoicePayload,
   UpdateInvoicePayload,
+  InvoiceValidationResult,
+  ApiResponse,
   RecordInvoicePaymentPayload,
   RecordPaymentResponse,
   ApplyCreditToInvoicePayload,
@@ -524,10 +526,19 @@ export const useUpdateInvoice = () => {
 
       // Invalidate invoice lists
       queryClient.invalidateQueries({ queryKey: ['invoices'] });
+      queryClient.invalidateQueries({ queryKey: ['invoices', 'payable'] });
 
       // Invalidate client-specific data
       queryClient.invalidateQueries({ queryKey: ['invoices', 'client', updatedInvoice.client_id] });
       queryClient.invalidateQueries({ queryKey: ['account', 'client', updatedInvoice.client_id] });
+
+      // Step 15: Additional invalidations for comprehensive data refresh
+      // Invalidate related tasks (invoice amount changes may affect task)
+      queryClient.invalidateQueries({ queryKey: ['tasks'] });
+
+      // Invalidate transactions (invoice edits cascade to transactions)
+      queryClient.invalidateQueries({ queryKey: ['transactions'] });
+      queryClient.invalidateQueries({ queryKey: ['account'] });
 
       // Invalidate summary data
       queryClient.invalidateQueries({ queryKey: ['clients'] });
@@ -552,9 +563,14 @@ export const useDeleteInvoice = () => {
       // Invalidate all invoice-related queries
       queryClient.invalidateQueries({ queryKey: ['invoices'] });
       queryClient.invalidateQueries({ queryKey: ['invoice'] });
+      queryClient.invalidateQueries({ queryKey: ['invoices', 'payable'] });
       queryClient.invalidateQueries({ queryKey: ['account'] });
       queryClient.invalidateQueries({ queryKey: ['clients'] });
       queryClient.invalidateQueries({ queryKey: ['dashboard'] });
+
+      // Step 15: Additional invalidations
+      queryClient.invalidateQueries({ queryKey: ['tasks'] });
+      queryClient.invalidateQueries({ queryKey: ['transactions'] });
 
       // Invalidate employee data
       queryClient.invalidateQueries({ queryKey: ['employee'] });
@@ -631,6 +647,47 @@ export const useApplyCreditToInvoice = () => {
   });
 };
 
+// --- Validation Endpoints ---
+
+/**
+ * Validate invoice edit before applying changes
+ * Shows consequences, warnings, and errors for proposed changes
+ */
+const validateInvoiceEdit = async ({ invoiceId, proposed }: { invoiceId: number; proposed: Partial<UpdateInvoicePayload> }): Promise<InvoiceValidationResult> => {
+  const { data } = await apiClient.post<ApiResponse<InvoiceValidationResult>>(`/validate/invoice/${invoiceId}`, proposed);
+  if (!data.success) {
+    throw new Error(data.message || 'Validation failed');
+  }
+  return data.data;
+};
+
+/**
+ * React Query hook for invoice edit validation
+ * Use this before calling updateInvoice mutation to show consequences to user
+ */
+export const useValidateInvoiceEdit = () => {
+  return useMutation({
+    mutationFn: validateInvoiceEdit,
+  });
+};
+
+export const useCancelInvoice = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, reason }: { id: number; reason?: string }) => {
+      const { data } = await apiClient.post<ApiResponse<Invoice>>(`/invoices/${id}/cancel`, { reason });
+      return data.data;
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ['invoices'] });
+      queryClient.invalidateQueries({ queryKey: ['invoice', data.id] });
+      queryClient.invalidateQueries({ queryKey: ['tasks'] });
+      queryClient.invalidateQueries({ queryKey: ['transactions'] });
+      queryClient.invalidateQueries({ queryKey: ['account'] });
+    },
+  });
+};
+
 // --- Query Key Factories ---
 // Useful for consistent query key patterns across the app
 
@@ -650,3 +707,4 @@ export const invoiceKeys = {
     [...invoiceKeys.all, 'employee', 'me', filters] as const,
   myStats: () => [...invoiceKeys.all, 'employee', 'me', 'stats'] as const,
 };
+

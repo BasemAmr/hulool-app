@@ -29,10 +29,10 @@ import { Badge } from '../components/ui/badge';
 import { cn } from '@/lib/utils';
 
 interface AdminEmployeeTasksTableProps {
-  employeeId: number;
+  userId: number;
 }
 
-const AdminEmployeeTasksTable = ({ employeeId }: AdminEmployeeTasksTableProps) => {
+const AdminEmployeeTasksTable = ({ userId }: AdminEmployeeTasksTableProps) => {
   const { t } = useTranslation();
   const deferTaskMutation = useDeferTask();
   const resumeTaskMutation = useResumeTask();
@@ -69,7 +69,7 @@ const AdminEmployeeTasksTable = ({ employeeId }: AdminEmployeeTasksTableProps) =
   };
 
   // Fetch tasks with filters
-  const { data: tasksData, isLoading } = useGetAdminEmployeeTasks(employeeId, filters);
+  const { data: tasksData, isLoading } = useGetAdminEmployeeTasks(userId, filters);
   const tasks = tasksData?.tasks || [];
   const total = tasksData?.pagination?.total || 0;
   const totalPages = Math.ceil(total / 20);

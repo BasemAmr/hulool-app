@@ -149,7 +149,7 @@ const EmployeeProfilePage = () => {
 
   const employeeTableId = parseInt(id || '0', 10);
   const { data: employee, isLoading, error: employeeError } = useGetEmployee(employeeTableId);
-
+  const userId = employee?.user_id;
   // Fetch ledger data for summary
   const { data: ledgerData } = useGetEmployeeLedger(employeeTableId, { page: 1, per_page: 100 });
 

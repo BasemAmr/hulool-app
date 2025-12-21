@@ -15,17 +15,22 @@ import type {
   Client,
   Invoice
 } from '../../api/types';
+import TransactionEditModal from '../modals/TransactionEditModal';
+import TransactionDeleteModal from '../modals/TransactionDeleteModal';
+import InvoiceEditModal from '../modals/InvoiceEditModal';
 import { 
   CreditCard, 
   Receipt,
   ArrowDownLeft,
   RefreshCw,
   ArrowUpRight,
-  FileText
+  FileText,
+  Edit3,
+  Trash2
 } from 'lucide-react';
 import { formatDate } from '../../utils/dateUtils';
 import { useModalStore } from '../../stores/modalStore';
-import { useGetAccountHistory, useGetAccountBalance } from '../../queries/accountQueries';
+import { useGetAccountHistory } from '../../queries/accountQueries';
 import { useGetPayableInvoices } from '../../queries/invoiceQueries';
 import HuloolDataGrid from '../grid/HuloolDataGrid';
 import type { HuloolGridColumn } from '../grid/HuloolDataGrid';
@@ -204,12 +209,15 @@ interface ActionsColumnData {
   client: Client;
   payableMap: Map<string, Invoice>;
   openModal: (modal: string, data: any) => void;
+  onEditTx: (tx: any) => void;
+  onDeleteTx: (tx: any) => void;
+  onEditInv: (inv: any) => void;
 }
 
 const ActionsCell = React.memo(({ rowData, columnData }: CellProps<FinancialTransaction & { is_payable?: boolean }, ActionsColumnData>) => {
-  const { client, payableMap, openModal } = columnData || {};
+  const { client, payableMap, openModal, onEditTx, onDeleteTx, onEditInv } = columnData || {};
 
-  if (!columnData || !rowData.is_payable) return null;
+  if (!columnData) return null;
 
   const handlePayInvoice = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -236,6 +244,24 @@ const ActionsCell = React.memo(({ rowData, columnData }: CellProps<FinancialTran
     }
   };
 
+  const handleEditTx = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    onEditTx?.(rowData);
+  };
+
+  const handleDeleteTx = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    onDeleteTx?.(rowData);
+  };
+
+  const handleEditInv = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    const relatedId = rowData.related_object_id ?? (rowData as any).related_id;
+    // Pass minimal invoice object, modal will fetch details if needed or use what's available
+    const invoice = payableMap?.get(String(relatedId)) || { id: Number(relatedId) };
+    onEditInv?.(invoice);
+  };
+
   return (
     <div 
       style={{ 
@@ -244,30 +270,31 @@ const ActionsCell = React.memo(({ rowData, columnData }: CellProps<FinancialTran
         alignItems: 'center', 
         height: '100%',
         pointerEvents: 'auto',
+        gap: '4px'
       }}
       onMouseDown={(e) => e.stopPropagation()}
       onClick={(e) => e.stopPropagation()}
     >
-      <button
-        onClick={handlePayInvoice}
-        onMouseDown={(e) => e.stopPropagation()}
-        style={{
-          display: 'flex',
-          alignItems: 'center',
-          gap: '4px',
-          padding: '4px 12px',
-          backgroundColor: 'var(--color-primary, #3b82f6)',
-          color: 'white',
-          border: 'none',
-          borderRadius: '6px',
-          cursor: 'pointer',
-          fontSize: '0.875rem',
-          fontWeight: 500,
-          pointerEvents: 'auto',
-        }}
-      >
-        <CreditCard size={14} /> دفع
+      {rowData.is_payable && (
+        <button
+          onClick={handlePayInvoice}
+          title="Pay"
+          className="p-1 bg-blue-500 text-white rounded hover:bg-blue-600 transition-colors"
+        >
+          <CreditCard size={14} />
+        </button>
+      )}
+      <button onClick={handleEditTx} className="p-1 hover:bg-gray-100 rounded text-gray-600" title="Edit Transaction">
+        <Edit3 size={14} />
       </button>
+      <button onClick={handleDeleteTx} className="p-1 hover:bg-gray-100 rounded text-red-500" title="Delete Transaction">
+        <Trash2 size={14} />
+      </button>
+      {rowData.related_object_type === 'invoice' && (
+        <button onClick={handleEditInv} className="p-1 hover:bg-gray-100 rounded text-blue-500" title="Edit Invoice">
+          <FileText size={14} />
+        </button>
+      )}
     </div>
   );
 });
@@ -285,6 +312,10 @@ const AccountLedgerTable: React.FC<AccountLedgerTableProps> = ({
   useTranslation();
   const openModal = useModalStore(state => state.openModal);
 
+  const [selectedTransaction, setSelectedTransaction] = React.useState<any>(null);
+  const [selectedInvoice, setSelectedInvoice] = React.useState<any>(null);
+  const [modalType, setModalType] = React.useState<'editTx' | 'deleteTx' | 'editInv' | null>(null);
+
   // Fetch account data
   const { 
     data: historyData, 
@@ -293,15 +324,10 @@ const AccountLedgerTable: React.FC<AccountLedgerTableProps> = ({
   } = useGetAccountHistory('client', client.id);
 
   const { 
-    data: balanceData, 
-    isLoading: isLoadingBalance 
-  } = useGetAccountBalance('client', client.id);
-
-  const { 
     data: payableInvoices 
   } = useGetPayableInvoices(client.id);
 
-  const isLoading = isLoadingHistory || isLoadingBalance;
+  const isLoading = isLoadingHistory;
 
   // Filter transactions
   const filteredTransactions = useMemo(() => {
@@ -325,9 +351,9 @@ const AccountLedgerTable: React.FC<AccountLedgerTableProps> = ({
   const totals = useMemo(() => {
     const totalDebit = filteredTransactions.reduce((sum, tx) => sum + getDebitAmount(tx), 0);
     const totalCredit = filteredTransactions.reduce((sum, tx) => sum + getCreditAmount(tx), 0);
-    const balance = balanceData?.current_balance ?? (totalDebit - totalCredit);
+    const balance = historyData?.balance ?? (totalDebit - totalCredit);
     return { totalDebit, totalCredit, balance };
-  }, [filteredTransactions, balanceData]);
+  }, [filteredTransactions, historyData?.balance]);
 
   // Create a map of payable invoices for O(1) lookup
   const payableMap = useMemo(() => {
@@ -433,8 +459,15 @@ const AccountLedgerTable: React.FC<AccountLedgerTableProps> = ({
       title: 'الإجراءات',
       type: 'custom',
       component: ActionsCell as React.ComponentType<CellProps<FinancialTransaction>>,
-      columnData: { client, payableMap, openModal },
-      width: 100,
+      columnData: { 
+        client, 
+        payableMap, 
+        openModal,
+        onEditTx: (tx: any) => { setSelectedTransaction(tx); setModalType('editTx'); },
+        onDeleteTx: (tx: any) => { setSelectedTransaction(tx); setModalType('deleteTx'); },
+        onEditInv: (inv: any) => { setSelectedInvoice(inv); setModalType('editInv'); }
+      },
+      width: 120,
       grow: 0,
     },
   ], [hideAmounts, client, payableMap, openModal]);
@@ -451,31 +484,31 @@ const AccountLedgerTable: React.FC<AccountLedgerTableProps> = ({
   return (
     <div className="account-ledger-wrapper">
       {/* Balance Summary Header */}
-      {balanceData && (
+      {historyData && (
         <div className="rounded-lg border border-border bg-card shadow-sm mb-4 p-4">
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4 text-center">
             <div className="flex flex-col items-center p-3 bg-gray-50 rounded-lg">
               <span className="text-sm text-gray-500 mb-1">إجمالي المستحقات</span>
               <span className="text-lg font-bold text-red-600">
-                {hideAmounts ? '***' : formatCurrency(balanceData.total_debits)}
+                {hideAmounts ? '***' : formatCurrency(historyData.total_debits)}
               </span>
             </div>
             <div className="flex flex-col items-center p-3 bg-gray-50 rounded-lg">
               <span className="text-sm text-gray-500 mb-1">إجمالي المدفوعات</span>
               <span className="text-lg font-bold text-green-600">
-                {hideAmounts ? '***' : formatCurrency(balanceData.total_credits)}
+                {hideAmounts ? '***' : formatCurrency(historyData.total_credits)}
               </span>
             </div>
             <div className="flex flex-col items-center p-3 bg-primary/10 rounded-lg">
               <span className="text-sm text-primary mb-1">الرصيد الحالي</span>
-              <span className={`text-xl font-bold ${balanceData.current_balance >= 0 ? 'text-red-600' : 'text-green-600'}`}>
-                {hideAmounts ? '***' : formatCurrency(balanceData.current_balance)}
+              <span className={`text-xl font-bold ${(historyData.balance ?? 0) >= 0 ? 'text-red-600' : 'text-green-600'}`}>
+                {hideAmounts ? '***' : formatCurrency(historyData.balance)}
               </span>
             </div>
             <div className="flex flex-col items-center p-3 bg-gray-50 rounded-lg">
-              <span className="text-sm text-gray-500 mb-1">آخر تحديث</span>
+              <span className="text-sm text-gray-500 mb-1">عدد المعاملات</span>
               <span className="text-sm font-medium text-gray-700">
-                {formatDate(balanceData.last_updated)}
+                {historyData.transactions?.length || 0}
               </span>
             </div>
           </div>
@@ -519,6 +552,28 @@ const AccountLedgerTable: React.FC<AccountLedgerTableProps> = ({
           </div>
         </div>
       </div>
+      {/* Modals */}
+      {modalType === 'editTx' && selectedTransaction && (
+        <TransactionEditModal
+          isOpen={true}
+          onClose={() => setModalType(null)}
+          transaction={selectedTransaction}
+        />
+      )}
+      {modalType === 'deleteTx' && selectedTransaction && (
+        <TransactionDeleteModal
+          isOpen={true}
+          onClose={() => setModalType(null)}
+          transaction={selectedTransaction}
+        />
+      )}
+      {modalType === 'editInv' && selectedInvoice && (
+        <InvoiceEditModal
+          isOpen={true}
+          onClose={() => setModalType(null)}
+          invoice={selectedInvoice}
+        />
+      )}
     </div>
   );
 };

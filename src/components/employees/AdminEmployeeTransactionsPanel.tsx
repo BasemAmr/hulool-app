@@ -100,7 +100,7 @@ const AdminEmployeeTransactionsPanel: React.FC<AdminEmployeeTransactionsPanelPro
     const maxWidth = Array.from(clientCellsRef.current.values()).reduce((max, cell) => {
       return Math.max(max, cell.offsetWidth);
     }, 100);
-    setMaxClientWidth(Math.min(maxWidth + 30, 330)); // Cap at 330px (max + 30px)
+    setMaxClientWidth(Math.min(maxWidth + 100, 350)); // Cap at 350px (max + 45px)
   }, [visibleTransactions]);
 
   // Auto-load more when scrolled to bottom or table doesn't fill container

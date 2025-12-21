@@ -30,6 +30,7 @@ import EmployeePayoutModal from '../modals/EmployeePayoutModal';
 import EmployeeBorrowModal from '../modals/EmployeeBorrowModal';
 import EditEmployeePayoutModal from '../modals/EditEmployeePayoutModal';
 import EditTaskExpenseModal from '../modals/EditTaskExpenseModal';
+import TaskAmountEditModal from '../modals/TaskAmountEditModal';
 
 
 import Button from '../ui/Button';
@@ -52,15 +53,26 @@ import SubmitForReviewModal from '../modals/SubmitForReviewModal';
 
 // NEW INVOICE/LEDGER MODALS
 import { InvoiceFormModal, RecordPaymentModal, InvoiceDetailsModal } from '../invoices';
+import AccountLedgerModal from '../modals/AccountLedgerModal';
 
 // FINANCIAL CENTER MODALS
 import ManualTransactionModal from '../admin/ManualTransactionModal';
 import JournalEntryDetailsModal from '../modals/JournalEntryDetailsModal';
 
+// Missing modal imports - Step 1 fix
+import InvoiceEditModal from '../modals/InvoiceEditModal';
+import InvoiceDeleteModal from '../modals/InvoiceDeleteModal';
+import TransactionEditModal from '../modals/TransactionEditModal';
+import TransactionDeleteModal from '../modals/TransactionDeleteModal';
+import TaskRestoreModal from '../modals/TaskRestoreModal';
+import TaskRestoreValidationWrapper from '../modals/TaskRestoreValidationWrapper';
+import { useRestoreTask } from '../../queries/taskQueries';
+import { useToast } from '../../hooks/useToast';
+
 // Separate component for client receivables to avoid re-renders
 const ClientReceivablesFetcher = ({ client }: { client?: any }) => {
   const { data: receivablesData, isLoading } = useGetClientReceivables(client?.id || 0);
-  
+
   return (
     <ClientReceivablesModal
       receivables={receivablesData?.statementItems || []}
@@ -76,7 +88,7 @@ const ModalManager = () => {
   const modalType = useModalStore((state) => state.modalType);
   const props = useModalStore((state) => state.props);
   const closeModal = useModalStore((state) => state.closeModal);
-  
+
   const { t } = useTranslation();
 
   if (!isOpen) return null;
@@ -110,7 +122,7 @@ const ModalManager = () => {
 
       case 'manualReceivable':
         return <ManualReceivableModal key="manualReceivable" />;
-       case 'taskDetails':
+      case 'taskDetails':
         return <TaskDetailsModal key="taskDetails" />;
 
       case 'taskSubtasks':
@@ -251,10 +263,10 @@ const ModalManager = () => {
           >
             <p>{props.message}</p>
             <div className="flex justify-end gap-2 mt-6">
-               <Button variant="secondary" onClick={closeModal}>{t('common.cancel')}</Button>
-               <Button variant="danger" onClick={() => { props.onConfirm(); closeModal(); }}>
-                 {t('common.confirm')}
-               </Button>
+              <Button variant="secondary" onClick={closeModal}>{t('common.cancel')}</Button>
+              <Button variant="danger" onClick={() => { props.onConfirm(); closeModal(); }}>
+                {t('common.confirm')}
+              </Button>
             </div>
           </BaseModal>
         );
@@ -284,6 +296,9 @@ const ModalManager = () => {
       case 'invoiceDetails':
         return <InvoiceDetailsModal key="invoiceDetails" />;
 
+      case 'accountLedger':
+        return <AccountLedgerModal key="accountLedger" />;
+
       // FINANCIAL CENTER MODALS
       case 'manualTransaction':
         return (
@@ -301,6 +316,76 @@ const ModalManager = () => {
 
       case 'journalEntryDetails':
         return <JournalEntryDetailsModal key="journalEntryDetails" />;
+
+      case 'taskAmountEdit':
+        return (
+          <TaskAmountEditModal
+            key="taskAmountEdit"
+            isOpen={isOpen}
+            onClose={closeModal}
+            task={props.task}
+          />
+        );
+
+      // Step 1: Missing modal registrations
+      case 'invoiceEdit':
+        return (
+          <InvoiceEditModal
+            key="invoiceEdit"
+            isOpen={isOpen}
+            onClose={closeModal}
+            invoice={props.invoice}
+          />
+        );
+
+      case 'invoiceDelete':
+        return (
+          <InvoiceDeleteModal
+            key="invoiceDelete"
+            isOpen={isOpen}
+            onClose={closeModal}
+            invoice={props.invoice}
+          />
+        );
+
+      case 'transactionEdit':
+        return (
+          <TransactionEditModal
+            key="transactionEdit"
+            isOpen={isOpen}
+            onClose={closeModal}
+            transaction={props.transaction}
+          />
+        );
+
+      case 'transactionDelete':
+        return (
+          <TransactionDeleteModal
+            key="transactionDelete"
+            isOpen={isOpen}
+            onClose={closeModal}
+            transaction={props.transaction}
+          />
+        );
+
+      case 'taskRestore':
+        return (
+          <TaskRestoreModal
+            key="taskRestore"
+            isOpen={isOpen}
+            onClose={closeModal}
+            task={props.task}
+          />
+        );
+
+      case 'taskRestoreValidation':
+        return (
+          <TaskRestoreValidationWrapper
+            key="taskRestoreValidation"
+            taskId={Number(props.taskId)}
+            onClose={closeModal}
+          />
+        );
 
       default:
         return null;

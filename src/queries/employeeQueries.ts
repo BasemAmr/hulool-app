@@ -254,10 +254,11 @@ export const useGetEmployeeTasks = (
     queryKey: ['employees', employeeId, 'tasks', params],
     queryFn: async () => {
       // We need to get employee details first to get the user_id
-      const employeeResponse = await apiClient.get(`/employees/${employeeId}`);
-      const employee = employeeResponse.data.data;
-      const response = await apiClient.get(`/tasks/employee/${employee.user_id}`, { params });
+      // const employeeResponse = await apiClient.get(`/employees/${employeeId}`);
+      // const employee = employeeResponse.data.data;
+      const response = await apiClient.get(`/tasks/employee/${employeeId}`, { params });
       return response.data;
+      // return { data: { tasks: [], pagination: {} } };
     },
     enabled: !!employeeId,
     staleTime: 1 * 60 * 1000, // Keep fresh for 1 minute

@@ -9,7 +9,7 @@ import type { Client } from '../api/types';
 import ClientsTable from '../components/clients/ClientsTable';
 import Button from '../components/ui/Button';
 import RegionSelect from '../components/shared/RegionSelect';
-import { PlusCircle, FileSpreadsheet, Printer, X } from 'lucide-react';
+import { PlusCircle, FileSpreadsheet, Printer, X, TrendingUp, TrendingDown } from 'lucide-react';
 // --- MODIFICATIONS START ---
 import { useMutation } from '@tanstack/react-query';
 import { exportService } from '../services/export/ExportService';
@@ -124,6 +124,14 @@ const AllClientsPage = () => {
           <Button onClick={handleAddClient} size="sm" className="hover:scale-105 transition-transform">
             <PlusCircle size={16} className="me-1" />
             {t('clients.addNew')}
+          </Button>
+          <Button onClick={() => openModal('manualTransaction', { direction: 'repayment' })} variant="outline-primary" size="sm" className="font-bold">
+            <TrendingUp size={16} className="me-1 text-green-600" />
+            سند قبض
+          </Button>
+          <Button onClick={() => openModal('manualTransaction', { direction: 'payout' })} variant="outline-primary" size="sm" className="font-bold">
+            <TrendingDown size={16} className="me-1 text-red-600" />
+            سند صرف
           </Button>
         </div>
         

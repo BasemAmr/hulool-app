@@ -5,7 +5,7 @@ import { useModalStore } from '../stores/modalStore';
 import { applyPageBackground } from '../utils/backgroundUtils';
 import ClientsReceivablesTable from '../components/receivables/ClientsReceivablesTable';
 import Button from '../components/ui/Button';
-import { PlusCircle, FileSpreadsheet, Search, X } from 'lucide-react';
+import { PlusCircle, FileSpreadsheet, Search, X, TrendingUp, TrendingDown } from 'lucide-react';
 import { useReceivablesPermissions } from '../hooks/useReceivablesPermissions';
 import SaudiRiyalIcon from '../components/ui/SaudiRiyalIcon';
 import { useDebounce } from '../hooks/useDebounce';
@@ -135,6 +135,14 @@ const ReceivablesPage = () => {
           <Button onClick={() => openModal('invoiceForm', {})} size="sm">
             <PlusCircle size={14} className="me-1" />
             إضافة فاتورة يدوية
+          </Button>
+          <Button onClick={() => openModal('manualTransaction', { direction: 'repayment' })} variant="outline-primary" size="sm" className="font-bold">
+            <TrendingUp size={16} className="me-1 text-green-600" />
+            سند قبض
+          </Button>
+          <Button onClick={() => openModal('manualTransaction', { direction: 'payout' })} variant="outline-primary" size="sm" className="font-bold">
+            <TrendingDown size={16} className="me-1 text-red-600" />
+            سند صرف
           </Button>
         </div>
         

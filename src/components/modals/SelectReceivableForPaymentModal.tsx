@@ -48,7 +48,12 @@ const SelectReceivableForPaymentModal = ({ isOpen, onClose, clientId }: SelectRe
   const handleProceedToPayment = () => {
     if (selectedReceivable) {
       onClose();
-      openModal('paymentForm', { receivable: selectedReceivable });
+      openModal('recordPayment', {
+        invoiceId: selectedReceivable.id,
+        amountDue: selectedReceivable.remaining_amount,
+        clientId: Number(selectedReceivable.client_id),
+        clientName: selectedReceivable.client_name
+      });
     }
   };
 

@@ -11,6 +11,7 @@ import { useEffect } from 'react';
 import { useRecordInvoicePayment } from '../../queries/invoiceQueries';
 import { useGetPaymentMethods } from '../../queries/paymentQueries';
 import { useModalStore } from '../../stores/modalStore';
+import { useToast } from '../../hooks/useToast';
 import type { RecordInvoicePaymentPayload, Invoice } from '../../api/types';
 import BaseModal from '../ui/BaseModal';
 import Button from '../ui/Button';
@@ -29,17 +30,17 @@ const RecordPaymentModal = () => {
   const { t } = useTranslation();
   const props = useModalStore((state) => state.props) as RecordPaymentModalProps;
   const closeModal = useModalStore((state) => state.closeModal);
-  
+
   const { invoiceId, invoice, amountDue, clientName } = props;
   const targetInvoiceId = invoiceId || invoice?.id;
-  
+
   // Use amountDue from props first (passed from parent), then invoice.remaining_amount, then calculate
   const remainingAmount = amountDue ?? invoice?.remaining_amount ?? (invoice ? Number(invoice.amount) - Number(invoice.paid_amount) : 0);
   const displayClientName = clientName || invoice?.client?.name || '';
-  
+
   // Fetch available payment methods
   const { data: paymentMethods, isLoading: methodsLoading } = useGetPaymentMethods();
-  
+
   const { handleSubmit, formState: { errors }, control, watch, setValue } = useForm<RecordInvoicePaymentPayload>({
     defaultValues: {
       amount: Number(remainingAmount) || 0,
@@ -56,18 +57,18 @@ const RecordPaymentModal = () => {
       setValue('amount', Number(remainingAmount), { shouldValidate: true, shouldDirty: false });
     }
   }, [remainingAmount, setValue]);
-  
+
   const recordPaymentMutation = useRecordInvoicePayment();
   const watchedAmount = watch('amount');
   const watchedMethodId = watch('payment_method_id');
-  
+
   // Get selected payment method details
   const selectedMethod = paymentMethods?.find(m => m.id === watchedMethodId);
   const isCashMethod = selectedMethod?.code === 'cash';
 
   const onSubmit = (data: RecordInvoicePaymentPayload) => {
     if (!targetInvoiceId) return;
-    
+
     recordPaymentMutation.mutate(
       { invoiceId: targetInvoiceId, payload: data },
       {
@@ -179,7 +180,7 @@ const RecordPaymentModal = () => {
               />
             )}
           />
-          
+
           {/* Payment Preview */}
           {watchedAmount > 0 && (
             <div className={`payment-preview mt-2 ${isOverpayment ? 'warning' : ''}`}>
@@ -228,8 +229,8 @@ const RecordPaymentModal = () => {
                 {...field}
                 placeholder={
                   selectedMethod?.code === 'bank_transfer' ? 'رقم الحوالة البنكية' :
-                  selectedMethod?.code === 'card' ? 'آخر 4 أرقام من البطاقة' :
-                  selectedMethod?.code === 'check' ? 'رقم الشيك' : 'رقم المرجع'
+                    selectedMethod?.code === 'card' ? 'آخر 4 أرقام من البطاقة' :
+                      selectedMethod?.code === 'check' ? 'رقم الشيك' : 'رقم المرجع'
                 }
               />
             )}
@@ -261,20 +262,20 @@ const RecordPaymentModal = () => {
               {/* Empty for alignment */}
             </div>
             <div className="footer-right">
-              <Button 
-                type="button" 
-                variant="secondary" 
-                size="sm" 
-                onClick={closeModal} 
+              <Button
+                type="button"
+                variant="secondary"
+                size="sm"
+                onClick={closeModal}
                 disabled={recordPaymentMutation.isPending}
                 className="me-2"
               >
                 {t('common.cancel')}
               </Button>
-              <Button 
-                type="submit" 
-                variant="primary" 
-                size="sm" 
+              <Button
+                type="submit"
+                variant="primary"
+                size="sm"
                 isLoading={recordPaymentMutation.isPending}
               >
                 {recordPaymentMutation.isPending ? 'جاري الحفظ...' : 'تسجيل الدفعة'}
@@ -374,7 +375,6 @@ const RecordPaymentModal = () => {
             padding: 0.75rem 1rem;
             background-color: #f8f9fa;
             border-radius: 0 0 0.375rem 0.375rem;
-            margin: 0 -1rem -1rem -1rem;
           }
           .footer-content {
             display: flex;

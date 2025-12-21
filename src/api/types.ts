@@ -132,9 +132,9 @@ export interface ClientPayload {
   phone: string;
   region_id?: number | null;
   google_drive_link?: string;
-  notes?: string;
+  notes?: string | null;
 }
- 
+
 
 export interface ClientUnpaidAmounts {
   client_id: number;
@@ -205,7 +205,7 @@ export interface Task {
   prepaid_amount: number;
   prepaid_receivable_id: number | null;
   expense_amount?: number;
-  
+
   notes: string | null;
   created_at: string;
   updated_at: string;
@@ -227,7 +227,8 @@ export interface TaskPayload {
   start_date: string;
   end_date?: string;
   prepaid_amount?: number;
-  notes?: string;
+  notes?: string; // Added optional notes
+
   requirements?: Requirement[];
   tag_ids?: number[];
   tags?: string[];
@@ -243,7 +244,8 @@ export interface UpdateTaskPayload {
   start_date?: string;
   end_date?: string;
   prepaid_amount?: number;
-  notes?: string;
+  notes?: string; // Added optional notes
+
   requirements?: Requirement[];
   tag_ids?: number[];
   tags?: string[];
@@ -390,8 +392,9 @@ export interface ManualReceivablePayload {
   description: string;
   amount: number;
   amount_details?: AmountDetail[];
-  notes?: string;
+
   due_date: string;
+  notes?: string;
 }
 
 /**
@@ -402,8 +405,9 @@ export interface UpdateReceivablePayload {
   description?: string;
   amount?: number;
   amount_details?: AmountDetail[];
-  notes?: string;
+
   due_date?: string;
+  notes?: string;
 }
 
 /**
@@ -880,7 +884,7 @@ export interface Invoice {
   status: InvoiceStatus;
   description: string;
   notes: string | null;
-  
+
   // Financial fields
   amount: number;
   total_amount?: number; // Alias used by some endpoints
@@ -888,25 +892,25 @@ export interface Invoice {
   amount_paid?: number; // Alias used by some endpoints
   remaining_amount: number;
   amount_due?: number; // Alias used by some endpoints
-  
+
   // Dates
   due_date: string;
   issued_date?: string;
   paid_date?: string | null;
   created_at: string;
   updated_at: string;
-  
+
   // Migration reference
   original_receivable_id?: number | null;
-  
+
   // Prepaid flag (for prepaid invoices)
   is_prepaid?: boolean;
-  
+
   // Computed flags
   is_fully_paid?: boolean;
   is_partially_paid?: boolean;
   is_overdue?: boolean;
-  
+
   // Related entities
   line_items?: InvoiceLineItem[];
   payments?: InvoicePayment[];
@@ -930,8 +934,9 @@ export interface CreateInvoicePayload {
   total_amount?: number;
   line_items?: InvoiceLineItem[];
   due_date: string;
-  notes?: string;
+
   task_id?: number;
+  notes?: string;
 }
 
 /**
@@ -945,7 +950,7 @@ export interface UpdateInvoicePayload {
   total_amount?: number;
   line_items?: InvoiceLineItem[];
   due_date?: string;
-  notes?: string;
+
 }
 
 /**
@@ -1027,7 +1032,7 @@ export type AccountType = 'client' | 'employee' | 'company';
 /**
  * Transaction types in the ledger
  */
-export type TransactionType = 
+export type TransactionType =
   | 'INVOICE_CREATED'
   | 'INVOICE_GENERATED'
   | 'PAYMENT_RECEIVED'
@@ -1171,6 +1176,9 @@ export interface DailyPaymentTotal {
 export interface AccountHistoryPaginatedData {
   transactions: FinancialTransaction[];
   pagination: Pagination;
+  balance?: number;
+  total_debits?: number;
+  total_credits?: number;
 }
 
 /**
@@ -1233,6 +1241,9 @@ export interface PendingItem {
   // Joined data
   account_name?: string;
   related_name?: string;
+  client_name?: string | null;
+  invoice_status?: string | null;
+  invoice_payment_progress?: number | null;
 }
 
 /**
@@ -1270,7 +1281,7 @@ export interface CreatePendingItemPayload {
   account_id: number;
   expected_amount: number;
   assigned_to?: number;
-  notes?: string;
+
 }
 
 /**
@@ -1387,3 +1398,165 @@ export interface InvoiceAgingAnalysis {
  * Payments now target invoices, not receivables.
  */
 // PaymentPayload interface is marked deprecated above in its original location
+// Transaction Management Types
+export interface UpdateTransactionPayload {
+  debit?: number;
+  credit?: number;
+  description?: string;
+  transaction_date?: string;
+  account_type?: 'client' | 'employee' | 'company';
+  account_id?: number;
+  reason: string;
+}
+
+export interface TransactionValidationResult {
+  allowed: boolean;
+  warnings: string[];
+  errors: string[];
+  consequences: {
+    transaction_summary?: {
+      old_debit: number;
+      new_debit: number;
+      old_credit: number;
+      new_credit: number;
+      amount_change: number;
+    };
+    paired_transaction: {
+      transaction_id: number;
+      account_type: string;
+      account_id: number;
+      account_name: string;
+      will_be_updated: boolean;
+      old_amount: number;
+      new_amount: number;
+    } | null;
+    balance_recalculations: Array<{
+      account_type: string;
+      account_id: number;
+      account_name: string;
+      reason: string;
+      current_balance: number;
+      estimated_new_balance: number;
+    }>;
+    invoice_impact?: {
+      invoice_id: number;
+      invoice_description: string;
+      current_status: string;
+      current_amount: number;
+      current_paid: number;
+      current_remaining: number;
+      new_paid: number;
+      new_remaining: number;
+      status_will_change: boolean;
+      new_status: string;
+    };
+  };
+}
+
+export interface CascadeResult {
+  success: boolean;
+  data: {
+    updated_transactions: number[];
+    updated_invoices?: number[];
+    balance_recalculations: Array<{
+      account_type: string;
+      account_id: number;
+    }>;
+  };
+  message?: string;
+}
+
+export interface TaskValidationResult {
+  allowed: boolean;
+  warnings: string[];
+  errors: string[];
+  consequences: {
+    task_summary?: {
+      old_amount: number;
+      new_amount: number;
+      old_prepaid: number;
+      new_prepaid: number;
+      old_final_invoice: number;
+      new_final_invoice: number;
+      client_name: string;
+    };
+    invoice_changes: Array<{
+      invoice_id: number;
+      invoice_type: string;
+      invoice_description: string;
+      old_amount: number;
+      new_amount: number;
+      current_status: string;
+      current_paid: number;
+      reason: string;
+    }>;
+    transaction_changes: Array<{
+      transaction_id: number;
+      type: string;
+      old_amount: number;
+      new_amount: number;
+    }>;
+    prepaid_sync: {
+      required: boolean;
+      old_prepaid: number;
+      new_prepaid: number;
+    } | null;
+    balance_recalculations: Array<{
+      account_type: string;
+      account_id: number;
+      account_name: string;
+      reason: string;
+      current_balance: number;
+      estimated_change: number;
+    }>;
+  };
+}
+
+export interface InvoiceValidationResult {
+  allowed: boolean;
+  warnings: string[];
+  errors: string[];
+  consequences: {
+    invoice_summary?: {
+      old_amount: number;
+      new_amount: number;
+      current_paid: number;
+      current_remaining: number;
+      new_remaining: number;
+      current_status: string;
+      new_status: string;
+      status_will_change: boolean;
+    };
+    transactions_affected: Array<{
+      transaction_id: number;
+      type: string;
+      account_type: string;
+      account_name: string;
+      old_debit: number;
+      new_debit: number;
+      old_credit: number;
+      new_credit: number;
+    }>;
+    allocations_affected: Array<any>;
+    balance_recalculations: Array<{
+      account_type: string;
+      account_id: number;
+      account_name: string;
+      reason: string;
+      current_balance: number;
+      estimated_change: number;
+    }>;
+  };
+}
+
+// Transaction Management Types
+export interface UpdateTransactionPayload {
+  debit?: number;
+  credit?: number;
+  description?: string;
+
+  transaction_date?: string;
+  account_type?: 'client' | 'employee' | 'company';
+  account_id?: number;
+  reason: string;
+}

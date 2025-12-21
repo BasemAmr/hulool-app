@@ -15,71 +15,71 @@ interface ClientFormProps {
 
 const ClientForm = ({ clientToEdit, onSuccess }: ClientFormProps) => {
   const { t } = useTranslation();
-  const { error: toast } = useToast();
-  const isEditMode = !!clientToEdit;
+  const { error: toastError, success: toastSuccess } = useToast();
 
-  const {
-    register,
-    handleSubmit,
-    control,
-    reset,
-    formState: { errors },
-  } = useForm<ClientPayload>({
-    defaultValues: {
-      name: clientToEdit?.name || '',
-      phone: clientToEdit?.phone || '',
-      region_id: clientToEdit?.region_id || null,
-      google_drive_link: clientToEdit?.google_drive_link || '',
-      notes: clientToEdit?.notes || '',
-    },
+  const { register, handleSubmit, control, formState: { errors }, reset } = useForm<ClientPayload>({
+    defaultValues: clientToEdit ? {
+      name: clientToEdit.name,
+      phone: clientToEdit.phone,
+      region_id: clientToEdit.region_id,
+      google_drive_link: clientToEdit.google_drive_link,
+      notes: clientToEdit.notes,
+    } : {}
   });
+
+  const isEditMode = !!clientToEdit;
+  const createMutation = useCreateClient();
+  const updateMutation = useUpdateClient();
+  const mutation = isEditMode ? updateMutation : createMutation;
 
   useEffect(() => {
     if (clientToEdit) {
       reset({
         name: clientToEdit.name,
         phone: clientToEdit.phone,
-        region_id: clientToEdit.region_id || null,
-        google_drive_link: clientToEdit.google_drive_link || '',
-        notes: clientToEdit.notes || '',
+        region_id: clientToEdit.region_id,
+        google_drive_link: clientToEdit.google_drive_link,
+        notes: clientToEdit.notes,
       });
+    } else {
+      reset();
     }
   }, [clientToEdit, reset]);
 
-  const createMutation = useCreateClient();
-  const updateMutation = useUpdateClient();
-  const mutation = isEditMode ? updateMutation : createMutation;
-
-  // Remove the old clientTypeOptions as we now use RegionSelect
-
   const onSubmit = (data: ClientPayload) => {
-    if (isEditMode) {
+    if (isEditMode && clientToEdit) {
       updateMutation.mutate({ id: clientToEdit.id, clientData: data }, {
-        onSuccess,
+        onSuccess: () => {
+          toastSuccess('تم التحديث', 'تم تحديث بيانات العميل بنجاح');
+          onSuccess();
+        },
         onError: (error: any) => {
           console.error('Client update error:', error);
           const errorMessage = error?.response?.data?.message;
-          
+
           // Check for duplicate phone number error
           if (errorMessage && (errorMessage.includes('phone number already exists') || errorMessage.includes('Another client with this phone number'))) {
-            toast('خطأ في التحديث', 'رقم الجوال مسجل مسبقاً لعميل آخر. يرجى استخدام رقم جوال آخر.');
+            toastError('خطأ في التحديث', 'رقم الجوال مسجل مسبقاً لعميل آخر. يرجى استخدام رقم جوال آخر.');
           } else {
-            toast('خطأ في تحديث العميل', errorMessage || 'حدث خطأ أثناء تحديث العميل');
+            toastError('خطأ في تحديث العميل', errorMessage || 'حدث خطأ أثناء تحديث العميل');
           }
         }
       });
     } else {
       createMutation.mutate(data, {
-        onSuccess,
+        onSuccess: () => {
+          toastSuccess('تم الإنشاء', 'تم إنشاء العميل بنجاح');
+          onSuccess();
+        },
         onError: (error: any) => {
           console.error('Client creation error:', error);
           const errorMessage = error?.response?.data?.message;
-          
+
           // Check for duplicate phone number error
           if (errorMessage && errorMessage.includes('phone number already exists')) {
-            toast('خطأ في التسجيل', 'رقم الجوال مسجل مسبقاً في النظام. يرجى استخدام رقم جوال آخر.');
+            toastError('خطأ في التسجيل', 'رقم الجوال مسجل مسبقاً في النظام. يرجى استخدام رقم جوال آخر.');
           } else {
-            toast('خطأ في إنشاء العميل', errorMessage || 'حدث خطأ أثناء إنشاء العميل');
+            toastError('خطأ في إنشاء العميل', errorMessage || 'حدث خطأ أثناء إنشاء العميل');
           }
         }
       });

@@ -238,3 +238,153 @@ html[dir="rtl"],
 :root {
   font-size: 75%; /* Scales everything using rem units */
 }
+
+.task-modal-compact {
+            width: 90vw;
+            max-width: 900px;
+            margin: auto;
+          }
+
+          
+          .step-content {
+            padding: 0.75rem 0;
+          }
+          
+          .main-form {
+            padding-bottom: 1rem;
+          }
+          
+          .form-grid {
+            display: grid;
+            grid-template-columns: 1fr 2fr;
+            gap: 1rem;
+            margin-bottom: 1rem;
+          }
+          
+          .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+            margin-bottom: 1rem;
+          }
+          
+          .form-group-compact {
+            margin-bottom: 0.75rem;
+          }
+          
+          .form-group-half {
+            min-width: 0;
+          }
+          
+          .form-label-compact {
+            font-size: 0.875rem;
+            font-weight: 500;
+            margin-bottom: 0.25rem;
+            display: block;
+            color: #495057;
+          }
+          
+          .form-control-sm {
+            font-size: 0.875rem;
+            padding: 0.375rem 0.5rem;
+          }
+          
+          .form-select-sm {
+            font-size: 0.875rem;
+            padding: 0.375rem 0.5rem;
+          }
+          
+          .invalid-feedback-compact {
+            font-size: 0.75rem;
+            color: #dc3545;
+            margin-top: 0.125rem;
+          }
+          
+          .client-section {
+            position: relative;
+          }
+          
+          .client-input-wrapper {
+            position: relative;
+          }
+          
+          .client-icons {
+            margin-bottom: 0.25rem;
+          }
+          
+          .requirements-section {
+            border: 1px solid #e9ecef;
+            border-radius: 0.375rem;
+            padding: 0.75rem;
+            background-color: #f8f9fa;
+          }
+          
+          .requirements-list-compact {
+            max-height: 120px;
+            overflow-y: auto;
+          }
+          
+          .requirement-item-compact {
+            padding: 0.5rem;
+            margin-bottom: 0.5rem;
+            background: white;
+            border-radius: 0.25rem;
+            border: 1px solid #e9ecef;
+          }
+          
+          .requirement-item-compact:last-child {
+            margin-bottom: 0;
+          }
+          
+          .empty-requirements {
+            text-align: center;
+            padding: 1rem;
+            color: #6c757d;
+          }
+          
+          .btn-xs {
+            padding: 0.25rem 0.5rem;
+            font-size: 0.75rem;
+            line-height: 1.2;
+          }
+          
+          .form-check-sm {
+            margin-bottom: 0;
+          }
+          
+          .form-check-input-sm {
+            width: 1rem;
+            height: 1rem;
+          }
+          
+          .fade-in {
+            animation: fadeIn 0.3s ease-in-out;
+          }
+          
+          @keyframes fadeIn {
+            from { 
+              opacity: 0; 
+              transform: translateY(10px); 
+            }
+            to { 
+              opacity: 1; 
+              transform: translateY(0); 
+            }
+          }
+          
+          /* Responsive adjustments */
+          @media (max-width: 768px) {
+            .task-modal-compact {
+              width: 95vw;
+            }
+            
+            .form-grid {
+              grid-template-columns: 1fr;
+              gap: 0.75rem;
+            }
+            
+            .form-row {
+              grid-template-columns: 1fr;
+              gap: 0.75rem;
+            }
+          }

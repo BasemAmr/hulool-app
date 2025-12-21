@@ -53,8 +53,8 @@ const getTypeBadgeStyle = (type: string) => {
 // Expand Toggle Cell
 const ExpandCell = React.memo(({ rowData, columnData }: CellProps<StatementItem, { expandedRows: Set<string>; toggleRow: (id: string) => void }>) => {
   const { expandedRows, toggleRow } = columnData || {};
-  const hasPayments = (rowData.details?.payments && rowData.details.payments.length > 0) || 
-                      (rowData.details?.allocations && rowData.details.allocations.length > 0);
+  const hasPayments = (rowData.details?.payments && rowData.details.payments.length > 0) ||
+    (rowData.details?.allocations && rowData.details.allocations.length > 0);
 
   if (!hasPayments) return null;
 
@@ -95,7 +95,7 @@ DescriptionCell.displayName = 'DescriptionCell';
 // Debit Cell
 const DebitCell = React.memo(({ rowData, columnData }: CellProps<StatementItem, { hideAmounts?: boolean }>) => {
   const hideAmounts = columnData?.hideAmounts;
-  
+
   return (
     <div style={{ textAlign: 'center', fontWeight: 600, color: '#000000' }}>
       {hideAmounts ? '***' : (rowData.debit > 0 ? formatCurrency(rowData.debit) : '—')}
@@ -107,7 +107,7 @@ DebitCell.displayName = 'DebitCell';
 // Credit Cell
 const CreditCell = React.memo(({ rowData, columnData }: CellProps<StatementItem, { hideAmounts?: boolean }>) => {
   const hideAmounts = columnData?.hideAmounts;
-  
+
   return (
     <div style={{ textAlign: 'center', fontWeight: 600, color: '#16a34a' }}>
       {hideAmounts ? '***' : (rowData.credit > 0 ? formatCurrency(rowData.credit) : '—')}
@@ -119,7 +119,7 @@ CreditCell.displayName = 'CreditCell';
 // Balance/Due Cell
 const BalanceCell = React.memo(({ rowData, columnData }: CellProps<StatementItem, { hideAmounts?: boolean }>) => {
   const hideAmounts = columnData?.hideAmounts;
-  
+
   return (
     <div style={{ textAlign: 'center', fontWeight: 700, color: '#dc2626' }}>
       {hideAmounts ? '***' : formatCurrency(rowData.balance)}
@@ -178,17 +178,17 @@ const ActionsCell = React.memo(({ rowData, columnData }: CellProps<StatementItem
 
   if (!client || !openModal) return null;
 
-  const canEdit = item.details?.receivables && 
-                  item.details.receivables.length > 0 && 
-                  !item.details.receivables[0].task_id;
-  
+  const canEdit = item.details?.receivables &&
+    item.details.receivables.length > 0 &&
+    !item.details.receivables[0].task_id;
+
   const canPay = (item.remaining_amount ?? 0) > 0;
   const isPaid = (item.remaining_amount ?? 0) <= 0 && item.debit > 0;
 
   const handleEdit = (e: React.MouseEvent) => {
     e.stopPropagation();
     if (!item.details?.receivables?.length) return;
-    
+
     const receivable = item.details.receivables.find(r => r.id === item.receivable_id) || {
       id: item.details.receivables[0].id,
       client_id: Number(client.id),
@@ -199,15 +199,22 @@ const ActionsCell = React.memo(({ rowData, columnData }: CellProps<StatementItem
       due_date: item.date,
       notes: '',
       created_at: item.date,
-      updated_at: item.date
+      updated_at: item.date,
+      // Add missing fields for Invoice type compatibility
+      paid_amount: Number(item.credit) || 0,
+      remaining_amount: Number(item.balance) || 0,
+      status: (item.balance <= 0) ? 'paid' : ((item.credit > 0) ? 'partially_paid' : 'pending'),
+      client_name: client.name,
+      client_phone: client.phone
     };
-    openModal('editReceivable', { receivable });
+    // Cast to any to bypass strict type check if needed, or structured as Invoice
+    openModal('invoiceEdit', { invoice: receivable as any });
   };
 
   const handleDelete = (e: React.MouseEvent) => {
     e.stopPropagation();
     if (!item.details?.receivables?.length) return;
-    
+
     const receivable = item.details.receivables.find(r => r.id === item.receivable_id) || {
       id: item.details.receivables[0].id,
       client_id: Number(client.id),
@@ -227,8 +234,8 @@ const ActionsCell = React.memo(({ rowData, columnData }: CellProps<StatementItem
     e.stopPropagation();
     if (!item.details?.receivables?.length) return;
 
-    let receivableId = item.details.receivables[0]?.id === item.details.receivables[0]?.prepaid_receivable_id 
-      ? item.details.receivables[1]?.id 
+    let receivableId = item.details.receivables[0]?.id === item.details.receivables[0]?.prepaid_receivable_id
+      ? item.details.receivables[1]?.id
       : item.details.receivables[0]?.id;
 
     if (!receivableId) return;
@@ -264,7 +271,12 @@ const ActionsCell = React.memo(({ rowData, columnData }: CellProps<StatementItem
         phone: client.phone
       }
     };
-    openModal('paymentForm', { receivable: pseudoReceivable });
+    openModal('recordPayment', {
+      invoiceId: pseudoReceivable.id,
+      amountDue: pseudoReceivable.remaining_amount,
+      clientId: pseudoReceivable.client_id,
+      clientName: pseudoReceivable.client_name
+    });
   };
 
   return (

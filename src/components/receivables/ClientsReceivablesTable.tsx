@@ -165,10 +165,11 @@ interface ActionsCellData {
   openModal: (modal: string, data: any) => void;
   onPaymentReminder: (phone: string, clientName: string, amount: number) => void;
   onPayment: (clientId: number) => void;
+  onViewLedger: (clientId: number, clientName: string) => void;
 }
 
 const ActionsCell = React.memo(({ rowData, columnData }: CellProps<ClientReceivablesSummary, ActionsCellData>) => {
-  const { openModal, onPaymentReminder, onPayment } = columnData || {};
+  const { openModal, onPaymentReminder, onPayment, onViewLedger } = columnData || {};
   const hasDebt = Number(rowData.remaining_amount) > 0;
 
   const handleEdit = (e: React.MouseEvent) => {
@@ -184,6 +185,11 @@ const ActionsCell = React.memo(({ rowData, columnData }: CellProps<ClientReceiva
   const handlePay = (e: React.MouseEvent) => {
     e.stopPropagation();
     onPayment?.(rowData.client_id);
+  };
+
+  const handleViewLedger = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    onViewLedger?.(rowData.client_id, rowData.client_name);
   };
 
   return (
@@ -219,6 +225,24 @@ const ActionsCell = React.memo(({ rowData, columnData }: CellProps<ClientReceiva
         <Edit3 size={14} />
       </button>
       */}
+      <button
+        onClick={handleViewLedger}
+        onMouseDown={(e) => e.stopPropagation()}
+        title="عرض كشف الحساب"
+        style={{
+          padding: '4px 8px',
+          borderRadius: '6px',
+          border: '1px solid var(--color-primary, #3b82f6)',
+          backgroundColor: 'transparent',
+          color: 'var(--color-primary, #3b82f6)',
+          cursor: 'pointer',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+        }}
+      >
+        <Edit3 size={14} />
+      </button>
       <button
         onClick={handleReminder}
         onMouseDown={(e) => e.stopPropagation()}
@@ -302,6 +326,14 @@ const ClientsReceivablesTable: React.FC<ClientsReceivablesTableProps> = ({
     });
   };
 
+  const handleViewLedger = (clientId: number, clientName: string) => {
+    openModal('accountLedger', {
+      clientId,
+      clientName,
+      filter: 'all'
+    });
+  };
+
   // Filter clients with debt
   const filteredClients = useMemo(() => 
     clients.filter(client => (Number(client.remaining_amount) || 0) > 0),
@@ -372,12 +404,13 @@ const ClientsReceivablesTable: React.FC<ClientsReceivablesTableProps> = ({
       columnData: { 
         openModal, 
         onPaymentReminder: handlePaymentReminder, 
-        onPayment: handlePayment 
+        onPayment: handlePayment,
+        onViewLedger: handleViewLedger
       },
-      width: 200, // Fixed width for actions
+      width: 250, // Fixed width for actions
       grow: 0,
     },
-  ], [handleClientClick, handleWhatsApp, openModal, handlePaymentReminder, handlePayment]);
+  ], [handleClientClick, handleWhatsApp, openModal, handlePaymentReminder, handlePayment, handleViewLedger]);
 
   // Empty state
   if (!clients || clients.length === 0 || filteredClients.length === 0) {

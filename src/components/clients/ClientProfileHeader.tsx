@@ -5,7 +5,7 @@ import { Link } from 'react-router-dom';
 import type { Client } from '../../api/types';
 import Button from '../ui/Button';
 import WhatsAppIcon from '../ui/WhatsAppIcon';
-import { Plus, Download } from 'lucide-react'; // For a generic export icon
+import { Plus, Download, TrendingUp, TrendingDown } from 'lucide-react'; // For a generic export icon
 import { useGetClientCredits } from '../../queries/clientCreditQueries';
 import SaudiRiyalIcon from '../ui/SaudiRiyalIcon';
 import {
@@ -23,6 +23,8 @@ interface ClientProfileHeaderProps {
   onAddTask: () => void;
   onAddInvoice: () => void;
   onAddCredit: () => void;
+  onAddSarfVoucher?: () => void;
+  onAddQabdVoucher?: () => void;
   // --- MODIFIED PROPS ---
   onExportStatement: () => void;
   onExportTasks: () => void;
@@ -54,6 +56,8 @@ const ClientProfileHeader = ({
   onAddTask, 
   onAddInvoice, 
   onAddCredit,
+  onAddSarfVoucher,
+  onAddQabdVoucher,
   onExportStatement,
   onExportTasks,
   onExportCredits,
@@ -119,6 +123,28 @@ const ClientProfileHeader = ({
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
+
+            {/* Voucher Buttons */}
+            {onAddQabdVoucher && (
+              <Button 
+                size="sm" 
+                onClick={onAddQabdVoucher}
+                variant="outline-primary"
+                className="font-bold"
+              >
+                <TrendingUp size={16} className="me-1 text-green-600" /> سند قبض
+              </Button>
+            )}
+            {onAddSarfVoucher && (
+              <Button 
+                size="sm" 
+                onClick={onAddSarfVoucher}
+                variant="outline-primary"
+                className="font-bold"
+              >
+                <TrendingDown size={16} className="me-1 text-red-600" /> سند صرف
+              </Button>
+            )}
 
             {/* Export Dropdown */}
             {(mode === 'receivables' || mode === 'tasks') && (

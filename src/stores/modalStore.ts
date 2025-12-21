@@ -17,7 +17,7 @@ import type {
 
 // Define all possible modals in the app.
 // We will add more types like 'task' in later phases.
-export type ModalType = 'clientForm' | 'confirmDelete' | 'taskForm' | 'requirements' | 'manualReceivable' | 'clientReceivables' | 'paymentForm' | 'paymentHistory' | 'clientSearch' | 'tagForm' | 'tagManagement' | 'selectReceivableForPayment' | 'taskCompletion' | 'amountDetails' | 'subtasksModal' | 'taskSelection' | 'taskDetails' | 'taskSubtasks' | 'recordCreditModal' | 'applyCreditModal' | 'clientCreditHistory' | 'creditEdit' | 'creditDelete' | 'allocationEdit' | 'allocationDelete' | 'paymentEdit' | 'paymentDelete' | 'editReceivable' | 'deleteReceivable' | 'clientReceivablesEdit' | 'urgentAlert' | 'prepaidConflict' | 'taskAmountConflict' | 'taskCancellation' | 'concurrentModification' | 'assignTask' | 'approval' | 'employeePayout' | 'editEmployeePayout' | 'editTaskExpense' | 'submitForReview' | 'employeeBorrow' | 'invoiceForm' | 'recordPayment' | 'accountLedger' | 'invoiceDetails' | 'applyCreditToInvoice' | 'manualTransaction' | 'createInvoice' | 'journalEntryDetails'
+export type ModalType = 'clientForm' | 'confirmDelete' | 'taskForm' | 'requirements' | 'manualReceivable' | 'clientReceivables' | 'paymentForm' | 'paymentHistory' | 'clientSearch' | 'tagForm' | 'tagManagement' | 'selectReceivableForPayment' | 'taskCompletion' | 'amountDetails' | 'subtasksModal' | 'taskSelection' | 'taskDetails' | 'taskSubtasks' | 'recordCreditModal' | 'applyCreditModal' | 'clientCreditHistory' | 'creditEdit' | 'creditDelete' | 'allocationEdit' | 'allocationDelete' | 'paymentEdit' | 'paymentDelete' | 'editReceivable' | 'deleteReceivable' | 'clientReceivablesEdit' | 'urgentAlert' | 'prepaidConflict' | 'taskAmountConflict' | 'taskCancellation' | 'concurrentModification' | 'assignTask' | 'approval' | 'employeePayout' | 'editEmployeePayout' | 'editTaskExpense' | 'submitForReview' | 'employeeBorrow' | 'invoiceForm' | 'recordPayment' | 'accountLedger' | 'invoiceDetails' | 'applyCreditToInvoice' | 'manualTransaction' | 'createInvoice' | 'journalEntryDetails' | 'taskRestore' | 'taskRestoreValidation' | 'taskAmountEdit' | 'invoiceEdit' | 'invoiceCancel' | 'invoiceDelete' | 'transactionEdit' | 'transactionDelete';
 
 // Define the props each modal type can receive.
 interface ModalProps {
@@ -121,6 +121,22 @@ interface ModalProps {
   };
   createInvoice: { client?: Client; client_id?: number };
   journalEntryDetails: { transactionId: number; accountType: string; accountId: number };
+
+  // NEW VALIDATION/CASCADE MODALS
+  taskRestore: { task: Task };
+  taskAmountEdit: { task: Task };
+  invoiceEdit: { invoice: Invoice };
+  invoiceCancel: { invoice: Invoice };
+  invoiceDelete: { invoice: Invoice };
+  transactionEdit: { transaction: any };
+  transactionDelete: { transaction: any };
+  taskRestoreValidation: {
+    taskId: number;
+    validation?: {
+      allowed: boolean;
+      consequences: any; // Using any for simplicity or import the type
+    };
+  };
 }
 
 interface ModalState {

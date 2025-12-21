@@ -11,6 +11,7 @@ import ClientSearchCompact from '../shared/ClientSearchCompact';
 import { useCreateInvoice } from '../../queries/invoiceQueries';
 import { useModalStore } from '../../stores/modalStore';
 import type { Client, CreateInvoicePayload, TaskType, InvoiceLineItem } from '../../api/types';
+import { useToast } from '../../hooks/useToast';
 import BaseModal from '../ui/BaseModal';
 import Button from '../ui/Button';
 import Input from '../ui/Input';
@@ -22,11 +23,11 @@ const InvoiceFormModal = () => {
   const props = useModalStore((state) => state.props);
   const closeModal = useModalStore((state) => state.closeModal);
   const preselectedClient = props.client;
-  
+
   const [step, setStep] = useState(0);
   const [selectedClient, setSelectedClient] = useState<Client | null>(preselectedClient || null);
   const [lineItems, setLineItems] = useState<InvoiceLineItem[]>([]);
-  
+
   const { register, handleSubmit, formState: { errors }, setValue, watch, control } = useForm<CreateInvoicePayload>({
     defaultValues: {
       client_id: preselectedClient?.id,
@@ -34,7 +35,7 @@ const InvoiceFormModal = () => {
       line_items: []
     }
   });
-  
+
   const createMutation = useCreateInvoice();
   const taskTypes: TaskType[] = ['Government', 'RealEstate', 'Accounting', 'Other'];
 
@@ -54,14 +55,16 @@ const InvoiceFormModal = () => {
   const updateLineItem = (index: number, field: keyof InvoiceLineItem, value: string | number) => {
     const updated = [...lineItems];
     updated[index] = { ...updated[index], [field]: value };
-    
+
     // Auto-calculate amount when quantity or unit_price changes
     if (field === 'quantity' || field === 'unit_price') {
       updated[index].amount = updated[index].quantity * updated[index].unit_price;
     }
-    
+
     setLineItems(updated);
   };
+
+  const { success, error } = useToast();
 
   const onSubmit = (data: CreateInvoicePayload) => {
     const payload: CreateInvoicePayload = {
@@ -69,11 +72,16 @@ const InvoiceFormModal = () => {
       amount: totalAmount,
       line_items: lineItems.length > 0 ? lineItems : undefined,
     };
-    
+
     createMutation.mutate(payload, {
       onSuccess: () => {
+        success('تم الإنشاء', 'تم إنشاء الفاتورة بنجاح');
         closeModal();
       },
+      onError: (err: any) => {
+        console.error('Create invoice error:', err);
+        error('فشل الإنشاء', err.message || 'فشل إنشاء الفاتورة');
+      }
     });
   };
 
@@ -147,7 +155,7 @@ const InvoiceFormModal = () => {
                 <span className="fw-bold ms-2">{watch('type') ? t(`receivables.type.${watch('type')}`) : ''}</span>
               </div>
             </div>
-            
+
             {preselectedClient ? (
               <div className="text-center">
                 <h5 className="mb-3">العميل المختار</h5>
@@ -160,9 +168,9 @@ const InvoiceFormModal = () => {
                     <span className="text-green-500 text-xl">✓</span>
                   </div>
                 </div>
-                <Button 
-                  variant="primary" 
-                  size="sm" 
+                <Button
+                  variant="primary"
+                  size="sm"
                   className="mt-3"
                   onClick={() => {
                     setSelectedClient(preselectedClient);
@@ -192,7 +200,7 @@ const InvoiceFormModal = () => {
                 </div>
               </>
             )}
-            
+
             <Controller
               name="client_id"
               control={control}
@@ -202,7 +210,7 @@ const InvoiceFormModal = () => {
               )}
             />
             {errors.client_id && <div className="text-center text-danger small mt-2">{t('common.required')}</div>}
-            
+
             <div className="modal-footer-compact">
               <div className="footer-content">
                 <div className="footer-left">
@@ -249,8 +257,8 @@ const InvoiceFormModal = () => {
                   <div className="mt-1">
                     <strong>{selectedClient?.name}</strong>
                     <small className="d-block text-muted">{selectedClient?.phone}</small>
-                    <button 
-                      type="button" 
+                    <button
+                      type="button"
                       className="btn btn-link btn-sm p-0 text-decoration-none"
                       onClick={() => setStep(1)}
                     >
@@ -273,16 +281,16 @@ const InvoiceFormModal = () => {
             <div className="mb-4">
               <div className="flex justify-between items-center mb-2">
                 <label className="font-medium">بنود الفاتورة</label>
-                <Button 
-                  type="button" 
-                  variant="outline-primary" 
+                <Button
+                  type="button"
+                  variant="outline-primary"
                   size="sm"
                   onClick={addLineItem}
                 >
                   <Plus size={14} className="ml-1" /> إضافة بند
                 </Button>
               </div>
-              
+
               {lineItems.length > 0 ? (
                 <div className="border rounded-lg overflow-hidden">
                   <div className="grid grid-cols-12 gap-2 p-2 bg-gray-100 text-sm font-medium">
@@ -399,31 +407,31 @@ const InvoiceFormModal = () => {
             <div className="modal-footer-compact">
               <div className="footer-content">
                 <div className="footer-left">
-                  <Button 
-                    type="button" 
-                    variant="secondary" 
-                    size="sm" 
-                    onClick={() => setStep(1)} 
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    size="sm"
+                    onClick={() => setStep(1)}
                     disabled={createMutation.isPending}
                   >
                     ← رجوع
                   </Button>
                 </div>
                 <div className="footer-right">
-                  <Button 
-                    type="button" 
-                    variant="secondary" 
-                    size="sm" 
-                    onClick={closeModal} 
-                    disabled={createMutation.isPending} 
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    size="sm"
+                    onClick={closeModal}
+                    disabled={createMutation.isPending}
                     className="me-2"
                   >
                     {t('common.cancel')}
                   </Button>
-                  <Button 
-                    type="submit" 
-                    variant="primary" 
-                    size="sm" 
+                  <Button
+                    type="submit"
+                    variant="primary"
+                    size="sm"
                     isLoading={createMutation.isPending}
                   >
                     {createMutation.isPending ? 'جاري الحفظ...' : 'إنشاء الفاتورة'}
@@ -514,7 +522,6 @@ const InvoiceFormModal = () => {
             padding: 0.75rem 1rem;
             background-color: #f8f9fa;
             border-radius: 0 0 0.375rem 0.375rem;
-            margin: 0 -1rem -1rem -1rem;
           }
           .footer-content {
             display: flex;

@@ -374,7 +374,6 @@ const ManualReceivableModal = () => {
             padding: 0.75rem 1rem;
             background-color: #f8f9fa;
             border-radius: 0 0 0.375rem 0.375rem;
-            margin: 0 -1rem -1rem -1rem;
           }
           .footer-content {
             display: flex;

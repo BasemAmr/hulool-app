@@ -36,6 +36,10 @@ import {
 import { useDebounce } from '../../hooks/useDebounce';
 import { useInView } from 'react-intersection-observer';
 import type { InvoiceStatus } from '../../api/types';
+import InvoiceEditModal from '../../components/modals/InvoiceEditModal';
+import InvoiceCancelModal from '../../components/modals/InvoiceCancelModal';
+import InvoiceDeleteModal from '../../components/modals/InvoiceDeleteModal';
+import { Edit3, Trash2, XCircle } from 'lucide-react';
 
 type ViewMode = 'table' | 'kanban';
 
@@ -48,6 +52,9 @@ const InvoicesHubPage = () => {
   );
   const [viewMode, setViewMode] = useState<ViewMode>('table');
   const debouncedSearch = useDebounce(search, 500);
+
+  const [selectedInvoice, setSelectedInvoice] = useState<any>(null);
+  const [modalType, setModalType] = useState<'edit' | 'cancel' | 'delete' | null>(null);
   const openModal = useModalStore((state) => state.openModal);
 
   // Update status filter if URL param changes
@@ -372,6 +379,36 @@ const InvoicesHubPage = () => {
                             <Button
                               variant="outline-secondary"
                               size="sm"
+                              onClick={() => { setSelectedInvoice(invoice); setModalType('edit'); }}
+                              title="Edit"
+                            >
+                              <Edit3 size={14} />
+                            </Button>
+                            {invoice.status === 'draft' && (
+                              <Button
+                                variant="outline-secondary"
+                                size="sm"
+                                onClick={() => { setSelectedInvoice(invoice); setModalType('delete'); }}
+                                title="Delete"
+                                className="text-red-500"
+                              >
+                                <Trash2 size={14} />
+                              </Button>
+                            )}
+                            {invoice.status !== 'cancelled' && invoice.status !== 'draft' && (
+                              <Button
+                                variant="outline-secondary"
+                                size="sm"
+                                onClick={() => { setSelectedInvoice(invoice); setModalType('cancel'); }}
+                                title="Cancel"
+                                className="text-orange-500"
+                              >
+                                <XCircle size={14} />
+                              </Button>
+                            )}
+                            <Button
+                              variant="outline-secondary"
+                              size="sm"
                               onClick={() => openModal('invoiceDetails', { invoiceId: invoice.id })}
                               title="تفاصيل"
                             >
@@ -405,6 +442,28 @@ const InvoicesHubPage = () => {
           </div>
         )}
       </div>
+
+      {modalType === 'edit' && selectedInvoice && (
+        <InvoiceEditModal 
+          isOpen={true} 
+          onClose={() => setModalType(null)} 
+          invoice={selectedInvoice} 
+        />
+      )}
+      {modalType === 'cancel' && selectedInvoice && (
+        <InvoiceCancelModal 
+          isOpen={true} 
+          onClose={() => setModalType(null)} 
+          invoice={selectedInvoice} 
+        />
+      )}
+      {modalType === 'delete' && selectedInvoice && (
+        <InvoiceDeleteModal 
+          isOpen={true} 
+          onClose={() => setModalType(null)} 
+          invoice={selectedInvoice} 
+        />
+      )}
     </div>
   );
 };

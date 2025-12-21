@@ -7,7 +7,7 @@ import {
   Banknote, LayoutDashboard, LogOut, NotebookText, Users, Settings, 
   Building, Calculator, Home, Briefcase, Plus, Receipt, 
   Tags, CreditCard, AlertTriangle, UserCog, Wallet, FileText, CheckSquare,
-  Search, ChevronDown, Menu, Loader
+  Search, ChevronDown, Menu, Loader, TrendingUp, TrendingDown
 } from 'lucide-react';
 import { useModalStore } from '../../stores/modalStore';
 import { 
@@ -92,7 +92,7 @@ const Navbar = () => {
               key={item.path}
               to={item.path}
               className={({ isActive }) =>
-                `flex items-center gap-2 px-3 py-2 text-sm font-medium rounded-md transition-colors whitespace-nowrap ${
+                `flex items-center gap-2 px-3 py-2 text-sm font-bold rounded-md transition-colors whitespace-nowrap ${
                   isActive 
                     ? 'bg-primary/10 text-primary' 
                     : 'text-muted-foreground hover:bg-accent hover:text-accent-foreground'
@@ -106,7 +106,7 @@ const Navbar = () => {
 
           {/* Employees Dropdown */}
           <DropdownMenu>
-            <DropdownMenuTrigger className={`flex items-center gap-2 px-3 py-2 text-sm font-medium rounded-md transition-colors outline-none ${isEmployeesActive ? 'bg-primary/10 text-primary' : 'text-muted-foreground hover:bg-accent hover:text-accent-foreground'}`}>
+            <DropdownMenuTrigger className={`flex items-center gap-2 px-3 py-2 text-sm font-bold rounded-md transition-colors outline-none ${isEmployeesActive ? 'bg-primary/10 text-primary' : 'text-muted-foreground hover:bg-accent hover:text-accent-foreground'}`}>
               <UserCog size={16} />
               <span>الموظفين</span>
               <ChevronDown size={14} className="opacity-50" />
@@ -147,7 +147,7 @@ const Navbar = () => {
             </DropdownMenuContent>
           </DropdownMenu>
           <DropdownMenu>
-            <DropdownMenuTrigger className={`flex items-center gap-2 px-3 py-2 text-sm font-medium rounded-md transition-colors outline-none ${isFinancialActive ? 'bg-primary/10 text-primary' : 'text-muted-foreground hover:bg-accent hover:text-accent-foreground'}`}>
+            <DropdownMenuTrigger className={`flex items-center gap-2 px-3 py-2 text-sm font-bold rounded-md transition-colors outline-none ${isFinancialActive ? 'bg-primary/10 text-primary' : 'text-muted-foreground hover:bg-accent hover:text-accent-foreground'}`}>
               <Wallet size={16} />
               <span>المركز المالي</span>
               <ChevronDown size={14} className="opacity-50" />
@@ -166,7 +166,7 @@ const Navbar = () => {
 
           {/* Tasks Dropdown */}
           <DropdownMenu>
-            <DropdownMenuTrigger className={`flex items-center gap-2 px-3 py-2 text-sm font-medium rounded-md transition-colors outline-none ${isTasksActive ? 'bg-primary/10 text-primary' : 'text-muted-foreground hover:bg-accent hover:text-accent-foreground'}`}>
+            <DropdownMenuTrigger className={`flex items-center gap-2 px-3 py-2 text-sm font-bold rounded-md transition-colors outline-none ${isTasksActive ? 'bg-primary/10 text-primary' : 'text-muted-foreground hover:bg-accent hover:text-accent-foreground'}`}>
               <NotebookText size={16} />
               <span>المهام</span>
               <ChevronDown size={14} className="opacity-50" />
@@ -221,6 +221,15 @@ const Navbar = () => {
                 <CreditCard size={16} /> 
               </DropdownMenuItem>
               <DropdownMenuSeparator />
+              <DropdownMenuItem onClick={() => openModal('manualTransaction', { direction: 'repayment' })} className="cursor-pointer flex flex-row-reverse justify-end gap-2 text-green-600 font-bold">
+                <span>اضافة سند قبض</span>
+                <TrendingUp size={16} className="text-green-600" />
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => openModal('manualTransaction', { direction: 'payout' })} className="cursor-pointer flex flex-row-reverse justify-end gap-2 text-red-600 font-bold">
+                <span>اضافة سند صرف</span>
+                <TrendingDown size={16} className="text-red-600" />
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
               <DropdownMenuItem onClick={() => openModal('urgentAlert', {})} className="text-destructive focus:text-destructive cursor-pointer flex flex-row-reverse justify-end gap-2">
                 <span>تنبيه عاجل</span>
                 <AlertTriangle size={16} /> 
@@ -236,7 +245,7 @@ const Navbar = () => {
             <DropdownMenuTrigger className="outline-none">
               <div className="flex items-center gap-2 hover:bg-accent rounded-full p-1 pr-2 transition-colors border border-transparent hover:border-border">
                 <div className="text-right hidden md:block">
-                  <div className="text-sm font-medium leading-none">{user?.display_name || 'مستخدم'}</div>
+                  <div className="text-sm font-bold leading-none">{user?.display_name || 'مستخدم'}</div>
                   <div className="text-xs text-muted-foreground mt-1">محامي</div>
                 </div>
                 <div className="w-8 h-8 rounded-full bg-primary/20 text-primary flex items-center justify-center font-semibold border border-primary/10">

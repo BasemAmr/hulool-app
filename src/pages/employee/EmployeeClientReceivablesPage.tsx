@@ -18,7 +18,7 @@ import Input from '../../components/ui/Input';
 import { Badge } from '../../components/ui/badge';
 import { Spinner } from '../../components/ui/spinner';
 import WhatsAppIcon from '../../components/ui/WhatsAppIcon';
-import { FileText, Search, X } from 'lucide-react';
+import { FileText, Search, X, DollarSign } from 'lucide-react';
 import { useDebounce } from '../../hooks/useDebounce';
 import { useInView } from 'react-intersection-observer';
 import { sendPaymentReminder, formatPhoneForWhatsApp } from '../../utils/whatsappUtils';
@@ -251,6 +251,22 @@ const EmployeeClientReceivablesPage = () => {
                                         </TableCell>
                                         <TableCell className="border border-gray-300 px-3 py-2">
                                             <div className="flex items-center gap-2">
+                                                {/* Step 8: Payment Button */}
+                                                {Number(invoice.remaining_amount) > 0 && (
+                                                    <button
+                                                        onClick={() => openModal('recordPayment', {
+                                                            invoiceId: invoice.id,
+                                                            invoice: invoice,
+                                                            amountDue: Number(invoice.remaining_amount),
+                                                            clientId: invoice.client_id,
+                                                            clientName: invoice.client?.name
+                                                        })}
+                                                        title="تسجيل دفعة"
+                                                        className="p-1.5 rounded border border-green-600 text-green-600 hover:bg-green-50 transition-colors"
+                                                    >
+                                                        <DollarSign size={16} />
+                                                    </button>
+                                                )}
                                                 {invoice.client?.phone && (
                                                     <button
                                                         onClick={() => handleWhatsAppReminder(invoice)}

@@ -21,6 +21,8 @@ import {
   useGetMyTransactions,
 } from '../../queries/employeeFinancialQueries';
 import { useGetMyPendingItems } from '../../queries/financialCenterQueries';
+import EmployeeTransactionsTable from '../../components/employees/EmployeeTransactionsTable';
+import { useModalStore } from '../../stores/modalStore';
 import { 
   Wallet, 
   TrendingUp, 
@@ -39,6 +41,7 @@ type TabType = 'summary' | 'pending' | 'history';
 const EmployeeFinancialsPageRedesigned = () => {
   const [activeTab, setActiveTab] = useState<TabType>('summary');
   const [searchParams] = useSearchParams();
+  const { openModal } = useModalStore();
   
   // Get URL parameters for highlighting
   const highlightTransactionId = searchParams.get('highlight');
@@ -49,6 +52,41 @@ const EmployeeFinancialsPageRedesigned = () => {
   
   const transactions = transactionsData?.data?.transactions || [];
   const pendingItems = pendingData?.items || [];
+
+  // Map transactions to the format expected by EmployeeTransactionsTable
+  const mappedTransactions = useMemo(() => {
+    return transactions.map(t => ({
+      id: String(t.id),
+      transaction_type: t.transaction_type || (t.direction === 'CREDIT' ? 'EMPLOYEE_COMMISSION' : 'EMPLOYEE_PAYOUT'),
+      description: t.transaction_name,
+      debit: t.direction === 'CREDIT' ? t.amount : '0',
+      credit: t.direction === 'DEBIT' ? t.amount : '0',
+      balance: t.balance ?? null,
+      transaction_date: t.transaction_date,
+      related_object_type: t.related_task_id ? 'task' : null,
+      related_object_id: t.related_task_id,
+      task_name: t.task_name,
+      client_name: t.client_name
+    }));
+  }, [transactions]);
+
+  // Map pending items to the format expected by EmployeeTransactionsTable
+  const mappedPending = useMemo(() => {
+    return pendingItems.map(item => ({
+      id: String(item.id),
+      item_type: item.item_type,
+      related_entity: item.related_entity ?? null,
+      task_id: String(item.related_id),
+      expected_amount: String(item.expected_amount),
+      status: item.status,
+      notes: item.notes,
+      created_at: item.created_at,
+      task_name: item.related_name ?? null,
+      client_name: item.client_name ?? null,
+      invoice_status: item.invoice_status ?? null,
+      invoice_payment_progress: item.invoice_payment_progress ?? 0
+    }));
+  }, [pendingItems]);
 
   // Calculate totals from transactions
   const totals = useMemo(() => {
@@ -363,60 +401,14 @@ const EmployeeFinancialsPageRedesigned = () => {
 
       {activeTab === 'history' && (
         <Card>
-          <CardContent className="p-0">
-            {transactions.length === 0 ? (
-              <div className="text-center py-12">
-                <FileText size={40} className="text-black/20 mx-auto mb-3" />
-                <p className="text-black/50">لا توجد معاملات</p>
-              </div>
-            ) : (
-              <Table className="border-collapse border border-gray-300">
-                <TableHeader>
-                  <TableRow>
-                    <TableHead className="text-start border border-gray-300 text-base px-3 py-2">التاريخ</TableHead>
-                    <TableHead className="text-start border border-gray-300 text-base px-3 py-2">الوصف</TableHead>
-                    <TableHead className="text-start border border-gray-300 text-base px-3 py-2">المبلغ</TableHead>
-                    <TableHead className="text-start border border-gray-300 text-base px-3 py-2">الرصيد</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {transactions.map((txn) => (
-                    <TableRow 
-                      key={txn.id}
-                      className={highlightTransactionId === String(txn.id) ? 'bg-yellow-50' : ''}
-                    >
-                      <TableCell className="border border-gray-300 text-start text-base px-3 py-2">
-                        <span>
-                          {new Date(txn.transaction_date || txn.created_at || '').toLocaleDateString('en-CA')}
-                        </span>
-                      </TableCell>
-                      <TableCell className="border border-gray-300 text-start text-base px-3 py-2">
-                        <div>
-                          <span className="font-medium text-black">{txn.transaction_name}</span>
-                          {/* Show notes field */}
-                          {txn.notes && (
-                            <p className="text-xs text-gray-600 mt-1 bg-gray-50 p-2 rounded border border-gray-200">
-                              {txn.notes}
-                            </p>
-                          )}
-                        </div>
-                      </TableCell>
-                      <TableCell className="border border-gray-300 text-start text-base px-3 py-2">
-                        <span className={`font-medium ${txn.direction === 'CREDIT' ? 'text-green-600' : 'text-red-600'}`}>
-                          {txn.direction === 'CREDIT' ? '+' : '-'}
-                          {new Intl.NumberFormat('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 2 }).format(parseFloat(txn.amount))}
-                        </span>
-                      </TableCell>
-                      <TableCell className="border border-gray-300 text-start text-base px-3 py-2">
-                        <span className="font-medium">
-                          {new Intl.NumberFormat('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 2 }).format(parseFloat(txn.balance || '0'))}
-                        </span>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            )}
+          <CardContent className="p-4">
+            <EmployeeTransactionsTable 
+              transactions={mappedTransactions}
+              pendingCommissions={mappedPending}
+              isLoading={isTransactionsLoading || isPendingLoading}
+              onEdit={(transaction) => openModal('transactionEdit', { transaction })}
+              onDelete={(transaction) => openModal('transactionDelete', { transaction })}
+            />
           </CardContent>
         </Card>
       )}

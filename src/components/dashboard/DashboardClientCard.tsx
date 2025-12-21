@@ -127,15 +127,7 @@ const DashboardClientCard = ({ data, index = 0, alternatingColors, onAssign, onW
   const handleDefer = (task: Task) => handleAction(deferTaskMutation, task, 'tasks.deferSuccess', 'tasks.deferSuccessMessage', 'tasks.deferError');
   const handleResume = (task: Task) => handleAction(resumeTaskMutation, task, 'tasks.resumeSuccess', 'tasks.resumeSuccessMessage', 'tasks.resumeError');
   const handleRestore = (task: Task) => {
-    restoreTaskMutation.mutate({ id: task.id }, {
-      onSuccess: () => {
-        success('تمت الاستعادة', `تم استعادة المهمة "${task.task_name || t(`type.${task.type}`)}" إلى حالة جديدة`);
-        queryClient.invalidateQueries({ queryKey: ['dashboard', 'clientsWithActiveTasks'] });
-      },
-      onError: (err: any) => {
-        error('خطأ', err.message || 'حدث خطأ أثناء استعادة المهمة');
-      }
-    });
+    openModal('taskRestoreValidation', { taskId: task.id });
   };
   const handleComplete = (task: Task) => openModal('taskCompletion', { task });
   const handleShowRequirements = (task: Task) => openModal('requirements', { task });

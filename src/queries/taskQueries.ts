@@ -1,13 +1,14 @@
 import { useQuery, useMutation, useQueryClient, useInfiniteQuery } from '@tanstack/react-query';
 import apiClient from '../api/apiClient';
-import type { 
-  ApiResponse, 
-  Task, 
-  TaskPayload, 
-  TaskPaginatedData, 
-  UpdateTaskPayload, 
-  UpdateRequirementsPayload, 
-  CompleteTaskPayload, 
+import { useToast } from "../hooks/useToast";
+import type {
+  ApiResponse,
+  Task,
+  TaskPayload,
+  TaskPaginatedData,
+  UpdateTaskPayload,
+  UpdateRequirementsPayload,
+  CompleteTaskPayload,
   CompleteTaskResponse,
   ConflictResponse,
   PrepaidConflictData,
@@ -17,7 +18,8 @@ import type {
   MainReceivableDecisions,
   TaskCancellationDecisions,
   ResolutionSummary,
-  ConcurrentModificationData
+  ConcurrentModificationData,
+  TaskValidationResult
 } from '../api/types';
 
 export interface TaskFilters {
@@ -48,17 +50,17 @@ export const fetchPaginatedTasks = async ({ pageParam = 1, queryKey }: { pagePar
 };
 
 const fetchTaskById = async (taskId: number): Promise<Task> => {
-    const { data } = await apiClient.get<ApiResponse<Task>>(`/tasks/${taskId}`);
-    if (!data.success) {
-        throw new Error(data.message || 'Failed to fetch task.');
-    }
-    return data.data;
+  const { data } = await apiClient.get<ApiResponse<Task>>(`/tasks/${taskId}`);
+  if (!data.success) {
+    throw new Error(data.message || 'Failed to fetch task.');
+  }
+  return data.data;
 };
 
 const createTask = async (taskData: TaskPayload): Promise<Task> => {
   const { data } = await apiClient.post<ApiResponse<Task>>('/tasks', taskData);
   if (!data.success) {
-      throw new Error(data.message || 'Failed to create task.');
+    throw new Error(data.message || 'Failed to create task.');
   }
   return data.data;
 };
@@ -66,7 +68,23 @@ const createTask = async (taskData: TaskPayload): Promise<Task> => {
 const updateTask = async ({ id, taskData }: { id: number; taskData: UpdateTaskPayload }): Promise<Task> => {
   const { data } = await apiClient.put<ApiResponse<Task>>(`/tasks/${id}`, taskData);
   if (!data.success) {
-      throw new Error(data.message || 'Failed to update task.');
+    throw new Error(data.message || 'Failed to update task.');
+  }
+  return data.data;
+};
+
+const updateTaskAmount = async ({ taskId, amount, expenseAmount, reason }: { taskId: number; amount: number; expenseAmount?: number; reason?: string }): Promise<any> => {
+  const { data } = await apiClient.put(`/tasks/${taskId}/amount`, { amount, expense_amount: expenseAmount, reason: reason || '' });
+  if (!data.success) {
+    throw new Error(data.message || 'Failed to update task amount.');
+  }
+  return data.data;
+};
+
+const updateTaskPrepaid = async ({ taskId, prepaidAmount, reason }: { taskId: number; prepaidAmount: number; reason?: string }): Promise<any> => {
+  const { data } = await apiClient.put(`/tasks/${taskId}/prepaid`, { prepaid_amount: prepaidAmount, reason: reason || '' });
+  if (!data.success) {
+    throw new Error(data.message || 'Failed to update task prepaid.');
   }
   return data.data;
 };
@@ -74,24 +92,24 @@ const updateTask = async ({ id, taskData }: { id: number; taskData: UpdateTaskPa
 const deleteTask = async (id: number): Promise<void> => {
   const { data } = await apiClient.delete<ApiResponse<null>>(`/tasks/${id}`);
   if (!data.success) {
-      throw new Error(data.message || 'Failed to delete task.');
+    throw new Error(data.message || 'Failed to delete task.');
   }
 };
 
 const updateRequirements = async (payload: UpdateRequirementsPayload): Promise<Task> => {
-    const { data } = await apiClient.put<ApiResponse<Task>>(`/tasks/${payload.task_id}/requirements`, { requirements: payload.requirements });
-    if (!data.success) {
-        throw new Error(data.message || 'Failed to update requirements.');
-    }
-    return data.data;
+  const { data } = await apiClient.put<ApiResponse<Task>>(`/tasks/${payload.task_id}/requirements`, { requirements: payload.requirements });
+  if (!data.success) {
+    throw new Error(data.message || 'Failed to update requirements.');
+  }
+  return data.data;
 };
 
 const createRequirements = async (payload: UpdateRequirementsPayload): Promise<Task> => {
-    const { data } = await apiClient.post<ApiResponse<Task>>(`/tasks/${payload.task_id}/requirements`, { requirements: payload.requirements });
-    if (!data.success) {
-        throw new Error(data.message || 'Failed to create requirements.');
-    }
-    return data.data;
+  const { data } = await apiClient.post<ApiResponse<Task>>(`/tasks/${payload.task_id}/requirements`, { requirements: payload.requirements });
+  if (!data.success) {
+    throw new Error(data.message || 'Failed to create requirements.');
+  }
+  return data.data;
 };
 
 // --- Update Task Completed Workflow API Functions ---
@@ -99,9 +117,9 @@ const createRequirements = async (payload: UpdateRequirementsPayload): Promise<T
 
 // API function to complete a task
 const completeTask = async ({ id, payload }: { id: number; payload: CompleteTaskPayload }): Promise<CompleteTaskResponse> => {
-    const { data } = await apiClient.post<ApiResponse<CompleteTaskResponse>>(`/tasks/${id}/complete`, payload);
-    if (!data.success) throw new Error(data.message || 'Failed to complete task');
-    return data.data;
+  const { data } = await apiClient.post<ApiResponse<CompleteTaskResponse>>(`/tasks/${id}/complete`, payload);
+  if (!data.success) throw new Error(data.message || 'Failed to complete task');
+  return data.data;
 };
 
 // API function to defer a task
@@ -125,11 +143,40 @@ const restoreTask = async ({ id }: { id: number }): Promise<Task> => {
   return data.data;
 };
 
+// API function to assign task
+const assignTask = async ({ id, assigned_to_id }: { id: number; assigned_to_id: number | null }): Promise<Task> => {
+  const { data } = await apiClient.put<ApiResponse<Task>>(`/tasks/${id}/assign`, { assigned_to_id });
+  if (!data.success) throw new Error(data.message || 'Failed to assign task');
+  return data.data;
+};
+
+// Comment 2: API function to unassign task (employee removes themselves)
+const unassignTask = async (id: number): Promise<Task> => {
+  const { data } = await apiClient.post<ApiResponse<Task>>(`/tasks/${id}/unassign`);
+  if (!data.success) throw new Error(data.message || 'Failed to unassign task');
+  return data.data;
+};
+
+// API function to validate restore task
+const validateRestoreTask = async (id: number): Promise<any> => {
+  const { data } = await apiClient.post(`/tasks/${id}/validate-restore`);
+  if (!data.success) throw new Error(data.message || 'Failed to validate restore task');
+  return data.data; // Expected to contain { allowed, consequences }
+};
+
+// API function to validate cancel task (for completed tasks)
+const validateCancelTask = async (id: number): Promise<any> => {
+  const { data } = await apiClient.post(`/tasks/${id}/validate-cancel`);
+  if (!data.success) throw new Error(data.message || 'Failed to validate cancel task');
+  return data.data; // Expected to contain { allowed, consequences }
+};
+
+
 // API function to resolve prepaid change conflicts
-const resolvePrepaidChange = async ({ id, new_prepaid_amount, decisions }: { 
-  id: number; 
-  new_prepaid_amount: number; 
-  decisions: PrepaidResolutionDecisions 
+const resolvePrepaidChange = async ({ id, new_prepaid_amount, decisions }: {
+  id: number;
+  new_prepaid_amount: number;
+  decisions: PrepaidResolutionDecisions
 }): Promise<ResolutionSummary> => {
   const { data } = await apiClient.post<ApiResponse<ResolutionSummary>>(`/tasks/${id}/resolve-prepaid-change`, {
     new_prepaid_amount,
@@ -142,14 +189,14 @@ const resolvePrepaidChange = async ({ id, new_prepaid_amount, decisions }: {
 // NEW API FUNCTIONS FOR CONFLICT RESOLUTION
 
 // API function to resolve task amount change conflicts
-const resolveTaskAmountChange = async ({ 
-  id, 
-  new_task_amount, 
-  main_receivable_decisions 
-}: { 
-  id: number; 
-  new_task_amount: number; 
-  main_receivable_decisions: MainReceivableDecisions 
+const resolveTaskAmountChange = async ({
+  id,
+  new_task_amount,
+  main_receivable_decisions
+}: {
+  id: number;
+  new_task_amount: number;
+  main_receivable_decisions: MainReceivableDecisions
 }): Promise<ResolutionSummary> => {
   const { data } = await apiClient.post<ApiResponse<ResolutionSummary>>(`/tasks/${id}/resolve-amount-change`, {
     new_task_amount,
@@ -160,12 +207,12 @@ const resolveTaskAmountChange = async ({
 };
 
 // API function to cancel task with conflict resolution
-const cancelTask = async ({ 
-  id, 
-  decisions 
-}: { 
-  id: number; 
-  decisions?: TaskCancellationDecisions 
+const cancelTask = async ({
+  id,
+  decisions
+}: {
+  id: number;
+  decisions?: TaskCancellationDecisions
 }): Promise<ResolutionSummary | ConflictResponse<TaskCancellationConflictData>> => {
   try {
     const payload = decisions || {};
@@ -191,10 +238,10 @@ const submitTaskForReview = async ({ id }: { id: number }): Promise<Task> => {
 };
 
 // API function to approve task with financial data
-const approveTask = async ({ id, expense_amount, notes }: { 
-  id: number; 
-  expense_amount: number; 
-  notes?: string 
+const approveTask = async ({ id, expense_amount, notes }: {
+  id: number;
+  expense_amount: number;
+  notes?: string
 }): Promise<Task> => {
   const { data } = await apiClient.post<ApiResponse<Task>>(`/tasks/${id}/approve`, {
     expense_amount,
@@ -205,9 +252,9 @@ const approveTask = async ({ id, expense_amount, notes }: {
 };
 
 // API function to reject task
-const rejectTask = async ({ id, rejection_reason }: { 
-  id: number; 
-  rejection_reason?: string 
+const rejectTask = async ({ id, rejection_reason }: {
+  id: number;
+  rejection_reason?: string
 }): Promise<Task> => {
   const { data } = await apiClient.post<ApiResponse<Task>>(`/tasks/${id}/reject`, {
     rejection_reason
@@ -217,12 +264,12 @@ const rejectTask = async ({ id, rejection_reason }: {
 };
 
 // Enhanced updateTask function that handles conflicts
-const updateTaskWithConflictHandling = async ({ 
-  id, 
-  taskData 
-}: { 
-  id: number; 
-  taskData: UpdateTaskPayload 
+const updateTaskWithConflictHandling = async ({
+  id,
+  taskData
+}: {
+  id: number;
+  taskData: UpdateTaskPayload
 }): Promise<Task | ConflictResponse<PrepaidConflictData | TaskAmountConflictData | ConcurrentModificationData>> => {
   try {
     const { data } = await apiClient.put<ApiResponse<Task>>(`/tasks/${id}`, taskData);
@@ -272,12 +319,12 @@ export const useGetTasksInfinite = (filters: Omit<TaskFilters, 'page'>) => {
 };
 
 export const useGetTask = (taskId: number) => {
-    return useQuery({
-        queryKey: ['task', taskId],
-        queryFn: () => fetchTaskById(taskId),
-        enabled: !!taskId, // Only fetch if taskId is provided
-        staleTime: 30 * 1000, // Keep data fresh for 30 seconds
-    });
+  return useQuery({
+    queryKey: ['task', taskId],
+    queryFn: () => fetchTaskById(taskId),
+    enabled: !!taskId, // Only fetch if taskId is provided
+    staleTime: 30 * 1000, // Keep data fresh for 30 seconds
+  });
 };
 
 export const useCreateTask = () => {
@@ -292,13 +339,13 @@ export const useCreateTask = () => {
       // Specific client tasks in case task was added from client profile
       queryClient.invalidateQueries({ queryKey: ['client', createdTask.client.id] }); // Correct client_id access
       queryClient.invalidateQueries({ queryKey: ['receivables', 'client', createdTask.client.id] }); // Invalidate receivables of the client
-      
+
       // Invalidate new Invoice/Ledger system queries (prepaid tasks create invoices)
       queryClient.invalidateQueries({ queryKey: ['invoices'] });
       queryClient.invalidateQueries({ queryKey: ['invoices', 'client', createdTask.client.id] });
       queryClient.invalidateQueries({ queryKey: ['account', 'client', createdTask.client.id] });
       queryClient.invalidateQueries({ queryKey: ['account', 'clients'] });
-      
+
       // Employee-related invalidations
       queryClient.invalidateQueries({ queryKey: ['employee'] }); // Invalidate all employee queries
       queryClient.invalidateQueries({ queryKey: ['employees'] }); // Invalidate employees list
@@ -318,13 +365,13 @@ export const useUpdateTask = () => {
       queryClient.invalidateQueries({ queryKey: ['tasks-by-tags'] }); // Invalidate tags columns view
       // Invalidate receivables for the client if task is updated
       queryClient.invalidateQueries({ queryKey: ['receivables', 'client', updatedTask.client.id] });
-      
+
       // Invalidate new Invoice/Ledger system queries
       queryClient.invalidateQueries({ queryKey: ['invoices'] });
       queryClient.invalidateQueries({ queryKey: ['invoices', 'client', updatedTask.client.id] });
       queryClient.invalidateQueries({ queryKey: ['account', 'client', updatedTask.client.id] });
       queryClient.invalidateQueries({ queryKey: ['account', 'clients'] });
-      
+
       // Employee-related invalidations
       queryClient.invalidateQueries({ queryKey: ['employee'] }); // Invalidate all employee queries
       queryClient.invalidateQueries({ queryKey: ['employees'] }); // Invalidate employees list
@@ -332,9 +379,35 @@ export const useUpdateTask = () => {
   });
 };
 
+export const useUpdateTaskAmount = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: updateTaskAmount,
+    onSuccess: (_, { taskId }) => {
+      queryClient.invalidateQueries({ queryKey: ['tasks'] });
+      queryClient.invalidateQueries({ queryKey: ['task', taskId] });
+      queryClient.invalidateQueries({ queryKey: ['invoices'] });
+      queryClient.invalidateQueries({ queryKey: ['transactions'] });
+    },
+  });
+};
+
+export const useUpdateTaskPrepaid = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: updateTaskPrepaid,
+    onSuccess: (_, { taskId }) => {
+      queryClient.invalidateQueries({ queryKey: ['tasks'] });
+      queryClient.invalidateQueries({ queryKey: ['task', taskId] });
+      queryClient.invalidateQueries({ queryKey: ['invoices'] });
+      queryClient.invalidateQueries({ queryKey: ['transactions'] });
+    },
+  });
+};
+
 export const useDeleteTask = () => {
   const queryClient = useQueryClient();
-  
+
   return useMutation({
     mutationFn: deleteTask,
     // --- START: OPTIMISTIC UPDATE LOGIC ---
@@ -378,7 +451,7 @@ export const useDeleteTask = () => {
           });
         }
       }
-      
+
       // Update the dashboard view by removing the task
       if (previousDashboardData) {
         queryClient.setQueryData(['dashboard', 'clientsWithActiveTasks'], (oldData: any) => {
@@ -404,7 +477,7 @@ export const useDeleteTask = () => {
       return { previousTasksData, previousDashboardData };
     },
     // --- END: OPTIMISTIC UPDATE LOGIC ---
-    
+
     // If the mutation fails, use the context returned from onMutate to roll back
     onError: (_err, _variables, context) => {
       if (context?.previousTasksData) {
@@ -422,7 +495,7 @@ export const useDeleteTask = () => {
       queryClient.invalidateQueries({ queryKey: ['dashboard'] });
       queryClient.invalidateQueries({ queryKey: ['tasks-by-tags'] });
       queryClient.invalidateQueries({ queryKey: ['receivables'] });
-      
+
       // Invalidate new Invoice/Ledger system queries
       queryClient.invalidateQueries({ queryKey: ['invoices'] });
       queryClient.invalidateQueries({ queryKey: ['account'] });
@@ -435,32 +508,45 @@ export const useDeleteTask = () => {
 };
 
 export const useUpdateRequirements = () => {
-    const queryClient = useQueryClient();
-    return useMutation({
-        mutationFn: updateRequirements,
-        onSuccess: (updatedTask: Task) => { // Type 'updatedTask'
-            queryClient.invalidateQueries({ queryKey: ['task', updatedTask.id] }); // Invalidate specific task
-            queryClient.invalidateQueries({ queryKey: ['tasks'] }); // Invalidate all tasks to reflect changes
-            queryClient.invalidateQueries({ queryKey: ['dashboard'] }); // Could affect dashboard if requirements are used there
-        },
-    });
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: updateRequirements,
+    onSuccess: (updatedTask: Task) => { // Type 'updatedTask'
+      queryClient.invalidateQueries({ queryKey: ['task', updatedTask.id] }); // Invalidate specific task
+      queryClient.invalidateQueries({ queryKey: ['tasks'] }); // Invalidate all tasks to reflect changes
+      queryClient.invalidateQueries({ queryKey: ['dashboard'] }); // Could affect dashboard if requirements are used there
+    },
+  });
 };
 
 export const useCreateRequirements = () => {
-    const queryClient = useQueryClient();
-    return useMutation({
-        mutationFn: createRequirements,
-        onSuccess: (updatedTask: Task) => { // Type 'updatedTask'
-            queryClient.invalidateQueries({ queryKey: ['task', updatedTask.id] }); // Invalidate specific task
-            queryClient.invalidateQueries({ queryKey: ['tasks'] }); // Invalidate all tasks to reflect changes
-            queryClient.invalidateQueries({ queryKey: ['dashboard'] }); // Could affect dashboard
-        },
-    });
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: createRequirements,
+    onSuccess: (updatedTask: Task) => { // Type 'updatedTask'
+      queryClient.invalidateQueries({ queryKey: ['task', updatedTask.id] }); // Invalidate specific task
+      queryClient.invalidateQueries({ queryKey: ['tasks'] }); // Invalidate all tasks to reflect changes
+      queryClient.invalidateQueries({ queryKey: ['dashboard'] }); // Could affect dashboard
+    },
+  });
+};
+
+export const useAssignTask = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: assignTask,
+    onSuccess: (updatedTask: Task) => {
+      queryClient.invalidateQueries({ queryKey: ['task', updatedTask.id] });
+      queryClient.invalidateQueries({ queryKey: ['tasks'] });
+      queryClient.invalidateQueries({ queryKey: ['dashboard'] });
+      queryClient.invalidateQueries({ queryKey: ['employee'] }); // Invalidate employee tasks
+    },
+  });
 };
 
 export const useResumeTask = () => {
   const queryClient = useQueryClient();
-  
+
   return useMutation({
     mutationFn: resumeTask,
     // --- START: OPTIMISTIC UPDATE LOGIC ---
@@ -501,7 +587,7 @@ export const useResumeTask = () => {
           });
         }
       }
-      
+
       // Update the dashboard view
       if (previousDashboardData) {
         queryClient.setQueryData(['dashboard', 'clientsWithActiveTasks'], (oldData: any) => {
@@ -534,7 +620,7 @@ export const useResumeTask = () => {
       return { previousTasksData, previousDashboardData };
     },
     // --- END: OPTIMISTIC UPDATE LOGIC ---
-    
+
     // If the mutation fails, use the context returned from onMutate to roll back
     onError: (_err, _variables, context) => {
       if (context?.previousTasksData) {
@@ -552,7 +638,7 @@ export const useResumeTask = () => {
       queryClient.invalidateQueries({ queryKey: ['dashboard', 'stats'] });
       queryClient.invalidateQueries({ queryKey: ['tasks-by-tags'] });
     },
-    onSuccess: (response: {id: number; status: string; receivable_id?: number}) => {
+    onSuccess: (response: { id: number; status: string; receivable_id?: number }) => {
       // The UI has already updated optimistically
       queryClient.invalidateQueries({ queryKey: ['task', response.id] });
       queryClient.invalidateQueries({ queryKey: ['clients'] });
@@ -572,7 +658,7 @@ export const useResolvePrepaidChange = () => {
       if (result.task?.id) {
         queryClient.invalidateQueries({ queryKey: ['task', result.task.id] });
         queryClient.invalidateQueries({ queryKey: ['receivables', 'client', result.task.client_id] });
-        
+
         // Invalidate new Invoice/Ledger system queries for the client
         queryClient.invalidateQueries({ queryKey: ['invoices', 'client', result.task.client_id] });
         queryClient.invalidateQueries({ queryKey: ['account', 'client', result.task.client_id] });
@@ -581,13 +667,13 @@ export const useResolvePrepaidChange = () => {
       queryClient.invalidateQueries({ queryKey: ['dashboard'] });
       queryClient.invalidateQueries({ queryKey: ['receivables'] });
       queryClient.invalidateQueries({ queryKey: ['client-credits'] });
-      
+
       // Invalidate new Invoice/Ledger system queries
       queryClient.invalidateQueries({ queryKey: ['invoices'] });
       queryClient.invalidateQueries({ queryKey: ['account', 'clients'] });
-      
+
       // Employee-related invalidations
-      queryClient.invalidateQueries({ queryKey: ['employee'] }); 
+      queryClient.invalidateQueries({ queryKey: ['employee'] });
       queryClient.invalidateQueries({ queryKey: ['employees'] });
     },
   });
@@ -623,7 +709,7 @@ export const useResolveTaskAmountChange = () => {
       if (result.task?.id) {
         queryClient.invalidateQueries({ queryKey: ['task', result.task.id] });
         queryClient.invalidateQueries({ queryKey: ['receivables', 'client', result.task.client_id] });
-        
+
         // Invalidate new Invoice/Ledger system queries for the client
         queryClient.invalidateQueries({ queryKey: ['invoices', 'client', result.task.client_id] });
         queryClient.invalidateQueries({ queryKey: ['account', 'client', result.task.client_id] });
@@ -632,11 +718,11 @@ export const useResolveTaskAmountChange = () => {
       queryClient.invalidateQueries({ queryKey: ['dashboard'] });
       queryClient.invalidateQueries({ queryKey: ['receivables'] });
       queryClient.invalidateQueries({ queryKey: ['client-credits'] });
-      
+
       // Invalidate new Invoice/Ledger system queries
       queryClient.invalidateQueries({ queryKey: ['invoices'] });
       queryClient.invalidateQueries({ queryKey: ['account', 'clients'] });
-      
+
       // Employee-related invalidations
       queryClient.invalidateQueries({ queryKey: ['employee'] });
       queryClient.invalidateQueries({ queryKey: ['employees'] });
@@ -656,7 +742,7 @@ export const useCancelTask = () => {
         if (resolutionResult.task?.id) {
           queryClient.invalidateQueries({ queryKey: ['task', resolutionResult.task.id] });
           queryClient.invalidateQueries({ queryKey: ['receivables', 'client', resolutionResult.task.client_id] });
-          
+
           // Invalidate new Invoice/Ledger system queries for the client
           queryClient.invalidateQueries({ queryKey: ['invoices', 'client', resolutionResult.task.client_id] });
           queryClient.invalidateQueries({ queryKey: ['account', 'client', resolutionResult.task.client_id] });
@@ -665,11 +751,11 @@ export const useCancelTask = () => {
         queryClient.invalidateQueries({ queryKey: ['dashboard'] });
         queryClient.invalidateQueries({ queryKey: ['receivables'] });
         queryClient.invalidateQueries({ queryKey: ['client-credits'] });
-        
+
         // Invalidate new Invoice/Ledger system queries
         queryClient.invalidateQueries({ queryKey: ['invoices'] });
         queryClient.invalidateQueries({ queryKey: ['account', 'clients'] });
-        
+
         // Employee-related invalidations
         queryClient.invalidateQueries({ queryKey: ['employee'] });
         queryClient.invalidateQueries({ queryKey: ['employees'] });
@@ -681,7 +767,7 @@ export const useCancelTask = () => {
 
 export const useDeferTask = () => {
   const queryClient = useQueryClient();
-  
+
   return useMutation({
     mutationFn: deferTask,
     // --- START: OPTIMISTIC UPDATE LOGIC ---
@@ -722,7 +808,7 @@ export const useDeferTask = () => {
           });
         }
       }
-      
+
       // Update the dashboard view
       if (previousDashboardData) {
         queryClient.setQueryData(['dashboard', 'clientsWithActiveTasks'], (oldData: any) => {
@@ -755,7 +841,7 @@ export const useDeferTask = () => {
       return { previousTasksData, previousDashboardData };
     },
     // --- END: OPTIMISTIC UPDATE LOGIC ---
-    
+
     // If the mutation fails, use the context returned from onMutate to roll back
     onError: (_err, _variables, context) => {
       if (context?.previousTasksData) {
@@ -772,7 +858,7 @@ export const useDeferTask = () => {
       queryClient.invalidateQueries({ queryKey: ['dashboard', 'clientsWithActiveTasks'] });
       queryClient.invalidateQueries({ queryKey: ['dashboard', 'stats'] });
     },
-    onSuccess: (response: {id: number; status: string; receivable_id?: number}) => {
+    onSuccess: (response: { id: number; status: string; receivable_id?: number }) => {
       // The UI has already updated optimistically
       queryClient.invalidateQueries({ queryKey: ['task', response.id] });
       queryClient.invalidateQueries({ queryKey: ['clients'] });
@@ -784,50 +870,50 @@ export const useDeferTask = () => {
 
 
 export const useCompleteTask = () => {
-    const queryClient = useQueryClient();
-    return useMutation({
-        mutationFn: completeTask,
-        onSuccess: (result: CompleteTaskResponse) => { // Type 'result'
-            // Invalidate everything that could be affected by task completion
-            queryClient.invalidateQueries({ queryKey: ['tasks'] });
-            queryClient.invalidateQueries({ queryKey: ['task', result.id] });
-            queryClient.invalidateQueries({ queryKey: ['clients'] });
-            queryClient.invalidateQueries({ queryKey: ['receivables'] }); // General receivables summaries/lists
-            queryClient.invalidateQueries({ queryKey: ['dashboard'] }); // Dashboard stats
-            queryClient.invalidateQueries({ queryKey: ['tasks-by-tags'] }); // Invalidate tags columns view
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: completeTask,
+    onSuccess: (result: CompleteTaskResponse) => { // Type 'result'
+      // Invalidate everything that could be affected by task completion
+      queryClient.invalidateQueries({ queryKey: ['tasks'] });
+      queryClient.invalidateQueries({ queryKey: ['task', result.id] });
+      queryClient.invalidateQueries({ queryKey: ['clients'] });
+      queryClient.invalidateQueries({ queryKey: ['receivables'] }); // General receivables summaries/lists
+      queryClient.invalidateQueries({ queryKey: ['dashboard'] }); // Dashboard stats
+      queryClient.invalidateQueries({ queryKey: ['tasks-by-tags'] }); // Invalidate tags columns view
 
-            // Invalidate specific client statement and payable lists if relevant
-            // This now correctly checks if result.task exists before accessing client_id
-            if (result.task?.client_id) {
-                 queryClient.invalidateQueries({ queryKey: ['receivables', 'client', result.task.client_id] });
-                 queryClient.invalidateQueries({ queryKey: ['receivables', 'payable', result.task.client_id] });
-                 
-                 // Invalidate new Invoice/Ledger system queries for the client
-                 queryClient.invalidateQueries({ queryKey: ['invoices', 'client', result.task.client_id] });
-                 queryClient.invalidateQueries({ queryKey: ['account', 'client', result.task.client_id] });
-            }
-            
-            // Invalidate new Invoice/Ledger system queries (task completion creates invoices)
-            queryClient.invalidateQueries({ queryKey: ['invoices'] });
-            queryClient.invalidateQueries({ queryKey: ['invoices', 'stats'] });
-            queryClient.invalidateQueries({ queryKey: ['account', 'clients'] });
-            
-            // Invalidate filtered receivables if task completion affects them (e.g., if a new receivable is created that is overdue/paid)
-            queryClient.invalidateQueries({ queryKey: ['receivables', 'filtered', 'paid'] });
-            queryClient.invalidateQueries({ queryKey: ['receivables', 'filtered', 'overdue'] });
-            
-            // Employee-related invalidations
-            queryClient.invalidateQueries({ queryKey: ['employee'] });
-            queryClient.invalidateQueries({ queryKey: ['employees'] });
-        },
-    });
+      // Invalidate specific client statement and payable lists if relevant
+      // This now correctly checks if result.task exists before accessing client_id
+      if (result.task?.client_id) {
+        queryClient.invalidateQueries({ queryKey: ['receivables', 'client', result.task.client_id] });
+        queryClient.invalidateQueries({ queryKey: ['receivables', 'payable', result.task.client_id] });
+
+        // Invalidate new Invoice/Ledger system queries for the client
+        queryClient.invalidateQueries({ queryKey: ['invoices', 'client', result.task.client_id] });
+        queryClient.invalidateQueries({ queryKey: ['account', 'client', result.task.client_id] });
+      }
+
+      // Invalidate new Invoice/Ledger system queries (task completion creates invoices)
+      queryClient.invalidateQueries({ queryKey: ['invoices'] });
+      queryClient.invalidateQueries({ queryKey: ['invoices', 'stats'] });
+      queryClient.invalidateQueries({ queryKey: ['account', 'clients'] });
+
+      // Invalidate filtered receivables if task completion affects them (e.g., if a new receivable is created that is overdue/paid)
+      queryClient.invalidateQueries({ queryKey: ['receivables', 'filtered', 'paid'] });
+      queryClient.invalidateQueries({ queryKey: ['receivables', 'filtered', 'overdue'] });
+
+      // Employee-related invalidations
+      queryClient.invalidateQueries({ queryKey: ['employee'] });
+      queryClient.invalidateQueries({ queryKey: ['employees'] });
+    },
+  });
 };
 
 // NEW REACT QUERY HOOKS FOR APPROVAL WORKFLOW
 
 export const useSubmitTaskForReview = () => {
   const queryClient = useQueryClient();
-  
+
   return useMutation({
     mutationFn: submitTaskForReview,
     // --- START: OPTIMISTIC UPDATE LOGIC ---
@@ -891,7 +977,7 @@ export const useSubmitTaskForReview = () => {
       return { previousTasksData, previousDashboardData };
     },
     // --- END: OPTIMISTIC UPDATE LOGIC ---
-    
+
     onError: (_err, _variables, context) => {
       if (context?.previousTasksData) {
         queryClient.setQueryData(['tasks'], context.previousTasksData);
@@ -914,7 +1000,7 @@ export const useSubmitTaskForReview = () => {
 
 export const useApproveTask = () => {
   const queryClient = useQueryClient();
-  
+
   return useMutation({
     mutationFn: approveTask,
     onSuccess: (updatedTask: Task) => {
@@ -925,22 +1011,22 @@ export const useApproveTask = () => {
       queryClient.invalidateQueries({ queryKey: ['dashboard'] });
       queryClient.invalidateQueries({ queryKey: ['tasks-by-tags'] });
       queryClient.invalidateQueries({ queryKey: ['receivables'] });
-      
+
       // Invalidate new Invoice/Ledger system queries (task approval creates invoices)
       queryClient.invalidateQueries({ queryKey: ['invoices'] });
       queryClient.invalidateQueries({ queryKey: ['invoices', 'stats'] });
       queryClient.invalidateQueries({ queryKey: ['account', 'clients'] });
-      
+
       // Invalidate client-specific data
       if (updatedTask.client?.id) {
         queryClient.invalidateQueries({ queryKey: ['receivables', 'client', updatedTask.client.id] });
         queryClient.invalidateQueries({ queryKey: ['client', updatedTask.client.id] });
-        
+
         // Invalidate new Invoice/Ledger system queries for the client
         queryClient.invalidateQueries({ queryKey: ['invoices', 'client', updatedTask.client.id] });
         queryClient.invalidateQueries({ queryKey: ['account', 'client', updatedTask.client.id] });
       }
-      
+
       // Employee-related invalidations
       queryClient.invalidateQueries({ queryKey: ['employee'] });
       queryClient.invalidateQueries({ queryKey: ['employees'] });
@@ -950,7 +1036,7 @@ export const useApproveTask = () => {
 
 export const useRejectTask = () => {
   const queryClient = useQueryClient();
-  
+
   return useMutation({
     mutationFn: rejectTask,
     // --- START: OPTIMISTIC UPDATE LOGIC ---
@@ -1014,7 +1100,7 @@ export const useRejectTask = () => {
       return { previousTasksData, previousDashboardData };
     },
     // --- END: OPTIMISTIC UPDATE LOGIC ---
-    
+
     onError: (_err, _variables, context) => {
       if (context?.previousTasksData) {
         queryClient.setQueryData(['tasks'], context.previousTasksData);
@@ -1037,7 +1123,7 @@ export const useRejectTask = () => {
 
 export const useRestoreTask = () => {
   const queryClient = useQueryClient();
-  
+
   return useMutation({
     mutationFn: restoreTask,
     // --- START: OPTIMISTIC UPDATE LOGIC ---
@@ -1101,7 +1187,7 @@ export const useRestoreTask = () => {
       return { previousTasksData, previousDashboardData };
     },
     // --- END: OPTIMISTIC UPDATE LOGIC ---
-    
+
     onError: (_err, _variables, context) => {
       if (context?.previousTasksData) {
         queryClient.setQueryData(['tasks'], context.previousTasksData);
@@ -1124,5 +1210,116 @@ export const useRestoreTask = () => {
       queryClient.invalidateQueries({ queryKey: ['employee'] });
       queryClient.invalidateQueries({ queryKey: ['employees'] });
     }
+  });
+};
+
+// --- Validation Endpoints ---
+
+/**
+ * Validate task edit before applying changes
+ * Shows consequences, warnings, and errors for proposed changes
+ */
+const validateTaskEdit = async ({ taskId, proposed }: { taskId: number; proposed: Partial<UpdateTaskPayload> }): Promise<TaskValidationResult> => {
+  const { data } = await apiClient.post<ApiResponse<TaskValidationResult>>(`/validate/task/${taskId}`, proposed);
+  if (!data.success) {
+    throw new Error(data.message || 'Validation failed');
+  }
+  return data.data;
+};
+
+/**
+ * React Query hook for task edit validation
+ * Use this before calling updateTask mutation to show consequences to user
+ */
+export const useValidateTaskEdit = () => {
+  return useMutation({
+    mutationFn: validateTaskEdit,
+  });
+};
+
+// Comment 2: Updated to use correct /tasks/{id}/unassign endpoint with toast and comprehensive invalidation
+export const useUnassignTask = () => {
+  const queryClient = useQueryClient();
+  const toast = useToast();
+
+  return useMutation({
+    mutationFn: unassignTask,
+    onSuccess: (updatedTask: Task) => {
+      toast.success('تم إلغاء التعيين', 'تم سحب المهمة منك بنجاح');
+
+      // Invalidate task queries
+      queryClient.invalidateQueries({ queryKey: ['task', updatedTask.id] });
+      queryClient.invalidateQueries({ queryKey: ['tasks'] });
+      queryClient.invalidateQueries({ queryKey: ['dashboard'] });
+
+      // Invalidate employee tasks (employee-specific views)
+      queryClient.invalidateQueries({ queryKey: ['employee'] });
+      queryClient.invalidateQueries({ queryKey: ['employeeTasks'] });
+    },
+    onError: (error: any) => {
+      toast.error('خطأ في إلغاء التعيين', error?.message || 'فشل سحب المهمة');
+    },
+  });
+};
+
+export const useMarkTaskUrgent = () => {
+  const queryClient = useQueryClient();
+  const { success, error } = useToast();
+
+  return useMutation({
+    mutationFn: async (taskId: number) => {
+      const { data } = await apiClient.post(`/tasks/${taskId}/mark-urgent`);
+      return data;
+    },
+    onSuccess: (data) => {
+      if (data.success) {
+        success("تم تمييز المهمة كعاجلة", "تم تحديث حالة المهمة بنجاح");
+        queryClient.invalidateQueries({ queryKey: ['tasks'] });
+        queryClient.invalidateQueries({ queryKey: ['task'] });
+        queryClient.invalidateQueries({ queryKey: ['dashboard'] });
+      } else {
+        error("فشل التحديث", data.message || "حدث خطأ أثناء تحديث المهمة");
+      }
+    },
+    onError: (err: any) => {
+      error("خطأ", err.response?.data?.message || "فشل الاتصال بالخادم");
+    }
+  });
+};
+
+export const useRemoveTaskUrgent = () => {
+  const queryClient = useQueryClient();
+  const { success, error } = useToast();
+
+  return useMutation({
+    mutationFn: async (taskId: number) => {
+      const { data } = await apiClient.put(`/tasks/${taskId}/remove-urgent`);
+      return data;
+    },
+    onSuccess: (data) => {
+      if (data.success) {
+        success("تم إزالة حالة الاستعجال", "تم تحديث حالة المهمة بنجاح");
+        queryClient.invalidateQueries({ queryKey: ['tasks'] });
+        queryClient.invalidateQueries({ queryKey: ['task'] });
+        queryClient.invalidateQueries({ queryKey: ['dashboard'] });
+      } else {
+        error("فشل التحديث", data.message || "حدث خطأ أثناء تحديث المهمة");
+      }
+    },
+    onError: (err: any) => {
+      error("خطأ", err.response?.data?.message || "فشل الاتصال بالخادم");
+    }
+  });
+};
+
+export const useValidateRestoreTask = () => {
+  return useMutation({
+    mutationFn: validateRestoreTask
+  });
+};
+
+export const useValidateCancelTask = () => {
+  return useMutation({
+    mutationFn: validateCancelTask
   });
 };

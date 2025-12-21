@@ -6,6 +6,8 @@ import { useToast } from '../../hooks/useToast';
 import { useModalStore } from '../../stores/modalStore';
 import { useGetEmployeeTransactions, useDeleteEmployeeTransaction, useGetEmployee } from '../../queries/employeeQueries';
 import { formatCurrency, formatDate } from '../../utils/formatUtils';
+// Step 17: Removed TransactionEditModal and TransactionDeleteModal imports - using ModalManager
+import { useCurrentUserCapabilities } from '../../queries/userQueries';
 
 // Confirmed transaction from ledger
 interface ConfirmedTransaction {
@@ -14,7 +16,7 @@ interface ConfirmedTransaction {
   description: string;
   debit: string;
   credit: string;
-  balance: string;
+  balance: string | null;
   transaction_date: string;
   related_object_type: string | null;
   related_object_id: string | null;
@@ -26,7 +28,7 @@ interface ConfirmedTransaction {
 interface PendingCommission {
   id: string;
   item_type: string;
-  related_entity: string;
+  related_entity: string | null;
   task_id: string | null;
   expected_amount: string;
   status: string;
@@ -68,100 +70,85 @@ interface LegacyTransaction {
 type ViewTab = 'confirmed' | 'pending';
 
 interface EmployeeTransactionsTableProps {
-  employeeId: number;
-  page: number;
-  perPage: number;
-  onPageChange: (page: number) => void;
+  employeeId?: number;
+  transactions?: ConfirmedTransaction[];
+  pendingCommissions?: PendingCommission[];
+  isLoading?: boolean;
+  page?: number;
+  perPage?: number;
+  onPageChange?: (page: number) => void;
+  onEdit?: (transaction: ConfirmedTransaction | LegacyTransaction) => void;
+  onDelete?: (transaction: ConfirmedTransaction | LegacyTransaction) => void;
 }
 
 const EmployeeTransactionsTable: React.FC<EmployeeTransactionsTableProps> = ({
   employeeId,
-  page,
-  perPage,
+  transactions: propTransactions,
+  pendingCommissions: propPendingCommissions,
+  isLoading: propIsLoading,
+  page = 1,
+  perPage = 10,
   onPageChange,
+  onEdit,
+  onDelete,
 }) => {
   const { success, error } = useToast();
   const { openModal } = useModalStore();
   const [activeTab, setActiveTab] = useState<ViewTab>('confirmed');
+  const { data: capabilities } = useCurrentUserCapabilities();
+  const canEdit = capabilities?.manage_options || false;
+  // Step 17: Removed local modal state - now using ModalManager
 
-  // Fetch employee data
-  const { data: employee } = useGetEmployee(employeeId);
-  
-  // Fetch employee transactions
-  const { 
-    data: transactionsData, 
-    isLoading, 
-    refetch 
-  } = useGetEmployeeTransactions(employeeId, { page, per_page: perPage });
+  // Fetch employee data - only if employeeId is provided
+  const { data: employee } = useGetEmployee(employeeId as number);
+
+  // Fetch employee transactions - only if employeeId is provided and no transactions prop
+  const {
+    data: transactionsData,
+    isLoading: isQueryLoading,
+    refetch
+  } = useGetEmployeeTransactions(employeeId as number, { page, per_page: perPage });
+
+  const isLoading = propIsLoading !== undefined ? propIsLoading : isQueryLoading;
 
   const deleteTransactionMutation = useDeleteEmployeeTransaction();
 
-  // Extract confirmed transactions and pending commissions from new API structure
-  const confirmedTransactions: ConfirmedTransaction[] = transactionsData?.data?.confirmed_transactions || [];
-  const pendingCommissions: PendingCommission[] = transactionsData?.data?.pending_commissions || [];
-  
+  // Extract confirmed transactions and pending commissions
+  const confirmedTransactions: ConfirmedTransaction[] = propTransactions
+    ? propTransactions
+    : (transactionsData?.data?.confirmed_transactions || []);
+
+  const pendingCommissions: PendingCommission[] = propPendingCommissions
+    ? propPendingCommissions
+    : (transactionsData?.data?.pending_commissions || []);
+
   const pagination = transactionsData?.pagination || {};
   const summary = transactionsData?.data?.summary || {};
 
   const handleEditTransaction = (transaction: ConfirmedTransaction | LegacyTransaction) => {
-    const taskId = 'related_object_id' in transaction 
-      ? transaction.related_object_id 
-      : (transaction as LegacyTransaction).related_task_id;
-      
-    if (taskId) {
-      // This is a task-related commission, edit the expense amount
-      openModal('editTaskExpense', { 
-        task: {} as any, // We'll need to fetch task details or modify modal interface
-        transaction
-      });
-    } else {
-      // This is a payout transaction, edit the payout
-      if (employee) {
-        openModal('editEmployeePayout', { 
-          employee: { ...employee, id: employeeId }, // Include the table ID
-          transaction
-        });
-      }
+    if (onEdit) {
+      onEdit(transaction);
+      return;
     }
+
+    // Step 17: Use ModalManager instead of local modal state
+    openModal('transactionEdit', { transaction });
   };
 
   const handleDeleteTransaction = async (transaction: ConfirmedTransaction | LegacyTransaction) => {
-    const taskId = 'related_object_id' in transaction 
-      ? transaction.related_object_id 
-      : (transaction as LegacyTransaction).related_task_id;
-      
-    // Only allow deletion of payout transactions (not task-related commissions)
-    if (taskId) {
-      error('Cannot delete commission transactions. These are managed through task approval.');
+    if (onDelete) {
+      onDelete(transaction);
       return;
     }
 
-    if (!confirm('Are you sure you want to delete this payout transaction? This action cannot be undone.')) {
-      return;
-    }
-
-    if (!employee) {
-      error('Employee data not loaded');
-      return;
-    }
-
-    try {
-      await deleteTransactionMutation.mutateAsync({
-        employeeTableId: employeeId,
-        employeeUserId: employee.user_id,
-        transactionId: parseInt(transaction.id, 10)
-      });
-      success('Transaction deleted successfully');
-      await refetch();
-    } catch (err: any) {
-      error(err.message || 'Failed to delete transaction');
-    }
+    // Step 17: Use ModalManager instead of local modal state
+    openModal('transactionDelete', { transaction });
   };
 
   // Helper: Get transaction icon for confirmed transactions
   const getConfirmedTransactionIcon = (transaction: ConfirmedTransaction) => {
     const debit = parseFloat(transaction.debit || '0');
-    
+
     if (debit > 0) {
       return <TrendingUp size={16} className="text-success" />; // Commission earned
     } else {
@@ -177,7 +164,7 @@ const EmployeeTransactionsTable: React.FC<EmployeeTransactionsTableProps> = ({
       'EMPLOYEE_EXPENSE': { label: 'مصروف', className: 'bg-orange-100 text-orange-800' },
       'EMPLOYEE_BORROW': { label: 'سلفة', className: 'bg-blue-100 text-blue-800' },
     };
-    
+
     const config = typeMap[type] || { label: type, className: 'bg-gray-100 text-gray-800' };
     return (
       <span className={`inline-flex items-center px-2 py-0.5 text-xs font-medium rounded ${config.className}`}>
@@ -195,11 +182,10 @@ const EmployeeTransactionsTable: React.FC<EmployeeTransactionsTableProps> = ({
       {/* Tab Navigation */}
       <div className="flex border-b mb-4">
         <button
-          className={`px-4 py-2 font-medium text-sm border-b-2 transition-colors ${
-            activeTab === 'confirmed' 
-              ? 'border-primary text-primary' 
-              : 'border-transparent text-gray-500 hover:text-gray-700'
-          }`}
+          className={`px-4 py-2 font-medium text-sm border-b-2 transition-colors ${activeTab === 'confirmed'
+            ? 'border-primary text-primary'
+            : 'border-transparent text-gray-500 hover:text-gray-700'
+            }`}
           onClick={() => setActiveTab('confirmed')}
         >
           <div className="flex items-center gap-2">
@@ -211,11 +197,10 @@ const EmployeeTransactionsTable: React.FC<EmployeeTransactionsTableProps> = ({
           </div>
         </button>
         <button
-          className={`px-4 py-2 font-medium text-sm border-b-2 transition-colors ${
-            activeTab === 'pending' 
-              ? 'border-primary text-primary' 
-              : 'border-transparent text-gray-500 hover:text-gray-700'
-          }`}
+          className={`px-4 py-2 font-medium text-sm border-b-2 transition-colors ${activeTab === 'pending'
+            ? 'border-primary text-primary'
+            : 'border-transparent text-gray-500 hover:text-gray-700'
+            }`}
           onClick={() => setActiveTab('pending')}
         >
           <div className="flex items-center gap-2">
@@ -233,16 +218,16 @@ const EmployeeTransactionsTable: React.FC<EmployeeTransactionsTableProps> = ({
       {/* Confirmed Transactions Tab */}
       {activeTab === 'confirmed' && (
         <div className="overflow-x-auto">
-          <Table>
+          <Table className="border-collapse border border-gray-300">
             <TableHeader>
               <TableRow>
-                <TableHead className="text-black">التاريخ</TableHead>
-                <TableHead className="text-black">الوصف</TableHead>
-                <TableHead className="text-black">النوع</TableHead>
-                <TableHead className="text-black">المهمة/العميل</TableHead>
-                <TableHead className="text-right text-black">المبلغ</TableHead>
-                <TableHead className="text-right text-black">الرصيد</TableHead>
-                <TableHead className="text-right text-black">الإجراءات</TableHead>
+                <TableHead className="text-black border border-gray-300">التاريخ</TableHead>
+                <TableHead className="text-black border border-gray-300">الوصف</TableHead>
+                <TableHead className="text-black border border-gray-300">النوع</TableHead>
+                <TableHead className="text-black border border-gray-300">المهمة/العميل</TableHead>
+                <TableHead className="text-right text-black border border-gray-300">المبلغ</TableHead>
+                <TableHead className="text-right text-black border border-gray-300">الرصيد</TableHead>
+                <TableHead className="text-right text-black border border-gray-300">الإجراءات</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -251,10 +236,10 @@ const EmployeeTransactionsTable: React.FC<EmployeeTransactionsTableProps> = ({
                 const credit = parseFloat(transaction.credit || '0');
                 const amount = debit > 0 ? debit : credit;
                 const isPositive = debit > 0;
-                
+
                 return (
                   <TableRow key={transaction.id}>
-                    <TableCell>
+                    <TableCell className="border border-gray-300">
                       <div className="flex items-center gap-2">
                         {getConfirmedTransactionIcon(transaction)}
                         <div className="font-medium text-black">
@@ -262,10 +247,10 @@ const EmployeeTransactionsTable: React.FC<EmployeeTransactionsTableProps> = ({
                         </div>
                       </div>
                     </TableCell>
-                    <TableCell>
+                    <TableCell className="border border-gray-300">
                       <div className="font-medium text-black">{transaction.description}</div>
                     </TableCell>
-                    <TableCell>
+                    <TableCell className="border border-gray-300">
                       {getTransactionTypeBadge(transaction.transaction_type)}
                     </TableCell>
                     <TableCell>
@@ -280,45 +265,46 @@ const EmployeeTransactionsTable: React.FC<EmployeeTransactionsTableProps> = ({
                         <span className="text-gray-400">—</span>
                       )}
                     </TableCell>
-                    <TableCell className="text-right">
+                    <TableCell className="text-right border border-gray-300">
                       <div className={`font-medium ${isPositive ? 'text-green-600' : 'text-red-600'}`}>
                         {isPositive ? '+' : '-'}{formatCurrency(amount)} <span className="text-xs">ر.س</span>
                       </div>
                     </TableCell>
-                    <TableCell className="text-right">
+                    <TableCell className="text-right border border-gray-300">
                       <span className="text-black">
                         {transaction.balance ? formatCurrency(parseFloat(transaction.balance)) : '—'}
                       </span>
                     </TableCell>
-                    <TableCell className="text-right">
-                      {!transaction.related_object_id && (
-                        <div className="inline-flex gap-2">
-                          <Button
-                            variant="outline-primary"
-                            size="sm"
-                            onClick={() => handleEditTransaction(transaction)}
-                            title="Edit"
-                          >
-                            <Edit size={12} />
-                          </Button>
-                          <Button
-                            variant="outline-danger"
-                            size="sm"
-                            onClick={() => handleDeleteTransaction(transaction)}
-                            title="Delete"
-                            isLoading={deleteTransactionMutation.isPending}
-                          >
-                            <Trash2 size={12} />
-                          </Button>
-                        </div>
-                      )}
+                    <TableCell className="text-right border border-gray-300">
+                      <div className="inline-flex gap-2">
+                        {canEdit && (
+                          <>
+                            <Button
+                              variant="outline-secondary"
+                              size="sm"
+                              onClick={() => handleEditTransaction(transaction)}
+                              title="Edit"
+                            >
+                              <Edit size={12} />
+                            </Button>
+                            <Button
+                              variant="outline-danger"
+                              size="sm"
+                              onClick={() => handleDeleteTransaction(transaction)}
+                              title="Delete"
+                            >
+                              <Trash2 size={12} />
+                            </Button>
+                          </>
+                        )}
+                      </div>
                     </TableCell>
                   </TableRow>
                 );
               })}
             </TableBody>
           </Table>
-          
+
           {confirmedTransactions.length === 0 && (
             <div className="p-8 text-center text-gray-500">
               <CheckCircle size={48} className="mx-auto mb-4 text-gray-300" />
@@ -331,7 +317,7 @@ const EmployeeTransactionsTable: React.FC<EmployeeTransactionsTableProps> = ({
       {/* Pending Commissions Tab */}
       {activeTab === 'pending' && (
         <div className="overflow-x-auto">
-          <Table>
+          <Table className="border-collapse border border-gray-300">
             <TableHeader>
               <TableRow>
                 <TableHead className="text-black">المهمة</TableHead>
@@ -346,10 +332,10 @@ const EmployeeTransactionsTable: React.FC<EmployeeTransactionsTableProps> = ({
               {pendingCommissions.map((pending) => {
                 const progress = pending.invoice_payment_progress || 0;
                 const invoiceStatus = pending.invoice_status || 'unknown';
-                
+
                 return (
                   <TableRow key={pending.id}>
-                    <TableCell>
+                    <TableCell className="border border-gray-300">
                       <div className="flex items-center gap-2">
                         <Clock size={16} className="text-amber-500" />
                         <div className="font-medium text-black">
@@ -357,38 +343,36 @@ const EmployeeTransactionsTable: React.FC<EmployeeTransactionsTableProps> = ({
                         </div>
                       </div>
                     </TableCell>
-                    <TableCell>
+                    <TableCell className="border border-gray-300">
                       <span className="text-black">{pending.client_name || '—'}</span>
                     </TableCell>
-                    <TableCell className="text-right">
+                    <TableCell className="text-right border border-gray-300">
                       <div className="font-medium text-amber-600">
                         {formatCurrency(parseFloat(pending.expected_amount))} <span className="text-xs">ر.س</span>
                       </div>
                     </TableCell>
-                    <TableCell>
-                      <span className={`inline-flex items-center px-2 py-0.5 text-xs font-medium rounded ${
-                        invoiceStatus === 'paid' ? 'bg-green-100 text-green-800' :
+                    <TableCell className="border border-gray-300">
+                      <span className={`inline-flex items-center px-2 py-0.5 text-xs font-medium rounded ${invoiceStatus === 'paid' ? 'bg-green-100 text-green-800' :
                         invoiceStatus === 'partially_paid' ? 'bg-blue-100 text-blue-800' :
-                        invoiceStatus === 'pending' ? 'bg-yellow-100 text-yellow-800' :
-                        'bg-gray-100 text-gray-800'
-                      }`}>
+                          invoiceStatus === 'pending' ? 'bg-yellow-100 text-yellow-800' :
+                            'bg-gray-100 text-gray-800'
+                        }`}>
                         {invoiceStatus === 'paid' ? 'مدفوع' :
-                         invoiceStatus === 'partially_paid' ? 'مدفوع جزئياً' :
-                         invoiceStatus === 'pending' ? 'قيد الانتظار' :
-                         invoiceStatus}
+                          invoiceStatus === 'partially_paid' ? 'مدفوع جزئياً' :
+                            invoiceStatus === 'pending' ? 'قيد الانتظار' :
+                              invoiceStatus}
                       </span>
                     </TableCell>
-                    <TableCell>
+                    <TableCell className="border border-gray-300">
                       <div className="w-24">
                         <div className="flex items-center gap-2">
                           <div className="flex-1 bg-gray-200 rounded-full h-2">
-                            <div 
-                              className={`h-2 rounded-full ${
-                                progress >= 100 ? 'bg-green-500' :
+                            <div
+                              className={`h-2 rounded-full ${progress >= 100 ? 'bg-green-500' :
                                 progress > 50 ? 'bg-blue-500' :
-                                progress > 0 ? 'bg-yellow-500' :
-                                'bg-gray-300'
-                              }`}
+                                  progress > 0 ? 'bg-yellow-500' :
+                                    'bg-gray-300'
+                                }`}
                               style={{ width: `${Math.min(progress, 100)}%` }}
                             />
                           </div>
@@ -396,12 +380,11 @@ const EmployeeTransactionsTable: React.FC<EmployeeTransactionsTableProps> = ({
                         </div>
                       </div>
                     </TableCell>
-                    <TableCell>
-                      <span className={`text-sm ${
-                        (pending.days_pending || 0) > 30 ? 'text-red-600 font-medium' :
+                    <TableCell className="border border-gray-300">
+                      <span className={`text-sm ${(pending.days_pending || 0) > 30 ? 'text-red-600 font-medium' :
                         (pending.days_pending || 0) > 14 ? 'text-orange-600' :
-                        'text-gray-600'
-                      }`}>
+                          'text-gray-600'
+                        }`}>
                         {pending.days_pending || 0} يوم
                       </span>
                     </TableCell>
@@ -410,7 +393,7 @@ const EmployeeTransactionsTable: React.FC<EmployeeTransactionsTableProps> = ({
               })}
             </TableBody>
           </Table>
-          
+
           {pendingCommissions.length === 0 && (
             <div className="p-8 text-center text-gray-500">
               <Clock size={48} className="mx-auto mb-4 text-gray-300" />
@@ -418,7 +401,7 @@ const EmployeeTransactionsTable: React.FC<EmployeeTransactionsTableProps> = ({
               <p className="text-sm mt-1">ستظهر هنا العمولات في انتظار دفع الفاتورة</p>
             </div>
           )}
-          
+
           {/* Pending Summary */}
           {pendingCommissions.length > 0 && (
             <div className="p-4 bg-amber-50 border-t border-amber-200">
@@ -446,7 +429,7 @@ const EmployeeTransactionsTable: React.FC<EmployeeTransactionsTableProps> = ({
               variant="outline-secondary"
               size="sm"
               disabled={page <= 1}
-              onClick={() => onPageChange(page - 1)}
+              onClick={() => onPageChange?.(page - 1)}
             >
               Previous
             </Button>
@@ -454,13 +437,14 @@ const EmployeeTransactionsTable: React.FC<EmployeeTransactionsTableProps> = ({
               variant="outline-secondary"
               size="sm"
               disabled={page >= Math.ceil(pagination.total / perPage)}
-              onClick={() => onPageChange(page + 1)}
+              onClick={() => onPageChange?.(page + 1)}
             >
               Next
             </Button>
           </div>
         </div>
       )}
+      {/* Step 17: Modals now handled by ModalManager */}
     </div>
   );
 };

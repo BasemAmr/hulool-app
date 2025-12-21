@@ -144,19 +144,31 @@ const fetchAccountHistory = async (
   // Try to extract transactions from various possible locations
   let transactions: any[] = [];
   let pagination: any = { total: 0, per_page: perPage, current_page: page, total_pages: 1, has_next: false, has_prev: false };
+  let balance: number | undefined;
+  let total_debits: number | undefined;
+  let total_credits: number | undefined;
 
   if (data.data?.transactions) {
     // Format: { success: true, data: { transactions: [...], pagination: {...} } }
     transactions = data.data.transactions;
     pagination = data.data.pagination || pagination;
+    balance = data.data.balance;
+    total_debits = data.data.total_debits;
+    total_credits = data.data.total_credits;
   } else if (data.data?.data) {
     // Format: { success: true, data: { data: [...], pagination: {...} } }
     transactions = data.data.data;
     pagination = data.data.pagination || pagination;
+    balance = data.data.balance;
+    total_debits = data.data.total_debits;
+    total_credits = data.data.total_credits;
   } else if (data.transactions) {
     // Format: { transactions: [...], pagination: {...} }
     transactions = data.transactions;
     pagination = data.pagination || pagination;
+    balance = data.balance;
+    total_debits = data.total_debits;
+    total_credits = data.total_credits;
   } else if (Array.isArray(data.data)) {
     // Format: { success: true, data: [...] }
     transactions = data.data;
@@ -168,6 +180,9 @@ const fetchAccountHistory = async (
   return {
     transactions,
     pagination,
+    balance,
+    total_debits,
+    total_credits,
   };
 };
 

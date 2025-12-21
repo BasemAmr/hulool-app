@@ -31,9 +31,9 @@ export const useGetAdminEmployeeDashboardClients = (employeeId: number) => {
 };
 
 // Get employee tasks with filters (Admin view)
-export const useGetAdminEmployeeTasks = (employeeId: number, filters: EmployeeTasksFilters = {}) => {
+export const useGetAdminEmployeeTasks = (userId: number, filters: EmployeeTasksFilters = {}) => {
   return useQuery({
-    queryKey: ['tasks', 'admin', 'employee', employeeId, filters],
+    queryKey: ['tasks', 'admin', 'employee', userId, filters],
     queryFn: async () => {
       const params = new URLSearchParams();
       
@@ -44,11 +44,11 @@ export const useGetAdminEmployeeTasks = (employeeId: number, filters: EmployeeTa
       if (filters.date_from) params.append('date_from', filters.date_from);
       if (filters.date_to) params.append('date_to', filters.date_to);
       
-      const response = await apiClient.get(`/tasks/employee/${employeeId}?${params.toString()}`);
+      const response = await apiClient.get(`/tasks/employee/${userId}?${params.toString()}`);
       // Handle WordPress API response structure: {success: true, data: {tasks: [...], pagination: {...}}}
       return response.data?.data || response.data || { tasks: [], pagination: {} };
     },
-    enabled: !!employeeId
+    enabled: !!userId
   });
 };
 

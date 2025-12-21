@@ -5,23 +5,24 @@ import { v4 as uuidv4 } from 'uuid';
 import { useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
 
-import type { 
-  Client, 
-  Task, 
-  TaskPayload, 
-  Requirement, 
-  UpdateTaskPayload, 
+import type {
+  Client,
+  Task,
+  TaskPayload,
+  Requirement,
+  UpdateTaskPayload,
   TaskType,
   ConflictResponse,
   PrepaidConflictData,
   TaskAmountConflictData,
   ConcurrentModificationData
 } from '../../api/types';
-import { 
-  useCreateTask, 
-  useUpdateTask, 
-  useCreateRequirements, 
-  useUpdateTaskWithConflicts 
+import {
+  useCreateTask,
+  useUpdateTask,
+  useCreateRequirements,
+  useUpdateTaskWithConflicts,
+  useAssignTask
 } from '../../queries/taskQueries';
 import { useGetEmployeesForSelection } from '../../queries/employeeQueries';
 import { useModalStore } from '../../stores/modalStore';
@@ -59,9 +60,9 @@ const TaskModal = () => {
   const toast = useToast();
   const queryClient = useQueryClient();
   const navigate = useNavigate();
-  
+
   const { isAdmin } = useAuthStore();
-  
+
   const closeModal = useModalStore((state) => state.closeModal);
   const openModal = useModalStore((state) => state.openModal);
   const props = useModalStore((state) => state.props as TaskModalProps);
@@ -107,6 +108,8 @@ const TaskModal = () => {
   const updateTaskMutation = useUpdateTask();
   const updateTaskWithConflictsMutation = useUpdateTaskWithConflicts();
   const createRequirementsMutation = useCreateRequirements();
+  // Comment 1: Declare assignTaskMutation at top level to avoid hooks rules violation
+  const assignTaskMutation = useAssignTask();
 
   const isLoading = createTaskMutation.isPending || updateTaskMutation.isPending || updateTaskWithConflictsMutation.isPending || createRequirementsMutation.isPending;
 
@@ -169,7 +172,7 @@ const TaskModal = () => {
   // Effect to update amount when subtasks change
   useEffect(() => {
     if (localSubtasks?.length > 0) {
-      const validSubtasks = localSubtasks.filter(subtask => 
+      const validSubtasks = localSubtasks.filter(subtask =>
         subtask.description && subtask.description.trim() && subtask.amount >= 0
       );
       if (validSubtasks?.length > 0) {
@@ -232,7 +235,7 @@ const TaskModal = () => {
             setValue('prepaid_amount', currentTask.prepaid_amount || 0);
             setValue('notes', currentTask.notes || '');
             // Update other fields as needed
-            
+
             // Retry the update with current timestamp
             const retryPayload = {
               ...originalPayload,
@@ -261,7 +264,7 @@ const TaskModal = () => {
     if (createdTask.prepaid_amount > 0 && createdTask.prepaid_invoice) {
       // Use the NEW invoice payment modal (recordPayment)
       closeModal();
-      openModal('recordPayment', { 
+      openModal('recordPayment', {
         invoiceId: createdTask.prepaid_invoice.id,
         clientId: createdTask.client_id,
         clientName: createdTask.client?.name
@@ -281,12 +284,44 @@ const TaskModal = () => {
       }));
 
     // Filter valid subtasks and calculate final amount
-    const validSubtasks = localSubtasks.filter(subtask => 
+    const validSubtasks = localSubtasks.filter(subtask =>
       subtask.description && subtask.description.trim() && subtask.amount >= 0
     );
     const finalAmount = validSubtasks?.length > 0 ? calculateTotal() : Number(data.amount);
-    
+
+    // Comment 1: assignTaskMutation is now declared at top level (no longer called here)
+
     if (isEditMode && taskToEdit) {
+      // Check if ONLY assignment changed (Step 5 fix)
+      // Only applicable if we have an assigned_to_id in form data
+      const newAssignment = data.assigned_to_id;
+      const oldAssignment = taskToEdit.assigned_to_id;
+      const assignmentChanged = newAssignment !== oldAssignment;
+
+      // We need to check if OTHER fields changed. 
+      // This is a simplified check. Ideally deep compare all fields.
+      const taskNameChanged = data.task_name !== taskToEdit.task_name;
+      const amountChanged = Number(data.amount) !== Number(taskToEdit.amount);
+      const notesChanged = (data.notes || '') !== (taskToEdit.notes || '');
+      const typeChanged = data.type !== taskToEdit.type;
+
+      if (assignmentChanged && !taskNameChanged && !amountChanged && !notesChanged && !typeChanged && isAdmin()) {
+        // Use dedicated assign endpoint
+        assignTaskMutation.mutate({
+          id: taskToEdit.id,
+          assigned_to_id: newAssignment !== undefined ? newAssignment : null
+        }, {
+          onSuccess: () => {
+            toast.success('تم تعيين المهمة بنجاح', 'تم تحديث المسؤول عن المهمة');
+            closeModal();
+          },
+          onError: (error: any) => {
+            toast.error('خطأ في التعيين', error?.message || 'فشل تعيين المهمة');
+          }
+        });
+        return;
+      }
+
       const updatePayload: UpdateTaskPayload = {
         ...data,
         amount: finalAmount,
@@ -311,7 +346,7 @@ const TaskModal = () => {
         taskToEdit_assigned_to_id: taskToEdit?.assigned_to_id,
         areEqual: updatePayload.assigned_to_id === taskToEdit?.assigned_to_id
       });
-      
+
       // Add optimistic locking timestamp
       const updatePayloadWithLocking = {
         ...updatePayload,
@@ -354,19 +389,19 @@ const TaskModal = () => {
         subtasks: validSubtasks,
         assigned_to_id: isAdmin() ? data.assigned_to_id : undefined,
       };
-      
+
       // console.log('Create payload (with tags):', createPayload);
-      
+
       createTaskMutation.mutate(createPayload, {
         onSuccess: (createdTask) => {
           // console.log('Task created successfully:', createdTask);
-          
+
           // Play notification sound when task is created successfully
           playNotificationSound();
-          
+
           if (validRequirements?.length > 0) {
             // console.log('Creating requirements for task:', createdTask.id);
-            
+
             createRequirementsMutation.mutate(
               {
                 task_id: createdTask.id,
@@ -405,9 +440,9 @@ const TaskModal = () => {
   const addRequirementField = () => {
     setLocalRequirements((prev) => [
       ...prev,
-      { 
-        temp_id: uuidv4(), 
-        requirement_text: '', 
+      {
+        temp_id: uuidv4(),
+        requirement_text: '',
         is_provided: false,
         id: undefined
       },
@@ -460,7 +495,7 @@ const TaskModal = () => {
       updatedSubtasks[index] = { ...updatedSubtasks[index], [field]: value };
     }
     setLocalSubtasks(updatedSubtasks);
-    
+
     // Update the total amount automatically
     const newTotal = updatedSubtasks.reduce((sum, subtask) => sum + (subtask.amount || 0), 0);
     setValue('amount', newTotal);
@@ -471,16 +506,16 @@ const TaskModal = () => {
   };
 
   const calculateProgress = () => {
-    const validSubtasks = localSubtasks.filter(subtask => 
+    const validSubtasks = localSubtasks.filter(subtask =>
       subtask.description && subtask.description.trim() && subtask.amount >= 0
     );
-    
+
     if (validSubtasks?.length === 0) return { completed: 0, total: 0, percentage: 0 };
-    
+
     const completed = validSubtasks.filter(subtask => subtask.is_completed).length;
     const total = validSubtasks?.length;
     const percentage = total > 0 ? Math.round((completed / total) * 100) : 0;
-    
+
     return { completed, total, percentage };
   };
 
@@ -497,9 +532,8 @@ const TaskModal = () => {
         isOpen={true}
         onClose={closeModal}
         title={isEditMode ? t('tasks.editTask') : t('tasks.addNew')}
-        className="task-modal-compact"
       >
-        <div className="modal-content-wrapper">
+        <div className=" h-[60vh] overflow-y-auto">
           <form onSubmit={handleSubmit(onSubmit)} className="h-100">
             {/* Step 0: Task Type Selection */}
             {step === 0 && !isEditMode && (
@@ -573,8 +607,8 @@ const TaskModal = () => {
                     </div>
                     {!isEditMode && step === 2 && (
                       <small className="text-muted-foreground text-xs">
-                        <button 
-                          type="button" 
+                        <button
+                          type="button"
                           className="text-primary hover:underline"
                           onClick={() => setStep(1)}
                         >
@@ -645,7 +679,7 @@ const TaskModal = () => {
 
                 {/* Progress Bar for Subtasks (if exists) */}
                 {hasSubtasks() && (
-                  <div 
+                  <div
                     className="mb-3 p-3 rounded-lg bg-gradient-to-r from-gray-100 to-gray-200 border border-gray-300"
                   >
                     <div className="grid grid-cols-2 gap-4">
@@ -655,7 +689,7 @@ const TaskModal = () => {
                           تقدم إنجاز المهام الفرعية
                         </div>
                         <div className="w-full h-2 bg-gray-300 rounded-full mb-2 overflow-hidden">
-                          <div 
+                          <div
                             className="h-full bg-green-600 transition-all duration-300"
                             style={{ width: `${calculateProgress().percentage}%` }}
                           ></div>
@@ -680,7 +714,7 @@ const TaskModal = () => {
                 <div className="mb-4">
                   <div className="flex justify-between items-center mb-2">
                     <label className="font-semibold text-black text-sm mb-0">
-                      <span 
+                      <span
                         className="px-2 py-1 rounded bg-blue-600 text-white text-xs"
                       >
                         إضافة مهمة فرعية
@@ -689,7 +723,7 @@ const TaskModal = () => {
                   </div>
 
                   {/* Subtasks Header */}
-                  <div 
+                  <div
                     className="grid grid-cols-12 py-2 font-semibold text-center text-white bg-blue-600 rounded-t"
                   >
                     <div className="col-span-6">البيان</div>
@@ -700,8 +734,8 @@ const TaskModal = () => {
                   {/* Subtasks List */}
                   <div className="border border-blue-600 border-t-0 rounded-b">
                     {localSubtasks?.map((subtask, index) => (
-                      <div 
-                        key={index} 
+                      <div
+                        key={index}
                         className={`grid grid-cols-12 py-2 items-center ${index % 2 === 0 ? 'bg-gray-50' : 'bg-white'}`}
                         style={{ borderBottom: index === localSubtasks?.length - 1 ? 'none' : '1px solid #e9ecef' }}
                       >
@@ -747,9 +781,9 @@ const TaskModal = () => {
                     ))}
 
                     {/* Add New Subtask Row */}
-                    <div 
+                    <div
                       className="py-2 text-center bg-gray-50"
-                      style={{ 
+                      style={{
                         borderTop: localSubtasks?.length > 0 ? '1px solid #e9ecef' : 'none'
                       }}
                     >
@@ -765,7 +799,7 @@ const TaskModal = () => {
 
                     {/* Total Row */}
                     {localSubtasks?.length > 0 && (
-                      <div 
+                      <div
                         className="grid grid-cols-12 py-2 font-semibold text-center text-white bg-blue-600"
                       >
                         <div className="col-span-6">الإجمالي</div>
@@ -789,7 +823,7 @@ const TaskModal = () => {
                           type="number"
                           step="1"
                           placeholder="المبلغ المقدم"
-                          {...register('prepaid_amount', { 
+                          {...register('prepaid_amount', {
                             validate: value => {
                               const amount = calculateTotal() || 0;
                               return !value || value <= amount || 'المبلغ المقدم لا يمكن أن يتجاوز مبلغ المهمة';
@@ -883,7 +917,7 @@ const TaskModal = () => {
                 </Accordion>
               </div>
             )}
-
+        
             {/* Footer */}
             <ModalFooter
               step={step}
@@ -896,165 +930,12 @@ const TaskModal = () => {
         </div>
 
         {/* Compact styling */}
-        <style>{`
-          .task-modal-compact {
-            width: 90vw;
-            max-width: 900px;
-            margin: auto;
-          }
+        {/* <style> */}
+          {
+          `
           
-          .modal-content-wrapper {
-            height: 100%;
-            display: flex;
-            flex-direction: column;
-          }
-          
-          .step-content {
-            flex: 1;
-            overflow-y: auto;
-            padding: 0.75rem 0;
-          }
-          
-          .main-form {
-            padding-bottom: 1rem;
-          }
-          
-          .form-grid {
-            display: grid;
-            grid-template-columns: 1fr 2fr;
-            gap: 1rem;
-            margin-bottom: 1rem;
-          }
-          
-          .form-row {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 1rem;
-            margin-bottom: 1rem;
-          }
-          
-          .form-group-compact {
-            margin-bottom: 0.75rem;
-          }
-          
-          .form-group-half {
-            min-width: 0;
-          }
-          
-          .form-label-compact {
-            font-size: 0.875rem;
-            font-weight: 500;
-            margin-bottom: 0.25rem;
-            display: block;
-            color: #495057;
-          }
-          
-          .form-control-sm {
-            font-size: 0.875rem;
-            padding: 0.375rem 0.5rem;
-          }
-          
-          .form-select-sm {
-            font-size: 0.875rem;
-            padding: 0.375rem 0.5rem;
-          }
-          
-          .invalid-feedback-compact {
-            font-size: 0.75rem;
-            color: #dc3545;
-            margin-top: 0.125rem;
-          }
-          
-          .client-section {
-            position: relative;
-          }
-          
-          .client-input-wrapper {
-            position: relative;
-          }
-          
-          .client-icons {
-            margin-bottom: 0.25rem;
-          }
-          
-          .requirements-section {
-            border: 1px solid #e9ecef;
-            border-radius: 0.375rem;
-            padding: 0.75rem;
-            background-color: #f8f9fa;
-          }
-          
-          .requirements-list-compact {
-            max-height: 120px;
-            overflow-y: auto;
-          }
-          
-          .requirement-item-compact {
-            padding: 0.5rem;
-            margin-bottom: 0.5rem;
-            background: white;
-            border-radius: 0.25rem;
-            border: 1px solid #e9ecef;
-          }
-          
-          .requirement-item-compact:last-child {
-            margin-bottom: 0;
-          }
-          
-          .empty-requirements {
-            text-align: center;
-            padding: 1rem;
-            color: #6c757d;
-          }
-          
-          .btn-xs {
-            padding: 0.25rem 0.5rem;
-            font-size: 0.75rem;
-            line-height: 1.2;
-          }
-          
-          .form-check-sm {
-            margin-bottom: 0;
-          }
-          
-          .form-check-input-sm {
-            width: 1rem;
-            height: 1rem;
-          }
-          
-          .fade-in {
-            animation: fadeIn 0.3s ease-in-out;
-          }
-          
-          @keyframes fadeIn {
-            from { 
-              opacity: 0; 
-              transform: translateY(10px); 
-            }
-            to { 
-              opacity: 1; 
-              transform: translateY(0); 
-            }
-          }
-          
-          /* Responsive adjustments */
-          @media (max-width: 768px) {
-            .task-modal-compact {
-              width: 95vw;
-              height: 90vh;
-            }
-            
-            .form-grid {
-              grid-template-columns: 1fr;
-              gap: 0.75rem;
-            }
-            
-            .form-row {
-              grid-template-columns: 1fr;
-              gap: 0.75rem;
-            }
-          }
-        `}</style>
+        `}
+        {/* </style> */}
       </BaseModal>
 
       {/* Success Modal */}

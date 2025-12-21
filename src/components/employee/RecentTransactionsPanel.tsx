@@ -222,7 +222,7 @@ const RecentTransactionsPanel: React.FC<RecentTransactionsPanelProps> = ({
             <table ref={tableRef} className="w-full text-sm mb-0 border-collapse">
               <thead className="sticky top-0 z-10 bg-gray-100">
                 <tr>
-                  <th className="px-2 py-2 border border-gray-300 text-start font-bold text-base text-black" style={{ width: `${maxClientWidth}px`, minWidth: `${maxClientWidth}px` }}>اسم العميل</th>
+                  <th className="px-2 py-2 border border-gray-300 text-start font-bold text-base text-black" style={{ width: `${maxClientWidth + 40}px`, minWidth: `${maxClientWidth + 40}px` }}>اسم العميل</th>
                   <th className="px-2 py-2 border border-gray-300 text-start font-bold text-base text-black">البيان</th>
                   <th className="px-2 py-2 border border-gray-300 text-center font-bold text-base text-black" style={{ width: '70px', minWidth: '70px' }}>المدين</th>
                   <th className="px-2 py-2 border border-gray-300 text-center font-bold text-base text-black" style={{ width: '70px', minWidth: '70px' }}>الدائن</th>
@@ -233,7 +233,7 @@ const RecentTransactionsPanel: React.FC<RecentTransactionsPanelProps> = ({
               <tbody>
                 {/* Opening Balance Row */}
                 <tr className="bg-green-50 font-bold">
-                  <td className="px-2 py-2 border border-gray-300 text-start font-bold text-base text-black" style={{ width: `${maxClientWidth}px`, minWidth: `${maxClientWidth}px` }}>-</td>
+                  <td className="px-2 py-2 border border-gray-300 text-start font-bold text-base text-black" style={{ width: `${maxClientWidth + 40}px`, minWidth: `${maxClientWidth + 40}px` }}>-</td>
                   <td className="px-2 py-2 border border-gray-300 text-start font-bold text-base text-black">
                     {opening_balance.description}
                   </td>
@@ -267,7 +267,7 @@ const RecentTransactionsPanel: React.FC<RecentTransactionsPanelProps> = ({
                           if (el) clientCellsRef.current.set(transaction.id, el);
                         }}
                         className="px-2 py-1.5 border border-gray-300 text-start font-bold text-base text-black" 
-                        style={{ width: `${maxClientWidth}px`, minWidth: `${maxClientWidth}px` }}
+                        style={{ width: `${maxClientWidth + 40}px`, minWidth: `${maxClientWidth + 40}px` }}
                       >
                         {clientDisplay}
                       </td>
@@ -315,7 +315,7 @@ const RecentTransactionsPanel: React.FC<RecentTransactionsPanelProps> = ({
                 )}
                 {/* Totals Footer Row */}
                 <tr className="bg-gray-100 border-t-2 border-gray-400">
-                  <td className="px-2 py-2 border border-gray-300 text-center font-bold text-base text-black" style={{ width: `${maxClientWidth}px`, minWidth: `${maxClientWidth}px` }}>-</td>
+                  <td className="px-2 py-2 border border-gray-300 text-center font-bold text-base text-black" style={{ width: `${maxClientWidth + 40}px`, minWidth: `${maxClientWidth + 40}px` }}>-</td>
                   <td className="px-2 py-2 border border-gray-300 text-center font-bold text-base text-black">
                     الإجماليات
                   </td>

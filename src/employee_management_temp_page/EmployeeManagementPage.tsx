@@ -50,7 +50,7 @@ const EmployeeManagementPage: React.FC = () => {
             <h6 className="mb-0 font-medium">جميع مهام الموظف</h6>
           </CardHeader>
           <CardContent className="p-0">
-            <AdminEmployeeTasksTable employeeId={employeeId} />
+            <AdminEmployeeTasksTable userId={parseInt(id || '0', 10)} />
           </CardContent>
         </Card>
       </div>

@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient, useInfiniteQuery } from '@tanstack/react-query';
 import apiClient from '../api/apiClient';
+import { useToast } from "../hooks/useToast";
 import type { ApiResponse, Task } from '../api/types';
 
 // Interface for employee tasks pagination response
@@ -30,14 +31,14 @@ export interface EmployeeTasksParams {
  */
 export const useGetEmployeeOwnTasks = (params: EmployeeTasksParams = {}) => {
   const { page = 1, per_page = 20, status, search, client_id } = params;
-  
+
   return useQuery({
     queryKey: ['employee', 'tasks', 'own', { page, per_page, status, search, client_id }],
     queryFn: async (): Promise<EmployeeTasksResponse> => {
       const queryParams = new URLSearchParams();
       queryParams.append('page', page.toString());
       queryParams.append('per_page', per_page.toString());
-      
+
       if (status) queryParams.append('status', status);
       if (search) queryParams.append('search', search);
       if (client_id) queryParams.append('client_id', client_id.toString());
@@ -45,11 +46,11 @@ export const useGetEmployeeOwnTasks = (params: EmployeeTasksParams = {}) => {
       const response = await apiClient.get<ApiResponse<EmployeeTasksResponse>>(
         `/tasks/employee/me?${queryParams.toString()}`
       );
-      
+
       if (!response.data.success) {
         throw new Error(response.data.message || 'Failed to fetch employee tasks');
       }
-      
+
       return response.data.data;
     },
     staleTime: 2 * 60 * 1000, // Keep fresh for 2 minutes
@@ -62,14 +63,14 @@ export const useGetEmployeeOwnTasks = (params: EmployeeTasksParams = {}) => {
  */
 export const useGetEmployeeOwnTasksInfinite = (filters: Omit<EmployeeTasksParams, 'page'> = {}) => {
   const { per_page = 20, status, search, client_id } = filters;
-  
+
   return useInfiniteQuery({
     queryKey: ['employee', 'tasks', 'own', 'infinite', { per_page, status, search, client_id }],
     queryFn: async ({ pageParam }: { pageParam: number }): Promise<EmployeeTasksResponse> => {
       const queryParams = new URLSearchParams();
       queryParams.append('page', pageParam.toString());
       queryParams.append('per_page', per_page.toString());
-      
+
       if (status) queryParams.append('status', status);
       if (search) queryParams.append('search', search);
       if (client_id) queryParams.append('client_id', client_id.toString());
@@ -77,11 +78,11 @@ export const useGetEmployeeOwnTasksInfinite = (filters: Omit<EmployeeTasksParams
       const response = await apiClient.get<ApiResponse<EmployeeTasksResponse>>(
         `/tasks/employee/me?${queryParams.toString()}`
       );
-      
+
       if (!response.data.success) {
         throw new Error(response.data.message || 'Failed to fetch employee tasks');
       }
-      
+
       return response.data.data;
     },
     initialPageParam: 1,
@@ -120,5 +121,30 @@ export const useSubmitTaskForReview = () => {
       queryClient.invalidateQueries({ queryKey: ['tasks'] });
       queryClient.invalidateQueries({ queryKey: ['receivables'] });
     },
+  });
+};
+
+export const useUnassignTask = () => {
+  const queryClient = useQueryClient();
+  const { success, error } = useToast();
+
+  return useMutation({
+    mutationFn: async (taskId: number) => {
+      const { data } = await apiClient.post(`/tasks/${taskId}/unassign`);
+      return data;
+    },
+    onSuccess: (data) => {
+      if (data.success) {
+        success("تم الغاء تعيين المهمة", "تم الغاء تعيين المهمة بنجاح");
+        queryClient.invalidateQueries({ queryKey: ['employee', 'tasks', 'own'] });
+        queryClient.invalidateQueries({ queryKey: ['tasks'] });
+        queryClient.invalidateQueries({ queryKey: ['dashboard'] });
+      } else {
+        error("فشل الغاء التعيين", data.message || "حدث خطأ أثناء الغاء تعيين المهمة");
+      }
+    },
+    onError: (err: any) => {
+      error("خطأ", err.response?.data?.message || "فشل الاتصال بالخادم");
+    }
   });
 };
