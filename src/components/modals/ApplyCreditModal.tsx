@@ -1,6 +1,9 @@
 import { useForm } from 'react-hook-form';
 import { useModalStore } from '../../stores/modalStore';
 import { useApplyCreditToReceivable } from '../../queries/clientCreditQueries';
+import { useToast } from '../../hooks/useToast';
+import { TOAST_MESSAGES } from '../../constants/toastMessages';
+import { getErrorMessage } from '../../utils/errorUtils';
 import BaseModal from '../ui/BaseModal';
 import Button from '../ui/Button';
 import Input from '../ui/Input';
@@ -13,6 +16,7 @@ interface ApplyCreditModalProps {
 
 const ApplyCreditModal = () => {
     const closeModal = useModalStore(state => state.closeModal);
+    const { success, error } = useToast();
     const props = useModalStore(state => state.props as ApplyCreditModalProps);
     const { receivable, availableCredit } = props;
 
@@ -35,7 +39,13 @@ const ApplyCreditModal = () => {
             note: data.note,
             paid_at: data.paid_at,
         }, {
-            onSuccess: closeModal,
+            onSuccess: () => {
+                success(TOAST_MESSAGES.CREDIT_APPLIED, `تم تطبيق رصيد بمبلغ ${data.amount} ريال على المستحق`);
+                closeModal();
+            },
+            onError: (err: any) => {
+                error(TOAST_MESSAGES.OPERATION_FAILED, getErrorMessage(err, 'فشل تطبيق الرصيد'));
+            }
         });
     };
 

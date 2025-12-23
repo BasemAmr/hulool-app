@@ -8,11 +8,12 @@ import { useCreateEmployee, useRemoveEmployeeStatus } from '../queries/employeeQ
 import { useToast } from '../hooks/useToast';
 import { useCurrentUserCapabilities } from '../queries/userQueries';
 import type { User } from '../api/types';
+import { TOAST_MESSAGES } from '../constants/toastMessages';
 
 const EmployeeManagementPage = () => {
   const navigate = useNavigate();
   const { success, error } = useToast();
-  
+
   const [search, setSearch] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
@@ -40,7 +41,7 @@ const EmployeeManagementPage = () => {
 
   const handleToggleEmployeeStatus = async (user: User) => {
     if (!canManageUsers) {
-      error('You do not have permission to manage employees');
+      error(TOAST_MESSAGES.PERMISSION_DENIED);
       return;
     }
 
@@ -49,18 +50,18 @@ const EmployeeManagementPage = () => {
       if (isEmployee(user)) {
         // Remove employee status
         await removeEmployeeStatusMutation.mutateAsync(user.id);
-        success(`${user.display_name} has been removed as an employee`);
+        success(TOAST_MESSAGES.EMPLOYEE_DELETED);
       } else {
         // Add employee status
         await createEmployeeMutation.mutateAsync({
           user_id: user.id,
           commission_rate: 20.00 // Default commission rate
         });
-        success(`${user.display_name} has been added as an employee`);
+        success(TOAST_MESSAGES.EMPLOYEE_CREATED);
       }
       await refetch();
     } catch (err: any) {
-      error(err.message || 'Failed to update employee status');
+      error(TOAST_MESSAGES.OPERATION_FAILED, err.message || 'فشل تحديث حالة الموظف');
     } finally {
       setIsLoading(false);
     }
@@ -204,7 +205,7 @@ const EmployeeManagementPage = () => {
               ))}
             </TableBody>
           </Table>
-          
+
           {filteredUsers.length === 0 && (
             <div className="p-4 text-center text-black">
               {search ? 'No users found matching your search.' : 'No users available.'}

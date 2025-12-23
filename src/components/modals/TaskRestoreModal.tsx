@@ -3,6 +3,7 @@ import BaseModal from '../ui/BaseModal';
 import Button from '../ui/Button';
 import { useRestoreTask } from '../../queries/taskQueries';
 import { useToast } from '../../hooks/useToast';
+import { TOAST_MESSAGES } from '../../constants/toastMessages';
 
 interface TaskRestoreModalProps {
   isOpen: boolean;
@@ -21,10 +22,10 @@ const TaskRestoreModal: React.FC<TaskRestoreModalProps> = ({
   const handleRestore = async () => {
     try {
       await restoreTask.mutateAsync({ id: task.id });
-      success('Task restored successfully');
+      success(TOAST_MESSAGES.TASK_RESTORED);
       onClose();
     } catch (err: any) {
-      error(err.message || 'Restore failed');
+      error(TOAST_MESSAGES.OPERATION_FAILED, err.message);
     }
   };
 

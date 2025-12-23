@@ -44,6 +44,8 @@ import {
   AccordionTrigger,
 } from '../ui/accordion';
 
+import { TOAST_MESSAGES } from '../../constants/toastMessages';
+
 // Import step components
 import TaskTypeStep from './steps/TaskTypeStep';
 import ClientSelectionStep from './steps/ClientSelectionStep';
@@ -198,10 +200,7 @@ const TaskModal = () => {
           conflictData: prepaidConflictData,
           newPrepaidAmount: originalPayload.prepaid_amount || 0,
           onResolved: () => {
-            toast.showToast({
-              type: 'success',
-              title: t('tasks.conflictResolved')
-            });
+            toast.success(TOAST_MESSAGES.SUCCESS);
             closeModal();
           }
         });
@@ -213,10 +212,7 @@ const TaskModal = () => {
           conflictData: amountConflictData,
           newTaskAmount: originalPayload.amount || 0,
           onResolved: () => {
-            toast.showToast({
-              type: 'success',
-              title: t('tasks.conflictResolved')
-            });
+            toast.success(TOAST_MESSAGES.SUCCESS);
             closeModal();
           }
         });
@@ -312,11 +308,11 @@ const TaskModal = () => {
           assigned_to_id: newAssignment !== undefined ? newAssignment : null
         }, {
           onSuccess: () => {
-            toast.success('تم تعيين المهمة بنجاح', 'تم تحديث المسؤول عن المهمة');
+            toast.success(TOAST_MESSAGES.TASK_UPDATED, 'تم تحديث المسؤول عن المهمة');
             closeModal();
           },
           onError: (error: any) => {
-            toast.error('خطأ في التعيين', error?.message || 'فشل تعيين المهمة');
+            toast.error(TOAST_MESSAGES.ERROR, error?.message || 'فشل تعيين المهمة');
           }
         });
         return;
@@ -366,12 +362,12 @@ const TaskModal = () => {
           }
 
           // It's a successful update
-          toast.success('تم التحديث بنجاح', 'تم تحديث المهمة بنجاح');
+          toast.success(TOAST_MESSAGES.TASK_UPDATED);
           closeModal();
         },
         onError: (error: any) => {
           console.error('Update error:', error);
-          toast.error('خطأ في التحديث', error?.response?.data?.message || 'حدث خطأ أثناء تحديث المهمة');
+          toast.error(TOAST_MESSAGES.ERROR, error?.response?.data?.message || TOAST_MESSAGES.OPERATION_FAILED);
         }
       });
     } else {
@@ -416,7 +412,7 @@ const TaskModal = () => {
                 },
                 onError: (error: any) => {
                   console.error('Requirements creation error:', error);
-                  toast.error('خطأ في إنشاء المتطلبات', error?.response?.data?.message || 'تم إنشاء المهمة لكن حدث خطأ في المتطلبات');
+                  toast.error(TOAST_MESSAGES.ERROR, error?.response?.data?.message || 'تم إنشاء المهمة لكن حدث خطأ في المتطلبات');
                   queryClient.invalidateQueries({ queryKey: ['tasks'] });
                   queryClient.invalidateQueries({ queryKey: ['dashboard'] });
                   handlePrepaidPayment(createdTask);
@@ -431,7 +427,7 @@ const TaskModal = () => {
         },
         onError: (error: any) => {
           console.error('Create error:', error);
-          toast.error('خطأ في الإنشاء', error?.response?.data?.message || 'حدث خطأ أثناء إنشاء المهمة');
+          toast.error(TOAST_MESSAGES.ERROR, error?.response?.data?.message || TOAST_MESSAGES.OPERATION_FAILED);
         }
       });
     }
@@ -917,7 +913,7 @@ const TaskModal = () => {
                 </Accordion>
               </div>
             )}
-        
+
             {/* Footer */}
             <ModalFooter
               step={step}
@@ -931,7 +927,7 @@ const TaskModal = () => {
 
         {/* Compact styling */}
         {/* <style> */}
-          {
+        {
           `
           
         `}

@@ -5,6 +5,7 @@ import Button from '../ui/Button';
 import { useModalStore } from '../../stores/modalStore';
 import { useToast } from '../../hooks/useToast';
 import { useAddEmployeeBorrow } from '../../queries/employeeQueries';
+import { TOAST_MESSAGES } from '../../constants/toastMessages';
 
 interface BorrowFormData {
   amount: string;
@@ -60,7 +61,7 @@ const EmployeeBorrowModal = () => {
         borrowData
       });
 
-      success('تم تسجيل بنجاح');
+      success(TOAST_MESSAGES.BORROW_RECORDED);
 
       // Reset form
       setFormData({
@@ -76,7 +77,7 @@ const EmployeeBorrowModal = () => {
         props.onSuccess();
       }
     } catch (err: any) {
-      error(err.message || 'فشل في تسجيل');
+      error(err.message || TOAST_MESSAGES.OPERATION_FAILED);
     }
   };
 

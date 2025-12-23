@@ -6,6 +6,7 @@ import type { Task } from '../../api/types';
 import { useGetEmployeesForSelection, useAssignTask } from '../../queries/employeeQueries';
 import { useModalStore } from '../../stores/modalStore';
 import { useToast } from '../../hooks/useToast';
+import { TOAST_MESSAGES } from '../../constants/toastMessages';
 
 import BaseModal from '../ui/BaseModal';
 import Button from '../ui/Button';
@@ -68,20 +69,11 @@ const AssignTaskModal = () => {
       },
       {
         onSuccess: () => {
-          const employeeName = data.assigned_to_id 
-            ? employees.find(emp => emp.user_id === data.assigned_to_id)?.display_name || 'Unknown'
-            : 'غير مكلف';
-          
-          success(
-            'تم تحديث التكليف',
-            data.assigned_to_id 
-              ? `تم تكليف ${employeeName} بالمهمة`
-              : 'تم إلغاء تكليف المهمة'
-          );
+          success(TOAST_MESSAGES.TASK_ASSIGNED);
           closeModal();
         },
         onError: (err: any) => {
-          error('خطأ في التكليف', err.message || 'حدث خطأ أثناء تحديث تكليف المهمة');
+          error(TOAST_MESSAGES.OPERATION_FAILED, err.message);
         },
       }
     );

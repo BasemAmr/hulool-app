@@ -4,6 +4,7 @@ import { useGetEmployeeOwnTasksInfinite, useSubmitTaskForReview, useUnassignTask
 import { useModalStore } from '../../stores/modalStore';
 import { useToast } from '../../hooks/useToast';
 import { formatDate } from '../../utils/dateUtils';
+import { translateTaskType } from '../../constants/taskTypes';
 import type { Task } from '../../api/types';
 import { useInView } from 'react-intersection-observer';
 import {
@@ -305,7 +306,7 @@ const EmployeeOwnTasksTable: React.FC<EmployeeOwnTasksTableProps> = ({
                   </td>
                   <td style={CELL_STYLE}>
                     <span className="px-2.5 py-1 bg-primary/10 text-primary rounded-full text-xs font-medium border border-primary/20">
-                      {task.type}
+                      {translateTaskType(task.type)}
                     </span>
                   </td>
                   <td style={CELL_STYLE}>

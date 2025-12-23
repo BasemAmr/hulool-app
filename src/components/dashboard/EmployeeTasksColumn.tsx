@@ -17,13 +17,13 @@ import {
   DropdownMenuTrigger,
   DropdownMenuSeparator,
 } from '../ui/dropdown-menu';
-import { 
-  DndContext, 
-  PointerSensor, 
-  KeyboardSensor, 
-  useSensor, 
-  useSensors, 
-  closestCenter, 
+import {
+  DndContext,
+  PointerSensor,
+  KeyboardSensor,
+  useSensor,
+  useSensors,
+  closestCenter,
   type DragEndEvent
 } from '@dnd-kit/core';
 import { arrayMove, sortableKeyboardCoordinates, SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable';
@@ -32,6 +32,7 @@ import { CSS } from '@dnd-kit/utilities';
 import { FloatingCardWrapper } from '../common/FloatingCardWrapper';
 import { Badge } from '../ui/badge';
 import { cn } from '@/lib/utils';
+import { translateTaskType } from '../../constants/taskTypes';
 
 export interface GroupedClientsByType {
   [key: string]: Array<{
@@ -132,7 +133,7 @@ const SortableAdminEmployeeClientCard = ({
       >
         ⋮⋮ اسحب لإعادة الترتيب
       </div>
-      
+
       {/* WRAP with FloatingCardWrapper */}
       <FloatingCardWrapper dynamicWidth={dynamicWidth}>
         <AdminEmployeeClientCard
@@ -201,7 +202,7 @@ const AdminEmployeeClientCard = ({
   const handleAction = (mutation: any, task: Task, successKey: string, successMessageKey: string, errorKey: string) => {
     mutation.mutate({ id: task.id }, {
       onSuccess: () => {
-        success(t(successKey), t(successMessageKey, { taskName: task.task_name || t(`type.${task.type}`) }));
+        success(t(successKey), t(successMessageKey, { taskName: task.task_name || translateTaskType(task.type) }));
         queryClient.invalidateQueries({ queryKey: ['dashboard', 'clientsWithActiveTasks'] });
       },
       onError: (err: any) => {
@@ -212,7 +213,7 @@ const AdminEmployeeClientCard = ({
 
   const handleDefer = (task: Task) => handleAction(deferTaskMutation, task, 'tasks.deferSuccess', 'tasks.deferSuccessMessage', 'tasks.deferError');
   const handleResume = (task: Task) => handleAction(resumeTaskMutation, task, 'tasks.resumeSuccess', 'tasks.resumeSuccessMessage', 'tasks.resumeError');
-  
+
   const handleSubmitForReview = (task: Task) => {
     submitForReviewMutation.mutate(task.id, {
       onSuccess: async (response) => {
@@ -220,13 +221,13 @@ const AdminEmployeeClientCard = ({
         await queryClient.invalidateQueries({ queryKey: ['dashboard', 'clientsWithActiveTasks'] });
         await queryClient.invalidateQueries({ queryKey: ['tasks'] });
         await new Promise(resolve => setTimeout(resolve, 100));
-        
+
         const updatedTask = {
           ...task,
           status: 'Pending Review' as const,
           id: response?.data?.id || task.id
         };
-        
+
         openModal('approval', { task: updatedTask });
       },
       onError: (err: any) => {
@@ -415,7 +416,7 @@ const AdminEmployeeClientCard = ({
                     <td className="text-[0.82em] px-2 py-2 text-black border-0" style={{ backgroundColor: rowColor }}>
                       <div className="flex items-center gap-1">
                         <span className="truncate max-w-[180px] inline-block">
-                          {task.task_name || t(`type.${task.type}`)}
+                          {task.task_name || translateTaskType(task.type)}
                         </span>
                         {isUrgent && (
                           <AlertTriangle size={10} className="text-red-500" />
@@ -425,7 +426,7 @@ const AdminEmployeeClientCard = ({
 
                     {/* Type */}
                     <td className="text-[0.77em] px-2 py-2 text-black border-0" style={{ backgroundColor: rowColor }}>
-                      <span>{t(`type.${task.type}`)}</span>
+                      <span>{translateTaskType(task.type)}</span>
                     </td>
 
                     {/* Status */}
@@ -433,10 +434,10 @@ const AdminEmployeeClientCard = ({
                       <Badge
                         variant={
                           task.status === 'New' ? 'default' :
-                          task.status === 'Deferred' ? 'destructive' :
-                          task.status === 'Pending Review' ? 'secondary' :
-                          task.status === 'Completed' ? 'default' :
-                          'outline'
+                            task.status === 'Deferred' ? 'destructive' :
+                              task.status === 'Pending Review' ? 'secondary' :
+                                task.status === 'Completed' ? 'default' :
+                                  'outline'
                         }
                         className={cn(
                           "text-[0.7em]",
@@ -471,7 +472,7 @@ const AdminEmployeeClientCard = ({
                           {/* Follow-up */}
                           <DropdownMenuItem
                             onClick={() => {
-                              openDrawer('taskFollowUp', { 
+                              openDrawer('taskFollowUp', {
                                 taskId: task.id,
                                 taskName: task.task_name || undefined,
                                 clientName: task.client?.name || client.name
@@ -699,8 +700,8 @@ const EmployeeTasksColumn: React.FC<EmployeeTasksColumnProps> = ({
                     strategy={verticalListSortingStrategy}
                   >
                     {clients.map((clientData, index) => (
-                      <div 
-                        key={`${employeeId}-client-${clientData.client.id}`} 
+                      <div
+                        key={`${employeeId}-client-${clientData.client.id}`}
                         className="overflow-visible relative flex-shrink-0"
                         style={{ zIndex: 50 - index }}
                       >

@@ -3,6 +3,7 @@ import BaseModal from '../ui/BaseModal';
 import Button from '../ui/Button';
 import { useValidateTaskEdit, useUpdateTaskAmount, useUpdateTaskPrepaid } from '../../queries/taskQueries';
 import { useToast } from '../../hooks/useToast';
+import { TOAST_MESSAGES } from '../../constants/toastMessages';
 import ValidationPreviewModal from './ValidationPreviewModal';
 import type { TaskValidationResult } from '../../api/types';
 
@@ -50,7 +51,7 @@ const TaskAmountEditModal: React.FC<TaskAmountEditModalProps> = ({
       setValidationResult(result);
       setShowPreview(true);
     } catch (err: any) {
-      error(err.message || 'Validation failed');
+      error(TOAST_MESSAGES.OPERATION_FAILED, err.message);
     }
   };
 
@@ -76,10 +77,10 @@ const TaskAmountEditModal: React.FC<TaskAmountEditModalProps> = ({
         });
       }
 
-      success('Task updated successfully');
+      success(TOAST_MESSAGES.TASK_UPDATED);
       onClose();
     } catch (err: any) {
-      error(err.message || 'Update failed');
+      error(TOAST_MESSAGES.OPERATION_FAILED, err.message);
     }
   };
 

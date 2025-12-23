@@ -4,7 +4,8 @@ import Logo from '../ui/Logo';
 import NotificationBell from './NotificationBell';
 import {
     Home, ClipboardList, Users, DollarSign, LogOut,
-    Search, ChevronDown, FileText
+    Search, ChevronDown, FileText,
+    TrendingUp, TrendingDown, Receipt
 } from 'lucide-react';
 import { useModalStore } from '../../stores/modalStore';
 import {
@@ -52,6 +53,13 @@ const EmployeeNavbar = () => {
                     <Logo />
                 </div>
 
+                {/* Welcome Message */}
+                <div className="hidden md:block mr-4">
+                    <span className="text-sm font-bold text-black">
+                        مرحباً {user?.display_name}
+                    </span>
+                </div>
+
                 {/* Main Navigation - Desktop */}
                 <div className="hidden md:flex items-center gap-1 flex-1 overflow-x-auto scrollbar-hide">
                     {employeeNavigationItems.map((item) => (
@@ -59,7 +67,7 @@ const EmployeeNavbar = () => {
                             key={item.path}
                             to={item.path}
                             className={({ isActive }) =>
-                                `flex items-center gap-2 px-3 py-2 text-sm font-medium rounded-md transition-colors whitespace-nowrap ${isActive
+                                `flex items-center gap-2 px-3 py-2 text-sm font-bold rounded-md transition-colors whitespace-nowrap ${isActive
                                     ? 'bg-primary/10 text-primary'
                                     : 'text-muted-foreground hover:bg-accent hover:text-accent-foreground'
                                 }`
@@ -71,8 +79,40 @@ const EmployeeNavbar = () => {
                     ))}
                 </div>
 
+                {/* Quick Action Buttons */}
+                <div className="hidden lg:flex items-center gap-2 mr-auto">
+                    <button
+                        onClick={() => openModal('taskForm', {})}
+                        className="px-3 py-1.5 text-sm font-bold border border-primary text-primary rounded-md hover:bg-primary hover:text-white transition-colors"
+                    >
+                        <FileText size={14} className="inline me-1" />
+                        إضافة مهمة
+                    </button>
+                    <button
+                        onClick={() => openModal('invoiceForm', {})}
+                        className="px-3 py-1.5 text-sm font-bold border border-border text-black rounded-md hover:bg-accent hover:text-accent-foreground transition-colors"
+                    >
+                        <Receipt size={14} className="inline me-1" />
+                        إضافة فاتورة
+                    </button>
+                    <button
+                        onClick={() => openModal('manualTransaction', { direction: 'repayment' , accountType: 'client' })}
+                        className="px-3 py-1.5 text-sm font-bold border border-green-600 text-green-600 rounded-md hover:bg-green-600 hover:text-white transition-colors"
+                    >
+                        <TrendingUp size={14} className="inline me-1" />
+                        سند قبض
+                    </button>
+                    <button
+                        onClick={() => openModal('manualTransaction', { direction: 'payout',accountType:'client' })}
+                        className="px-3 py-1.5 text-sm font-bold border border-red-600 text-red-600 rounded-md hover:bg-red-600 hover:text-white transition-colors"
+                    >
+                        <TrendingDown size={14} className="inline me-1" />
+                        سند صرف
+                    </button>
+                </div>
+
                 {/* Right Side Actions */}
-                <div className="flex items-center gap-2 mr-auto">
+                <div className="flex items-center gap-2">
                     {/* Search */}
                     <div className="relative hidden sm:block w-64 ml-2">
                         <div

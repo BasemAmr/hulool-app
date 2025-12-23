@@ -5,6 +5,7 @@ import { useUpdateTransaction, useValidateTransactionEdit } from '../../queries/
 import { useToast } from '../../hooks/useToast';
 import ValidationPreviewModal from './ValidationPreviewModal';
 import type { TransactionValidationResult, UpdateTransactionPayload } from '../../api/types';
+import { TOAST_MESSAGES } from '../../constants/toastMessages';
 
 interface TransactionEditModalProps {
   isOpen: boolean;
@@ -56,7 +57,7 @@ const TransactionEditModal: React.FC<TransactionEditModalProps> = ({
 
   const handlePreview = async () => {
     if (!formData.reason) {
-      error('Reason is required');
+      error(TOAST_MESSAGES.VALIDATION_ERROR, 'سبب التعديل مطلوب');
       return;
     }
     try {
@@ -67,7 +68,7 @@ const TransactionEditModal: React.FC<TransactionEditModalProps> = ({
       setValidationResult(result);
       setShowPreview(true);
     } catch (err: any) {
-      error(err.message || 'Validation failed');
+      error(TOAST_MESSAGES.OPERATION_FAILED, err.message);
     }
   };
 
@@ -77,10 +78,10 @@ const TransactionEditModal: React.FC<TransactionEditModalProps> = ({
         id: transaction.id,
         payload: formData
       });
-      success('Transaction updated successfully');
+      success(TOAST_MESSAGES.TRANSACTION_UPDATED);
       onClose();
     } catch (err: any) {
-      error(err.message || 'Update failed');
+      error(TOAST_MESSAGES.OPERATION_FAILED, err.message);
     }
   };
 

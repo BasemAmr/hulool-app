@@ -5,6 +5,7 @@ import Button from '../ui/Button';
 import { useModalStore } from '../../stores/modalStore';
 import { useToast } from '../../hooks/useToast';
 import { useAddEmployeePayout } from '../../queries/employeeQueries';
+import { TOAST_MESSAGES } from '../../constants/toastMessages';
 
 interface PayoutFormData {
   amount: string;
@@ -44,10 +45,10 @@ const EmployeePayoutModal = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     console.log(formData);
-    console.log('Employee Table ID:', employeeTableId);  
+    console.log('Employee Table ID:', employeeTableId);
     console.log('Employee User ID:', employeeUserId);
     console.log(validateForm());
-    if (!validateForm()  || !employeeUserId) return;
+    if (!validateForm() || !employeeUserId) return;
 
     try {
       const payoutData = {
@@ -58,13 +59,13 @@ const EmployeePayoutModal = () => {
 
       console.log(payoutData);
 
-      await addPayoutMutation.mutateAsync({ 
-        employeeUserId, 
-        payoutData 
+      await addPayoutMutation.mutateAsync({
+        employeeUserId,
+        payoutData
       });
-      
-      success('تم تسجيل الصرف بنجاح');
-      
+
+      success(TOAST_MESSAGES.EMPLOYEE_PAYOUT_RECORDED);
+
       // Reset form
       setFormData({
         amount: '',
@@ -72,15 +73,15 @@ const EmployeePayoutModal = () => {
         type: 'PAYOUT',
       });
       setErrors({});
-      
+
       closeModal();
-      
+
       // Call onSuccess callback if provided
       if (props?.onSuccess) {
         props.onSuccess();
       }
     } catch (err: any) {
-      error(err.message || 'فشل في تسجيل الصرف');
+      error(TOAST_MESSAGES.OPERATION_FAILED, err.message);
     }
   };
 

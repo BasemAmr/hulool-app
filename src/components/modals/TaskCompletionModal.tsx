@@ -7,6 +7,7 @@ import { useToast } from '../../hooks/useToast';
 import { useQueryClient } from '@tanstack/react-query';
 import { useEffect } from 'react';
 import type { Task, CompleteTaskPayload } from '../../api/types';
+import { TOAST_MESSAGES } from '../../constants/toastMessages';
 import BaseModal from '../ui/BaseModal';
 import Button from '../ui/Button';
 import Input from '../ui/Input';
@@ -69,7 +70,7 @@ const TaskCompletionModal = () => {
         // Ensure partial payment amount is a valid number
         const amount = Number(data.payment_amount);
         if (isNaN(amount) || amount <= 0 || amount > remainingAmount) {
-          error(t('common.error'), t('payments.invalidAmount'));
+          error(TOAST_MESSAGES.VALIDATION_ERROR, t('payments.invalidAmount'));
           return;
         }
         payload.payment_amount = amount;
@@ -88,39 +89,28 @@ const TaskCompletionModal = () => {
     // console.log('Transformed payload:', payload);
 
     completeTaskMutation.mutate(
-      { 
-        id: Number(task.id), 
-        payload 
-      }, 
+      {
+        id: Number(task.id),
+        payload
+      },
       {
         onSuccess: (response) => {
           if (data.is_paid && response.payment) {
-            success(
-              t('tasks.completeSuccess'), 
-              t('tasks.completeWithPaymentSuccessMessage', {
-                taskName: task.task_name || t(`type.${task.type}`),
-                amount: payload.payment_amount
-              })
-            );
+            success(TOAST_MESSAGES.TASK_COMPLETED, 'تم إكمال المهمة بنجاح');
           } else {
-            success(
-              t('tasks.completeSuccess'), 
-              t('tasks.completeSuccessMessage', {
-                taskName: task.task_name || t(`type.${task.type}`)
-              })
-            );
+            success(TOAST_MESSAGES.TASK_COMPLETED);
           }
-          
+
           // Invalidate queries
           queryClient.invalidateQueries({ queryKey: ['dashboard'] });
           queryClient.invalidateQueries({ queryKey: ['tasks'] });
           queryClient.invalidateQueries({ queryKey: ['receivables'] });
           queryClient.invalidateQueries({ queryKey: ['clients'] });
-          
+
           closeModal();
         },
         onError: (err: any) => {
-          error(t('common.error'), err.message || t('tasks.completeError'));
+          error(TOAST_MESSAGES.OPERATION_FAILED, err.message);
         }
       }
     );
@@ -198,9 +188,9 @@ const TaskCompletionModal = () => {
               step="0.01"
               max={remainingAmount}
               disabled={watchIsFullPayment}
-              {...register('payment_amount', { 
-                required: watchIsPaid && !watchIsFullPayment, 
-                valueAsNumber: true, 
+              {...register('payment_amount', {
+                required: watchIsPaid && !watchIsFullPayment,
+                valueAsNumber: true,
                 max: {
                   value: remainingAmount,
                   message: `المبلغ لا يمكن أن يتجاوز المتبقي وهو ${remainingAmount} ريال`
@@ -217,9 +207,9 @@ const TaskCompletionModal = () => {
                 control={control}
                 rules={{ required: watchIsPaid }}
                 render={({ field }) => (
-                  <select 
-                    {...field} 
-                    className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary ${errors.payment_method_id ? 'border-destructive bg-destructive/5' : 'border-border'}`} 
+                  <select
+                    {...field}
+                    className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary ${errors.payment_method_id ? 'border-destructive bg-destructive/5' : 'border-border'}`}
                     disabled={isLoadingMethods}
                   >
                     <option value="">{t('payments.selectMethod')}</option>
@@ -234,39 +224,39 @@ const TaskCompletionModal = () => {
               )}
             </div>
 
-            <Input 
-              label={t('payments.dateLabel')} 
-              type="date" 
-              {...register('paid_at', { required: watchIsPaid })} 
-              error={errors.paid_at ? t('payments.dateRequired') : undefined} 
+            <Input
+              label={t('payments.dateLabel')}
+              type="date"
+              {...register('paid_at', { required: watchIsPaid })}
+              error={errors.paid_at ? t('payments.dateRequired') : undefined}
             />
 
-            <Input 
-              label={t('payments.notesLabel')} 
-              {...register('payment_note')} 
+            <Input
+              label={t('payments.notesLabel')}
+              {...register('payment_note')}
             />
           </div>
         ) : (
           // Due date field for unpaid tasks
-          <Input 
-            label={t('receivables.dueDate')} 
-            type="date" 
-            {...register('due_date')} 
-            error={errors.due_date ? t('receivables.dueDateRequired') : undefined} 
+          <Input
+            label={t('receivables.dueDate')}
+            type="date"
+            {...register('due_date')}
+            error={errors.due_date ? t('receivables.dueDateRequired') : undefined}
           />
         )}
 
         <div className="flex justify-end gap-2 pt-4 border-t border-border">
-          <Button 
-            type="button" 
-            variant="secondary" 
-            onClick={closeModal} 
+          <Button
+            type="button"
+            variant="secondary"
+            onClick={closeModal}
             disabled={completeTaskMutation.isPending}
           >
             {t('common.cancel')}
           </Button>
-          <Button 
-            type="submit" 
+          <Button
+            type="submit"
             isLoading={completeTaskMutation.isPending}
           >
             {watchIsPaid ? t('tasks.completeAndPay') : t('tasks.complete')}

@@ -321,8 +321,7 @@ const ClientsReceivablesTable: React.FC<ClientsReceivablesTableProps> = ({
     // TODO: Create selectInvoiceForPayment modal to use new /invoices API
     // For now, using existing modal which will need to be updated
     openModal('selectReceivableForPayment', {
-      clientId,
-      receivables: [] // Will be fetched by the modal
+      clientId
     });
   };
 

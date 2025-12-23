@@ -3,6 +3,7 @@ import BaseModal from '../ui/BaseModal';
 import Button from '../ui/Button';
 import { useDeleteTransaction } from '../../queries/transactionQueries';
 import { useToast } from '../../hooks/useToast';
+import { TOAST_MESSAGES } from '../../constants/toastMessages';
 
 interface TransactionDeleteModalProps {
   isOpen: boolean;
@@ -21,7 +22,7 @@ const TransactionDeleteModal: React.FC<TransactionDeleteModalProps> = ({
 
   const handleDelete = async () => {
     if (!reason) {
-      error('Reason is required');
+      error(TOAST_MESSAGES.REASON_REQUIRED, 'يرجى تقديم سبب الحذف');
       return;
     }
     try {
@@ -29,10 +30,10 @@ const TransactionDeleteModal: React.FC<TransactionDeleteModalProps> = ({
         id: transaction.id,
         reason
       });
-      success('Transaction pair deleted successfully');
+      success(TOAST_MESSAGES.TRANSACTION_DELETED);
       onClose();
     } catch (err: any) {
-      error(err.message || 'Delete failed');
+      error(TOAST_MESSAGES.OPERATION_FAILED, err.message || 'Delete failed');
     }
   };
 

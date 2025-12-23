@@ -15,6 +15,7 @@ import { useMutation } from '@tanstack/react-query';
 import { exportService } from '../services/export/ExportService';
 import { useToast } from '../hooks/useToast';
 import { useInView } from 'react-intersection-observer';
+import { TOAST_MESSAGES } from '../constants/toastMessages';
 // --- MODIFICATIONS END ---
 
 
@@ -93,13 +94,13 @@ const AllTasksPage = () => {
   useEffect(() => {
     const taskId = searchParams.get('taskId');
     const highlightMessage = searchParams.get('highlightMessage');
-    
+
     if (taskId) {
       const taskIdNum = parseInt(taskId, 10);
       if (!isNaN(taskIdNum)) {
         console.log('Notification link detected - Task ID:', taskIdNum, 'Highlight Message:', highlightMessage);
         console.log('Available tasks:', allTasks.length, 'Loading:', isLoading);
-        
+
         // Open drawer immediately, even if task details aren't loaded yet
         // The TaskFollowUpPanel will handle loading its own data
         openDrawer('taskFollowUp', {
@@ -108,7 +109,7 @@ const AllTasksPage = () => {
           clientName: undefined, // Let the panel fetch this
           highlightMessage: highlightMessage ? parseInt(highlightMessage, 10) : undefined
         });
-        
+
         // Clear the URL parameters after handling them
         const newParams = new URLSearchParams(searchParams);
         newParams.delete('taskId');
@@ -132,10 +133,10 @@ const AllTasksPage = () => {
   const exportTasksMutation = useMutation({
     mutationFn: exportService.exportAllTasks,
     onSuccess: () => {
-      showToast({ type: 'success', title: 'تم تصدير الملف بنجاح' });
+      showToast({ type: 'success', title: TOAST_MESSAGES.EXPORT_SUCCESS });
     },
     onError: (error: Error) => {
-      showToast({ type: 'error', title: 'فشل التصدير', message: error.message });
+      showToast({ type: 'error', title: TOAST_MESSAGES.EXPORT_FAILED, message: error.message });
     },
   });
 
@@ -186,17 +187,17 @@ const AllTasksPage = () => {
               total_funds_involved: conflictData.total_funds_involved
             },
             onResolved: () => {
-              success('تم حل التعارض وإلغاء المهمة', 'تم إلغاء المهمة بنجاح بعد حل التعارضات المالية');
+              success(TOAST_MESSAGES.TASK_CANCELLED, 'تم إلغاء المهمة بنجاح بعد حل التعارضات المالية');
             }
           });
           return;
         }
 
         // It's a successful cancellation
-        success('تم الإلغاء', 'تم إلغاء المهمة بنجاح');
+        success(TOAST_MESSAGES.TASK_CANCELLED);
       },
       onError: (err: any) => {
-        error('خطأ', err.message || 'حدث خطأ أثناء إلغاء المهمة');
+        error(TOAST_MESSAGES.ERROR, err.message || TOAST_MESSAGES.OPERATION_FAILED);
       }
     });
   };
@@ -264,16 +265,16 @@ const AllTasksPage = () => {
             minWidth: 'fit-content',
             fontSize: '1.1rem'
           }}>{pageTitle}</h5>
-          
+
           <Button onClick={handleAddTask} size="sm" style={{ minWidth: 'fit-content' }}>
             <PlusCircle size={14} className="ms-1" />
             {t('tasks.addNew')}
           </Button>
         </div>
-        
+
         {/* Export button */}
-        <Button 
-          variant="outline-primary" 
+        <Button
+          variant="outline-primary"
           size="sm"
           onClick={handleExportToExcel}
           isLoading={exportTasksMutation.isPending}
@@ -307,7 +308,7 @@ const AllTasksPage = () => {
             onShowRequirements={handleShowRequirements}
             onAssign={handleAssignTask}
           />
-          
+
           {/* --- NEW: Load More Button & Intersection Observer --- */}
           <div ref={ref} className="text-center p-4">
             {hasNextPage && (

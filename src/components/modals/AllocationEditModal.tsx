@@ -3,6 +3,9 @@ import { useTranslation } from 'react-i18next';
 import { useUpdateAllocation, useDeleteAllocation } from '../../queries/allocationQueries';
 import { useGetClientCredits } from '../../queries/clientCreditQueries';
 import { useModalStore } from '../../stores/modalStore';
+import { useToast } from '../../hooks/useToast';
+import { TOAST_MESSAGES } from '../../constants/toastMessages';
+import { getErrorMessage } from '../../utils/errorUtils';
 import BaseModal from '../ui/BaseModal';
 import Button from '../ui/Button';
 import Input from '../ui/Input';
@@ -29,6 +32,7 @@ interface AllocationEditModalProps {
 const AllocationEditModal: React.FC = () => {
   const { t } = useTranslation();
   const { closeModal, props } = useModalStore();
+  const { success, error } = useToast();
   const { allocation, clientId } = props as AllocationEditModalProps;
   
   const { data: clientCredits } = useGetClientCredits(clientId);
@@ -65,7 +69,11 @@ const AllocationEditModal: React.FC = () => {
       description: data.description
     }, {
       onSuccess: () => {
+        success(TOAST_MESSAGES.ALLOCATION_UPDATED, 'تم تحديث التخصيص بنجاح');
         closeModal();
+      },
+      onError: (err: any) => {
+        error(TOAST_MESSAGES.UPDATE_FAILED, getErrorMessage(err, 'فشل تحديث التخصيص'));
       }
     });
   };
@@ -136,7 +144,11 @@ const AllocationEditModal: React.FC = () => {
               if (window.confirm(t('allocations.deleteAllocationConfirmation'))) {
                 deleteAllocation.mutate(allocation.id, {
                   onSuccess: () => {
+                    success(TOAST_MESSAGES.ALLOCATION_DELETED, 'تم حذف التخصيص بنجاح');
                     closeModal();
+                  },
+                  onError: (err: any) => {
+                    error(TOAST_MESSAGES.DELETE_FAILED, getErrorMessage(err, 'فشل حذف التخصيص'));
                   }
                 });
               }

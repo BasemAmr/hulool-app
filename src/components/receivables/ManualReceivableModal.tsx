@@ -3,6 +3,9 @@ import { useTranslation } from 'react-i18next';
 import ClientSearchCompact from '../shared/ClientSearchCompact';
 import { useCreateManualReceivable } from '../../queries/receivableQueries';
 import { useModalStore } from '../../stores/modalStore';
+import { useToast } from '../../hooks/useToast';
+import { TOAST_MESSAGES } from '../../constants/toastMessages';
+import { getErrorMessage } from '../../utils/errorUtils';
 import type { Client, ManualReceivablePayload, TaskType } from '../../api/types';
 import BaseModal from '../ui/BaseModal';
 import Button from '../ui/Button';
@@ -14,6 +17,7 @@ const ManualReceivableModal = () => {
   const { t } = useTranslation();
   const props = useModalStore((state) => state.props);
   const closeModal = useModalStore((state) => state.closeModal);
+  const { success, error } = useToast();
   const preselectedClient = props.client;
   const [step, setStep] = useState(0);
   const [selectedClient, setSelectedClient] = useState<Client | null>(preselectedClient || null);
@@ -31,7 +35,13 @@ const ManualReceivableModal = () => {
 
   const onSubmit = (data: ManualReceivablePayload) => {
     createMutation.mutate({ ...data, amount: Number(data.amount) }, {
-      onSuccess: closeModal,
+      onSuccess: () => {
+        success(TOAST_MESSAGES.RECEIVABLE_CREATED, `تم إضافة مستحق بمبلغ ${data.amount} ريال`);
+        closeModal();
+      },
+      onError: (err: any) => {
+        error(TOAST_MESSAGES.CREATE_FAILED, getErrorMessage(err, 'فشل إضافة المستحق'));
+      }
     });
   };
 

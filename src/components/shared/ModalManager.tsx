@@ -308,6 +308,7 @@ const ModalManager = () => {
             onClose={closeModal}
             preselectedAccount={props?.preselectedAccount}
             direction={props?.direction}
+            accountType={props?.accountType}
           />
         );
 

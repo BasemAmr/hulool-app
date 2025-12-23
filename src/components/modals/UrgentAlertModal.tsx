@@ -8,6 +8,7 @@ import BaseModal from '../ui/BaseModal';
 import Button from '../ui/Button';
 import type { Task } from '../../api/types';
 import type { Tag } from '../../api/types';
+import { TOAST_MESSAGES } from '../../constants/toastMessages';
 
 
 
@@ -111,11 +112,11 @@ const UrgentAlertModal = () => {
         }
       }
 
-      success('نجح', `تم ${isAdding ? 'إضافة' : 'إزالة'} التنبيه العاجل بنجاح`);
+      success(TOAST_MESSAGES.TASK_UPDATED);
       closeModal();
     } catch (err: any) {
       console.error('Error toggling urgent alert:', err);
-      error('خطأ', err?.response?.data?.message || 'حدث خطأ أثناء المعالجة');
+      error(TOAST_MESSAGES.OPERATION_FAILED, err?.response?.data?.message);
     }
   };
 

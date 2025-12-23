@@ -3,6 +3,7 @@ import BaseModal from '../ui/BaseModal';
 import Button from '../ui/Button';
 import { useUpdateInvoice, useValidateInvoiceEdit } from '../../queries/invoiceQueries';
 import { useToast } from '../../hooks/useToast';
+import { TOAST_MESSAGES } from '../../constants/toastMessages';
 import ValidationPreviewModal from '../modals/ValidationPreviewModal';
 import type { InvoiceValidationResult, UpdateInvoicePayload } from '../../api/types';
 
@@ -55,7 +56,7 @@ const InvoiceEditModal: React.FC<InvoiceEditModalProps> = ({
       setValidationResult(result);
       setShowPreview(true);
     } catch (err: any) {
-      error(err.message || 'Validation failed');
+      error(TOAST_MESSAGES.OPERATION_FAILED, err.message);
     }
   };
 
@@ -65,10 +66,10 @@ const InvoiceEditModal: React.FC<InvoiceEditModalProps> = ({
         id: invoice.id,
         payload: formData
       });
-      success('Invoice updated successfully');
+      success(TOAST_MESSAGES.INVOICE_UPDATED);
       onClose();
     } catch (err: any) {
-      error(err.message || 'Update failed');
+      error(TOAST_MESSAGES.OPERATION_FAILED, err.message);
     }
   };
 

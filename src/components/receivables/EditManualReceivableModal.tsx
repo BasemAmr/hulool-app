@@ -2,6 +2,9 @@ import { useForm } from 'react-hook-form';
 import { useTranslation } from 'react-i18next';
 import { useModalStore } from '../../stores/modalStore';
 import { useUpdateReceivable, useResolveReceivableOverpayment, useAutoResolveReceivableOverpayment } from '../../queries/receivableQueries';
+import { useToast } from '../../hooks/useToast';
+import { TOAST_MESSAGES } from '../../constants/toastMessages';
+import { getErrorMessage, isConflictError } from '../../utils/errorUtils';
 import BaseModal from '../ui/BaseModal';
 import Button from '../ui/Button';
 import Input from '../ui/Input';
@@ -17,6 +20,7 @@ interface EditManualReceivableModalProps {
 const EditManualReceivableModal = () => {
   const { t } = useTranslation();
   const closeModal = useModalStore((state) => state.closeModal);
+  const { success, error } = useToast();
   const { receivable } = useModalStore(state => state.props as EditManualReceivableModalProps);
   
   const { register, handleSubmit, formState: { errors }, watch, control, reset, setValue } = useForm<UpdateReceivablePayload>({
@@ -69,7 +73,15 @@ const EditManualReceivableModal = () => {
               allocation_decisions: allocationDecisions
             }
           },
-          { onSuccess: closeModal }
+          { 
+            onSuccess: () => {
+              success(TOAST_MESSAGES.RECEIVABLE_OVERPAYMENT_RESOLVED, 'تم حل تعارض الدفع الزائد بنجاح');
+              closeModal();
+            },
+            onError: (err: any) => {
+              error(TOAST_MESSAGES.OPERATION_FAILED, getErrorMessage(err, 'فشل حل التعارض'));
+            }
+          }
         );
       } else {
         // Auto resolution
@@ -79,21 +91,32 @@ const EditManualReceivableModal = () => {
             new_amount: data.amount || 0,
             resolution_type: selectedResolution as 'auto_reduce_payments' | 'auto_reduce_latest' | 'convert_surplus_to_credit'
           },
-          { onSuccess: closeModal }
+          { 
+            onSuccess: () => {
+              success(TOAST_MESSAGES.RECEIVABLE_OVERPAYMENT_RESOLVED, 'تم حل تعارض الدفع الزائد تلقائياً');
+              closeModal();
+            },
+            onError: (err: any) => {
+              error(TOAST_MESSAGES.OPERATION_FAILED, getErrorMessage(err, 'فشل الحل التلقائي'));
+            }
+          }
         );
       }
     } else {
       updateMutation.mutate(
         { id: receivable.id, payload: data },
         { 
-          onSuccess: closeModal,
-          onError: (error: any) => {
-            if (error.response?.status === 409 && error.response.data?.code === 'overpayment_detected') {
-              setConflictData(error.response.data.data);
+          onSuccess: () => {
+            success(TOAST_MESSAGES.RECEIVABLE_UPDATED, 'تم تحديث المستحق بنجاح');
+            closeModal();
+          },
+          onError: (err: any) => {
+            if (isConflictError(err) && err.response.data?.code === 'overpayment_detected') {
+              setConflictData(err.response.data.data);
               setSelectedResolution('auto_reduce_payments'); // Default to recommended option
               
               // Initialize payment decisions for manual resolution
-              const payments: PaymentDecision[] = error.response.data.data.payments.map(
+              const payments: PaymentDecision[] = err.response.data.data.payments.map(
                 (payment: any) => ({
                   payment_id: payment.id,
                   action: 'keep' as const
@@ -102,13 +125,15 @@ const EditManualReceivableModal = () => {
               setPaymentDecisions(payments);
 
               // Initialize allocation decisions for manual resolution
-              const allocations: AllocationDecision[] = error.response.data.data.allocations.map(
+              const allocations: AllocationDecision[] = err.response.data.data.allocations.map(
                 (allocation: any) => ({
                   allocation_id: allocation.id,
                   action: 'keep' as const
                 })
               );
               setAllocationDecisions(allocations);
+            } else {
+              error(TOAST_MESSAGES.UPDATE_FAILED, getErrorMessage(err, 'فشل تحديث المستحق'));
             }
           }
         }

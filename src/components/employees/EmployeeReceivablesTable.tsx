@@ -42,7 +42,7 @@ const EmployeeReceivablesTable: React.FC<EmployeeReceivablesTableProps> = ({
   const handlePayment = (clientId: number) => {
     openModal('selectReceivableForPayment', {
       clientId,
-      receivables: []
+
     });
   };
 

@@ -5,6 +5,7 @@ import { useApproveTask, useRejectTask } from '../../queries/taskQueries';
 import { useToast } from '../../hooks/useToast';
 import { useState } from 'react';
 import type { Task } from '../../api/types';
+import { TOAST_MESSAGES } from '../../constants/toastMessages';
 import BaseModal from '../ui/BaseModal';
 import Button from '../ui/Button';
 import Input from '../ui/Input';
@@ -24,7 +25,7 @@ const ApprovalModal = () => {
   const props = useModalStore((state) => state.props as ApprovalModalProps);
   const { task } = props;
   const { success, error } = useToast();
-  
+
   const [isRejecting, setIsRejecting] = useState(false);
 
   const approveTaskMutation = useApproveTask();
@@ -42,12 +43,12 @@ const ApprovalModal = () => {
 
   const onApprove = (data: ApprovalFormData) => {
     if (data.expense_amount < 0) {
-      error(t('common.error'), 'لا يمكن أن يكون مبلغ المصروف سلبياً');
+      error(TOAST_MESSAGES.VALIDATION_ERROR, 'لا يمكن أن يكون مبلغ المصروف سلبياً');
       return;
     }
 
     if (data.expense_amount > task.amount) {
-      error(t('common.error'), 'لا يمكن أن يتجاوز مبلغ المصروف مبلغ المهمة');
+      error(TOAST_MESSAGES.VALIDATION_ERROR, 'لا يمكن أن يتجاوز مبلغ المصروف مبلغ المهمة');
       return;
     }
 
@@ -59,14 +60,11 @@ const ApprovalModal = () => {
       },
       {
         onSuccess: () => {
-          success(
-            t('tasks.approvalSuccess'),
-            `تمت الموافقة على المهمة "${task.task_name || `المهمة #${task.id}`}" وإكمالها بصافي ربح ${netEarning.toFixed(2)}`
-          );
+          success(TOAST_MESSAGES.TASK_APPROVED);
           closeModal();
         },
         onError: (err: any) => {
-          error(t('common.error'), err.message || 'فشل في الموافقة على المهمة');
+          error(TOAST_MESSAGES.OPERATION_FAILED, err.message);
         }
       }
     );
@@ -80,14 +78,11 @@ const ApprovalModal = () => {
       },
       {
         onSuccess: () => {
-          success(
-            'تم رفض المهمة',
-            `تم رفض المهمة "${task.task_name || `المهمة #${task.id}`}" وتمت إعادتها إلى الحالة "جديدة"`
-          );
+          success(TOAST_MESSAGES.TASK_REJECTED);
           closeModal();
         },
         onError: (err: any) => {
-          error(t('common.error'), err.message || 'فشل في رفض المهمة');
+          error(TOAST_MESSAGES.OPERATION_FAILED, err.message);
         }
       }
     );

@@ -6,6 +6,7 @@ import Button from '../ui/Button';
 import BaseModal from '../ui/BaseModal';
 import type { Tag } from '../../api/types';
 import { useCreateTag, useUpdateTag } from '../../queries/tagQueries';
+import { TOAST_MESSAGES } from '../../constants/toastMessages';
 
 const TagFormModal = () => {
     // const { t } = useTranslation();
@@ -78,18 +79,18 @@ const TagFormModal = () => {
         if (isEditMode && tagToEdit) {
             updateTagMutation.mutate({ id: tagToEdit.id, payload }, {
                 onSuccess: () => {
-                    success('تم التحديث', 'تم تحديث العلامة بنجاح');
+                    success(TOAST_MESSAGES.TAG_UPDATED);
                     closeModal();
                 },
-                onError: (err: any) => error('خطأ في التحديث', err.message || 'فشل تحديث العلامة.'),
+                onError: (err: any) => error(TOAST_MESSAGES.OPERATION_FAILED, err.message),
             });
         } else {
             createTagMutation.mutate(payload, {
                 onSuccess: () => {
-                    success('تم الحفظ', 'تم إنشاء العلامة بنجاح');
+                    success(TOAST_MESSAGES.TAG_CREATED);
                     closeModal();
                 },
-                onError: (err: any) => error('خطأ في الإنشاء', err.message || 'فشل إنشاء العلامة.'),
+                onError: (err: any) => error(TOAST_MESSAGES.OPERATION_FAILED, err.message),
             });
         }
     };

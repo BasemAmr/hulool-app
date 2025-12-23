@@ -4,7 +4,9 @@ import { useModalStore } from '../../stores/modalStore';
 import { useGetPaymentMethods, useCreatePayment, useUpdatePayment, useGetReceivablePayments } from '../../queries/paymentQueries';
 
 import { useGetClientCredits, useReplacePaymentWithCredit } from '../../queries/clientCreditQueries';
-
+import { useToast } from '../../hooks/useToast';
+import { TOAST_MESSAGES } from '../../constants/toastMessages';
+import { getErrorMessage } from '../../utils/errorUtils';
 
 import type { Receivable, PaymentPayload } from '../../api/types';
 import BaseModal from '../ui/BaseModal';
@@ -22,8 +24,7 @@ const ReceivablePaymentModal = () => {
   const { t } = useTranslation();
   const closeModal = useModalStore((state) => state.closeModal);
   const openModal = useModalStore(state => state.openModal); // Get openModal function
-
-
+  const { success, error } = useToast();
 
   const props = useModalStore((state) => state.props as ReceivablePaymentModalProps);
   const { receivable, isRequired = false } = props;
@@ -59,7 +60,15 @@ const ReceivablePaymentModal = () => {
       const existingPayment = existingPayments[0];
       updatePaymentMutation.mutate(
         { id: existingPayment.id, ...data, amount: Number(data.amount), receivable_id: Number(receivable.id) },
-        { onSuccess: closeModal }
+        { 
+          onSuccess: () => {
+            success(TOAST_MESSAGES.PAYMENT_UPDATED, 'تم تحديث الدفعة بنجاح');
+            closeModal();
+          },
+          onError: (err: any) => {
+            error(TOAST_MESSAGES.UPDATE_FAILED, getErrorMessage(err, 'فشل تحديث الدفعة'));
+          }
+        }
       );
     } else {
       // For new payments, use POST
@@ -68,7 +77,13 @@ const ReceivablePaymentModal = () => {
         amount: Number(data.amount), 
         receivable_id: Number(receivable.id) 
       }, {
-        onSuccess: closeModal,
+        onSuccess: () => {
+          success(TOAST_MESSAGES.PAYMENT_RECORDED, 'تم تسجيل الدفعة بنجاح');
+          closeModal();
+        },
+        onError: (err: any) => {
+          error(TOAST_MESSAGES.OPERATION_FAILED, getErrorMessage(err, 'فشل تسجيل الدفعة'));
+        }
       });
     }
   };
@@ -86,7 +101,11 @@ const ReceivablePaymentModal = () => {
         const existingPayment = existingPayments[0];
         replacePaymentWithCreditMutation.mutate(existingPayment.id, {
             onSuccess: () => {
+                success(TOAST_MESSAGES.CREDIT_APPLIED, 'تم تطبيق الرصيد على الدفعة بنجاح');
                 closeModal();
+            },
+            onError: (err: any) => {
+              error(TOAST_MESSAGES.OPERATION_FAILED, getErrorMessage(err, 'فشل تطبيق الرصيد'));
             }
         });
     } else {

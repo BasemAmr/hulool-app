@@ -1,4 +1,5 @@
 import { Controller } from 'react-hook-form';
+import { translateTaskType } from '../../../constants/taskTypes';
 import { useTranslation } from 'react-i18next';
 import type { TaskType } from '../../../api/types';
 
@@ -18,7 +19,7 @@ const TaskTypeStep = ({ control, errors, onTypeSelected }: TaskTypeStepProps) =>
         <h5 className="mb-2">{t('tasks.selectTaskType')}</h5>
         <p className="text-muted small">{t('tasks.selectTaskTypeDescription')}</p>
       </div>
-      
+
       <div className="type-selection-grid">
         <Controller
           name="type"
@@ -41,16 +42,16 @@ const TaskTypeStep = ({ control, errors, onTypeSelected }: TaskTypeStepProps) =>
                     {type === 'Accounting' && <i className="fas fa-calculator"></i>}
                     {type === 'Other' && <i className="fas fa-tasks"></i>}
                   </div>
-                  <div className="type-label">{t(`type.${type}`)}</div>
+                  <div className="type-label">{translateTaskType(type)}</div>
                 </div>
               ))}
             </>
           )}
         />
       </div>
-      
+
       {errors.type && <div className="text-center text-danger small mt-2">{t('tasks.formTypeLabel')} is required</div>}
-      
+
       <style>{`
         .task-type-step {
           padding: 1rem 0;

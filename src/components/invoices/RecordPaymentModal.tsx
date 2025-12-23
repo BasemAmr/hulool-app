@@ -17,6 +17,7 @@ import BaseModal from '../ui/BaseModal';
 import Button from '../ui/Button';
 import Input from '../ui/Input';
 import { AlertCircle, Loader2 } from 'lucide-react';
+import { TOAST_MESSAGES } from '../../constants/toastMessages';
 
 interface RecordPaymentModalProps {
   invoiceId?: number;
@@ -30,6 +31,7 @@ const RecordPaymentModal = () => {
   const { t } = useTranslation();
   const props = useModalStore((state) => state.props) as RecordPaymentModalProps;
   const closeModal = useModalStore((state) => state.closeModal);
+  const { success } = useToast();
 
   const { invoiceId, invoice, amountDue, clientName } = props;
   const targetInvoiceId = invoiceId || invoice?.id;
@@ -73,6 +75,7 @@ const RecordPaymentModal = () => {
       { invoiceId: targetInvoiceId, payload: data },
       {
         onSuccess: () => {
+          success(TOAST_MESSAGES.INVOICE_PAYMENT_RECORDED);
           closeModal();
         },
       }

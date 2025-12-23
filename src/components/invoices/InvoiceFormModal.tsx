@@ -17,6 +17,7 @@ import Button from '../ui/Button';
 import Input from '../ui/Input';
 import { useState } from 'react';
 import { Plus, Trash2 } from 'lucide-react';
+import { TOAST_MESSAGES } from '../../constants/toastMessages';
 
 const InvoiceFormModal = () => {
   const { t } = useTranslation();
@@ -75,12 +76,12 @@ const InvoiceFormModal = () => {
 
     createMutation.mutate(payload, {
       onSuccess: () => {
-        success('تم الإنشاء', 'تم إنشاء الفاتورة بنجاح');
+        success(TOAST_MESSAGES.INVOICE_CREATED);
         closeModal();
       },
       onError: (err: any) => {
         console.error('Create invoice error:', err);
-        error('فشل الإنشاء', err.message || 'فشل إنشاء الفاتورة');
+        error(TOAST_MESSAGES.OPERATION_FAILED, err.message);
       }
     });
   };

@@ -3,6 +3,9 @@ import { useForm } from 'react-hook-form';
 import { useTranslation } from 'react-i18next';
 import { useModalStore } from '../../stores/modalStore';
 import { useUpdateClientCredit, useResolveCreditReduction } from '../../queries/clientCreditQueries';
+import { useToast } from '../../hooks/useToast';
+import { TOAST_MESSAGES } from '../../constants/toastMessages';
+import { getErrorMessage, isConflictError } from '../../utils/errorUtils';
 import type { ClientCredit, CreditReductionConflictData, AllocationAdjustment } from '../../api/types';
 import BaseModal from '../ui/BaseModal';
 import Button from '../ui/Button';
@@ -21,6 +24,7 @@ interface FormData {
 const CreditEditModal = () => {
   const { t } = useTranslation();
   const closeModal = useModalStore(state => state.closeModal);
+  const { success, error } = useToast();
   const { credit } = useModalStore(state => state.props as CreditEditModalProps);
   
   const [conflictData, setConflictData] = useState<CreditReductionConflictData | null>(null);
@@ -44,19 +48,21 @@ const CreditEditModal = () => {
           new_amount: data.amount,
           allocation_adjustments: allocationAdjustments
         });
+        success(TOAST_MESSAGES.CREDIT_REDUCTION_RESOLVED, 'تم حل تعارض تخفيض الرصيد بنجاح');
       } else {
         // Normal update
         await updateCreditMutation.mutateAsync({
           id: credit.id,
           amount: data.amount
         });
+        success(TOAST_MESSAGES.CREDIT_UPDATED, 'تم تحديث مبلغ الرصيد بنجاح');
       }
       closeModal();
-    } catch (error: any) {
-      if (error.response?.status === 409 && error.response.data?.code === 'credit_reduction_conflict') {
-        setConflictData(error.response.data.data);
+    } catch (err: any) {
+      if (isConflictError(err) && err.response.data?.code === 'credit_reduction_conflict') {
+        setConflictData(err.response.data.data);
         // Initialize allocation adjustments
-        const adjustments: AllocationAdjustment[] = error.response.data.data.allocations.map(
+        const adjustments: AllocationAdjustment[] = err.response.data.data.allocations.map(
           (allocation: any) => ({
             allocation_id: allocation.id,
             action: 'keep' as const,
@@ -64,6 +70,8 @@ const CreditEditModal = () => {
           })
         );
         setAllocationAdjustments(adjustments);
+      } else {
+        error(TOAST_MESSAGES.UPDATE_FAILED, getErrorMessage(err, 'فشل تحديث الرصيد'));
       }
     }
   };

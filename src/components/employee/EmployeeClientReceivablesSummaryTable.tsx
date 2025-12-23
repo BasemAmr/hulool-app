@@ -43,8 +43,7 @@ const EmployeeClientReceivablesSummaryTable: React.FC<EmployeeClientReceivablesS
   const handlePayment = (clientId: number) => {
     // Open the modal to select specific receivable for payment
     openModal('selectReceivableForPayment', {
-      clientId,
-      receivables: [] // Will be loaded in the modal
+      clientId
     });
   };
 

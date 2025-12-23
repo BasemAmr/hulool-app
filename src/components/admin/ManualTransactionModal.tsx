@@ -16,17 +16,19 @@ import ClientSearchCombobox from '../ui/ClientSearchCombobox';
 import { useCreateManualTransaction, useGetAccountsByType } from '../../queries/financialCenterQueries';
 import { useToast } from '../../hooks/useToast';
 import { ArrowRight, AlertCircle, User, Building, Briefcase, TrendingUp, TrendingDown, ArrowLeftRight } from 'lucide-react';
-import type { 
-  AccountType, 
+import type {
+  AccountType,
   UnifiedAccount,
-  ManualTransactionType 
+  ManualTransactionType
 } from '../../api/types';
+import { TOAST_MESSAGES } from '../../constants/toastMessages';
 
 interface ManualTransactionModalProps {
   isOpen: boolean;
   onClose: () => void;
   preselectedAccount?: UnifiedAccount;
   direction?: 'payout' | 'repayment'; // Optional: sarf or qabd
+  accountType?: 'employee' | 'client'; // Optional: freeze to this type if provided
 }
 
 const ManualTransactionModal = ({
@@ -34,10 +36,11 @@ const ManualTransactionModal = ({
   onClose,
   preselectedAccount,
   direction: initialDirection,
+  accountType: frozenAccountType,
 }: ManualTransactionModalProps) => {
-  const { showToast } = useToast();
+  const { success, error } = useToast();
   const createTransaction = useCreateManualTransaction();
-  
+
   // Fetch accounts
   const { data: employeesData } = useGetAccountsByType('employee', {}, isOpen);
   const { data: clientsData } = useGetAccountsByType('client', {}, isOpen);
@@ -45,18 +48,18 @@ const ManualTransactionModal = ({
 
   // Direction selector state (if not preselected)
   const [direction, setDirection] = useState<'payout' | 'repayment'>(initialDirection || 'payout');
-  
+
   // Transaction mode is always payout or repayment
   const transactionMode: ManualTransactionType = direction;
-  
+
   // Form state for single-account transactions (payout/repayment only)
   const [accountType, setAccountType] = useState<AccountType>(
-    preselectedAccount?.type || 'employee'
+    frozenAccountType || preselectedAccount?.type || 'employee'
   );
   const [accountId, setAccountId] = useState<string>(
     (preselectedAccount?.id && preselectedAccount.id !== 0) ? preselectedAccount.id.toString() : ''
   );
-  
+
   // Common fields
   const [amount, setAmount] = useState<string>('');
   const [description, setDescription] = useState<string>('');
@@ -108,7 +111,7 @@ const ManualTransactionModal = ({
 
   // Calculate preview balances
   const amountNum = parseFloat(amount) || 0;
-  
+
   // Format currency (English numbers, bold)
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('en-US', {
@@ -153,7 +156,7 @@ const ManualTransactionModal = ({
       const accountNewBalance = isEmployee
         ? selectedAccount.balance - amountNum  // Employee: CREDIT reduces balance
         : selectedAccount.balance + amountNum; // Client: DEBIT increases balance
-      
+
       return {
         accountCurrent: selectedAccount.balance,
         accountNew: accountNewBalance,
@@ -168,7 +171,7 @@ const ManualTransactionModal = ({
       const accountNewBalance = isEmployee
         ? selectedAccount.balance + amountNum  // Employee: DEBIT increases balance
         : selectedAccount.balance - amountNum; // Client: CREDIT decreases balance
-      
+
       return {
         accountCurrent: selectedAccount.balance,
         accountNew: accountNewBalance,
@@ -187,7 +190,7 @@ const ManualTransactionModal = ({
     e.preventDefault();
 
     if (!amount || !description || !accountId) {
-      showToast({ type: 'error', title: 'يرجى ملء جميع الحقول المطلوبة' });
+      error(TOAST_MESSAGES.VALIDATION_ERROR);
       return;
     }
 
@@ -204,22 +207,27 @@ const ManualTransactionModal = ({
         notes: notes || undefined,
       });
 
-      showToast({ type: 'success', title: 'تم إنشاء المعاملة بنجاح' });
+      // Show context-rich success message
+      if (transactionMode === 'payout') {
+        success(TOAST_MESSAGES.SANAD_SARF_CREATED, `تم إنشاء سند صرف بمبلغ ${amount} ريال`);
+      } else {
+        success(TOAST_MESSAGES.SANAD_QABD_CREATED, `تم إنشاء سند قبض بمبلغ ${amount} ريال`);
+      }
+      
       onClose();
       resetForm();
     } catch (err) {
-      showToast({
-        type: 'error',
-        title: 'فشل إنشاء المعاملة',
-        message: err instanceof Error ? err.message : 'حدث خطأ',
-      });
+      error(
+        TOAST_MESSAGES.OPERATION_FAILED,
+        err instanceof Error ? err.message : TOAST_MESSAGES.UNKNOWN_ERROR,
+      );
     }
   };
 
   // Reset form
   const resetForm = () => {
     setDirection(initialDirection || 'payout');
-    setAccountType('employee');
+    setAccountType(frozenAccountType || 'employee');
     setAccountId('');
     setAmount('');
     setDescription('');
@@ -244,11 +252,10 @@ const ManualTransactionModal = ({
             <button
               type="button"
               onClick={() => setDirection('payout')}
-              className={`p-3 rounded-lg border-2 text-sm font-medium transition-all ${
-                direction === 'payout'
-                  ? 'border-red-500 bg-red-50 text-red-700'
-                  : 'border-gray-200 hover:border-gray-300'
-              }`}
+              className={`p-3 rounded-lg border-2 text-sm font-medium transition-all ${direction === 'payout'
+                ? 'border-red-500 bg-red-50 text-red-700'
+                : 'border-gray-200 hover:border-gray-300'
+                }`}
             >
               <TrendingDown size={16} className="mx-auto mb-1" />
               سند صرف
@@ -256,11 +263,10 @@ const ManualTransactionModal = ({
             <button
               type="button"
               onClick={() => setDirection('repayment')}
-              className={`p-3 rounded-lg border-2 text-sm font-medium transition-all ${
-                direction === 'repayment'
-                  ? 'border-green-500 bg-green-50 text-green-700'
-                  : 'border-gray-200 hover:border-gray-300'
-              }`}
+              className={`p-3 rounded-lg border-2 text-sm font-medium transition-all ${direction === 'repayment'
+                ? 'border-green-500 bg-green-50 text-green-700'
+                : 'border-gray-200 hover:border-gray-300'
+                }`}
             >
               <TrendingUp size={16} className="mx-auto mb-1" />
               سند قبض
@@ -269,51 +275,52 @@ const ManualTransactionModal = ({
         )}
         {/* Account Type and Selection */}
         <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-black mb-1">
-                  نوع الحساب
-                </label>
-                <select
-                  value={accountType}
-                  onChange={(e) => {
-                    setAccountType(e.target.value as AccountType);
-                    setAccountId('');
-                  }}
-                  className="w-full px-3 py-2 text-sm border border-input rounded-md bg-background"
-                >
-                  <option value="employee">موظف</option>
-                  <option value="client">عميل</option>
-                </select>
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-black mb-1">
-                  اختر {accountType === 'employee' ? 'الموظف' : 'العميل'}
-                </label>
-                {accountType === 'client' ? (
-                  <ClientSearchCombobox
-                    value={accountId}
-                    onChange={(newValue) => {
-                      console.log('Account client selected:', newValue);
-                      setAccountId(newValue);
-                    }}
-                    placeholder="ابحث عن عميل..."
-                  />
-                ) : (
-                  <select
-                    value={accountId}
-                    onChange={(e) => setAccountId(e.target.value)}
-                    className="w-full px-3 py-2 text-sm border border-input rounded-md bg-background"
-                    required
-                  >
-                    <option value="">اختر...</option>
-                    {getAccountsByType(accountType).map((account) => (
-                      <option key={account.id} value={account.id}>
-                        {account.name} ({formatCurrency(account.balance)} SAR)
-                      </option>
-                    ))}
-                  </select>
-                )}
-              </div>
+          <div>
+            <label className="block text-sm font-medium text-black mb-1">
+              نوع الحساب
+            </label>
+            <select
+              value={accountType}
+              onChange={(e) => {
+                setAccountType(e.target.value as AccountType);
+                setAccountId('');
+              }}
+              disabled={!!frozenAccountType}
+              className={`w-full px-3 py-2 text-sm border border-input rounded-md bg-background ${frozenAccountType ? 'bg-gray-100 cursor-not-allowed opacity-75' : ''}`}
+            >
+              <option value="employee">موظف</option>
+              <option value="client">عميل</option>
+            </select>
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-black mb-1">
+              اختر {accountType === 'employee' ? 'الموظف' : 'العميل'}
+            </label>
+            {accountType === 'client' ? (
+              <ClientSearchCombobox
+                value={accountId}
+                onChange={(newValue) => {
+                  console.log('Account client selected:', newValue);
+                  setAccountId(newValue);
+                }}
+                placeholder="ابحث عن عميل..."
+              />
+            ) : (
+              <select
+                value={accountId}
+                onChange={(e) => setAccountId(e.target.value)}
+                className="w-full px-3 py-2 text-sm border border-input rounded-md bg-background"
+                required
+              >
+                <option value="">اختر...</option>
+                {getAccountsByType(accountType).map((account) => (
+                  <option key={account.id} value={account.id}>
+                    {account.name} ({formatCurrency(account.balance)} SAR)
+                  </option>
+                ))}
+              </select>
+            )}
+          </div>
         </div>
 
         {/* Amount */}
@@ -393,11 +400,10 @@ const ManualTransactionModal = ({
               {/* Payout/Repayment Preview */}
               <div className="flex items-center gap-3">
                 {/* Account */}
-                <div className={`flex-1 p-4 bg-white rounded-lg border-2 shadow-sm ${
-                  transactionMode === 'payout' 
-                    ? (accountType === 'employee' ? 'border-red-300' : 'border-green-300')
-                    : (accountType === 'employee' ? 'border-green-300' : 'border-red-300')
-                }`}>
+                <div className={`flex-1 p-4 bg-white rounded-lg border-2 shadow-sm ${transactionMode === 'payout'
+                  ? (accountType === 'employee' ? 'border-red-300' : 'border-green-300')
+                  : (accountType === 'employee' ? 'border-green-300' : 'border-red-300')
+                  }`}>
                   <div className="flex items-center gap-2 mb-3">
                     {getTypeIcon(selectedAccount.type)}
                     <span className="font-bold text-base text-black">{selectedAccount.name}</span>
@@ -409,18 +415,16 @@ const ManualTransactionModal = ({
                     </div>
                     <div className="flex justify-between items-center pt-2 border-t-2 border-gray-200">
                       <span className="text-sm font-medium text-gray-700">New Balance:</span>
-                      <span className={`text-lg font-black ${
-                        balances.accountNew > balances.accountCurrent ? 'text-green-600' : 'text-red-600'
-                      }`}>
+                      <span className={`text-lg font-black ${balances.accountNew > balances.accountCurrent ? 'text-green-600' : 'text-red-600'
+                        }`}>
                         {formatCurrency(balances.accountNew)} SAR
                       </span>
                     </div>
                     <div className="text-center">
-                      <span className={`inline-block px-3 py-1 font-bold text-sm rounded-full ${
-                        balances.accountNew > balances.accountCurrent 
-                          ? 'bg-green-100 text-green-700' 
-                          : 'bg-red-100 text-red-700'
-                      }`}>
+                      <span className={`inline-block px-3 py-1 font-bold text-sm rounded-full ${balances.accountNew > balances.accountCurrent
+                        ? 'bg-green-100 text-green-700'
+                        : 'bg-red-100 text-red-700'
+                        }`}>
                         {balances.accountNew > balances.accountCurrent ? '+' : ''}{formatCurrency(balances.accountNew - balances.accountCurrent)} SAR
                       </span>
                     </div>
@@ -431,11 +435,10 @@ const ManualTransactionModal = ({
                 <ArrowRight size={24} className="text-blue-600 flex-shrink-0 font-bold" />
 
                 {/* Company */}
-                <div className={`flex-1 p-4 bg-white rounded-lg border-2 shadow-sm ${
-                  transactionMode === 'payout'
-                    ? (accountType === 'employee' ? 'border-green-300' : 'border-red-300')
-                    : (accountType === 'employee' ? 'border-red-300' : 'border-green-300')
-                }`}>
+                <div className={`flex-1 p-4 bg-white rounded-lg border-2 shadow-sm ${transactionMode === 'payout'
+                  ? (accountType === 'employee' ? 'border-green-300' : 'border-red-300')
+                  : (accountType === 'employee' ? 'border-red-300' : 'border-green-300')
+                  }`}>
                   <div className="flex items-center gap-2 mb-3">
                     {getTypeIcon('company')}
                     <span className="font-bold text-base text-black">{companyAccount.name}</span>
@@ -447,18 +450,16 @@ const ManualTransactionModal = ({
                     </div>
                     <div className="flex justify-between items-center pt-2 border-t-2 border-gray-200">
                       <span className="text-sm font-medium text-gray-700">New Balance:</span>
-                      <span className={`text-lg font-black ${
-                        balances.companyNew > balances.companyCurrent ? 'text-green-600' : 'text-red-600'
-                      }`}>
+                      <span className={`text-lg font-black ${balances.companyNew > balances.companyCurrent ? 'text-green-600' : 'text-red-600'
+                        }`}>
                         {formatCurrency(balances.companyNew)} SAR
                       </span>
                     </div>
                     <div className="text-center">
-                      <span className={`inline-block px-3 py-1 font-bold text-sm rounded-full ${
-                        balances.companyNew > balances.companyCurrent 
-                          ? 'bg-green-100 text-green-700' 
-                          : 'bg-red-100 text-red-700'
-                      }`}>
+                      <span className={`inline-block px-3 py-1 font-bold text-sm rounded-full ${balances.companyNew > balances.companyCurrent
+                        ? 'bg-green-100 text-green-700'
+                        : 'bg-red-100 text-red-700'
+                        }`}>
                         {balances.companyNew > balances.companyCurrent ? '+' : ''}{formatCurrency(balances.companyNew - balances.companyCurrent)} SAR
                       </span>
                     </div>

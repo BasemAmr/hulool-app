@@ -5,6 +5,9 @@ import { useModalStore } from '../../stores/modalStore';
 import { useRecordClientCredit } from '../../queries/clientCreditQueries';
 import { useGetPaymentMethods } from '../../queries/paymentQueries';
 import { useGetClient } from '../../queries/clientQueries';
+import { useToast } from '../../hooks/useToast';
+import { TOAST_MESSAGES } from '../../constants/toastMessages';
+import { getErrorMessage } from '../../utils/errorUtils';
 import BaseModal from '../ui/BaseModal';
 import Button from '../ui/Button';
 import Input from '../ui/Input';
@@ -15,6 +18,7 @@ const RecordCreditModal = () => {
 //   const { t } = useTranslation();
   const closeModal = useModalStore(state => state.closeModal);
   const props = useModalStore(state => state.props as { client?: Client });
+  const { success, error } = useToast();
   const [selectedClient, setSelectedClient] = useState<Client | null>(props.client || null);
   const { register, handleSubmit, formState: { errors }, setValue } = useForm<RecordCreditPayload>();
   const recordCreditMutation = useRecordClientCredit();
@@ -36,7 +40,11 @@ const RecordCreditModal = () => {
   const onSubmit = (data: RecordCreditPayload) => {
     recordCreditMutation.mutate({ ...data, amount: Number(data.amount) }, {
       onSuccess: () => {
+        success(TOAST_MESSAGES.CREDIT_RECORDED, `تم تسجيل رصيد بمبلغ ${data.amount} ريال للعميل "${selectedClient?.name}"`);
         closeModal();
+      },
+      onError: (err: any) => {
+        error(TOAST_MESSAGES.OPERATION_FAILED, getErrorMessage(err, 'فشل تسجيل الرصيد'));
       }
     });
   };

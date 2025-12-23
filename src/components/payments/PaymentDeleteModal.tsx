@@ -2,6 +2,9 @@ import { useTranslation } from 'react-i18next';
 import { AlertTriangle } from 'lucide-react';
 import { useModalStore } from '../../stores/modalStore';
 import { useDeletePayment, useGetPayment } from '../../queries/paymentQueries';
+import { useToast } from '../../hooks/useToast';
+import { TOAST_MESSAGES } from '../../constants/toastMessages';
+import { getErrorMessage } from '../../utils/errorUtils';
 import BaseModal from '../ui/BaseModal';
 import Button from '../ui/Button';
 import type { Payment } from '../../api/types';
@@ -13,6 +16,7 @@ interface PaymentDeleteModalProps {
 const PaymentDeleteModal = () => {
   const { t } = useTranslation();
   const closeModal = useModalStore((state) => state.closeModal);
+  const { success, error } = useToast();
   
   const props = useModalStore((state) => state.props as PaymentDeleteModalProps);
   const { payment } = props;
@@ -24,7 +28,13 @@ const PaymentDeleteModal = () => {
 
   const handleDelete = () => {
     deletePaymentMutation.mutate(payment.id, {
-      onSuccess: closeModal,
+      onSuccess: () => {
+        success(TOAST_MESSAGES.PAYMENT_DELETED, 'تم حذف الدفعة بنجاح');
+        closeModal();
+      },
+      onError: (err: any) => {
+        error(TOAST_MESSAGES.DELETE_FAILED, getErrorMessage(err, 'فشل حذف الدفعة'));
+      }
     });
   };
 

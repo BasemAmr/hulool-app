@@ -18,13 +18,14 @@ import AllTasksTable from '../components/tasks/AllTasksTable';
 import ClientReceivablesTable from '../components/receivables/ClientReceivablesTable';
 import { AccountLedgerTable } from '../components/invoices';
 import { TrendingUp, TrendingDown } from 'lucide-react';
-import type {  Task, StatementItem, TaskCancellationConflictData, UnifiedAccount } from '../api/types';
+import type { Task, StatementItem, TaskCancellationConflictData, UnifiedAccount } from '../api/types';
 import { useReceivablesPermissions } from '../hooks/useReceivablesPermissions';
 import ClientCreditsHistoryTable from '../components/clients/ClientCreditsHistoryTable';
 
 // Import export service
 import { exportService } from '../services/export/ExportService';
 import type { ClientStatementReportData, ClientTasksReportData, ClientCreditsReportData } from '../services/export/exportTypes';
+import { TOAST_MESSAGES } from '../constants/toastMessages';
 
 // Feature flag: Set to true to use new Invoice/Ledger system
 const USE_INVOICE_LEDGER_SYSTEM = true;
@@ -38,7 +39,7 @@ const ClientProfilePage = () => {
 
     const mode = (searchParams.get('mode') || 'general') as 'general' | 'tasks' | 'receivables';
     const filter = (searchParams.get('filter') || 'all') as 'all' | 'unpaid' | 'paid';
-    
+
     const { hasViewAllReceivablesPermission, hasViewAmountsPermission } = useReceivablesPermissions();
 
     // Apply client profile page background
@@ -50,7 +51,7 @@ const ClientProfilePage = () => {
     const { data: client, isLoading: isLoadingClient } = useGetClient(clientId);
     const { data: tasksData, isLoading: isLoadingTasks } = useGetTasks({ client_id: clientId });
     const { data: creditsData, isLoading: isLoadingCredits } = useGetClientCredits(clientId);
-    
+
     // Fetch the new statement data for display - only if user has permission
     const { data: statementData, isLoading: isLoadingReceivables } = useGetClientReceivables(clientId, hasViewAllReceivablesPermission);
 
@@ -58,7 +59,7 @@ const ClientProfilePage = () => {
     const { success, error: showError } = useToast();
 
     // Mutation hooks
-  const cancelTaskMutation = useCancelTask();
+    const cancelTaskMutation = useCancelTask();
 
     // Export mutations
     const exportStatementMutation = useMutation({
@@ -66,11 +67,11 @@ const ClientProfilePage = () => {
             await exportService.exportClientStatement(data, { includeSubTables: true });
         },
         onSuccess: () => {
-            success(t('export.statementSuccess'));
+            success(TOAST_MESSAGES.EXPORT_SUCCESS);
         },
         onError: (error) => {
             console.error('Export failed:', error);
-            showError(t('export.statementError'));
+            showError(TOAST_MESSAGES.EXPORT_FAILED);
         },
     });
 
@@ -79,11 +80,11 @@ const ClientProfilePage = () => {
             await exportService.exportClientTasks(data);
         },
         onSuccess: () => {
-            success(t('export.tasksSuccess'));
+            success(TOAST_MESSAGES.EXPORT_SUCCESS);
         },
         onError: (error) => {
             console.error('Export failed:', error);
-            showError(t('export.tasksError'));
+            showError(TOAST_MESSAGES.EXPORT_FAILED);
         },
     });
 
@@ -92,15 +93,15 @@ const ClientProfilePage = () => {
             await exportService.exportClientCredits(data);
         },
         onSuccess: () => {
-            success(t('export.creditsSuccess'));
+            success(TOAST_MESSAGES.EXPORT_SUCCESS);
         },
         onError: (error) => {
             console.error('Export failed:', error);
-            showError(t('export.creditsError'));
+            showError(TOAST_MESSAGES.EXPORT_FAILED);
         },
     });
 
-  const queryClient = useQueryClient();
+    const queryClient = useQueryClient();
 
 
     // --- Handlers ---
@@ -134,9 +135,9 @@ const ClientProfilePage = () => {
                 pending_count: 0,
                 pending_amount: 0
             };
-            openModal('manualTransaction', { 
-                preselectedAccount: clientAccount, 
-                direction: 'payout' 
+            openModal('manualTransaction', {
+                preselectedAccount: clientAccount,
+                direction: 'payout'
             });
         }
     };
@@ -153,52 +154,52 @@ const ClientProfilePage = () => {
                 pending_count: 0,
                 pending_amount: 0
             };
-            openModal('manualTransaction', { 
-                preselectedAccount: clientAccount, 
-                direction: 'repayment' 
+            openModal('manualTransaction', {
+                preselectedAccount: clientAccount,
+                direction: 'repayment'
             });
         }
     };
 
     const handleEditTask = (task: Task) => openModal('taskForm', { taskToEdit: task });
-    
-   const handleCancelTask = (task: Task) => {
-    cancelTaskMutation.mutate({
-      id: task.id,
-      decisions: {
-        task_action: 'cancel'
-      }
-    }, {
-      onSuccess: (result) => {
-        // Check if it's a conflict response
-        if ('success' in result && result.success === false && result.code === 'task_cancellation_conflict') {
-          const conflictData = result.data as TaskCancellationConflictData;
-          // Open the task cancellation modal with conflict data
-          openModal('taskCancellation', {
-            taskId: task.id,
-            analysisData: {
-              task_id: conflictData.task_id,
-              prepaid_receivable: conflictData.prepaid_receivable,
-              main_receivable: conflictData.main_receivable,
-              total_funds_involved: conflictData.total_funds_involved
-            },
-            onResolved: () => {
-              success('تم حل التعارض وإلغاء المهمة', 'تم إلغاء المهمة بنجاح بعد حل التعارضات المالية');
-              queryClient.invalidateQueries({ queryKey: ['dashboard', 'clientsWithActiveTasks'] });
-            }
-          });
-          return;
-        }
 
-        // It's a successful cancellation
-        success('تم الإلغاء', 'تم إلغاء المهمة بنجاح');
-        queryClient.invalidateQueries({ queryKey: ['dashboard', 'clientsWithActiveTasks'] });
-      },
-      onError: (err: any) => {
-        showError('خطأ', err.message || 'حدث خطأ أثناء إلغاء المهمة');
-      }
-    });
-  };
+    const handleCancelTask = (task: Task) => {
+        cancelTaskMutation.mutate({
+            id: task.id,
+            decisions: {
+                task_action: 'cancel'
+            }
+        }, {
+            onSuccess: (result) => {
+                // Check if it's a conflict response
+                if ('success' in result && result.success === false && result.code === 'task_cancellation_conflict') {
+                    const conflictData = result.data as TaskCancellationConflictData;
+                    // Open the task cancellation modal with conflict data
+                    openModal('taskCancellation', {
+                        taskId: task.id,
+                        analysisData: {
+                            task_id: conflictData.task_id,
+                            prepaid_receivable: conflictData.prepaid_receivable,
+                            main_receivable: conflictData.main_receivable,
+                            total_funds_involved: conflictData.total_funds_involved
+                        },
+                        onResolved: () => {
+                            success(TOAST_MESSAGES.TASK_CANCELLED);
+                            queryClient.invalidateQueries({ queryKey: ['dashboard', 'clientsWithActiveTasks'] });
+                        }
+                    });
+                    return;
+                }
+
+                // It's a successful cancellation
+                success(TOAST_MESSAGES.TASK_CANCELLED);
+                queryClient.invalidateQueries({ queryKey: ['dashboard', 'clientsWithActiveTasks'] });
+            },
+            onError: (err: any) => {
+                showError(TOAST_MESSAGES.OPERATION_FAILED, err.message);
+            }
+        });
+    };
 
     const handleShowRequirements = (task: Task) => openModal('requirements', { task });
     const handleCompleteTask = (task: Task) => openModal('taskCompletion', { task });
@@ -206,12 +207,12 @@ const ClientProfilePage = () => {
     // Export handlers
     const handleExportStatement = () => {
         if (!client || !statementData?.statementItems) return;
-        
+
         const statementItems = statementData.statementItems as any[];
         const totalDebit = statementItems.reduce((sum, item) => sum + item.debit, 0);
         const totalCredit = statementItems.reduce((sum, item) => sum + item.credit, 0);
         const balance = statementItems.length > 0 ? statementItems[statementItems.length - 1].balance : 0;
-        
+
         const reportData: ClientStatementReportData = {
             client: client,
             clientName: client.name,
@@ -237,13 +238,13 @@ const ClientProfilePage = () => {
                 to: new Date().toISOString().split('T')[0]
             }
         };
-        
+
         exportStatementMutation.mutate(reportData);
     };
 
     const handleExportTasks = () => {
         if (!client || !tasksData?.tasks) return;
-        
+
         const tasks = tasksData.tasks.map(task => ({
             ...task,
             client_name: client.name,
@@ -258,7 +259,7 @@ const ClientProfilePage = () => {
             requirements_text: task.requirements.map(r => r.requirement_text).join('، '),
             notes_text: task.notes || '',
             tags_text: task.tags.map(t => t.name).join('، '),
-            duration_days: task.end_date 
+            duration_days: task.end_date
                 ? Math.ceil((new Date(task.end_date).getTime() - new Date(task.start_date).getTime()) / (1000 * 60 * 60 * 24))
                 : undefined,
             is_completed: task.status === 'Completed',
@@ -282,7 +283,7 @@ const ClientProfilePage = () => {
         const totalAmount = tasks.reduce((sum, t) => sum + t.amount, 0);
         const totalPaid = tasks.reduce((sum, t) => sum + t.amount_paid, 0);
         const totalRemaining = tasks.reduce((sum, t) => sum + t.amount_remaining, 0);
-        
+
         const reportData: ClientTasksReportData = {
             client: client,
             tasks: tasks,
@@ -298,13 +299,13 @@ const ClientProfilePage = () => {
                 average_completion_days: 0
             }
         };
-        
+
         exportTasksMutation.mutate(reportData);
     };
 
     const handleExportCredits = () => {
         if (!client || !creditsData?.credits) return;
-        
+
         const credits = creditsData.credits.map(credit => ({
             id: credit.id,
             client_id: credit.client_id,
@@ -321,7 +322,7 @@ const ClientProfilePage = () => {
         const totalGranted = credits.reduce((sum, c) => sum + c.amount_granted, 0);
         const totalUsed = credits.reduce((sum, c) => sum + c.amount_used, 0);
         const totalAvailable = credits.reduce((sum, c) => sum + c.amount_available, 0);
-        
+
         const reportData: ClientCreditsReportData = {
             client: client,
             credits: credits,
@@ -334,7 +335,7 @@ const ClientProfilePage = () => {
                 utilization_rate: totalGranted > 0 ? (totalUsed / totalGranted) * 100 : 0
             }
         };
-        
+
         exportCreditsMutation.mutate(reportData);
     };
 
@@ -359,7 +360,7 @@ const ClientProfilePage = () => {
                 isExporting={exportStatementMutation.isPending || exportTasksMutation.isPending || exportCreditsMutation.isPending}
             />
 
-            
+
 
             {/* Tasks Table - Show in general and tasks modes */}
             {(mode === 'general' || mode === 'tasks') && (

@@ -43,7 +43,6 @@ interface ModalProps {
   tagManagement: {};
   selectReceivableForPayment: {
     clientId: number;
-    receivables: Receivable[];
   };
   taskCompletion: { task: Task };
   amountDetails: { task: Task };
@@ -117,7 +116,8 @@ interface ModalProps {
   // FINANCIAL CENTER MODALS
   manualTransaction: {
     preselectedAccount?: UnifiedAccount;
-    direction?: 'payout' | 'repayment'
+    direction?: 'payout' | 'repayment';
+    accountType?: 'employee' | 'client'; // Freeze to this type if provided
   };
   createInvoice: { client?: Client; client_id?: number };
   journalEntryDetails: { transactionId: number; accountType: string; accountId: number };

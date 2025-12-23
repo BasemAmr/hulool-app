@@ -3,6 +3,9 @@ import { useTranslation } from 'react-i18next';
 import { AlertTriangle } from 'lucide-react';
 import { useModalStore } from '../../stores/modalStore';
 import { useDeleteReceivable, useDeleteReceivableWithResolution } from '../../queries/receivableQueries';
+import { useToast } from '../../hooks/useToast';
+import { TOAST_MESSAGES } from '../../constants/toastMessages';
+import { getErrorMessage, isConflictError } from '../../utils/errorUtils';
 import BaseModal from '../ui/BaseModal';
 import Button from '../ui/Button';
 import Input from '../ui/Input';
@@ -16,6 +19,7 @@ interface DeleteReceivableModalProps {
 const DeleteReceivableModal = () => {
   const { t } = useTranslation();
   const closeModal = useModalStore((state) => state.closeModal);
+  const { success, error } = useToast();
   const { receivable } = useModalStore(state => state.props as DeleteReceivableModalProps);
   
   interface ConflictResponse {
@@ -48,19 +52,30 @@ const DeleteReceivableModal = () => {
               allocation_decisions: allocationDecisions
             }
           },
-          { onSuccess: closeModal }
+          { 
+            onSuccess: () => {
+              success(TOAST_MESSAGES.RECEIVABLE_DELETION_RESOLVED, 'تم حذف المستحق وحل التعارضات بنجاح');
+              closeModal();
+            },
+            onError: (err: any) => {
+              error(TOAST_MESSAGES.DELETE_FAILED, getErrorMessage(err, 'فشل حذف المستحق'));
+            }
+          }
       );
     } else {
       deleteMutation.mutate(
         receivable.id,
         { 
-          onSuccess: closeModal,
-          onError: (error: any) => {
-            if (error.response?.status === 409 && error.response.data?.code === 'deletion_conflict_financial_records_exist') {
-              setConflictData(error.response.data.data);
+          onSuccess: () => {
+            success(TOAST_MESSAGES.RECEIVABLE_DELETED, 'تم حذف المستحق بنجاح');
+            closeModal();
+          },
+          onError: (err: any) => {
+            if (isConflictError(err) && err.response.data?.code === 'deletion_conflict_financial_records_exist') {
+              setConflictData(err.response.data.data);
               
               // Initialize payment decisions
-              const payments: PaymentDecision[] = error.response.data.data.payments.map(
+              const payments: PaymentDecision[] = err.response.data.data.payments.map(
                 (payment: any) => ({
                   payment_id: payment.id,
                   action: 'keep' as const
@@ -69,13 +84,15 @@ const DeleteReceivableModal = () => {
               setPaymentDecisions(payments);
 
               // Initialize allocation decisions
-              const allocations: AllocationDecision[] = error.response.data.data.allocations.map(
+              const allocations: AllocationDecision[] = err.response.data.data.allocations.map(
                 (allocation: any) => ({
                   allocation_id: allocation.id,
                   action: 'keep' as const
                 })
               );
               setAllocationDecisions(allocations);
+            } else {
+              error(TOAST_MESSAGES.DELETE_FAILED, getErrorMessage(err, 'فشل حذف المستحق'));
             }
           }
         }

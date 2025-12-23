@@ -12,38 +12,38 @@ const fetchReceivables = async (): Promise<ReceivablePaginatedData> => {
 };
 
 const createManualReceivable = async (payload: ManualReceivablePayload): Promise<Receivable> => {
-    const { data } = await apiClient.post<ApiResponse<Receivable>>('/receivables', payload);
-    if (!data.success) throw new Error(data.message || 'Failed to create receivable');
-    return data.data;
+  const { data } = await apiClient.post<ApiResponse<Receivable>>('/receivables', payload);
+  if (!data.success) throw new Error(data.message || 'Failed to create receivable');
+  return data.data;
 };
 
 const updateReceivable = async ({ id, payload }: { id: number; payload: UpdateReceivablePayload }): Promise<Receivable> => {
-    const { data } = await apiClient.put<ApiResponse<Receivable>>(`/receivables/${id}`, payload);
-    if (!data.success) throw new Error(data.message || 'Failed to update receivable');
-    return data.data;
+  const { data } = await apiClient.put<ApiResponse<Receivable>>(`/receivables/${id}`, payload);
+  if (!data.success) throw new Error(data.message || 'Failed to update receivable');
+  return data.data;
 };
 
 const deleteReceivable = async (id: number): Promise<void> => {
-    const { data } = await apiClient.delete<ApiResponse<null>>(`/receivables/${id}`);
-    if (!data.success) throw new Error(data.message || 'Failed to delete receivable');
+  const { data } = await apiClient.delete<ApiResponse<null>>(`/receivables/${id}`);
+  if (!data.success) throw new Error(data.message || 'Failed to delete receivable');
 };
 
 const resolveReceivableOverpayment = async ({ id, resolution }: { id: number; resolution: { new_amount: number; payment_decisions?: PaymentDecision[]; allocation_decisions?: AllocationDecision[] } }): Promise<Receivable> => {
-    const { data } = await apiClient.post<ApiResponse<Receivable>>(`/receivables/${id}/resolve-overpayment`, resolution);
-    if (!data.success) throw new Error(data.message || 'Failed to resolve overpayment');
-    return data.data;
+  const { data } = await apiClient.post<ApiResponse<Receivable>>(`/receivables/${id}/resolve-overpayment`, resolution);
+  if (!data.success) throw new Error(data.message || 'Failed to resolve overpayment');
+  return data.data;
 };
 
 const autoResolveReceivableOverpayment = async ({ id, new_amount, resolution_type }: { id: number; new_amount: number; resolution_type: 'auto_reduce_payments' | 'auto_reduce_latest' | 'convert_surplus_to_credit' }): Promise<Receivable> => {
-    const { data } = await apiClient.post<ApiResponse<Receivable>>(`/receivables/${id}/auto-resolve-overpayment`, { new_amount, resolution_type });
-    if (!data.success) throw new Error(data.message || 'Failed to auto-resolve overpayment');
-    return data.data;
+  const { data } = await apiClient.post<ApiResponse<Receivable>>(`/receivables/${id}/auto-resolve-overpayment`, { new_amount, resolution_type });
+  if (!data.success) throw new Error(data.message || 'Failed to auto-resolve overpayment');
+  return data.data;
 };
 
 const deleteReceivableWithResolution = async ({ id, resolution }: { id: number; resolution: { payment_decisions?: PaymentDecision[]; allocation_decisions?: AllocationDecision[] } }): Promise<{ summary: object }> => {
-    const { data } = await apiClient.post<ApiResponse<{ summary: object }>>(`/receivables/${id}/delete-with-resolution`, resolution);
-    if (!data.success) throw new Error(data.message || 'Failed to delete receivable with resolution');
-    return data.data;
+  const { data } = await apiClient.post<ApiResponse<{ summary: object }>>(`/receivables/${id}/delete-with-resolution`, resolution);
+  if (!data.success) throw new Error(data.message || 'Failed to delete receivable with resolution');
+  return data.data;
 };
 
 // Fetch Single Client Receivables (now fetches the statement)
@@ -52,10 +52,10 @@ const fetchClientReceivables = async (clientId: number): Promise<ClientStatement
   if (!data.success) {
     throw new Error(data.message || 'Failed to fetch client statement.');
   }
-  
+
   // Ensure data structure is properly formatted
   const responseData = data.data;
-  
+
   // Transform statement items to ensure all required fields are present
   const statementItems = (responseData.statementItems || []).map(item => ({
     ...item,
@@ -72,7 +72,7 @@ const fetchClientReceivables = async (clientId: number): Promise<ClientStatement
     debit: Number(item.debit || 0),
     credit: Number(item.credit || 0)
   }));
-  
+
   return {
     statementItems,
     totals: responseData.totals || { totalDebit: 0, totalCredit: 0, balance: 0 }
@@ -81,43 +81,43 @@ const fetchClientReceivables = async (clientId: number): Promise<ClientStatement
 
 // NEW: Fetch ALL raw receivables for a client (for export)
 const fetchAllClientReceivables = async (clientId: number): Promise<{ receivables: Receivable[] }> => {
-    const { data } = await apiClient.get<ApiResponse<{ receivables: any[] }>>(`/receivables/client/${clientId}/all`);
-    if (!data.success) {
-        throw new Error(data.message || 'Failed to fetch all client receivables.');
-    }
-    
-    // Transform API response to match Receivable interface
-    const transformedReceivables: Receivable[] = data.data.receivables.map(receivable => ({
-        id: Number(receivable.id),
-        client_id: Number(receivable.client_id),
-        task_id: receivable.task_id ? Number(receivable.task_id) : null,
-        reference_receivable_id: receivable.reference_receivable_id ? Number(receivable.reference_receivable_id) : null,
-        created_by: Number(receivable.created_by),
-        type: receivable.type as TaskType,
-        description: receivable.description,
-        amount: Number(receivable.amount),
-        original_amount: receivable.original_amount ? Number(receivable.original_amount) : null,
-        amount_details: typeof receivable.amount_details === 'string' 
-            ? JSON.parse(receivable.amount_details || '[]') 
-            : receivable.amount_details,
-        adjustment_reason: receivable.adjustment_reason,
-        notes: receivable.notes,
-        due_date: receivable.due_date,
-        created_at: receivable.created_at,
-        updated_at: receivable.updated_at,
-        client_name: receivable.client_name,
-        client_phone: receivable.client_phone,
-        task_name: receivable.task_name,
-        task_type: receivable.task_type,
-        total_paid: Number(receivable.total_paid || 0),
-        remaining_amount: Number(receivable.remaining_amount || 0),
-        payments: receivable.payments || [],
-        allocations: receivable.allocations || [],
-        client: {},
-        task: receivable.task_id ? { id: Number(receivable.task_id) } : undefined
-    }));
-    
-    return { receivables: transformedReceivables };
+  const { data } = await apiClient.get<ApiResponse<{ receivables: any[] }>>(`/receivables/client/${clientId}/all`);
+  if (!data.success) {
+    throw new Error(data.message || 'Failed to fetch all client receivables.');
+  }
+
+  // Transform API response to match Receivable interface
+  const transformedReceivables: Receivable[] = data.data.receivables.map(receivable => ({
+    id: Number(receivable.id),
+    client_id: Number(receivable.client_id),
+    task_id: receivable.task_id ? Number(receivable.task_id) : null,
+    reference_receivable_id: receivable.reference_receivable_id ? Number(receivable.reference_receivable_id) : null,
+    created_by: Number(receivable.created_by),
+    type: receivable.type as TaskType,
+    description: receivable.description,
+    amount: Number(receivable.amount),
+    original_amount: receivable.original_amount ? Number(receivable.original_amount) : null,
+    amount_details: typeof receivable.amount_details === 'string'
+      ? JSON.parse(receivable.amount_details || '[]')
+      : receivable.amount_details,
+    adjustment_reason: receivable.adjustment_reason,
+    notes: receivable.notes,
+    due_date: receivable.due_date,
+    created_at: receivable.created_at,
+    updated_at: receivable.updated_at,
+    client_name: receivable.client_name,
+    client_phone: receivable.client_phone,
+    task_name: receivable.task_name,
+    task_type: receivable.task_type,
+    total_paid: Number(receivable.total_paid || 0),
+    remaining_amount: Number(receivable.remaining_amount || 0),
+    payments: receivable.payments || [],
+    allocations: receivable.allocations || [],
+    client: {},
+    task: receivable.task_id ? { id: Number(receivable.task_id) } : undefined
+  }));
+
+  return { receivables: transformedReceivables };
 };
 
 // Fetch Clients Receivables Summary
@@ -126,7 +126,7 @@ const fetchAllClientReceivables = async (clientId: number): Promise<{ receivable
 // UPDATE THIS FUNCTION
 const fetchClientsReceivablesSummary = async (): Promise<{ clients: ClientSummary[] }> => {
   const response = await apiClient.get<ApiResponse<{ clients: any[] }>>('/accounts/clients/balances');
-  
+
   // Transform API response fields to match ClientSummary interface
   // API returns: total_debit, total_credit, total_outstanding
   const clients = response.data?.data?.clients || [];
@@ -139,7 +139,7 @@ const fetchClientsReceivablesSummary = async (): Promise<{ clients: ClientSummar
     remaining_amount: Number(client.total_outstanding || 0),
     receivables_count: Number(client.transaction_count || client.receivables_count || 0)
   }));
-  
+
   return { clients: transformedClients };
 };
 
@@ -150,11 +150,11 @@ export const fetchPaginatedClientsReceivablesSummary = async ({ pageParam = 1, s
   if (search) {
     params.search = search;
   }
-  
+
   const { data } = await apiClient.get<{ clients: any[]; pagination: any }>('/accounts/clients/balances', {
     params
   });
-  
+
   // Transform API response fields to match ClientSummary interface
   // API returns: total_debit, total_credit, total_outstanding
   const transformedClients: ClientSummary[] = (data.clients || []).map((client: any) => ({
@@ -166,7 +166,7 @@ export const fetchPaginatedClientsReceivablesSummary = async ({ pageParam = 1, s
     remaining_amount: Number(client.total_outstanding || 0),
     receivables_count: Number(client.transaction_count || client.receivables_count || 0)
   }));
-  
+
   return { clients: transformedClients, pagination: data.pagination };
 };
 
@@ -182,11 +182,11 @@ const fetchClientsReceivablesTotals = async (): Promise<{
   balanced_clients: number;
 }> => {
   const { data } = await apiClient.get<any>('/accounts/clients/totals');
-  
+
   return {
-    total_amount: Number(data.total_amount || 0),
-    total_paid: Number(data.total_paid || 0),
-    total_unpaid: Number(data.total_unpaid || 0),
+    total_amount: Number(data.total_debit || data.total_amount || 0),
+    total_paid: Number(data.total_credit || data.total_paid || 0),
+    total_unpaid: Number(data.total_outstanding || data.total_unpaid || 0),
     clients_count: Number(data.clients_count || 0),
     clients_with_debt: Number(data.clients_with_debt || 0),
     clients_with_credit: Number(data.clients_with_credit || 0),
@@ -237,23 +237,23 @@ export const useGetReceivables = () => {
 };
 
 export const useCreateManualReceivable = () => {
-    const queryClient = useQueryClient();
-    return useMutation({
-        mutationFn: createManualReceivable,
-        onSuccess: (newReceivable) => {
-            queryClient.invalidateQueries({ queryKey: ['receivables'] }); // Invalidate all receivables summaries
-            queryClient.invalidateQueries({ queryKey: ['clients'] }); // Invalidate clients to update overall totals
-            queryClient.invalidateQueries({ queryKey: ['dashboard'] }); // Invalidate dashboard stats
-            queryClient.invalidateQueries({ queryKey: ['receivables', 'client', newReceivable.client_id] }); // Invalidate specific client statement
-            queryClient.invalidateQueries({ queryKey: ['receivables', 'payable', newReceivable.client_id] }); // Invalidate payable list for that client
-            queryClient.invalidateQueries({ queryKey: ['receivables', 'filtered', 'paid'] }); // Might affect paid list
-            queryClient.invalidateQueries({ queryKey: ['receivables', 'filtered', 'overdue'] }); // Might affect overdue list
-            
-            // Employee-related invalidations
-            queryClient.invalidateQueries({ queryKey: ['employee'] });
-            queryClient.invalidateQueries({ queryKey: ['employees'] });
-        },
-    });
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: createManualReceivable,
+    onSuccess: (newReceivable) => {
+      queryClient.invalidateQueries({ queryKey: ['receivables'] }); // Invalidate all receivables summaries
+      queryClient.invalidateQueries({ queryKey: ['clients'] }); // Invalidate clients to update overall totals
+      queryClient.invalidateQueries({ queryKey: ['dashboard'] }); // Invalidate dashboard stats
+      queryClient.invalidateQueries({ queryKey: ['receivables', 'client', newReceivable.client_id] }); // Invalidate specific client statement
+      queryClient.invalidateQueries({ queryKey: ['receivables', 'payable', newReceivable.client_id] }); // Invalidate payable list for that client
+      queryClient.invalidateQueries({ queryKey: ['receivables', 'filtered', 'paid'] }); // Might affect paid list
+      queryClient.invalidateQueries({ queryKey: ['receivables', 'filtered', 'overdue'] }); // Might affect overdue list
+
+      // Employee-related invalidations
+      queryClient.invalidateQueries({ queryKey: ['employee'] });
+      queryClient.invalidateQueries({ queryKey: ['employees'] });
+    },
+  });
 };
 
 // UPDATE THIS HOOK's RETURN TYPE
@@ -268,13 +268,13 @@ export const useGetClientReceivables = (clientId: number, enabled: boolean = tru
 };
 
 export const useGetAllClientReceivables = (clientId: number, enabled: boolean = true) => {
-    return useQuery({
-        queryKey: ['receivables', 'client', clientId, 'all'], // Specific key for export data
-        queryFn: () => fetchAllClientReceivables(clientId),
-        enabled: !!clientId && enabled,
-        staleTime: 5 * 60 * 1000, // Data for export doesn't need to be minute-by-minute fresh
-        // refetchOnWindowFocus: false (inherited)
-    });
+  return useQuery({
+    queryKey: ['receivables', 'client', clientId, 'all'], // Specific key for export data
+    queryFn: () => fetchAllClientReceivables(clientId),
+    enabled: !!clientId && enabled,
+    staleTime: 5 * 60 * 1000, // Data for export doesn't need to be minute-by-minute fresh
+    // refetchOnWindowFocus: false (inherited)
+  });
 };
 
 // UPDATE THIS HOOK's RETURN TYPE
@@ -370,7 +370,7 @@ export const useUpdateReceivable = () => {
       queryClient.invalidateQueries({ queryKey: ['receivables', 'payable', updatedReceivable.client_id] });
       queryClient.invalidateQueries({ queryKey: ['receivables', 'filtered', 'paid'] });
       queryClient.invalidateQueries({ queryKey: ['receivables', 'filtered', 'overdue'] });
-      
+
       // Employee-related invalidations
       queryClient.invalidateQueries({ queryKey: ['employee'] });
       queryClient.invalidateQueries({ queryKey: ['employees'] });
@@ -389,7 +389,7 @@ export const useDeleteReceivable = () => {
       queryClient.invalidateQueries({ queryKey: ['dashboard'] });
       // Note: We can't invalidate specific client queries without knowing the client_id
       // This will be handled by the calling component
-      
+
       // Employee-related invalidations
       queryClient.invalidateQueries({ queryKey: ['employee'] });
       queryClient.invalidateQueries({ queryKey: ['employees'] });
@@ -410,7 +410,7 @@ export const useResolveReceivableOverpayment = () => {
       queryClient.invalidateQueries({ queryKey: ['receivables', 'payable', updatedReceivable.client_id] });
       queryClient.invalidateQueries({ queryKey: ['receivables', 'filtered', 'paid'] });
       queryClient.invalidateQueries({ queryKey: ['receivables', 'filtered', 'overdue'] });
-      
+
       // Employee-related invalidations
       queryClient.invalidateQueries({ queryKey: ['employee'] });
       queryClient.invalidateQueries({ queryKey: ['employees'] });
@@ -431,7 +431,7 @@ export const useAutoResolveReceivableOverpayment = () => {
       queryClient.invalidateQueries({ queryKey: ['receivables', 'payable', updatedReceivable.client_id] });
       queryClient.invalidateQueries({ queryKey: ['receivables', 'filtered', 'paid'] });
       queryClient.invalidateQueries({ queryKey: ['receivables', 'filtered', 'overdue'] });
-      
+
       // Employee-related invalidations
       queryClient.invalidateQueries({ queryKey: ['employee'] });
       queryClient.invalidateQueries({ queryKey: ['employees'] });
@@ -450,7 +450,7 @@ export const useDeleteReceivableWithResolution = () => {
       queryClient.invalidateQueries({ queryKey: ['dashboard'] });
       // Note: We can't invalidate specific client queries without knowing the client_id
       // This will be handled by the calling component
-      
+
       // Employee-related invalidations
       queryClient.invalidateQueries({ queryKey: ['employee'] });
       queryClient.invalidateQueries({ queryKey: ['employees'] });

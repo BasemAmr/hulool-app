@@ -15,7 +15,7 @@ import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
 import HuloolDataGrid, { DEFAULT_TYPE_COLORS } from '../grid/HuloolDataGrid';
 import type { HuloolGridColumn } from '../grid/HuloolDataGrid';
-import { 
+import {
   GridActionBar,
   createEditAction,
   createGoogleDriveAction,
@@ -32,6 +32,7 @@ import { useCurrentUserCapabilities } from '../../queries/userQueries';
 import { useDrawerStore } from '../../stores/drawerStore';
 import type { CellProps } from 'react-datasheet-grid';
 import { X, DollarSign, CreditCard, RotateCcw } from 'lucide-react';
+import { translateTaskType } from '../../constants/taskTypes';
 // Button removed - using GridActionBar for all actions
 
 interface AllTasksTableProps {
@@ -57,8 +58,8 @@ const ClientLinkCell = React.memo(({ rowData }: CellProps<Task>) => {
 
   return (
     <span className="hulool-cell-content" style={{ fontWeight: 600 }}>
-      <Link 
-        to={`/clients/${rowData.client.id}?mode=tasks`} 
+      <Link
+        to={`/clients/${rowData.client.id}?mode=tasks`}
         className="no-underline text-black font-bold hover:text-primary transition-colors"
         onClick={(e) => e.stopPropagation()}
       >
@@ -76,7 +77,7 @@ const PhoneWhatsAppCell = React.memo(({ rowData }: CellProps<Task>) => {
   }
 
   const phone = rowData.client.phone;
-  
+
   const formatPhoneForWhatsApp = (phone: string) => {
     const cleanPhone = phone.replace(/\D/g, '');
     if (cleanPhone.startsWith('966')) return cleanPhone;
@@ -99,7 +100,7 @@ const PhoneWhatsAppCell = React.memo(({ rowData }: CellProps<Task>) => {
         className="hulool-whatsapp-btn"
       >
         <svg width="16" height="16" viewBox="0 0 24 24" fill="#25D366">
-          <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z"/>
+          <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z" />
         </svg>
       </button>
     </div>
@@ -111,7 +112,7 @@ PhoneWhatsAppCell.displayName = 'PhoneWhatsAppCell';
 const ServiceCell = React.memo(({ rowData, columnData }: CellProps<Task, { t: (key: string) => string }>) => {
   const t = columnData?.t || ((key: string) => key);
   const displayName = rowData.task_name || t(`type.${rowData.type}`);
-  
+
   return (
     <div style={{ fontWeight: 500, color: '#000000' }}>
       {displayName}
@@ -123,18 +124,16 @@ ServiceCell.displayName = 'ServiceCell';
 // Type Badge Cell
 const TypeBadgeCell = React.memo(({ rowData, columnData }: CellProps<Task, { t: (key: string) => string }>) => {
   const t = columnData?.t || ((key: string) => key);
-  
+
   const typeColors: Record<string, string> = {
     Government: '#3b82f6',
     RealEstate: '#22c55e',
     Accounting: '#eab308',
     Other: '#6b7280',
   };
-  
+
   // Get translated type name
-  const translatedType = t(`type.${rowData.type}`);
-  // Fallback if translation returns the key
-  const displayType = translatedType.startsWith('type.') ? rowData.type : translatedType;
+  const displayType = translateTaskType(rowData.type);
 
   return (
     <div style={{ display: 'flex', justifyContent: 'center' }}>
@@ -157,10 +156,10 @@ TypeBadgeCell.displayName = 'TypeBadgeCell';
 // Notes Cell
 const NotesCell = React.memo(({ rowData }: CellProps<Task>) => {
   const notes = rowData.notes;
-  
+
   return (
-    <div style={{ 
-      color: '#000000', 
+    <div style={{
+      color: '#000000',
       fontSize: '0.875rem',
       maxWidth: '200px',
       overflow: 'hidden',
@@ -176,7 +175,7 @@ NotesCell.displayName = 'NotesCell';
 // Assigned Employee Cell
 const AssignedCell = React.memo(({ rowData, columnData }: CellProps<Task, { getEmployeeName: (id: number | null) => string }>) => {
   const getEmployeeName = columnData?.getEmployeeName || (() => '—');
-  
+
   return (
     <div style={{ fontSize: '0.875rem', fontWeight: 500, color: '#4b5563' }}>
       {getEmployeeName(rowData.assigned_to_id)}
@@ -188,7 +187,7 @@ AssignedCell.displayName = 'AssignedCell';
 // Status Badge Cell
 const StatusBadgeCell = React.memo(({ rowData, columnData }: CellProps<Task, { t: (key: string) => string }>) => {
   const t = columnData?.t || ((key: string) => key);
-  
+
   const statusStyles: Record<string, { bg: string; text: string; border: string }> = {
     New: { bg: 'rgba(234, 179, 8, 0.2)', text: '#a16207', border: 'rgba(234, 179, 8, 0.3)' },
     Deferred: { bg: 'rgba(239, 68, 68, 0.2)', text: '#dc2626', border: 'rgba(239, 68, 68, 0.3)' },
@@ -198,7 +197,7 @@ const StatusBadgeCell = React.memo(({ rowData, columnData }: CellProps<Task, { t
   };
 
   const style = statusStyles[rowData.status] || statusStyles.Cancelled;
-  
+
   // Get translated status name
   const translatedStatus = t(`status.${rowData.status}`);
   // Fallback if translation returns the key
@@ -330,11 +329,11 @@ const ActionsCell = React.memo(({ rowData, rowIndex, columnData }: CellProps<Tas
   }
 
   // Review for Pending Review
-  if (task.assigned_to_id && 
-      task.status !== 'Completed' && 
-      task.status !== 'Cancelled' && 
-      task.status !== 'New' && 
-      task.status !== 'Deferred') {
+  if (task.assigned_to_id &&
+    task.status !== 'Completed' &&
+    task.status !== 'Cancelled' &&
+    task.status !== 'New' &&
+    task.status !== 'Deferred') {
     actions.push({
       type: 'review',
       onClick: () => handleApproveTask?.(task),
@@ -390,15 +389,15 @@ ActionsCell.displayName = 'ActionsCell';
 // MAIN COMPONENT
 // ================================
 
-const AllTasksTable: React.FC<AllTasksTableProps> = ({ 
-  tasks, 
-  isLoading, 
-  onEdit, 
-  onComplete, 
-  onViewAmountDetails, 
-  onDelete, 
-  onShowRequirements, 
-  onAssign 
+const AllTasksTable: React.FC<AllTasksTableProps> = ({
+  tasks,
+  isLoading,
+  onEdit,
+  onComplete,
+  onViewAmountDetails,
+  onDelete,
+  onShowRequirements,
+  onAssign
 }) => {
   const { t } = useTranslation();
   const deferTaskMutation = useDeferTask();
@@ -407,7 +406,7 @@ const AllTasksTable: React.FC<AllTasksTableProps> = ({
   const { success, error } = useToast();
   const { openDrawer } = useDrawerStore();
   const { openModal } = useModalStore();
-  
+
   // Get employees for assignment
   const { data: employees = [] } = useGetEmployeesForSelection();
 

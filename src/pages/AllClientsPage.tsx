@@ -15,13 +15,14 @@ import { useMutation } from '@tanstack/react-query';
 import { exportService } from '../services/export/ExportService';
 import { useToast } from '../hooks/useToast';
 import { useInView } from 'react-intersection-observer';
+import { TOAST_MESSAGES } from '../constants/toastMessages';
 // --- MODIFICATIONS END ---
 
 const AllClientsPage = () => {
   const { t } = useTranslation();
   // const navigate = useNavigate();
   const openModal = useModalStore((state) => state.openModal);
-  const { showToast } = useToast(); // ADD
+  const { success, error } = useToast(); // ADD
 
   const [search, setSearch] = useState('');
   const [regionFilter, setRegionFilter] = useState<number | null>(null);
@@ -57,10 +58,10 @@ const AllClientsPage = () => {
   const exportMutation = useMutation({
     mutationFn: exportService.exportAllClients,
     onSuccess: () => {
-      showToast({ type: 'success', title: 'تم تصدير الملف بنجاح' });
+      success(TOAST_MESSAGES.EXPORT_SUCCESS);
     },
-    onError: (error: Error) => {
-      showToast({ type: 'error', title: 'فشل التصدير', message: error.message });
+    onError: (err: Error) => {
+      error(TOAST_MESSAGES.EXPORT_FAILED, err.message);
     },
   });
 
@@ -109,7 +110,7 @@ const AllClientsPage = () => {
 
   const handlePrint = () => {
     // This can be implemented later by creating a PrintGenerator
-    showToast({ type: 'info', title: 'قيد التطوير', message: 'ميزة الطباعة ستكون متاحة قريباً.'});
+    error('قيد التطوير', 'ميزة الطباعة ستكون متاحة قريباً.');
   };
 
 

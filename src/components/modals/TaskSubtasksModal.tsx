@@ -7,6 +7,7 @@ import { useModalStore } from '../../stores/modalStore';
 import { useUpdateTask } from '../../queries/taskQueries';
 import { useToast } from '../../hooks/useToast';
 import type { Task } from '../../api/types';
+import { TOAST_MESSAGES } from '../../constants/toastMessages';
 
 interface Subtask {
   id?: number;
@@ -163,11 +164,11 @@ const TaskSubtasksModal = () => {
         }
       });
 
-      success('تم الحفظ', 'تم حفظ المهام الفرعية بنجاح');
+      success(TOAST_MESSAGES.TASK_UPDATED);
       setHasChanges(false);
       closeModal();
     } catch (err: any) {
-      error('خطأ', err.message || 'حدث خطأ أثناء حفظ المهام الفرعية');
+      error(TOAST_MESSAGES.OPERATION_FAILED, err.message);
     }
   };
 

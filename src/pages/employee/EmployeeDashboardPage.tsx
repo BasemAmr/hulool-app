@@ -8,7 +8,6 @@ import RecentTransactionsPanel from '../../components/employee/RecentTransaction
 import { useModalStore } from '../../stores/modalStore';
 import { Spinner } from '../../components/ui/spinner';
 import { Alert, AlertDescription, AlertTitle } from '../../components/ui/alert';
-import { Receipt, FileText, CreditCard } from 'lucide-react';
 
 /**
  * EmployeeDashboardPage - Main dashboard for employee users
@@ -22,7 +21,6 @@ const EmployeeDashboardPage = () => {
   const [selectedMonth, setSelectedMonth] = useState<number | undefined>(undefined);
   const [selectedYear, setSelectedYear] = useState<number | undefined>(undefined);
   const { data: ledgerData, isLoading, error } = useEmployeeDashboard(selectedMonth, selectedYear);
-  const openModal = useModalStore(state => state.openModal);
 
   useEffect(() => {
     applyPageBackground('employee-dashboard');
@@ -51,56 +49,16 @@ const EmployeeDashboardPage = () => {
     );
   }
 
-  const handleAddTask = () => openModal('taskForm', {});
-  const handleAddReceivable = () => openModal('manualReceivable', {});
-  const handleRecordCredit = () => openModal('recordCreditModal', {});
-
   return (
     <div className="w-full p-2" style={{ height: '100vh', overflow: 'visible' }}>
-      {/* Compact Header */}
-      <div className="mt-2 mb-2">
-        <div className="flex justify-between items-center">
-          {/* Quick Action Buttons (left) */}
-          <div className="flex gap-2">
-            <button
-              onClick={handleAddTask}
-              className="px-3 py-1.5 text-xs border border-primary text-primary rounded-md hover:bg-primary hover:text-white transition-colors"
-            >
-              <FileText size={14} className="inline me-1" />
-              إضافة مهمة
-            </button>
-            <button
-              onClick={handleAddReceivable}
-              className="px-3 py-1.5 text-xs border border-border text-black rounded-md hover:bg-accent hover:text-accent-foreground transition-colors"
-            >
-              <Receipt size={14} className="inline me-1" />
-              إضافة مستحق
-            </button>
-            <button
-              onClick={handleRecordCredit}
-              className="px-3 py-1.5 text-xs border border-green-600 text-green-600 rounded-md hover:bg-green-600 hover:text-white transition-colors"
-            >
-              <CreditCard size={14} className="inline me-1" />
-              إضافة دفعة
-            </button>
-          </div>
-          {/* Employee Name (center) */}
-          <div className="flex-grow flex justify-center">
-            <h1 className="text-xl font-bold mb-0 text-center text-black">مرحبا {user?.display_name}</h1>
-          </div>
-          {/* Empty right side for perfect centering */}
-          <div style={{ width: '1px', visibility: 'hidden' }} />
-        </div>
-      </div>
-
-      {/* Main Dashboard Panels */}
-      <div 
-        className="grid gap-2" 
-        style={{ 
-          height: 'calc(100vh - 120px)', 
-          overflow: 'visible', 
+      {/* Main Dashboard Panels - no header */}
+      <div
+        className="grid gap-2"
+        style={{
+          height: 'calc(100vh - 80px)',
+          overflow: 'visible',
           position: 'relative',
-          gridTemplateColumns: '1fr 1fr 2fr' // 0.25, 0.25, 0.5
+          gridTemplateColumns: '2fr 4fr 5fr'
         }}
       >
         {/* Recent Tasks Panel - 1 fraction */}

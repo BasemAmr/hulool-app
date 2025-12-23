@@ -3,6 +3,7 @@ import BaseModal from '../ui/BaseModal';
 import Button from '../ui/Button';
 import { useDeleteInvoice } from '../../queries/invoiceQueries';
 import { useToast } from '../../hooks/useToast';
+import { TOAST_MESSAGES } from '../../constants/toastMessages';
 
 interface InvoiceDeleteModalProps {
   isOpen: boolean;
@@ -21,10 +22,10 @@ const InvoiceDeleteModal: React.FC<InvoiceDeleteModalProps> = ({
   const handleDelete = async () => {
     try {
       await deleteInvoice.mutateAsync(invoice.id);
-      success('تم الحذف', 'تم حذف الفاتورة بنجاح');
+      success(TOAST_MESSAGES.INVOICE_DELETED);
       onClose();
     } catch (err: any) {
-      error('فشل الحذف', err.message || 'فشل حذف الفاتورة');
+      error(TOAST_MESSAGES.OPERATION_FAILED, err.message);
     }
   };
 

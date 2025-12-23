@@ -56,7 +56,7 @@ const BaseClientCard = ({
 
   // Determine which columns to show based on context
   const showStatus = context === 'admin-employee-filter' || context === 'admin-employee-profile';
-  const showAmountColumn = showAmount && context !== 'employee-dashboard';
+  const showAmountColumn = showAmount;
 
   return (
     <div
