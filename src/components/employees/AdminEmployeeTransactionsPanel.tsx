@@ -1,9 +1,11 @@
 // Admin view of employee transactions panel - Monthly ledger with infinite scroll
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { MoreHorizontal } from 'lucide-react';
+import { MoreHorizontal, Download, ChevronDown } from 'lucide-react';
 import apiClient from '../../api/apiClient';
 import { formatDate } from '../../utils/dateUtils';
+import { exportService } from '../../services/export/ExportService';
+import type { EmployeeStatementReportData } from '../../services/export/exportTypes';
 import {
   ShadcnSelect as Select,
   ShadcnSelectContent as SelectContent,
@@ -11,9 +13,16 @@ import {
   ShadcnSelectTrigger as SelectTrigger,
   ShadcnSelectValue as SelectValue,
 } from '../ui/shadcn-select';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '../ui/dropdown-menu';
 
 interface AdminEmployeeTransactionsPanelProps {
   employeeId: number;
+  employeeName?: string;
 }
 
 interface MonthlyTransaction {
@@ -60,11 +69,12 @@ interface MonthlyLedgerData {
   summary: MonthlySummary;
 }
 
-const AdminEmployeeTransactionsPanel: React.FC<AdminEmployeeTransactionsPanelProps> = ({ employeeId }) => {
+const AdminEmployeeTransactionsPanel: React.FC<AdminEmployeeTransactionsPanelProps> = ({ employeeId, employeeName }) => {
   const [selectedMonth, setSelectedMonth] = useState<number>(new Date().getMonth() + 1);
   const [selectedYear, setSelectedYear] = useState<number>(new Date().getFullYear());
   const [visibleTransactions, setVisibleTransactions] = useState(20);
   const [isAutoLoading, setIsAutoLoading] = useState(false);
+  const [isExporting, setIsExporting] = useState(false);
   const [maxClientWidth, setMaxClientWidth] = useState(100);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const tableRef = useRef<HTMLTableElement>(null);
@@ -161,7 +171,7 @@ const AdminEmployeeTransactionsPanel: React.FC<AdminEmployeeTransactionsPanelPro
 
   const getTransactionTypeLabel = (transactionType: string | null | undefined, direction: 'income' | 'expense' | null): string => {
     if (!transactionType) return direction === 'income' ? 'سند قبض' : 'سند صرف';
-    
+
     // All types map to either سند صرف (payout) or سند قبض (repayment) based on direction
     // Income direction = سند قبض (company paying employee)
     // Expense direction = سند صرف (employee paying company)
@@ -176,6 +186,132 @@ const AdminEmployeeTransactionsPanel: React.FC<AdminEmployeeTransactionsPanelPro
     setSelectedYear(parseInt(value, 10));
   };
 
+  const handleExport = async () => {
+    if (!ledgerData || isExporting) return;
+
+    setIsExporting(true);
+    try {
+      const exportData: EmployeeStatementReportData = {
+        employeeId,
+        employeeName: employeeName || `موظف #${employeeId}`,
+        period: ledgerData.period,
+        openingBalance: {
+          total_debit: ledgerData.opening_balance.total_debit,
+          total_credit: ledgerData.opening_balance.total_credit,
+          balance: ledgerData.opening_balance.balance,
+        },
+        transactions: ledgerData.transactions.map(t => ({
+          id: t.id,
+          date: t.date,
+          description: t.description,
+          amount: t.amount,
+          running_balance: t.running_balance,
+          direction: t.direction,
+          transaction_type: t.transaction_type,
+          client_name: t.client_name,
+        })),
+        summary: {
+          period_income: ledgerData.summary.period_income,
+          period_expenses: ledgerData.summary.period_expenses,
+          closing_balance: ledgerData.summary.closing_balance,
+          total_to_date_income: ledgerData.summary.total_to_date_income,
+          total_to_date_expenses: ledgerData.summary.total_to_date_expenses,
+        },
+      };
+
+      await exportService.exportEmployeeStatement(exportData);
+    } catch (error) {
+      console.error('Export failed:', error);
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
+  const handleExportAll = async () => {
+    if (isExporting) return;
+
+    setIsExporting(true);
+    try {
+      // First request to get total_pages and summary
+      const firstResponse = await apiClient.get(`/employees/${employeeId}/payouts`, {
+        params: { page: 1, per_page: 100 }
+      });
+      const firstData = firstResponse.data;
+      const totalPages = firstData?.pagination?.total_pages || 1;
+      const summaryData = firstData?.data?.summary || {};
+
+      // Collect all transactions from all pages
+      let allTransactions = [...(firstData?.data?.transactions || [])];
+
+      // Fetch remaining pages if any
+      for (let page = 2; page <= totalPages; page++) {
+        const response = await apiClient.get(`/employees/${employeeId}/payouts`, {
+          params: { page, per_page: 100 }
+        });
+        const pageTransactions = response.data?.data?.transactions || [];
+        allTransactions = [...allTransactions, ...pageTransactions];
+      }
+
+      if (allTransactions.length === 0) {
+        throw new Error('No transaction data available');
+      }
+
+      // Map transactions - API returns debit/credit, not amount/direction
+      // Transactions are already sorted DESC, reverse for running balance calculation
+      const sortedTransactions = [...allTransactions].reverse();
+      let runningBalance = 0;
+
+      const transactionsWithBalance = sortedTransactions.map((t: any) => {
+        const debit = parseFloat(t.debit || 0);
+        const credit = parseFloat(t.credit || 0);
+        const amount = debit > 0 ? debit : credit;
+        const direction = debit > 0 ? 'income' : 'expense';
+
+        // Update running balance (debit = income for employee, credit = expense)
+        runningBalance += debit - credit;
+
+        return {
+          id: t.id,
+          date: t.transaction_date || t.date || t.created_at,
+          description: t.task_name || t.description || '',
+          amount: amount,
+          running_balance: runningBalance,
+          direction: direction as 'income' | 'expense',
+          transaction_type: t.transaction_type || '',
+          client_name: t.client_name || null,
+        };
+      });
+
+      // Re-reverse to get back to original order (newest first)
+      const finalTransactions = transactionsWithBalance.reverse();
+
+      const exportData: EmployeeStatementReportData = {
+        employeeId,
+        employeeName: employeeName || `موظف #${employeeId}`,
+        period: { month: 0, year: 0, month_name: 'جميع الفترات' },
+        openingBalance: {
+          total_debit: 0,
+          total_credit: 0,
+          balance: 0,
+        },
+        transactions: finalTransactions,
+        summary: {
+          period_income: summaryData?.total_earned || 0,
+          period_expenses: summaryData?.total_expenses || 0,
+          closing_balance: summaryData?.balance_due || 0,
+          total_to_date_income: summaryData?.total_earned || 0,
+          total_to_date_expenses: summaryData?.total_expenses || 0,
+        },
+      };
+
+      await exportService.exportEmployeeStatement(exportData);
+    } catch (error) {
+      console.error('Export all failed:', error);
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
   if (isLoading) {
     return (
       <div className="h-full flex items-center justify-center rounded-lg border border-border bg-card shadow-sm">
@@ -185,16 +321,16 @@ const AdminEmployeeTransactionsPanel: React.FC<AdminEmployeeTransactionsPanelPro
   }
 
   const transactions = ledgerData?.transactions || [];
-  const summary = ledgerData?.summary || { 
-    balance_due: 0, 
-    total_to_date_income: 0, 
-    total_to_date_expenses: 0 
+  const summary = ledgerData?.summary || {
+    balance_due: 0,
+    total_to_date_income: 0,
+    total_to_date_expenses: 0
   };
-  const opening_balance = ledgerData?.opening_balance || { 
-    total_debit: 0, 
-    total_credit: 0, 
-    balance: 0, 
-    description: 'رصيد افتتاحي' 
+  const opening_balance = ledgerData?.opening_balance || {
+    total_debit: 0,
+    total_credit: 0,
+    balance: 0,
+    description: 'رصيد افتتاحي'
   };
 
   const displayedTransactions = transactions.slice(0, visibleTransactions);
@@ -232,9 +368,41 @@ const AdminEmployeeTransactionsPanel: React.FC<AdminEmployeeTransactionsPanelPro
               </SelectContent>
             </Select>
           </div>
-          <span className="text-sm text-white font-bold">
-            رصيد: {formatCurrency(summary.balance_due)} ر.س
-          </span>
+          <div className="flex items-center gap-3">
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <button
+                  disabled={isExporting}
+                  className="flex items-center gap-1 px-2 py-1 bg-white text-green-700 rounded-md text-sm font-bold hover:bg-green-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                  title="تصدير إلى Excel"
+                >
+                  <Download size={14} className={isExporting ? 'animate-pulse' : ''} />
+                  <span>{isExporting ? 'جاري...' : 'تصدير'}</span>
+                  <ChevronDown size={12} />
+                </button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="text-right">
+                <DropdownMenuItem
+                  onClick={handleExport}
+                  disabled={!ledgerData}
+                  className="cursor-pointer"
+                >
+                  <Download size={14} className="ml-2" />
+                  الشهر الحالي ({arabicMonths[selectedMonth - 1]} {selectedYear})
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  onClick={handleExportAll}
+                  className="cursor-pointer"
+                >
+                  <Download size={14} className="ml-2" />
+                  جميع المعاملات
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+            <span className="text-sm text-white font-bold">
+              رصيد: {formatCurrency(summary.balance_due)} ر.س
+            </span>
+          </div>
         </div>
       </div>
 
@@ -302,17 +470,17 @@ const AdminEmployeeTransactionsPanel: React.FC<AdminEmployeeTransactionsPanelPro
                 {/* Transaction Rows */}
                 {displayedTransactions.map((transaction, index) => {
                   const bgColor = index % 2 === 0 ? 'bg-green-100' : 'bg-green-50';
-                  
+
                   // Determine what to show in client name column (first column)
                   let clientDisplay = transaction.client_name || getTransactionTypeLabel(transaction.transaction_type, transaction.direction);
 
                   return (
                     <tr key={transaction.id} className={bgColor}>
-                      <td 
+                      <td
                         ref={(el) => {
                           if (el) clientCellsRef.current.set(transaction.id, el);
                         }}
-                        className="px-1.5 py-1 border border-gray-300 text-start font-bold text-base" 
+                        className="px-1.5 py-1 border border-gray-300 text-start font-bold text-base"
                         style={{ width: `${maxClientWidth}px`, minWidth: `${maxClientWidth}px` }}
                       >
                         {clientDisplay}

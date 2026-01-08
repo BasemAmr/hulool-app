@@ -50,7 +50,7 @@ const EmployeeDashboardPage = () => {
   }
 
   return (
-    <div className="w-full p-2" style={{ height: '100vh', overflow: 'visible' }}>
+    <div className="w-full px-2 pb-2" style={{ height: '100vh', overflow: 'visible' }}>
       {/* Main Dashboard Panels - no header */}
       <div
         className="grid gap-2"
@@ -58,7 +58,7 @@ const EmployeeDashboardPage = () => {
           height: 'calc(100vh - 80px)',
           overflow: 'visible',
           position: 'relative',
-          gridTemplateColumns: '2fr 4fr 5fr'
+          gridTemplateColumns: '3fr 4fr 5fr'
         }}
       >
         {/* Recent Tasks Panel - 1 fraction */}

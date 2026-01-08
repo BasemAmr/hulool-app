@@ -7,14 +7,16 @@ import { generateAllReceivablesExcel } from './ReceivableExcelGenerator';
 import { generateClientStatementExcel } from './ClientStatementGenerator';
 import { generateClientTasksExcel } from './ClientTasksGenerator';
 import { generateClientCreditsExcel } from './ClientCreditsGenerator';
-import type { 
-  AllClientsReportData, 
+import { generateEmployeeStatementExcel } from './EmployeeStatementGenerator';
+import type {
+  AllClientsReportData,
   AllTasksReportData,
   AllReceivablesReportData,
   ClientStatementReportData,
   ClientTasksReportData,
   ClientCreditsReportData,
-  ExportOptions 
+  EmployeeStatementReportData,
+  ExportOptions
 } from './exportTypes';
 
 class ExportService {
@@ -23,20 +25,20 @@ class ExportService {
    * Implementation of "تصدير جميع العملاء" from specifications
    */
   public async exportAllClients(
-    data: AllClientsReportData, 
+    data: AllClientsReportData,
     options?: ExportOptions
   ): Promise<void> {
     try {
       const workbook = new ExcelJS.Workbook();
-      
+
       // Set workbook properties
       workbook.creator = 'نظام إدارة الأعمال';
       workbook.lastModifiedBy = 'نظام إدارة الأعمال';
       workbook.created = new Date();
       workbook.modified = new Date();
-      
+
       generateAllClientsExcel(workbook, data, options);
-      
+
       const filename = options?.customFilename || 'تقرير_جميع_العملاء';
       await saveWorkbook(workbook, filename);
     } catch (error) {
@@ -50,19 +52,19 @@ class ExportService {
    * Implementation of "تصدير جميع المهام" from specifications
    */
   public async exportAllTasks(
-    data: AllTasksReportData, 
+    data: AllTasksReportData,
     options?: ExportOptions
   ): Promise<void> {
     try {
       const workbook = new ExcelJS.Workbook();
-      
+
       workbook.creator = 'نظام إدارة الأعمال';
       workbook.lastModifiedBy = 'نظام إدارة الأعمال';
       workbook.created = new Date();
       workbook.modified = new Date();
-      
+
       generateAllTasksExcel(workbook, data, options);
-      
+
       const filename = options?.customFilename || 'تقرير_جميع_المهام';
       await saveWorkbook(workbook, filename);
     } catch (error) {
@@ -76,19 +78,19 @@ class ExportService {
    * Implementation of "تصدير جميع المستحقات" from specifications
    */
   public async exportAllReceivables(
-    data: AllReceivablesReportData, 
+    data: AllReceivablesReportData,
     options?: ExportOptions
   ): Promise<void> {
     try {
       const workbook = new ExcelJS.Workbook();
-      
+
       workbook.creator = 'نظام إدارة الأعمال';
       workbook.lastModifiedBy = 'نظام إدارة الأعمال';
       workbook.created = new Date();
       workbook.modified = new Date();
-      
+
       generateAllReceivablesExcel(workbook, data, options);
-      
+
       const filename = options?.customFilename || 'تقرير_جميع_المستحقات';
       await saveWorkbook(workbook, filename);
     } catch (error) {
@@ -102,19 +104,19 @@ class ExportService {
    * Implementation of "تفاصيل مستحقات العميل" from specifications
    */
   public async exportClientStatement(
-    data: ClientStatementReportData, 
+    data: ClientStatementReportData,
     options?: ExportOptions
   ): Promise<void> {
     try {
       const workbook = new ExcelJS.Workbook();
-      
+
       workbook.creator = 'نظام إدارة الأعمال';
       workbook.lastModifiedBy = 'نظام إدارة الأعمال';
       workbook.created = new Date();
       workbook.modified = new Date();
-      
+
       generateClientStatementExcel(workbook, data, options);
-      
+
       const filename = options?.customFilename || `كشف_حساب_${data.clientName.replace(/\s+/g, '_')}`;
       await saveWorkbook(workbook, filename);
     } catch (error) {
@@ -128,19 +130,19 @@ class ExportService {
    * Implementation of "مهام العميل" from specifications
    */
   public async exportClientTasks(
-    data: ClientTasksReportData, 
+    data: ClientTasksReportData,
     options?: ExportOptions
   ): Promise<void> {
     try {
       const workbook = new ExcelJS.Workbook();
-      
+
       workbook.creator = 'نظام إدارة الأعمال';
       workbook.lastModifiedBy = 'نظام إدارة الأعمال';
       workbook.created = new Date();
       workbook.modified = new Date();
-      
+
       generateClientTasksExcel(workbook, data, options);
-      
+
       const filename = options?.customFilename || `مهام_${data.client.name.replace(/\s+/g, '_')}`;
       await saveWorkbook(workbook, filename);
     } catch (error) {
@@ -154,24 +156,51 @@ class ExportService {
    * Implementation of "ائتمانات العميل" from specifications
    */
   public async exportClientCredits(
-    data: ClientCreditsReportData, 
+    data: ClientCreditsReportData,
     options?: ExportOptions
   ): Promise<void> {
     try {
       const workbook = new ExcelJS.Workbook();
-      
+
       workbook.creator = 'نظام إدارة الأعمال';
       workbook.lastModifiedBy = 'نظام إدارة الأعمال';
       workbook.created = new Date();
       workbook.modified = new Date();
-      
+
       generateClientCreditsExcel(workbook, data, options);
-      
+
       const filename = options?.customFilename || `ائتمانات_${data.client.name.replace(/\s+/g, '_')}`;
       await saveWorkbook(workbook, filename);
     } catch (error) {
       console.error('Error exporting client credits:', error);
       throw new Error('فشل في تصدير ائتمانات العميل');
+    }
+  }
+
+  /**
+   * Export employee financial statement
+   * Implementation of "كشف حساب الموظف" from specifications
+   */
+  public async exportEmployeeStatement(
+    data: EmployeeStatementReportData,
+    options?: ExportOptions
+  ): Promise<void> {
+    try {
+      const workbook = new ExcelJS.Workbook();
+
+      workbook.creator = 'نظام إدارة الأعمال';
+      workbook.lastModifiedBy = 'نظام إدارة الأعمال';
+      workbook.created = new Date();
+      workbook.modified = new Date();
+
+      generateEmployeeStatementExcel(workbook, data, options);
+
+      const filename = options?.customFilename ||
+        `كشف_حساب_الموظف_${data.employeeName.replace(/\s+/g, '_')}_${data.period.month_name}_${data.period.year}`;
+      await saveWorkbook(workbook, filename);
+    } catch (error) {
+      console.error('Error exporting employee statement:', error);
+      throw new Error('فشل في تصدير كشف حساب الموظف');
     }
   }
 
@@ -187,20 +216,20 @@ class ExportService {
   ): Promise<void> {
     try {
       const workbook = new ExcelJS.Workbook();
-      
+
       workbook.creator = 'نظام إدارة الأعمال';
       workbook.lastModifiedBy = 'نظام إدارة الأعمال';
       workbook.created = new Date();
       workbook.modified = new Date();
-      
+
       // Generate multiple sheets in the same workbook
       generateClientStatementExcel(workbook, clientStatementData, options);
       generateClientTasksExcel(workbook, clientTasksData, options);
-      
+
       if (clientCreditsData) {
         generateClientCreditsExcel(workbook, clientCreditsData, options);
       }
-      
+
       const filename = options?.customFilename || `تقرير_شامل_${clientStatementData.clientName.replace(/\s+/g, '_')}`;
       await saveWorkbook(workbook, filename);
     } catch (error) {

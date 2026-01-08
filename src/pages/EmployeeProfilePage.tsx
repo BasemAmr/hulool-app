@@ -104,8 +104,8 @@ const EmployeeHeader: React.FC<EmployeePageHeader> = ({ employee, onSarf, onQabd
             key={key}
             onClick={() => onModeChange(key)}
             className={`px-4 py-2 rounded-md font-bold text-lg transition-colors ${activeMode === key
-                ? 'bg-primary text-white shadow-md'
-                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+              ? 'bg-primary text-white shadow-md'
+              : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
               }`}
           >
             <Icon size={20} className="mr-2 inline" />
@@ -264,7 +264,7 @@ const EmployeeProfilePage = () => {
 
           {/* Transactions Panel - 0.5 fraction */}
           <div style={{ height: '100%', overflow: 'hidden' }}>
-            <AdminEmployeeTransactionsPanel employeeId={employeeTableId} />
+            <AdminEmployeeTransactionsPanel employeeId={employeeTableId} employeeName={employee.display_name} />
           </div>
         </div>
       )}

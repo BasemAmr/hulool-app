@@ -166,6 +166,38 @@ export interface ClientCreditsReportData {
   };
 }
 
+// Employee transaction for export
+export interface EmployeeTransaction {
+  id: number;
+  date: string;
+  description: string;
+  amount: number;
+  running_balance: number;
+  direction: 'income' | 'expense' | null;
+  transaction_type: string;
+  client_name: string | null;
+}
+
+// Employee statement export data
+export interface EmployeeStatementReportData {
+  employeeId: number;
+  employeeName: string;
+  period: { month: number; year: number; month_name: string };
+  openingBalance: {
+    total_debit: number;
+    total_credit: number;
+    balance: number;
+  };
+  transactions: EmployeeTransaction[];
+  summary: {
+    period_income: number;
+    period_expenses: number;
+    closing_balance: number;
+    total_to_date_income: number;
+    total_to_date_expenses: number;
+  };
+}
+
 // Generic export options
 export interface ExportOptions {
   includeSubTables?: boolean;
