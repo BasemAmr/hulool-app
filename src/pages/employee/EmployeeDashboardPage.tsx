@@ -58,7 +58,7 @@ const EmployeeDashboardPage = () => {
           height: 'calc(100vh - 80px)',
           overflow: 'visible',
           position: 'relative',
-          gridTemplateColumns: '3fr 4fr 5fr'
+          gridTemplateColumns: '4fr 4fr 5fr'
         }}
       >
         {/* Recent Tasks Panel - 1 fraction */}
