@@ -9,7 +9,9 @@ import { getErrorMessage, isConflictError } from '../../utils/errorUtils';
 import type { ClientCredit, CreditReductionConflictData, AllocationAdjustment } from '../../api/types';
 import BaseModal from '../ui/BaseModal';
 import Button from '../ui/Button';
+import { NumberInput } from '../ui/NumberInput';
 import Input from '../ui/Input';
+import { Controller } from 'react-hook-form';
 import SaudiRiyalIcon from '../ui/SaudiRiyalIcon';
 
 interface CreditEditModalProps {
@@ -26,14 +28,14 @@ const CreditEditModal = () => {
   const closeModal = useModalStore(state => state.closeModal);
   const { success, error } = useToast();
   const { credit } = useModalStore(state => state.props as CreditEditModalProps);
-  
+
   const [conflictData, setConflictData] = useState<CreditReductionConflictData | null>(null);
   const [allocationAdjustments, setAllocationAdjustments] = useState<AllocationAdjustment[]>([]);
-  
+
   const updateCreditMutation = useUpdateClientCredit();
   const resolveReductionMutation = useResolveCreditReduction();
-  
-  const { register, handleSubmit, formState: { errors } } = useForm<FormData>({
+
+  const { register, handleSubmit, control, formState: { errors } } = useForm<FormData>({
     defaultValues: {
       amount: credit.amount
     }
@@ -77,9 +79,9 @@ const CreditEditModal = () => {
   };
 
   const handleAllocationActionChange = (allocationId: number, action: AllocationAdjustment['action'], newAmount?: number) => {
-    setAllocationAdjustments(prev => 
-      prev.map(adj => 
-        adj.allocation_id === allocationId 
+    setAllocationAdjustments(prev =>
+      prev.map(adj =>
+        adj.allocation_id === allocationId
           ? { ...adj, action, new_amount: newAmount }
           : adj
       )
@@ -88,11 +90,11 @@ const CreditEditModal = () => {
 
   const getTotalReduction = () => {
     if (!conflictData) return 0;
-    
+
     return conflictData.allocations.reduce((total, allocation, index) => {
       const adjustment = allocationAdjustments[index];
       if (!adjustment) return total;
-      
+
       switch (adjustment.action) {
         case 'remove_allocation':
           return total + allocation.amount;
@@ -106,7 +108,7 @@ const CreditEditModal = () => {
 
   const isResolutionValid = () => {
     if (!conflictData) return true;
-    
+
     const totalReduction = getTotalReduction();
     return totalReduction >= conflictData.deficit;
   };
@@ -121,13 +123,11 @@ const CreditEditModal = () => {
           </div>
         </div>
 
-        <Input
-          label={t('credits.newAmount')}
-          type="number"
-          step="0.01"
-          {...register('amount', { 
-            required: true, 
-            valueAsNumber: true,
+        <Controller
+          name="amount"
+          control={control} // Need to destructure control from useForm
+          rules={{
+            required: true,
             min: 0,
             validate: (value) => {
               if (conflictData && value > credit.amount) {
@@ -135,8 +135,16 @@ const CreditEditModal = () => {
               }
               return true;
             }
-          })}
-          error={errors.amount?.message}
+          }}
+          render={({ field }) => (
+            <NumberInput
+              label={t('credits.newAmount')}
+              name={field.name}
+              value={field.value || 0}
+              onChange={field.onChange}
+              error={errors.amount?.message}
+            />
+          )}
         />
 
         {conflictData && (
@@ -147,7 +155,7 @@ const CreditEditModal = () => {
               <p className="text-sm text-yellow-800"><strong>{t('credits.allocatedAmount')}: </strong><SaudiRiyalIcon amount={conflictData.allocated_amount} /></p>
               <p className="text-sm text-yellow-800"><strong>{t('credits.deficit')}: </strong><SaudiRiyalIcon amount={conflictData.deficit} /></p>
             </div>
-            
+
             <div className="space-y-2">
               <h6 className="font-semibold text-black text-sm">{t('credits.allocationAdjustments')}</h6>
               <div className="space-y-2 max-h-48 overflow-y-auto">
@@ -173,21 +181,21 @@ const CreditEditModal = () => {
                           <option value="reduce_allocation">{t('credits.reduceAllocation')}</option>
                           <option value="remove_allocation">{t('credits.removeAllocation')}</option>
                         </select>
-                        
+
                         {allocationAdjustments[index]?.action === 'reduce_allocation' && (
                           <div>
-                            <Input
-                              type="number"
-                              step="0.01"
-                              placeholder={t('credits.newAmount')}
-                              value={allocationAdjustments[index]?.new_amount || ''}
+                            <NumberInput
+                              name={`allocation_${allocation.id}`}
+                              value={allocationAdjustments[index]?.new_amount || 0}
                               onChange={(e) => {
                                 handleAllocationActionChange(
-                                  allocation.id, 
-                                  'reduce_allocation', 
+                                  allocation.id,
+                                  'reduce_allocation',
                                   parseFloat(e.target.value) || 0
                                 );
                               }}
+                              placeholder={t('credits.newAmount')}
+                              className="mt-1"
                             />
                           </div>
                         )}
@@ -197,11 +205,11 @@ const CreditEditModal = () => {
                 ))}
               </div>
             </div>
-            
+
             <div className="text-sm font-semibold text-black pt-2 border-t border-yellow-200">
               {t('credits.totalReduction')}: <SaudiRiyalIcon amount={getTotalReduction()} />
             </div>
-            
+
             {!isResolutionValid() && (
               <div className="text-destructive text-xs">
                 {t('credits.insufficientReduction')}
@@ -214,14 +222,14 @@ const CreditEditModal = () => {
           <Button type="button" variant="secondary" onClick={closeModal}>
             {t('common.cancel')}
           </Button>
-          <Button 
-              type="submit" 
-              variant="primary" 
-              isLoading={updateCreditMutation.isPending || resolveReductionMutation.isPending}
-              disabled={conflictData ? !isResolutionValid() : false}
-            >
-              {t('common.save')}
-            </Button>
+          <Button
+            type="submit"
+            variant="primary"
+            isLoading={updateCreditMutation.isPending || resolveReductionMutation.isPending}
+            disabled={conflictData ? !isResolutionValid() : false}
+          >
+            {t('common.save')}
+          </Button>
         </div>
       </form>
     </BaseModal>

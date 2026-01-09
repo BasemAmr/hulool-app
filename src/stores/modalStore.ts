@@ -107,7 +107,8 @@ interface ModalProps {
     invoice?: Invoice;
     amountDue?: number;
     clientId?: number;
-    clientName?: string
+    clientName?: string;
+    initialPaymentAmount?: number;
   };
   accountLedger: { clientId: number; clientName?: string; filter?: 'all' | 'invoices' | 'payments' | 'credits' };
   invoiceDetails: { invoice?: Invoice; invoiceId?: number; isEmployeeView?: boolean };

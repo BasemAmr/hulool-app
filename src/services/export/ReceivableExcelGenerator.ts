@@ -1,11 +1,11 @@
 // src/services/export/ReceivableExcelGenerator.ts
 import type { Workbook } from 'exceljs';
-import { 
-  setupWorksheet, 
-  addReportHeader, 
-  styles, 
+import {
+  setupWorksheet,
+  addReportHeader,
+  styles,
   applyReceivablesConditionalFormatting,
-  autoSizeColumns 
+  autoSizeColumns
 } from './excelStyles';
 import type { AllReceivablesReportData, ExportOptions } from './exportTypes';
 
@@ -14,8 +14,8 @@ import type { AllReceivablesReportData, ExportOptions } from './exportTypes';
  * Implements "تصدير جميع المستحقات" specification
  */
 export function generateAllReceivablesExcel(
-  workbook: Workbook, 
-  data: AllReceivablesReportData, 
+  workbook: Workbook,
+  data: AllReceivablesReportData,
   _options?: ExportOptions
 ) {
   const { receivables, summary } = data;
@@ -26,13 +26,13 @@ export function generateAllReceivablesExcel(
   // Add report header
   const contentStartRow = addReportHeader(worksheet, 'تقرير جميع المستحقات', 5);
 
-  // Define columns as per specification
+  // Define columns optimized for A4 landscape printing
   worksheet.columns = [
-    { header: 'العميل', key: 'clientName', width: 25 },
-    { header: 'رقم الجوال', key: 'clientPhone', width: 15 },
-    { header: 'إجمالي المدين', key: 'totalDebit', width: 15 },
-    { header: 'إجمالي الدائن', key: 'totalCredit', width: 15 },
-    { header: 'إجمالي المستحقات', key: 'netReceivables', width: 18 },
+    { header: 'العميل', key: 'clientName', width: 20 },
+    { header: 'رقم الجوال', key: 'clientPhone', width: 13 },
+    { header: 'إجمالي المدين', key: 'totalDebit', width: 13 },
+    { header: 'إجمالي الدائن', key: 'totalCredit', width: 13 },
+    { header: 'إجمالي المستحقات', key: 'netReceivables', width: 15 },
   ];
 
   // Position headers at content start row
@@ -47,7 +47,7 @@ export function generateAllReceivablesExcel(
   let currentRow = contentStartRow + 1;
   receivables.forEach((receivable, index) => {
     const row = worksheet.getRow(currentRow);
-    
+
     row.values = [
       receivable.client_name || '',
       receivable.client_phone ? `+966${receivable.client_phone.replace(/^\+?966/, '')}` : '',
@@ -60,23 +60,23 @@ export function generateAllReceivablesExcel(
     const isEvenRow = index % 2 === 1;
     row.getCell(1).style = styles.dataCell(isEvenRow); // Client name
     row.getCell(2).style = styles.dataCellCenter(isEvenRow); // Phone
-    
+
     // Debit cell - red for debt
     const debitCell = row.getCell(3);
-    debitCell.style = { 
-      ...styles.dataCellCenter(isEvenRow), 
+    debitCell.style = {
+      ...styles.dataCellCenter(isEvenRow),
       ...styles.currency,
       font: { ...styles.currency.font, color: { argb: 'FF9C0006' } } // Red for debit
     };
-    
+
     // Credit cell - green for credit
     const creditCell = row.getCell(4);
-    creditCell.style = { 
-      ...styles.dataCellCenter(isEvenRow), 
+    creditCell.style = {
+      ...styles.dataCellCenter(isEvenRow),
       ...styles.currency,
       font: { ...styles.currency.font, color: { argb: 'FF006100' } } // Green for credit
     };
-    
+
     // Net receivables with conditional formatting
     const netCell = row.getCell(5);
     netCell.style = { ...styles.dataCellCenter(isEvenRow), ...styles.currency };
@@ -109,7 +109,7 @@ export function generateAllReceivablesExcel(
   summaryItems.forEach(([label, value]) => {
     const summaryRow = worksheet.addRow(['', '', '', label, value]);
     summaryRow.getCell(4).style = styles.totalLabel;
-    
+
     if (typeof value === 'number' && (label.toString().includes('مدين') || label.toString().includes('دائن') || label.toString().includes('مستحقات'))) {
       summaryRow.getCell(5).style = styles.totalValue();
       if (label.toString().includes('صافي')) {

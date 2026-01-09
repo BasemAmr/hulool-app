@@ -9,6 +9,8 @@ import type { Task } from '../../api/types';
 import BaseModal from '../ui/BaseModal';
 import Button from '../ui/Button';
 import Input from '../ui/Input';
+import { NumberInput } from '../ui/NumberInput';
+import { DateInput } from '../ui/DateInput';
 import apiClient from '../../api/apiClient';
 
 interface SubmitForReviewModalProps {
@@ -64,13 +66,13 @@ const SubmitForReviewModal = () => {
     try {
       // First, submit the task for review - this creates the receivable
       const submitResponse = await apiClient.post(`/tasks/${task.id}/submit-for-review`);
-      
+
       if (!submitResponse.data.success) {
         throw new Error(submitResponse.data.message || 'Failed to submit task for review');
       }
 
       const receivableId = submitResponse.data.data.receivable_id;
-      
+
       if (!receivableId) {
         throw new Error('No receivable was created');
       }
@@ -78,7 +80,7 @@ const SubmitForReviewModal = () => {
       // If the user marked it as paid, create a payment
       if (data.is_paid && data.payment_method_id) {
         const paymentAmount = data.is_full_payment ? remainingAmount : Number(data.payment_amount);
-        
+
         if (isNaN(paymentAmount) || paymentAmount <= 0 || paymentAmount > remainingAmount) {
           error(t('common.error'), t('payments.invalidAmount'));
           return;
@@ -93,13 +95,13 @@ const SubmitForReviewModal = () => {
         };
 
         const paymentResponse = await apiClient.post('/payments', paymentPayload);
-        
+
         if (!paymentResponse.data.success) {
           console.warn('Task submitted but payment creation failed:', paymentResponse.data.message);
         }
 
         success(
-          t('tasks.submitSuccess'), 
+          t('tasks.submitSuccess'),
           t('tasks.submitWithPaymentSuccessMessage', {
             taskName: task.task_name || t(`type.${task.type}`),
             amount: paymentAmount
@@ -107,20 +109,20 @@ const SubmitForReviewModal = () => {
         );
       } else {
         success(
-          t('tasks.submitSuccess'), 
+          t('tasks.submitSuccess'),
           t('tasks.submitSuccessMessage', {
             taskName: task.task_name || t(`type.${task.type}`)
           })
         );
       }
-      
+
       // Invalidate queries
       queryClient.invalidateQueries({ queryKey: ['dashboard'] });
       queryClient.invalidateQueries({ queryKey: ['tasks'] });
       queryClient.invalidateQueries({ queryKey: ['receivables'] });
       queryClient.invalidateQueries({ queryKey: ['clients'] });
       queryClient.invalidateQueries({ queryKey: ['employee'] });
-      
+
       closeModal();
     } catch (err: any) {
       error(t('common.error'), err.message || t('tasks.submitError'));
@@ -199,22 +201,27 @@ const SubmitForReviewModal = () => {
               </label>
             </div>
 
-            <Input
-              label={t('payments.amountLabel')}
-              type="number"
-              step="0.01"
-              max={remainingAmount}
-              disabled={watchIsFullPayment}
-              {...register('payment_amount', { 
-                required: watchIsPaid && !watchIsFullPayment, 
-                valueAsNumber: true, 
+            <Controller
+              name="payment_amount"
+              control={control}
+              rules={{
+                required: watchIsPaid && !watchIsFullPayment,
                 max: {
                   value: remainingAmount,
                   message: `المبلغ لا يمكن أن يتجاوز المتبقي وهو ${remainingAmount} ريال`
                 },
                 min: 0.01
-              })}
-              error={errors.payment_amount ? (errors.payment_amount.message || t('payments.amountRequired')) : undefined}
+              }}
+              render={({ field }) => (
+                <NumberInput
+                  label={t('payments.amountLabel')}
+                  name={field.name}
+                  value={field.value || 0}
+                  onChange={field.onChange}
+                  disabled={watchIsFullPayment}
+                  error={errors.payment_amount ? (errors.payment_amount.message || t('payments.amountRequired')) : undefined}
+                />
+              )}
             />
 
             <div className="space-y-2">
@@ -224,9 +231,9 @@ const SubmitForReviewModal = () => {
                 control={control}
                 rules={{ required: watchIsPaid }}
                 render={({ field }) => (
-                  <select 
-                    {...field} 
-                    className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary ${errors.payment_method_id ? 'border-destructive bg-destructive/5' : 'border-border'}`} 
+                  <select
+                    {...field}
+                    className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary ${errors.payment_method_id ? 'border-destructive bg-destructive/5' : 'border-border'}`}
                     disabled={isLoadingMethods}
                   >
                     <option value="">{t('payments.selectMethod')}</option>
@@ -241,37 +248,40 @@ const SubmitForReviewModal = () => {
               )}
             </div>
 
-            <Input 
-              label={t('payments.dateLabel')} 
-              type="date" 
-              {...register('paid_at', { required: watchIsPaid })} 
-              error={errors.paid_at ? t('payments.dateRequired') : undefined} 
+            <DateInput
+              label={t('payments.dateLabel')}
+              name="paid_at"
+              value={watch('paid_at') || ''}
+              onChange={(e) => setValue('paid_at', e.target.value)}
+              error={errors.paid_at ? t('payments.dateRequired') : undefined}
+              required={watchIsPaid}
             />
 
-            <Input 
-              label={t('payments.notesLabel')} 
-              {...register('payment_note')} 
+            <Input
+              label={t('payments.notesLabel')}
+              {...register('payment_note')}
             />
           </div>
         ) : (
           // Due date field for unpaid receivables
-          <Input 
-            label={t('receivables.dueDate')} 
-            type="date" 
-            {...register('due_date')} 
-            error={errors.due_date ? t('receivables.dueDateRequired') : undefined} 
+          <DateInput
+            label={t('receivables.dueDate')}
+            name="due_date"
+            value={watch('due_date') || ''}
+            onChange={(e) => setValue('due_date', e.target.value)}
+            error={errors.due_date ? t('receivables.dueDateRequired') : undefined}
           />
         )}
 
         <div className="flex justify-end gap-2 pt-4 border-t border-border">
-          <Button 
-            type="button" 
-            variant="secondary" 
+          <Button
+            type="button"
+            variant="secondary"
             onClick={closeModal}
           >
             {t('common.cancel')}
           </Button>
-          <Button 
+          <Button
             type="submit"
           >
             {watchIsPaid ? t('tasks.submitForReviewModal.submitWithPayment') : t('tasks.submitForReviewModal.submitWithoutPayment')}

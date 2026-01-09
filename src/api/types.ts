@@ -1406,7 +1406,7 @@ export interface UpdateTransactionPayload {
   transaction_date?: string;
   account_type?: 'client' | 'employee' | 'company';
   account_id?: number;
-  reason: string;
+  reason?: string;
 }
 
 export interface TransactionValidationResult {
@@ -1547,16 +1547,4 @@ export interface InvoiceValidationResult {
       estimated_change: number;
     }>;
   };
-}
-
-// Transaction Management Types
-export interface UpdateTransactionPayload {
-  debit?: number;
-  credit?: number;
-  description?: string;
-
-  transaction_date?: string;
-  account_type?: 'client' | 'employee' | 'company';
-  account_id?: number;
-  reason: string;
 }

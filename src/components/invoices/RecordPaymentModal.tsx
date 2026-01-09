@@ -15,6 +15,8 @@ import { useToast } from '../../hooks/useToast';
 import type { RecordInvoicePaymentPayload, Invoice } from '../../api/types';
 import BaseModal from '../ui/BaseModal';
 import Button from '../ui/Button';
+import { NumberInput } from '../ui/NumberInput';
+import { DateInput } from '../ui/DateInput';
 import Input from '../ui/Input';
 import { AlertCircle, Loader2 } from 'lucide-react';
 import { TOAST_MESSAGES } from '../../constants/toastMessages';
@@ -25,6 +27,7 @@ interface RecordPaymentModalProps {
   amountDue?: number;
   clientId?: number;
   clientName?: string;
+  initialPaymentAmount?: number;
 }
 
 const RecordPaymentModal = () => {
@@ -33,7 +36,7 @@ const RecordPaymentModal = () => {
   const closeModal = useModalStore((state) => state.closeModal);
   const { success } = useToast();
 
-  const { invoiceId, invoice, amountDue, clientName } = props;
+  const { invoiceId, invoice, amountDue, clientName, initialPaymentAmount } = props;
   const targetInvoiceId = invoiceId || invoice?.id;
 
   // Use amountDue from props first (passed from parent), then invoice.remaining_amount, then calculate
@@ -45,7 +48,7 @@ const RecordPaymentModal = () => {
 
   const { handleSubmit, formState: { errors }, control, watch, setValue } = useForm<RecordInvoicePaymentPayload>({
     defaultValues: {
-      amount: Number(remainingAmount) || 0,
+      amount: typeof initialPaymentAmount !== 'undefined' ? Number(initialPaymentAmount) : (Number(remainingAmount) || 0),
       payment_method_id: undefined,
       paid_at: new Date().toISOString().split('T')[0],
       note: '',
@@ -53,12 +56,12 @@ const RecordPaymentModal = () => {
     }
   });
 
-  // Sync form amount when remainingAmount changes (handles async prop updates)
+  // Sync form amount when remainingAmount changes (handles async prop updates) - BUT ONLY if initialPaymentAmount wasn't provided
   useEffect(() => {
-    if (typeof remainingAmount !== 'undefined') {
+    if (typeof remainingAmount !== 'undefined' && typeof initialPaymentAmount === 'undefined') {
       setValue('amount', Number(remainingAmount), { shouldValidate: true, shouldDirty: false });
     }
-  }, [remainingAmount, setValue]);
+  }, [remainingAmount, initialPaymentAmount, setValue]);
 
   const recordPaymentMutation = useRecordInvoicePayment();
   const watchedAmount = watch('amount');
@@ -109,15 +112,17 @@ const RecordPaymentModal = () => {
         {/* Invoice Summary */}
         <div className="invoice-summary mb-4">
           <div className="summary-row">
-            <span className="summary-label">رقم الفاتورة:</span>
-            <span className="summary-value">#{targetInvoiceId}</span>
-          </div>
-          {displayClientName && (
-            <div className="summary-row">
-              <span className="summary-label">العميل:</span>
-              <span className="summary-value">{displayClientName}</span>
+            <div>
+              <span className="summary-label ml-2">رقم الفاتورة:</span>
+              <span className="summary-value">#{targetInvoiceId}</span>
             </div>
-          )}
+            {displayClientName && (
+              <div>
+                <span className="summary-label ml-2">العميل:</span>
+                <span className="summary-value">{displayClientName}</span>
+              </div>
+            )}
+          </div>
           <div className="summary-row highlight">
             <span className="summary-label">المبلغ المتبقي:</span>
             <span className="summary-value text-primary font-bold">
@@ -147,7 +152,12 @@ const RecordPaymentModal = () => {
                       className={`payment-method-card ${field.value === method.id ? 'selected' : ''}`}
                       onClick={() => field.onChange(method.id)}
                     >
-                      <div className="method-label">{method.name}</div>
+                      <div className="method-label">
+                        {method.name === 'بنكي' ? 'تحويل بنكي' :
+                          method.name === 'شبكة' ? 'شبكة بنكية' :
+                            method.name === 'نقد' ? 'دفع نقدي' :
+                              method.name}
+                      </div>
                     </div>
                   ))}
                 </div>
@@ -159,66 +169,74 @@ const RecordPaymentModal = () => {
           )}
         </div>
 
-        {/* Amount Input */}
-        <div className="mb-4">
-          <div className="d-flex justify-content-between align-items-center mb-1">
-            <label className="form-label font-medium mb-0">المبلغ المدفوع</label>
-          </div>
-          <Controller
-            name="amount"
-            control={control}
-            rules={{
-              required: t('common.required'),
-              min: { value: 0.01, message: 'المبلغ يجب أن يكون أكبر من صفر' }
-            }}
-            defaultValue={Number(remainingAmount) || 0}
-            render={({ field }) => (
-              <Input
-                type="number"
-                step="0.01"
-                {...field}
-                value={field.value || ''}
-                onChange={(e) => field.onChange(e.target.value ? Number(e.target.value) : '')}
-                error={errors.amount?.message}
-              />
-            )}
-          />
-
-          {/* Payment Preview */}
-          {watchedAmount > 0 && (
-            <div className={`payment-preview mt-2 ${isOverpayment ? 'warning' : ''}`}>
-              {isOverpayment ? (
-                <div className="preview-item warning">
-                  <AlertCircle size={16} className="ml-1" />
-                  <span>المبلغ أكبر من المطلوب! سيتم إضافة {(watchedAmount - remainingAmount).toFixed(2)} ر.س كرصيد للعميل</span>
-                </div>
-              ) : (
-                <div className="preview-item">
-                  <span>المتبقي بعد الدفع:</span>
-                  <span className={remainingAfterPayment === 0 ? 'text-success font-bold' : ''}>
-                    {remainingAfterPayment === 0 ? 'تم السداد الكامل ✓' : `${remainingAfterPayment.toFixed(2)} ر.س`}
-                  </span>
-                </div>
-              )}
+        {/* Amount and Date Grid */}
+        <div className="grid grid-cols-2 gap-4 mb-4">
+          <div>
+            <div className="d-flex justify-content-between align-items-center mb-1">
+              <label className="form-label font-medium mb-0">المبلغ المدفوع</label>
             </div>
-          )}
-        </div>
-
-        {/* Payment Date */}
-        <Controller
-          name="paid_at"
-          control={control}
-          rules={{ required: t('common.required') }}
-          defaultValue={new Date().toISOString().split('T')[0]}
-          render={({ field }) => (
-            <Input
-              label="تاريخ الدفع"
-              type="date"
-              {...field}
-              error={errors.paid_at?.message}
+            <Controller
+              name="amount"
+              control={control}
+              rules={{
+                required: t('common.required'),
+                min: { value: 0.01, message: 'المبلغ يجب أن يكون أكبر من صفر' }
+              }}
+              defaultValue={Number(remainingAmount) || 0}
+              render={({ field }) => (
+                <NumberInput
+                  name={field.name}
+                  label={<span>المبلغ المطلوب <span className="text-red-500">*</span></span> as any}
+                  value={field.value}
+                  onChange={(e) => {
+                    field.onChange(e.target.value ? Number(e.target.value) : '');
+                  }}
+                  placeholder="0.00"
+                  error={errors.amount?.message}
+                />
+              )}
             />
-          )}
-        />
+            {/* Payment Preview */}
+            {watchedAmount > 0 && (
+              <div className={`payment-preview mt-2 ${isOverpayment ? 'warning' : ''}`}>
+                {isOverpayment ? (
+                  <div className="preview-item warning">
+                    <AlertCircle size={16} className="ml-1" />
+                    <span>المبلغ أكبر من المطلوب! سيتم إضافة {(watchedAmount - remainingAmount).toFixed(2)} ر.س كرصيد للعميل</span>
+                  </div>
+                ) : (
+                  <div className="preview-item">
+                    <span>المتبقي بعد الدفع:</span>
+                    <span className={remainingAfterPayment === 0 ? 'text-success font-bold' : ''}>
+                      {remainingAfterPayment === 0 ? 'تم السداد الكامل ✓' : `${remainingAfterPayment.toFixed(2)} ر.س`}
+                    </span>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+
+          <div>
+            <label className="form-label font-medium mb-1">تاريخ الدفع</label>
+            <Controller
+              name="paid_at"
+              control={control}
+              rules={{ required: t('common.required') }}
+              defaultValue={new Date().toISOString().split('T')[0]}
+              render={({ field }) => (
+                <DateInput
+                  name={field.name}
+                  label="تاريخ الدفع"
+                  value={field.value}
+                  onChange={(e) => {
+                    field.onChange(e.target.value);
+                  }}
+                  error={errors.paid_at?.message}
+                />
+              )}
+            />
+          </div>
+        </div>
 
         {/* Reference Number (for non-cash payments) */}
         {!isCashMethod && selectedMethod && (
@@ -249,8 +267,9 @@ const RecordPaymentModal = () => {
             defaultValue=""
             render={({ field }) => (
               <textarea
-                className="form-control"
-                rows={2}
+                className="form-control w-100"
+                rows={3}
+                style={{ width: '100%', resize: 'vertical' }}
                 placeholder="أي ملاحظات على الدفعة..."
                 {...field}
               />

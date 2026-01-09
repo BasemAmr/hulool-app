@@ -1,12 +1,12 @@
 // src/services/export/TaskExcelGenerator.ts
 import type { Workbook } from 'exceljs';
-import { 
-  setupWorksheet, 
-  addReportHeader, 
-  styles, 
+import {
+  setupWorksheet,
+  addReportHeader,
+  styles,
   taskStatusStyles,
   applyOverdueConditionalFormatting,
-  autoSizeColumns 
+  autoSizeColumns
 } from './excelStyles';
 import type { AllTasksReportData, ExportOptions } from './exportTypes';
 import { formatDateForExcel, formatTaskStatusArabic, formatTaskTypeArabic } from '../../utils/formatUtils';
@@ -16,8 +16,8 @@ import { formatDateForExcel, formatTaskStatusArabic, formatTaskTypeArabic } from
  * Implements "تصدير جميع المهام" specification
  */
 export function generateAllTasksExcel(
-  workbook: Workbook, 
-  data: AllTasksReportData, 
+  workbook: Workbook,
+  data: AllTasksReportData,
   _options?: ExportOptions
 ) {
   const { tasks, summary } = data;
@@ -28,23 +28,23 @@ export function generateAllTasksExcel(
   // Add report header
   const contentStartRow = addReportHeader(worksheet, 'تقرير جميع المهام', 9);
 
-  // Define columns as per specification
+  // Define columns optimized for A4 landscape printing
   worksheet.columns = [
-    { header: 'العميل', key: 'clientName', width: 20 },
-    { header: 'رقم الجوال', key: 'clientPhone', width: 15 },
-    { header: 'الخدمة المقدمة', key: 'serviceName', width: 25 },
-    { header: 'النوع', key: 'taskType', width: 15 },
-    { header: 'الملاحظات', key: 'notes', width: 25 },
-    { header: 'الحالة', key: 'status', width: 12 },
-    { header: 'تاريخ بداية الأمر', key: 'startDate', width: 15 },
-    { header: 'تاريخ الانتهاء', key: 'endDate', width: 15 },
-    { header: 'المبلغ', key: 'amount', width: 15 },
+    { header: 'العميل', key: 'clientName', width: 16 },
+    { header: 'رقم الجوال', key: 'clientPhone', width: 13 },
+    { header: 'الخدمة المقدمة', key: 'serviceName', width: 20 },
+    { header: 'النوع', key: 'taskType', width: 12 },
+    { header: 'الملاحظات', key: 'notes', width: 20 },
+    { header: 'الحالة', key: 'status', width: 10 },
+    { header: 'تاريخ بداية الأمر', key: 'startDate', width: 13 },
+    { header: 'تاريخ الانتهاء', key: 'endDate', width: 13 },
+    { header: 'المبلغ', key: 'amount', width: 12 },
   ];
 
   // Position headers at content start row
   const headerRow = worksheet.getRow(contentStartRow);
   headerRow.values = [
-    'العميل', 'رقم الجوال', 'الخدمة المقدمة', 'النوع', 'الملاحظات', 
+    'العميل', 'رقم الجوال', 'الخدمة المقدمة', 'النوع', 'الملاحظات',
     'الحالة', 'تاريخ بداية الأمر', 'تاريخ الانتهاء', 'المبلغ'
   ];
   headerRow.eachCell(cell => {
@@ -56,10 +56,10 @@ export function generateAllTasksExcel(
   let currentRow = contentStartRow + 1;
   tasks.forEach((task, index) => {
     const row = worksheet.getRow(currentRow);
-    
+
     const statusArabic = formatTaskStatusArabic(task.status);
     const typeArabic = formatTaskTypeArabic(task.type);
-    
+
     row.values = [
       task.client_name || '',
       task.client_phone ? `+966${task.client_phone.replace(/^\+?966/, '')}` : '',
@@ -79,22 +79,22 @@ export function generateAllTasksExcel(
     row.getCell(3).style = styles.dataCell(isEvenRow); // Service name
     row.getCell(4).style = styles.dataCellCenter(isEvenRow); // Type
     row.getCell(5).style = { ...styles.dataCell(isEvenRow), alignment: { ...styles.dataCell(isEvenRow).alignment, wrapText: true } }; // Notes
-    
+
     // Status cell with conditional formatting
     const statusCell = row.getCell(6);
     const statusStyle = taskStatusStyles[statusArabic as keyof typeof taskStatusStyles];
     statusCell.style = { ...styles.dataCellCenter(isEvenRow), ...(statusStyle || {}) };
-    
+
     // Date cells
     row.getCell(7).style = { ...styles.dataCellCenter(isEvenRow), ...styles.dateFormat };
     const endDateCell = row.getCell(8);
     endDateCell.style = { ...styles.dataCellCenter(isEvenRow), ...styles.dateFormat };
-    
+
     // Apply overdue formatting if applicable
     if (task.end_date && task.is_overdue) {
       applyOverdueConditionalFormatting(endDateCell, task.end_date, task.status);
     }
-    
+
     // Amount cell
     row.getCell(9).style = { ...styles.dataCellCenter(isEvenRow), ...styles.currency };
 
@@ -128,7 +128,7 @@ export function generateAllTasksExcel(
   summaryItems.forEach(([label, value]) => {
     const summaryRow = worksheet.addRow(['', '', '', '', '', '', '', label, value]);
     summaryRow.getCell(8).style = styles.totalLabel;
-    
+
     if (typeof value === 'number' && (label.toString().includes('مبلغ') || label.toString().includes('مدفوع') || label.toString().includes('متبقي'))) {
       summaryRow.getCell(9).style = styles.totalValue();
     } else {

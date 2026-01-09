@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
-// import { useTranslation } from 'react-i18next';
+import { useTranslation } from 'react-i18next';
 import { useModalStore } from '../../stores/modalStore';
 import { useRecordClientCredit } from '../../queries/clientCreditQueries';
 import { useGetPaymentMethods } from '../../queries/paymentQueries';
@@ -10,16 +10,19 @@ import { TOAST_MESSAGES } from '../../constants/toastMessages';
 import { getErrorMessage } from '../../utils/errorUtils';
 import BaseModal from '../ui/BaseModal';
 import Button from '../ui/Button';
+import { NumberInput } from '../ui/NumberInput';
 import Input from '../ui/Input';
+import SaudiRiyalIcon from '../ui/SaudiRiyalIcon';
 import ClientSearchCompact from '../shared/ClientSearchCompact';
 import type { Client, RecordCreditPayload } from '../../api/types';
 
 const RecordCreditModal = () => {
-//   const { t } = useTranslation();
+  const { t } = useTranslation();
   const closeModal = useModalStore(state => state.closeModal);
   const props = useModalStore(state => state.props as { client?: Client });
   const { success, error } = useToast();
   const [selectedClient, setSelectedClient] = useState<Client | null>(props.client || null);
+  const [amount, setAmount] = useState<string>('');
   const { register, handleSubmit, formState: { errors }, setValue } = useForm<RecordCreditPayload>();
   const recordCreditMutation = useRecordClientCredit();
   const { data: paymentMethods } = useGetPaymentMethods();
@@ -62,11 +65,15 @@ const RecordCreditModal = () => {
               </p>
               <Button variant="secondary" size="sm" onClick={() => setSelectedClient(null)}>تغيير</Button>
             </div>
-            <Input
-              label="المبلغ"
-              type="number"
-              step="0.01"
-              {...register('amount', { required: true, valueAsNumber: true })}
+            <NumberInput
+              name="amount"
+              label={<span>{t('credits.amount')} <span className="text-red-500">*</span></span> as any}
+              value={amount}
+              onChange={(e) => {
+                setAmount(e.target.value);
+                setValue('amount', Number(e.target.value), { shouldValidate: true });
+              }}
+              placeholder="0.00"
               error={errors.amount && "المبلغ مطلوب"}
             />
             <Input
@@ -81,12 +88,12 @@ const RecordCreditModal = () => {
               {...register('received_at', { required: true })}
               error={errors.received_at && "التاريخ مطلوب"}
             />
-             <div className="space-y-2">
+            <div className="space-y-2">
               <label className="font-medium text-sm text-black block">طريقة الدفع</label>
-              <select 
-                {...register('payment_method_id', { 
-                  setValueAs: (v) => v === '' ? undefined : Number(v) 
-                })} 
+              <select
+                {...register('payment_method_id', {
+                  setValueAs: (v) => v === '' ? undefined : Number(v)
+                })}
                 className="w-full px-3 py-2 border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-primary text-black"
               >
                 <option value="">اختر طريقة الدفع</option>

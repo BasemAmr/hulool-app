@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import BaseModal from '../ui/BaseModal';
 import Button from '../ui/Button';
+import { NumberInput } from '../ui/NumberInput';
+import { DateInput } from '../ui/DateInput';
 import { useUpdateTransaction, useValidateTransactionEdit } from '../../queries/transactionQueries';
 import { useToast } from '../../hooks/useToast';
 import ValidationPreviewModal from './ValidationPreviewModal';
@@ -56,14 +58,15 @@ const TransactionEditModal: React.FC<TransactionEditModalProps> = ({
   };
 
   const handlePreview = async () => {
-    if (!formData.reason) {
-      error(TOAST_MESSAGES.VALIDATION_ERROR, 'سبب التعديل مطلوب');
-      return;
-    }
+    // Auto-generate reason if not provided
+    const payload = {
+      ...formData,
+      reason: formData.reason || `تعديل المعاملة #${transaction.id}`
+    };
     try {
       const result = await validateTransaction.mutateAsync({
         id: transaction.id,
-        payload: formData
+        payload
       });
       setValidationResult(result);
       setShowPreview(true);
@@ -73,10 +76,15 @@ const TransactionEditModal: React.FC<TransactionEditModalProps> = ({
   };
 
   const handleConfirm = async () => {
+    // Auto-generate reason if not provided
+    const payload = {
+      ...formData,
+      reason: formData.reason || `تعديل المعاملة #${transaction.id}`
+    };
     try {
       await updateTransaction.mutateAsync({
         id: transaction.id,
-        payload: formData
+        payload
       });
       success(TOAST_MESSAGES.TRANSACTION_UPDATED);
       onClose();
@@ -109,24 +117,22 @@ const TransactionEditModal: React.FC<TransactionEditModalProps> = ({
       <div className="space-y-4 dir-rtl" dir="rtl">
         <div className="grid grid-cols-2 gap-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700">مدين</label>
-            <input
-              type="number"
+            <NumberInput
               name="debit"
-              value={formData.debit}
+              value={formData.debit || 0}
               onChange={handleChange}
-              className="mt-1 block w-full border rounded-md shadow-sm p-2"
+              label="مدين"
+              className="mt-1"
               disabled={formData.credit! > 0}
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700">دائن</label>
-            <input
-              type="number"
+            <NumberInput
               name="credit"
-              value={formData.credit}
+              value={formData.credit || 0}
               onChange={handleChange}
-              className="mt-1 block w-full border rounded-md shadow-sm p-2"
+              label="دائن"
+              className="mt-1"
               disabled={formData.debit! > 0}
             />
           </div>
@@ -144,18 +150,17 @@ const TransactionEditModal: React.FC<TransactionEditModalProps> = ({
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700">التاريخ</label>
-          <input
-            type="date"
+          <DateInput
             name="transaction_date"
-            value={formData.transaction_date}
+            value={formData.transaction_date || ''}
             onChange={handleChange}
-            className="mt-1 block w-full border rounded-md shadow-sm p-2"
+            label="التاريخ"
+            className="mt-1"
           />
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700">سبب التعديل <span className="text-red-500">*</span></label>
+          <label className="block text-sm font-medium text-gray-700">سبب التعديل (اختياري)</label>
           <textarea
             name="reason"
             value={formData.reason}

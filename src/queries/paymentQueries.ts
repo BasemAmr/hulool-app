@@ -74,7 +74,11 @@ export const useCreatePayment = () => {
       // Invalidate the specific receivable's payments for its history modal
       queryClient.invalidateQueries({ queryKey: ['payments', newPayment.receivable_id] });
       queryClient.invalidateQueries({ queryKey: ['receivables', 'client', newPayment.client_id] }); // Invalidate client statement
-      
+
+      // Invalidate account ledger queries (AccountLedgerTable)
+      queryClient.invalidateQueries({ queryKey: ['account'] });
+      queryClient.invalidateQueries({ queryKey: ['invoices'] });
+
       // Employee-related invalidations
       queryClient.invalidateQueries({ queryKey: ['employee'] });
       queryClient.invalidateQueries({ queryKey: ['employees'] });
@@ -96,7 +100,11 @@ export const useUpdatePayment = () => {
       // Invalidate the specific receivable's payments
       queryClient.invalidateQueries({ queryKey: ['payments', updatedPayment.receivable_id] });
       queryClient.invalidateQueries({ queryKey: ['receivables', 'client', updatedPayment.client_id] });
-      
+
+      // Invalidate account ledger queries (AccountLedgerTable)
+      queryClient.invalidateQueries({ queryKey: ['account'] });
+      queryClient.invalidateQueries({ queryKey: ['invoices'] });
+
       // Employee-related invalidations
       queryClient.invalidateQueries({ queryKey: ['employee'] });
       queryClient.invalidateQueries({ queryKey: ['employees'] });
@@ -119,7 +127,11 @@ export const useDeletePayment = () => {
       // So we'll invalidate all payment-related queries
       queryClient.invalidateQueries({ queryKey: ['payments'] });
       queryClient.invalidateQueries({ queryKey: ['receivables', 'client'] });
-      
+
+      // Invalidate account ledger queries (AccountLedgerTable)
+      queryClient.invalidateQueries({ queryKey: ['account'] });
+      queryClient.invalidateQueries({ queryKey: ['invoices'] });
+
       // Employee-related invalidations
       queryClient.invalidateQueries({ queryKey: ['employee'] });
       queryClient.invalidateQueries({ queryKey: ['employees'] });
@@ -128,12 +140,12 @@ export const useDeletePayment = () => {
 };
 
 export const useGetReceivablePayments = (receivableId: number, initialData?: Payment[]) => {
-    return useQuery({
-        queryKey: ['payments', receivableId],
-        queryFn: () => fetchReceivablePayments(receivableId),
-        enabled: !!receivableId,
-        staleTime: 0, // Always refetch when this hook is active (e.g., modal opens)
-        // refetchOnWindowFocus: false (inherited, but staleTime 0 makes it refetch on mount anyway)
-        initialData: initialData, // Use initialData for immediate display
-    });
+  return useQuery({
+    queryKey: ['payments', receivableId],
+    queryFn: () => fetchReceivablePayments(receivableId),
+    enabled: !!receivableId,
+    staleTime: 0, // Always refetch when this hook is active (e.g., modal opens)
+    // refetchOnWindowFocus: false (inherited, but staleTime 0 makes it refetch on mount anyway)
+    initialData: initialData, // Use initialData for immediate display
+  });
 };

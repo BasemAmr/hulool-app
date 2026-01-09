@@ -5,6 +5,8 @@ import { useModalStore } from '../../stores/modalStore';
 import Button from '../ui/Button';
 import BaseModal from '../ui/BaseModal';
 import { formatDate } from '../../utils/dateUtils';
+import { NumberInput } from '../ui/NumberInput';
+import { useTranslation } from 'react-i18next';
 
 interface SelectReceivableForPaymentModalProps {
   isOpen: boolean;
@@ -15,6 +17,8 @@ interface SelectReceivableForPaymentModalProps {
 const SelectReceivableForPaymentModal = ({ isOpen, onClose, clientId }: SelectReceivableForPaymentModalProps) => {
   const openModal = useModalStore((state) => state.openModal);
   const [selectedInvoiceId, setSelectedInvoiceId] = useState<number | null>(null);
+  const [paymentAmount, setPaymentAmount] = useState<number>(0);
+  const { t } = useTranslation();
 
   // Handle Escape key
   useEffect(() => {
@@ -38,20 +42,30 @@ const SelectReceivableForPaymentModal = ({ isOpen, onClose, clientId }: SelectRe
   useEffect(() => {
     if (!isOpen) {
       setSelectedInvoiceId(null);
+      setPaymentAmount(0); // Reset payment amount when modal closes
     }
   }, [isOpen]);
+
+  useEffect(() => {
+    if (selectedInvoice) {
+      setPaymentAmount(selectedInvoice.remaining_amount); // Set default payment amount to remaining
+    } else {
+      setPaymentAmount(0);
+    }
+  }, [selectedInvoice]);
 
   const handleInvoiceSelect = (invoiceId: number) => {
     setSelectedInvoiceId(invoiceId);
   };
 
   const handleProceedToPayment = () => {
-    if (selectedInvoice) {
+    if (selectedInvoice && paymentAmount > 0) {
       onClose();
       // Open the invoice payment modal with correct data structure
       openModal('recordPayment', {
         invoice: selectedInvoice,
-        invoiceId: selectedInvoice.id
+        invoiceId: selectedInvoice.id,
+        initialPaymentAmount: paymentAmount, // Pass the selected payment amount
       });
     }
   };
@@ -88,8 +102,8 @@ const SelectReceivableForPaymentModal = ({ isOpen, onClose, clientId }: SelectRe
                 <div
                   key={invoice.id}
                   className={`p-4 rounded-lg border cursor-pointer transition-colors ${selectedInvoiceId === invoice.id
-                    ? 'border-primary bg-primary/5'
-                    : 'border-border hover:bg-muted/50'
+                      ? 'border-primary bg-primary/5'
+                      : 'border-border hover:bg-muted/50'
                     }`}
                   onClick={() => handleInvoiceSelect(Number(invoice.id))}
                 >
@@ -98,8 +112,8 @@ const SelectReceivableForPaymentModal = ({ isOpen, onClose, clientId }: SelectRe
                       <div className="flex items-center gap-2">
                         <span className="font-bold text-sm">#{invoice.invoice_number}</span>
                         <span className={`text-xs px-2 py-0.5 rounded-full ${invoice.status === 'paid' ? 'bg-green-100 text-green-700' :
-                          invoice.status === 'partially_paid' ? 'bg-yellow-100 text-yellow-700' :
-                            'bg-red-100 text-red-700'
+                            invoice.status === 'partially_paid' ? 'bg-yellow-100 text-yellow-700' :
+                              'bg-red-100 text-red-700'
                           }`}>
                           {invoice.status === 'paid' ? 'مدفوعة' :
                             invoice.status === 'partially_paid' ? 'مدفوعة جزئياً' : 'غير مدفوعة'}
@@ -128,6 +142,18 @@ const SelectReceivableForPaymentModal = ({ isOpen, onClose, clientId }: SelectRe
           </div>
         )}
 
+        {selectedInvoice && (
+          <div className="mb-4">
+            <NumberInput
+              name="payment_amount"
+              label={t('receivables.paymentAmount')}
+              value={paymentAmount}
+              onChange={(e) => setPaymentAmount(Number(e.target.value))}
+              max={selectedInvoice.remaining_amount}
+            />
+          </div>
+        )}
+
         <div className="flex justify-end gap-2 pt-4 border-t border-border">
           <Button variant="secondary" onClick={onClose}>
             إلغاء
@@ -135,7 +161,7 @@ const SelectReceivableForPaymentModal = ({ isOpen, onClose, clientId }: SelectRe
           <Button
             variant="primary"
             onClick={handleProceedToPayment}
-            disabled={!selectedInvoiceId}
+            disabled={!selectedInvoiceId || paymentAmount <= 0 || paymentAmount > (selectedInvoice?.remaining_amount || 0)}
           >
             <CreditCard size={16} className="mr-2" />
             متابعة للسداد

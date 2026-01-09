@@ -44,7 +44,7 @@ export const useGetPendingItems = (filters?: {
       if (filters?.status) params.append('status', filters.status);
       if (filters?.account_type) params.append('account_type', filters.account_type);
       if (filters?.account_id) params.append('account_id', String(filters.account_id));
-      
+
       const { data } = await apiClient.get<PendingItemsResponse>(
         `/pending-items${params.toString() ? `?${params.toString()}` : ''}`
       );
@@ -88,7 +88,7 @@ export const useGetMyPendingItems = () => {
  */
 export const useCreatePendingItem = () => {
   const queryClient = useQueryClient();
-  
+
   return useMutation({
     mutationFn: async (payload: CreatePendingItemPayload) => {
       const { data } = await apiClient.post<ApiResponse<PendingItem>>(
@@ -108,7 +108,7 @@ export const useCreatePendingItem = () => {
  */
 export const useApprovePendingItem = () => {
   const queryClient = useQueryClient();
-  
+
   return useMutation({
     mutationFn: async ({ id, finalAmount }: { id: number; finalAmount?: number }) => {
       const { data } = await apiClient.post<ApiResponse<PendingItem>>(
@@ -129,7 +129,7 @@ export const useApprovePendingItem = () => {
  */
 export const useRejectPendingItem = () => {
   const queryClient = useQueryClient();
-  
+
   return useMutation({
     mutationFn: async ({ id, reason }: { id: number; reason?: string }) => {
       const { data } = await apiClient.post<ApiResponse<PendingItem>>(
@@ -149,7 +149,7 @@ export const useRejectPendingItem = () => {
  */
 export const useBulkApprovePendingItems = () => {
   const queryClient = useQueryClient();
-  
+
   return useMutation({
     mutationFn: async (ids: number[]) => {
       const { data } = await apiClient.post<ApiResponse<{ approved: number; failed: number }>>(
@@ -190,7 +190,7 @@ export const useGetAccountsByType = (
       if (filters?.search) params.append('search', filters.search);
       if (filters?.page) params.append('page', String(filters.page));
       if (filters?.per_page) params.append('per_page', String(filters.per_page));
-      
+
       const { data } = await apiClient.get<UnifiedAccountsResponse>(
         `/accounts?${params.toString()}`
       );
@@ -218,7 +218,7 @@ export const useGetUnifiedAccounts = (filters?: {
       if (filters?.search) params.append('search', filters.search);
       if (filters?.page) params.append('page', filters.page.toString());
       if (filters?.per_page) params.append('per_page', filters.per_page.toString());
-      
+
       const { data } = await apiClient.get<UnifiedAccountsResponse>(
         `/accounts${params.toString() ? `?${params.toString()}` : ''}`
       );
@@ -236,7 +236,7 @@ export const useGetUnifiedAccounts = (filters?: {
  */
 export const useCreateManualTransaction = () => {
   const queryClient = useQueryClient();
-  
+
   return useMutation({
     mutationFn: async (payload: CreateManualTransactionPayload) => {
       const { data } = await apiClient.post<ApiResponse<any>>(
@@ -246,8 +246,13 @@ export const useCreateManualTransaction = () => {
       return data.data;
     },
     onSuccess: () => {
+      // Invalidate all account-related queries
+      queryClient.invalidateQueries({ queryKey: ['account'] }); // ← CRITICAL: AccountLedgerTable uses ['account', 'client', id, 'history']
       queryClient.invalidateQueries({ queryKey: ['accounts'] });
       queryClient.invalidateQueries({ queryKey: ['transactions'] });
+      queryClient.invalidateQueries({ queryKey: ['invoices'] });
+      queryClient.invalidateQueries({ queryKey: ['clients'] });
+      queryClient.invalidateQueries({ queryKey: ['dashboard'] });
     },
   });
 };
@@ -271,7 +276,7 @@ export const useGetInvoiceAgingAnalysis = (filters?: {
       if (filters?.start_date) params.append('start_date', filters.start_date);
       if (filters?.end_date) params.append('end_date', filters.end_date);
       if (filters?.client_id) params.append('client_id', String(filters.client_id));
-      
+
       const { data } = await apiClient.get<ApiResponse<InvoiceAgingAnalysis>>(
         `/invoices/aging-analysis${params.toString() ? `?${params.toString()}` : ''}`
       );

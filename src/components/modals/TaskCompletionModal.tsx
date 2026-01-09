@@ -11,6 +11,8 @@ import { TOAST_MESSAGES } from '../../constants/toastMessages';
 import BaseModal from '../ui/BaseModal';
 import Button from '../ui/Button';
 import Input from '../ui/Input';
+import { NumberInput } from '../ui/NumberInput';
+import { DateInput } from '../ui/DateInput';
 
 interface TaskCompletionModalProps {
   task: Task;
@@ -182,22 +184,27 @@ const TaskCompletionModal = () => {
               </label>
             </div>
 
-            <Input
-              label={t('payments.amountLabel')}
-              type="number"
-              step="0.01"
-              max={remainingAmount}
-              disabled={watchIsFullPayment}
-              {...register('payment_amount', {
+            <Controller
+              name="payment_amount"
+              control={control}
+              rules={{
                 required: watchIsPaid && !watchIsFullPayment,
-                valueAsNumber: true,
                 max: {
                   value: remainingAmount,
                   message: `المبلغ لا يمكن أن يتجاوز المتبقي وهو ${remainingAmount} ريال`
                 },
                 min: 0.01
-              })}
-              error={errors.payment_amount ? (errors.payment_amount.message || t('payments.amountRequired')) : undefined}
+              }}
+              render={({ field }) => (
+                <NumberInput
+                  label={t('payments.amountLabel')}
+                  name={field.name}
+                  value={field.value || 0}
+                  onChange={field.onChange}
+                  disabled={watchIsFullPayment}
+                  error={errors.payment_amount ? (errors.payment_amount.message || t('payments.amountRequired')) : undefined}
+                />
+              )}
             />
 
             <div className="space-y-2">
@@ -224,11 +231,13 @@ const TaskCompletionModal = () => {
               )}
             </div>
 
-            <Input
+            <DateInput
               label={t('payments.dateLabel')}
-              type="date"
-              {...register('paid_at', { required: watchIsPaid })}
+              name="paid_at"
+              value={watch('paid_at') || ''}
+              onChange={(e) => setValue('paid_at', e.target.value)}
               error={errors.paid_at ? t('payments.dateRequired') : undefined}
+              required={watchIsPaid}
             />
 
             <Input
@@ -238,10 +247,11 @@ const TaskCompletionModal = () => {
           </div>
         ) : (
           // Due date field for unpaid tasks
-          <Input
+          <DateInput
             label={t('receivables.dueDate')}
-            type="date"
-            {...register('due_date')}
+            name="due_date"
+            value={watch('due_date') || ''}
+            onChange={(e) => setValue('due_date', e.target.value)}
             error={errors.due_date ? t('receivables.dueDateRequired') : undefined}
           />
         )}

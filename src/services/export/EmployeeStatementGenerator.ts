@@ -51,13 +51,13 @@ export function generateEmployeeStatementExcel(
     });
     headerRow.height = 25;
 
-    // Set column widths
-    worksheet.getColumn(1).width = 25; // Client name
-    worksheet.getColumn(2).width = 35; // Description
-    worksheet.getColumn(3).width = 15; // Debit
-    worksheet.getColumn(4).width = 15; // Credit
-    worksheet.getColumn(5).width = 15; // Balance
-    worksheet.getColumn(6).width = 15; // Date
+    // Set column widths optimized for A4 landscape printing
+    worksheet.getColumn(1).width = 18; // Client name
+    worksheet.getColumn(2).width = 28; // Description
+    worksheet.getColumn(3).width = 12; // Debit
+    worksheet.getColumn(4).width = 12; // Credit
+    worksheet.getColumn(5).width = 12; // Balance
+    worksheet.getColumn(6).width = 12; // Date
 
     let currentRow = tableStartRow + 1;
 

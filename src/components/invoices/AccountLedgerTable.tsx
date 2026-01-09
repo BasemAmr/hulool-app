@@ -10,16 +10,16 @@
 
 import React, { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import type { 
-  FinancialTransaction, 
+import type {
+  FinancialTransaction,
   Client,
   Invoice
 } from '../../api/types';
 import TransactionEditModal from '../modals/TransactionEditModal';
 import TransactionDeleteModal from '../modals/TransactionDeleteModal';
 import InvoiceEditModal from '../modals/InvoiceEditModal';
-import { 
-  CreditCard, 
+import {
+  CreditCard,
   Receipt,
   ArrowDownLeft,
   RefreshCw,
@@ -60,8 +60,8 @@ const getDebitAmount = (tx: FinancialTransaction): number => {
     const parsed = parseFloat(debit);
     return isNaN(parsed) ? 0 : parsed;
   }
-  const isDebit = tx.direction === 'debit' || 
-    tx.transaction_type === 'INVOICE_CREATED' || 
+  const isDebit = tx.direction === 'debit' ||
+    tx.transaction_type === 'INVOICE_CREATED' ||
     tx.transaction_type === 'INVOICE_GENERATED';
   return isDebit ? (typeof tx.amount === 'string' ? parseFloat(tx.amount) : tx.amount) : 0;
 };
@@ -72,8 +72,8 @@ const getCreditAmount = (tx: FinancialTransaction): number => {
     const parsed = parseFloat(credit);
     return isNaN(parsed) ? 0 : parsed;
   }
-  const isDebit = tx.direction === 'debit' || 
-    tx.transaction_type === 'INVOICE_CREATED' || 
+  const isDebit = tx.direction === 'debit' ||
+    tx.transaction_type === 'INVOICE_CREATED' ||
     tx.transaction_type === 'INVOICE_GENERATED';
   return !isDebit ? (typeof tx.amount === 'string' ? parseFloat(tx.amount) : tx.amount) : 0;
 };
@@ -183,6 +183,8 @@ const TypeBadgeCell = React.memo(({ rowData }: CellProps<FinancialTransaction>) 
     'ADJUSTMENT': { bg: '#fef9c3', text: '#a16207', label: 'تعديل' },
     'REVERSAL': { bg: '#ffedd5', text: '#c2410c', label: 'عكس' },
     'INVOICE_REVERSED': { bg: '#ffedd5', text: '#c2410c', label: 'فاتورة ملغاة' },
+    'PAYOUT': { bg: '#fee2e2', text: '#b91c1c', label: 'سند صرف' },
+    'REPAYMENT': { bg: '#dcfce7', text: '#15803d', label: 'سند قبض' },
   };
 
   const badge = badges[rowData.transaction_type] || { bg: '#f3f4f6', text: '#4b5563', label: rowData.transaction_type };
@@ -222,10 +224,10 @@ const ActionsCell = React.memo(({ rowData, columnData }: CellProps<FinancialTran
   const handlePayInvoice = (e: React.MouseEvent) => {
     e.stopPropagation();
     e.preventDefault();
-    
+
     const relatedId = rowData.related_object_id ?? (rowData as any).related_id;
     const invoice = payableMap?.get(String(relatedId));
-    
+
     if (invoice && client) {
       openModal?.('recordPayment', { invoice, clientName: client.name });
     } else if (client) {
@@ -263,11 +265,11 @@ const ActionsCell = React.memo(({ rowData, columnData }: CellProps<FinancialTran
   };
 
   return (
-    <div 
-      style={{ 
-        display: 'flex', 
-        justifyContent: 'center', 
-        alignItems: 'center', 
+    <div
+      style={{
+        display: 'flex',
+        justifyContent: 'center',
+        alignItems: 'center',
         height: '100%',
         pointerEvents: 'auto',
         gap: '4px'
@@ -317,14 +319,14 @@ const AccountLedgerTable: React.FC<AccountLedgerTableProps> = ({
   const [modalType, setModalType] = React.useState<'editTx' | 'deleteTx' | 'editInv' | null>(null);
 
   // Fetch account data
-  const { 
-    data: historyData, 
+  const {
+    data: historyData,
     isLoading: isLoadingHistory,
-    error: historyError 
+    error: historyError
   } = useGetAccountHistory('client', client.id);
 
-  const { 
-    data: payableInvoices 
+  const {
+    data: payableInvoices
   } = useGetPayableInvoices(client.id);
 
   const isLoading = isLoadingHistory;
@@ -332,7 +334,7 @@ const AccountLedgerTable: React.FC<AccountLedgerTableProps> = ({
   // Filter transactions
   const filteredTransactions = useMemo(() => {
     if (!historyData?.transactions) return [];
-    
+
     return historyData.transactions.filter(tx => {
       switch (filter) {
         case 'invoices':
@@ -372,14 +374,14 @@ const AccountLedgerTable: React.FC<AccountLedgerTableProps> = ({
       const relatedId = tx.related_object_id ?? (tx as any).related_id ?? (tx as any).related_object_reference;
       const relatedType = String(tx.related_object_type ?? '').toLowerCase();
       const key = String(relatedId ?? '');
-      
-      const isInvoiceType = 
-        tx.transaction_type === 'INVOICE_CREATED' || 
+
+      const isInvoiceType =
+        tx.transaction_type === 'INVOICE_CREATED' ||
         tx.transaction_type === 'INVOICE_GENERATED';
-        
-      const isPayable = isInvoiceType && 
-                        relatedType === 'invoice' && 
-                        payableMap.has(key);
+
+      const isPayable = isInvoiceType &&
+        relatedType === 'invoice' &&
+        payableMap.has(key);
 
       return { ...tx, is_payable: isPayable };
     });
@@ -459,9 +461,9 @@ const AccountLedgerTable: React.FC<AccountLedgerTableProps> = ({
       title: 'الإجراءات',
       type: 'custom',
       component: ActionsCell as React.ComponentType<CellProps<FinancialTransaction>>,
-      columnData: { 
-        client, 
-        payableMap, 
+      columnData: {
+        client,
+        payableMap,
         openModal,
         onEditTx: (tx: any) => { setSelectedTransaction(tx); setModalType('editTx'); },
         onDeleteTx: (tx: any) => { setSelectedTransaction(tx); setModalType('deleteTx'); },

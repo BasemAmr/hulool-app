@@ -369,6 +369,7 @@ export const useUpdateTask = () => {
       // Invalidate new Invoice/Ledger system queries
       queryClient.invalidateQueries({ queryKey: ['invoices'] });
       queryClient.invalidateQueries({ queryKey: ['invoices', 'client', updatedTask.client.id] });
+      queryClient.invalidateQueries({ queryKey: ['account'] }); // ← General invalidation for AccountLedgerTable
       queryClient.invalidateQueries({ queryKey: ['account', 'client', updatedTask.client.id] });
       queryClient.invalidateQueries({ queryKey: ['account', 'clients'] });
 

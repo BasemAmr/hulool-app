@@ -1,6 +1,7 @@
-import { useFieldArray, type Control, type UseFormRegister, useWatch } from 'react-hook-form';
+import { useFieldArray, type Control, type UseFormRegister, useWatch, Controller } from 'react-hook-form';
 import { XCircle, PlusCircle } from 'lucide-react';
 import Button from '../ui/Button';
+import { NumberInput } from '../ui/NumberInput';
 
 interface AmountDetailsInputProps {
   control: Control<any>;
@@ -43,13 +44,19 @@ const AmountDetailsInput = ({ control, register, totalAmount }: AmountDetailsInp
                 className="base-input"
                 placeholder={`وصف البند ${index + 1}`}
               />
-              <input
-                {...register(`amount_details.${index}.amount`, { valueAsNumber: true })}
-                type="number"
-                step="0.01"
-                className="base-input"
-                placeholder="المبلغ"
-                style={{ width: '120px' }}
+              <Controller
+                control={control}
+                name={`amount_details.${index}.amount`}
+                render={({ field }) => (
+                  <NumberInput
+                    name={field.name}
+                    value={field.value}
+                    onChange={(e) => field.onChange(Number(e.target.value))}
+                    placeholder="المبلغ"
+                    style={{ width: '120px' }}
+                    className="mb-0"
+                  />
+                )}
               />
               <Button type="button" variant="danger" size="sm" onClick={() => remove(index)}>
                 <XCircle size={16} />
@@ -61,8 +68,8 @@ const AmountDetailsInput = ({ control, register, totalAmount }: AmountDetailsInp
 
       {fields.length > 0 && (
         <div className="p-2 rounded-md text-sm bg-blue-50 border border-blue-200 text-blue-800">
-          المبلغ الإجمالي: {totalAmount.toLocaleString()} | 
-          مجموع التفاصيل: {currentDetailsSum.toLocaleString()} | 
+          المبلغ الإجمالي: {totalAmount.toLocaleString()} |
+          مجموع التفاصيل: {currentDetailsSum.toLocaleString()} |
           المتبقي للتفصيل: <span className="font-bold">{remainingAmount.toLocaleString()}</span>
         </div>
       )}

@@ -20,10 +20,12 @@ const InvoiceCancelModal: React.FC<InvoiceCancelModalProps> = ({
   const [reason, setReason] = useState('');
 
   const handleCancel = async () => {
+    // Auto-generate reason if not provided
+    const cancelReason = reason || `إلغاء الفاتورة #${invoice.id}`;
     try {
       await cancelInvoice.mutateAsync({
         id: invoice.id,
-        reason
+        reason: cancelReason
       });
       success('Invoice cancelled successfully');
       onClose();
@@ -68,8 +70,8 @@ const InvoiceCancelModal: React.FC<InvoiceCancelModalProps> = ({
           <Button variant="secondary" onClick={onClose}>
             Cancel
           </Button>
-          <Button 
-            variant="danger" 
+          <Button
+            variant="danger"
             onClick={handleCancel}
             isLoading={cancelInvoice.isPending}
           >

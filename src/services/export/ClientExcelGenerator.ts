@@ -1,11 +1,11 @@
 // src/services/export/ClientExcelGenerator.ts
 import type { Workbook } from 'exceljs';
-import { 
-  setupWorksheet, 
-  addReportHeader, 
-  styles, 
+import {
+  setupWorksheet,
+  addReportHeader,
+  styles,
   applyReceivablesConditionalFormatting,
-  autoSizeColumns 
+  autoSizeColumns
 } from './excelStyles';
 import type { AllClientsReportData, ExportOptions } from './exportTypes';
 
@@ -14,8 +14,8 @@ import type { AllClientsReportData, ExportOptions } from './exportTypes';
  * Implements "تصدير جميع العملاء" specification
  */
 export function generateAllClientsExcel(
-  workbook: Workbook, 
-  data: AllClientsReportData, 
+  workbook: Workbook,
+  data: AllClientsReportData,
   _options?: ExportOptions
 ) {
   const { clients, summary } = data;
@@ -26,13 +26,13 @@ export function generateAllClientsExcel(
   // Add report header
   const contentStartRow = addReportHeader(worksheet, 'تقرير جميع العملاء', 5);
 
-  // Define columns as per specification
+  // Define columns optimized for A4 landscape printing
   worksheet.columns = [
-    { header: 'اسم العميل', key: 'clientName', width: 25 },
-    { header: 'رقم الهاتف', key: 'phoneNumber', width: 15 },
-    { header: 'المنطقة', key: 'clientRegion', width: 15 },
-    { header: 'الملاحظات', key: 'notes', width: 30 },
-    { header: 'المستحقات', key: 'receivables', width: 15 },
+    { header: 'اسم العميل', key: 'clientName', width: 20 },
+    { header: 'رقم الهاتف', key: 'phoneNumber', width: 13 },
+    { header: 'المنطقة', key: 'clientRegion', width: 12 },
+    { header: 'الملاحظات', key: 'notes', width: 24 },
+    { header: 'المستحقات', key: 'receivables', width: 12 },
   ];
 
   // Position headers at content start row
@@ -47,7 +47,7 @@ export function generateAllClientsExcel(
   let currentRow = contentStartRow + 1;
   clients.forEach((client, index) => {
     const row = worksheet.getRow(currentRow);
-    
+
     row.values = [
       client.name || '',
       client.phone ? `+966${client.phone.replace(/^\+?966/, '')}` : '', // Ensure +966 prefix
@@ -92,7 +92,7 @@ export function generateAllClientsExcel(
   summaryItems.forEach(([label, value]) => {
     const summaryRow = worksheet.addRow(['', '', '', label, value]);
     summaryRow.getCell(4).style = styles.totalLabel;
-    
+
     if (typeof value === 'number' && label.toString().includes('مبلغ') || label.toString().includes('رصيد') || label.toString().includes('مستحقات')) {
       summaryRow.getCell(5).style = styles.totalValue();
       if (label.toString().includes('رصيد') && typeof value === 'number') {
@@ -117,19 +117,19 @@ export function generateAllClientsExcel(
   autoSizeColumns(worksheet);
 
   // Data validation for client type column (as per specification)
-//   const clientTypeValidation = {
-//     type: 'list' as const,
-//     allowBlank: false,
-//     formulae: ['"عادي,مميز,VIP,شركة"'],
-//     showErrorMessage: true,
-//     errorTitle: 'نوع العميل غير صحيح',
-//     error: 'يرجى اختيار نوع العميل من القائمة المحددة'
-//   };
+  //   const clientTypeValidation = {
+  //     type: 'list' as const,
+  //     allowBlank: false,
+  //     formulae: ['"عادي,مميز,VIP,شركة"'],
+  //     showErrorMessage: true,
+  //     errorTitle: 'نوع العميل غير صحيح',
+  //     error: 'يرجى اختيار نوع العميل من القائمة المحددة'
+  //   };
 
-//   // Apply validation to the client type column for data rows
-//   for (let i = contentStartRow + 1; i < currentRow - summaryItems.length - 2; i++) {
-//     worksheet.getCell(`C${i}`).dataValidation = clientTypeValidation;
-//   }
+  //   // Apply validation to the client type column for data rows
+  //   for (let i = contentStartRow + 1; i < currentRow - summaryItems.length - 2; i++) {
+  //     worksheet.getCell(`C${i}`).dataValidation = clientTypeValidation;
+  //   }
 
   return worksheet;
 }

@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Save, X } from 'lucide-react';
 import BaseModal from '../ui/BaseModal';
 import Button from '../ui/Button';
+import { NumberInput } from '../ui/NumberInput';
 import { useModalStore } from '../../stores/modalStore';
 import { useToast } from '../../hooks/useToast';
 import { useUpdateEmployeeTransaction } from '../../queries/employeeQueries';
@@ -51,7 +52,7 @@ const EditEmployeePayoutModal = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!validateForm() || !employeeTableId || !employeeUserId || !transaction) return;
 
     try {
@@ -60,7 +61,7 @@ const EditEmployeePayoutModal = () => {
         notes: formData.notes,
       };
 
-      await updateTransactionMutation.mutateAsync({ 
+      await updateTransactionMutation.mutateAsync({
         employeeTableId,
         employeeUserId,
         transactionId: parseInt(transaction.id, 10),
@@ -69,7 +70,7 @@ const EditEmployeePayoutModal = () => {
 
       success('Payout updated successfully');
       closeModal();
-      
+
       // Call onSuccess callback if provided
       if (props?.onSuccess) {
         props.onSuccess();
@@ -109,17 +110,13 @@ const EditEmployeePayoutModal = () => {
             Amount <span className="text-destructive">*</span>
           </label>
           <div className="flex items-center gap-2">
-            <span className="px-3 py-2 border border-border rounded-md bg-muted text-sm font-medium">SAR</span>
-            <input
-              type="number"
-              step="0.01"
-              min="0.01"
-              className={`flex-1 px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary ${errors.amount ? 'border-destructive bg-destructive/5' : 'border-border'}`}
-              id="edit-payout-amount"
+            <NumberInput
+              name="edit-payout-amount"
               value={formData.amount}
               onChange={(e) => handleInputChange('amount', e.target.value)}
               placeholder="Enter payout amount"
-              required
+              className="flex-1"
+              error={errors.amount}
             />
           </div>
           {errors.amount && (

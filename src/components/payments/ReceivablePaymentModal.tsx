@@ -12,6 +12,8 @@ import type { Receivable, PaymentPayload } from '../../api/types';
 import BaseModal from '../ui/BaseModal';
 import Button from '../ui/Button';
 import Input from '../ui/Input';
+import { NumberInput } from '../ui/NumberInput';
+import { DateInput } from '../ui/DateInput';
 
 interface ReceivablePaymentModalProps {
   receivable: Receivable;
@@ -38,11 +40,11 @@ const ReceivablePaymentModal = () => {
   // NEW: Fetch client credits
   const { data: creditData } = useGetClientCredits(Number(receivable.client_id));
   const availableCredit = creditData?.balance || 0;
-  
+
   // Check if this is a prepaid receivable that might have automatic payment
   const isPrepaidReceivable = isRequired;
 
-  const { register, handleSubmit, control, formState: { errors } } = useForm<PaymentPayload>({
+  const { register, handleSubmit, control, formState: { errors }, watch } = useForm<PaymentPayload>({
     defaultValues: {
       receivable_id: Number(receivable.id),
 
@@ -60,7 +62,7 @@ const ReceivablePaymentModal = () => {
       const existingPayment = existingPayments[0];
       updatePaymentMutation.mutate(
         { id: existingPayment.id, ...data, amount: Number(data.amount), receivable_id: Number(receivable.id) },
-        { 
+        {
           onSuccess: () => {
             success(TOAST_MESSAGES.PAYMENT_UPDATED, 'تم تحديث الدفعة بنجاح');
             closeModal();
@@ -72,10 +74,10 @@ const ReceivablePaymentModal = () => {
       );
     } else {
       // For new payments, use POST
-      createPaymentMutation.mutate({ 
-        ...data, 
-        amount: Number(data.amount), 
-        receivable_id: Number(receivable.id) 
+      createPaymentMutation.mutate({
+        ...data,
+        amount: Number(data.amount),
+        receivable_id: Number(receivable.id)
       }, {
         onSuccess: () => {
           success(TOAST_MESSAGES.PAYMENT_RECORDED, 'تم تسجيل الدفعة بنجاح');
@@ -98,23 +100,23 @@ const ReceivablePaymentModal = () => {
   const handleApplyCredit = () => {
     // If this is a prepaid receivable with a payment, we can replace it directly
     if (isPrepaidReceivable && existingPayments && existingPayments.length > 0) {
-        const existingPayment = existingPayments[0];
-        replacePaymentWithCreditMutation.mutate(existingPayment.id, {
-            onSuccess: () => {
-                success(TOAST_MESSAGES.CREDIT_APPLIED, 'تم تطبيق الرصيد على الدفعة بنجاح');
-                closeModal();
-            },
-            onError: (err: any) => {
-              error(TOAST_MESSAGES.OPERATION_FAILED, getErrorMessage(err, 'فشل تطبيق الرصيد'));
-            }
-        });
+      const existingPayment = existingPayments[0];
+      replacePaymentWithCreditMutation.mutate(existingPayment.id, {
+        onSuccess: () => {
+          success(TOAST_MESSAGES.CREDIT_APPLIED, 'تم تطبيق الرصيد على الدفعة بنجاح');
+          closeModal();
+        },
+        onError: (err: any) => {
+          error(TOAST_MESSAGES.OPERATION_FAILED, getErrorMessage(err, 'فشل تطبيق الرصيد'));
+        }
+      });
     } else {
-        // Otherwise, open the apply credit modal
-        closeModal();
-        openModal('applyCreditModal', { 
-            receivable, 
-            availableCredit,
-        });
+      // Otherwise, open the apply credit modal
+      closeModal();
+      openModal('applyCreditModal', {
+        receivable,
+        availableCredit,
+      });
     }
   };
 
@@ -137,21 +139,20 @@ const ReceivablePaymentModal = () => {
       <form onSubmit={handleSubmit(onSubmit)}>
 
         {availableCredit > 0 && (
-          <div className={`alert d-flex justify-content-between align-items-center ${
-            isPrepaidReceivable && availableCredit >= receivable.amount 
-              ? 'alert-success' 
-              : isPrepaidReceivable && availableCredit < receivable.amount
+          <div className={`alert d-flex justify-content-between align-items-center ${isPrepaidReceivable && availableCredit >= receivable.amount
+            ? 'alert-success'
+            : isPrepaidReceivable && availableCredit < receivable.amount
               ? 'alert-warning'
               : 'alert-success'
-          }`}>
+            }`}>
             <span>
               لدى العميل رصيد متاح: <strong>{availableCredit.toLocaleString()} ريال</strong>
               {isPrepaidReceivable && (
                 <>
                   <br />
                   <small>
-                    {availableCredit >= receivable.amount 
-                      ? 'الرصيد كافي لتغطية الدفع المقدم' 
+                    {availableCredit >= receivable.amount
+                      ? 'الرصيد كافي لتغطية الدفع المقدم'
                       : `الرصيد غير كافي - مطلوب ${receivable.amount.toLocaleString()} ريال`}
                   </small>
                 </>
@@ -171,18 +172,13 @@ const ReceivablePaymentModal = () => {
           </div>
         )}
 
-        <Input
+        <NumberInput
           label={`${t('payments.amountLabel')}${isRequired ? ' (مبلغ ثابت)' : ''}`}
-          type="number"
-          step="0.01"
-          max={isRequired ? receivable.amount : receivable.remaining_amount}
-          readOnly={isRequired} // Make readonly when required (prepaid)
-          {...register('amount', {
-            required: true,
-            valueAsNumber: true,
-            max: isRequired ? receivable.amount : receivable.remaining_amount
-          })}
-          error={errors.amount ? "Amount is required and cannot exceed remaining balance." : undefined}
+          name="amount"
+          value={isRequired ? receivable.amount : receivable.remaining_amount}
+          disabled={isRequired}
+          onChange={() => { }}
+          className="mb-3"
         />
 
         <div className="mb-3">
@@ -203,7 +199,13 @@ const ReceivablePaymentModal = () => {
           {errors.payment_method_id && <div className="invalid-feedback d-block">Required</div>}
         </div>
 
-        <Input label={t('payments.dateLabel')} type="date" {...register('paid_at', { required: true })} error={errors.paid_at && "Required"} />
+        <DateInput
+          label={t('payments.dateLabel')}
+          name="paid_at"
+          value={watch('paid_at') || ''}
+          onChange={(e) => register('paid_at').onChange(e)}
+          className="mb-3"
+        />
         <Input
           label={`${t('payments.notesLabel')}`}
           {...register('note')}
@@ -212,13 +214,13 @@ const ReceivablePaymentModal = () => {
 
         <footer className="modal-footer">
           {!isRequired && (
-              <Button type="button" variant="secondary" onClick={handleClose} disabled={createPaymentMutation.isPending || updatePaymentMutation.isPending || isLoadingPayments}>
-                {t('common.cancel')}
-              </Button>
-            )}
-            <Button type="submit" isLoading={createPaymentMutation.isPending || updatePaymentMutation.isPending || isLoadingPayments}>
-              {isRequired ? t('payments.payNow') : t('common.save')}
+            <Button type="button" variant="secondary" onClick={handleClose} disabled={createPaymentMutation.isPending || updatePaymentMutation.isPending || isLoadingPayments}>
+              {t('common.cancel')}
             </Button>
+          )}
+          <Button type="submit" isLoading={createPaymentMutation.isPending || updatePaymentMutation.isPending || isLoadingPayments}>
+            {isRequired ? t('payments.payNow') : t('common.save')}
+          </Button>
         </footer>
       </form>
 

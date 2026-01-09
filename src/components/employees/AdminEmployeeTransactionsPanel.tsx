@@ -282,8 +282,8 @@ const AdminEmployeeTransactionsPanel: React.FC<AdminEmployeeTransactionsPanelPro
         };
       });
 
-      // Re-reverse to get back to original order (newest first)
-      const finalTransactions = transactionsWithBalance.reverse();
+      // Keep chronological order (oldest first) for export
+      const finalTransactions = transactionsWithBalance;
 
       const exportData: EmployeeStatementReportData = {
         employeeId,

@@ -100,8 +100,8 @@ export const styles = {
     font: { ...FONTS.title, color: { argb: COLORS.headerText } },
     fill: { type: 'pattern', pattern: 'solid', fgColor: { argb: COLORS.headerBg } },
     alignment: { horizontal: 'center', vertical: 'middle' },
-    border: { 
-      top: { style: 'medium', color: { argb: COLORS.border } }, 
+    border: {
+      top: { style: 'medium', color: { argb: COLORS.border } },
       bottom: { style: 'medium', color: { argb: COLORS.border } },
       left: { style: 'medium', color: { argb: COLORS.border } },
       right: { style: 'medium', color: { argb: COLORS.border } },
@@ -195,15 +195,21 @@ export const setupWorksheet = (worksheet: Worksheet) => {
   worksheet.views = [{ rightToLeft: true }]; // Enable RTL for Arabic
   worksheet.properties.defaultRowHeight = 20;
   worksheet.pageSetup = {
-    orientation: 'landscape', // As specified in requirements
+    paperSize: 9, // A4
+    orientation: 'landscape',
+    fitToPage: true,
+    fitToWidth: 1,
+    fitToHeight: 0, // Fit to width, allow multiple pages vertically
     margins: {
-      left: 0.75,
-      right: 0.75,
-      top: 0.75,
-      bottom: 0.75,
-      header: 0.3,
-      footer: 0.3,
+      left: 0.5,
+      right: 0.5,
+      top: 0.5,
+      bottom: 0.5,
+      header: 0.2,
+      footer: 0.2,
     },
+    printArea: undefined,
+    printTitlesRow: '1:3', // Repeat header rows on each page
   };
 };
 
@@ -213,15 +219,15 @@ export const addReportHeader = (worksheet: Worksheet, title: string, columnSpan:
   worksheet.mergeCells(1, 1, 1, columnSpan);
   titleRow.getCell(1).style = styles.reportTitle;
   titleRow.height = 35;
-  
+
   // Add date/time stamp
-  const dateRow = worksheet.addRow([`تاريخ التقرير: ${new Date().toLocaleDateString('ar-SA')}`]);
+  const dateRow = worksheet.addRow([`تاريخ التقرير: ${new Date().toLocaleDateString('en-US')}`]);
   worksheet.mergeCells(2, 1, 2, columnSpan);
   dateRow.getCell(1).style = {
     font: { ...FONTS.default, italic: true },
     alignment: { horizontal: 'center', vertical: 'middle' },
   };
-  
+
   worksheet.addRow([]); // Spacer row
   return 3; // Return the row number where content should start
 };
@@ -256,7 +262,7 @@ export const applyReceivablesConditionalFormatting = (cell: Cell, balance: numbe
 export const applyOverdueConditionalFormatting = (cell: Cell, dueDate: string, status: string) => {
   const today = new Date();
   const due = new Date(dueDate);
-  
+
   if (due < today && status !== 'منجزة' && status !== 'ملغية') {
     cell.style = {
       ...cell.style,
@@ -268,12 +274,12 @@ export const applyOverdueConditionalFormatting = (cell: Cell, dueDate: string, s
 
 // Add summary dashboard for client reports
 export const addClientSummaryDashboard = (
-  worksheet: Worksheet, 
-  startRow: number, 
+  worksheet: Worksheet,
+  startRow: number,
   summaryData: Record<string, any>
 ) => {
   const dashboardStartRow = startRow;
-  
+
   // Create dashboard header
   const dashboardHeaderRow = worksheet.addRow(['ملخص التقرير']);
   worksheet.mergeCells(dashboardStartRow, 1, dashboardStartRow, 6);
@@ -283,12 +289,12 @@ export const addClientSummaryDashboard = (
   };
 
   let currentRow = dashboardStartRow + 2;
-  
+
   // Add summary items
   Object.entries(summaryData).forEach(([key, value]) => {
     const summaryRow = worksheet.addRow(['', key, value]);
     summaryRow.getCell(2).style = styles.totalLabel;
-    
+
     // Apply appropriate formatting based on value type
     if (typeof value === 'number' && key.includes('مبلغ')) {
       summaryRow.getCell(3).style = styles.totalValue();
@@ -308,13 +314,13 @@ export const addClientSummaryDashboard = (
 export const saveWorkbook = async (workbook: Workbook, filename: string) => {
   try {
     const buffer = await workbook.xlsx.writeBuffer();
-    const blob = new Blob([buffer], { 
-      type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' 
+    const blob = new Blob([buffer], {
+      type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
     });
-    
+
     const timestamp = new Date().toISOString().slice(0, 19).replace(/[:]/g, '-');
     const finalFilename = `${filename}_${timestamp}.xlsx`;
-    
+
     saveAs(blob, finalFilename);
   } catch (error) {
     console.error('Error saving Excel file:', error);
@@ -322,7 +328,7 @@ export const saveWorkbook = async (workbook: Workbook, filename: string) => {
   }
 };
 
-// Auto-size columns based on content
+// Auto-size columns based on content with A4 print optimization
 export const autoSizeColumns = (worksheet: Worksheet) => {
   worksheet.columns.forEach(column => {
     if (column.eachCell) {
@@ -333,7 +339,8 @@ export const autoSizeColumns = (worksheet: Worksheet) => {
           maxLength = cellLength;
         }
       });
-      column.width = Math.min(Math.max(maxLength + 2, 10), 50); // Min 10, Max 50
+      // Reduced max width for A4 printing (28 instead of 50)
+      column.width = Math.min(Math.max(maxLength + 2, 8), 28);
     }
   });
 };

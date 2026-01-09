@@ -3,6 +3,7 @@ import { Plus, Trash2, Save, X, Check, DollarSign, Layers } from 'lucide-react';
 import { useModalStore } from '../../stores/modalStore';
 import BaseModal from '../ui/BaseModal';
 import Button from '../ui/Button';
+import { NumberInput } from '../ui/NumberInput';
 import Input from '../ui/Input';
 
 interface Subtask {
@@ -21,27 +22,27 @@ interface SubtasksModalProps {
 const SubtasksModal = (directProps?: SubtasksModalProps) => {
   const closeModal = useModalStore((state) => state.closeModal);
   const storeProps = useModalStore((state) => state.props as SubtasksModalProps);
-  
+
   // Use direct props if provided, otherwise use modal store props
   const { subtasks: initialSubtasks, onSave, onClose } = directProps || storeProps;
-  
+
   const [localSubtasks, setLocalSubtasks] = useState<Subtask[]>(
     (initialSubtasks && initialSubtasks.length > 0) ? [...initialSubtasks] : [{ description: '', amount: 0, is_completed: false }]
   );
-  
+
   const [errors, setErrors] = useState<{ [key: number]: { description?: string; amount?: string } }>({});
 
   const validateSubtask = (subtask: Subtask) => {
     const subtaskErrors: { description?: string; amount?: string } = {};
-    
+
     if (!subtask.description.trim()) {
       subtaskErrors.description = 'وصف المهمة الفرعية مطلوب';
     }
-    
+
     if (subtask.amount <= 0) {
       subtaskErrors.amount = 'يجب أن يكون المبلغ أكبر من صفر';
     }
-    
+
     return subtaskErrors;
   };
 
@@ -53,7 +54,7 @@ const SubtasksModal = (directProps?: SubtasksModalProps) => {
       updatedSubtasks[index] = { ...updatedSubtasks[index], [field]: value };
     }
     setLocalSubtasks(updatedSubtasks);
-    
+
     // Clear errors for this field
     if (errors[index]) {
       const newErrors = { ...errors };
@@ -73,11 +74,11 @@ const SubtasksModal = (directProps?: SubtasksModalProps) => {
     if (localSubtasks.length > 1) {
       const updatedSubtasks = localSubtasks.filter((_, i) => i !== index);
       setLocalSubtasks(updatedSubtasks);
-      
+
       // Remove errors for this index and adjust indices
       const newErrors = { ...errors };
       delete newErrors[index];
-      
+
       // Adjust error indices for remaining items
       const adjustedErrors: typeof errors = {};
       Object.keys(newErrors).forEach(key => {
@@ -88,14 +89,14 @@ const SubtasksModal = (directProps?: SubtasksModalProps) => {
           adjustedErrors[numKey] = newErrors[numKey];
         }
       });
-      
+
       setErrors(adjustedErrors);
     }
   };
 
   const handleSave = () => {
     // Filter out empty subtasks
-    const validSubtasks = localSubtasks.filter(subtask => 
+    const validSubtasks = localSubtasks.filter(subtask =>
       subtask.description.trim() && subtask.amount > 0
     );
 
@@ -139,14 +140,14 @@ const SubtasksModal = (directProps?: SubtasksModalProps) => {
     return localSubtasks.reduce((sum, subtask) => sum + (subtask.amount || 0), 0);
   };
 
-  const hasValidSubtasks = localSubtasks.some(subtask => 
+  const hasValidSubtasks = localSubtasks.some(subtask =>
     subtask.description.trim() && subtask.amount > 0
   );
 
   return (
-    <BaseModal 
-      isOpen={true} 
-      onClose={onClose || closeModal} 
+    <BaseModal
+      isOpen={true}
+      onClose={onClose || closeModal}
       title="إدارة المهام الفرعية"
       className="subtasks-modal"
     >
@@ -165,8 +166,8 @@ const SubtasksModal = (directProps?: SubtasksModalProps) => {
         {/* Subtasks List */}
         <div className="subtasks-list space-y-3 max-h-96 overflow-y-auto">
           {localSubtasks.map((subtask, index) => (
-            <div 
-              key={index} 
+            <div
+              key={index}
               className="subtask-item rounded-lg border border-border bg-card p-4 transition-shadow hover:shadow-md"
             >
               <div className="grid grid-cols-5 gap-4 items-start">
@@ -183,24 +184,23 @@ const SubtasksModal = (directProps?: SubtasksModalProps) => {
                     <div className="text-destructive text-xs mt-1">{errors[index].description}</div>
                   )}
                 </div>
-                
+
                 {/* Amount */}
                 <div className="col-span-1">
                   <label className="font-medium text-black text-sm block mb-2">المبلغ (ريال)</label>
-                  <Input
-                    type="number"
+                  <NumberInput
+                    name={`subtask-amount-${index}`}
                     value={subtask.amount}
                     onChange={(e) => handleSubtaskChange(index, 'amount', Number(e.target.value))}
                     placeholder="0"
-                    min="0"
-                    step="0.01"
+                    min={0}
                     className={errors[index]?.amount ? 'border-destructive bg-destructive/5' : ''}
                   />
                   {errors[index]?.amount && (
                     <div className="text-destructive text-xs mt-1">{errors[index].amount}</div>
                   )}
                 </div>
-                
+
                 {/* Completion Status */}
                 <div className="col-span-1">
                   <label className="font-medium text-black text-sm block mb-2">مكتملة</label>
@@ -224,7 +224,7 @@ const SubtasksModal = (directProps?: SubtasksModalProps) => {
                     </label>
                   </div>
                 </div>
-                
+
                 {/* Actions */}
                 <div className="col-span-1 flex justify-end pt-8">
                   <Button
@@ -256,7 +256,7 @@ const SubtasksModal = (directProps?: SubtasksModalProps) => {
 
         {/* Total Summary */}
         {hasValidSubtasks && (
-          <div 
+          <div
             className="p-4 rounded-lg text-white bg-gradient-to-r from-yellow-500 to-yellow-700"
           >
             <div className="flex justify-between items-center">
@@ -280,8 +280,8 @@ const SubtasksModal = (directProps?: SubtasksModalProps) => {
             <X size={16} className="mr-1" />
             إلغاء
           </Button>
-          <Button 
-            variant="primary" 
+          <Button
+            variant="primary"
             onClick={handleSave}
           >
             <Save size={16} className="mr-1" />

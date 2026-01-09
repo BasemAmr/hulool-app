@@ -46,6 +46,9 @@ import {
 
 import { TOAST_MESSAGES } from '../../constants/toastMessages';
 
+import { NumberInput } from '../ui/NumberInput';
+import { DateInput } from '../ui/DateInput';
+
 // Import step components
 import TaskTypeStep from './steps/TaskTypeStep';
 import ClientSelectionStep from './steps/ClientSelectionStep';
@@ -664,12 +667,19 @@ const TaskModal = () => {
 
                   <div>
                     <label className="font-semibold text-black text-sm block mb-1">التاريخ الإنشاء</label>
-                    <input
-                      className={`w-full px-3 py-1.5 border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-primary ${errors.start_date ? 'border-destructive bg-destructive/5' : 'border-border'}`}
-                      type="date"
-                      {...register('start_date', { required: true })}
+                    <Controller
+                      name="start_date"
+                      control={control}
+                      rules={{ required: true }}
+                      render={({ field }) => (
+                        <DateInput
+                          {...field}
+                          value={field.value}
+                          onChange={(e) => field.onChange(e.target.value)}
+                          error={errors.start_date && "مطلوب"}
+                        />
+                      )}
                     />
-                    {errors.start_date && <div className="text-destructive text-xs mt-1">مطلوب</div>}
                   </div>
                 </div>
 
@@ -745,12 +755,11 @@ const TaskModal = () => {
                           />
                         </div>
                         <div className="col-span-3 px-2">
-                          <input
-                            type="number"
-                            className="w-full px-3 py-1.5 border border-border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-primary"
-                            value={subtask.amount || ''}
+                          <NumberInput
+                            value={subtask.amount}
                             onChange={(e) => handleSubtaskChange(index, 'amount', Number(e.target.value))}
                             placeholder="0.00"
+                            className="w-full"
                           />
                         </div>
                         <div className="col-span-3 text-center">
@@ -814,28 +823,41 @@ const TaskModal = () => {
                       {/* Prepaid Amount */}
                       <div className="mb-3">
                         <label className="font-semibold text-black text-sm block mb-1">المدفوع مقدماً</label>
-                        <input
-                          className={`w-full px-3 py-2 border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-primary ${errors.prepaid_amount ? 'border-destructive bg-destructive/5' : 'border-border'}`}
-                          type="number"
-                          step="1"
-                          placeholder="المبلغ المقدم"
-                          {...register('prepaid_amount', {
+                        <Controller
+                          name="prepaid_amount"
+                          control={control}
+                          rules={{
                             validate: value => {
                               const amount = calculateTotal() || 0;
                               return !value || value <= amount || 'المبلغ المقدم لا يمكن أن يتجاوز مبلغ المهمة';
                             }
-                          })}
+                          }}
+                          render={({ field }) => (
+                            <NumberInput
+                              name={field.name}
+                              value={field.value ?? ''}
+                              onChange={(e) => field.onChange(Number(e.target.value))}
+                              placeholder="المبلغ المقدم"
+                              max={calculateTotal()}
+                              error={errors.prepaid_amount?.message}
+                            />
+                          )}
                         />
-                        {errors.prepaid_amount && <div className="text-destructive text-xs mt-1">{errors.prepaid_amount.message}</div>}
                       </div>
 
                       {/* End Date (moved here) */}
                       <div className="mb-3">
                         <label className="font-semibold text-black text-sm block mb-1">تاريخ الانتهاء</label>
-                        <input
-                          className="w-full px-3 py-2 border border-border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-primary"
-                          type="date"
-                          {...register('end_date')}
+                        <Controller
+                          name="end_date"
+                          control={control}
+                          render={({ field }) => (
+                            <DateInput
+                              {...field}
+                              value={field.value || ''}
+                              onChange={(e) => field.onChange(e.target.value)}
+                            />
+                          )}
                         />
                       </div>
 

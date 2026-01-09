@@ -21,14 +21,12 @@ const TransactionDeleteModal: React.FC<TransactionDeleteModalProps> = ({
   const [reason, setReason] = useState('');
 
   const handleDelete = async () => {
-    if (!reason) {
-      error(TOAST_MESSAGES.REASON_REQUIRED, 'يرجى تقديم سبب الحذف');
-      return;
-    }
+    // Auto-generate reason if not provided
+    const deleteReason = reason || `حذف المعاملة #${transaction.id}`;
     try {
       await deleteTransaction.mutateAsync({
         id: transaction.id,
-        reason
+        reason: deleteReason
       });
       success(TOAST_MESSAGES.TRANSACTION_DELETED);
       onClose();
@@ -62,7 +60,7 @@ const TransactionDeleteModal: React.FC<TransactionDeleteModalProps> = ({
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700">سبب الحذف <span className="text-red-500">*</span></label>
+          <label className="block text-sm font-medium text-gray-700">سبب الحذف (اختياري)</label>
           <textarea
             value={reason}
             onChange={(e) => setReason(e.target.value)}

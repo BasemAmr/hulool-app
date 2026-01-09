@@ -10,6 +10,8 @@ import type { Client, ManualReceivablePayload, TaskType } from '../../api/types'
 import BaseModal from '../ui/BaseModal';
 import Button from '../ui/Button';
 import Input from '../ui/Input';
+import { NumberInput } from '../ui/NumberInput';
+import { DateInput } from '../ui/DateInput';
 import { useState } from 'react';
 import AmountDetailsInput from '../shared/AmountDetailsInput';
 
@@ -118,9 +120,9 @@ const ManualReceivableModal = () => {
                     <i className="fas fa-check-circle text-success"></i>
                   </div>
                 </div>
-                <Button 
-                  variant="primary" 
-                  size="sm" 
+                <Button
+                  variant="primary"
+                  size="sm"
                   className="mt-3"
                   onClick={() => {
                     setSelectedClient(preselectedClient);
@@ -207,8 +209,8 @@ const ManualReceivableModal = () => {
                     <small className="d-block text-muted">{selectedClient?.phone}</small>
                   </div>
                   <small className="text-muted">
-                    <button 
-                      type="button" 
+                    <button
+                      type="button"
                       className="btn btn-link btn-sm p-0 text-decoration-none"
                       onClick={() => setStep(1)}
                     >
@@ -223,19 +225,25 @@ const ManualReceivableModal = () => {
               {...register('description', { required: true })}
               error={errors.description && t('common.required')}
             />
-            <Input
-              label={t('receivables.tableHeaderTotal')}
-              type="number"
-              step="0.01"
-              {...register('amount', {
+            <Controller
+              name="amount"
+              control={control}
+              rules={{
                 required: true,
-                valueAsNumber: true,
                 validate: (value) => {
                   const detailsSum = watch('amount_details')?.reduce((sum, item) => sum + (Number(item.amount) || 0), 0) || 0;
                   return value >= detailsSum || `المبلغ الإجمالي لا يمكن أن يكون أقل من مجموع التفاصيل (${detailsSum})`;
                 }
-              })}
-              error={errors.amount ? errors.amount.message || 'Amount is required' : undefined}
+              }}
+              render={({ field }) => (
+                <NumberInput
+                  label={t('receivables.tableHeaderTotal')}
+                  name={field.name}
+                  value={field.value || 0}
+                  onChange={field.onChange}
+                  error={errors.amount ? errors.amount.message || 'Amount is required' : undefined}
+                />
+              )}
             />
             <AmountDetailsInput
               control={control}
@@ -251,10 +259,11 @@ const ManualReceivableModal = () => {
                 {...register('notes')}
               />
             </div>
-            <Input
+            <DateInput
               label={t('receivables.tableHeaderDueDate')}
-              type="date"
-              {...register('due_date', { required: true })}
+              name="due_date"
+              value={watch('due_date') || ''}
+              onChange={(e) => setValue('due_date', e.target.value)}
               error={errors.due_date && t('common.required')}
             />
             <div className="modal-footer-compact">

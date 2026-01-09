@@ -13,6 +13,8 @@ import Button from '../ui/Button';
 import SaudiRiyalIcon from '../ui/SaudiRiyalIcon';
 import { Card, CardContent } from '../ui/card';
 import ClientSearchCombobox from '../ui/ClientSearchCombobox';
+import { NumberInput } from '../ui/NumberInput';
+import { DateInput } from '../ui/DateInput';
 import { useCreateManualTransaction, useGetAccountsByType } from '../../queries/financialCenterQueries';
 import { useToast } from '../../hooks/useToast';
 import { ArrowRight, AlertCircle, User, Building, Briefcase, TrendingUp, TrendingDown, ArrowLeftRight } from 'lucide-react';
@@ -213,7 +215,7 @@ const ManualTransactionModal = ({
       } else {
         success(TOAST_MESSAGES.SANAD_QABD_CREATED, `تم إنشاء سند قبض بمبلغ ${amount} ريال`);
       }
-      
+
       onClose();
       resetForm();
     } catch (err) {
@@ -323,25 +325,26 @@ const ManualTransactionModal = ({
           </div>
         </div>
 
-        {/* Amount */}
-        <div>
-          <label className="block text-sm font-medium text-black mb-1">
-            المبلغ <span className="text-red-500">*</span>
-          </label>
-          <div className="relative">
-            <input
-              type="number"
-              step="0.01"
-              min="0.01"
+        {/* Amount & Date Grid */}
+        <div className="grid grid-cols-2 gap-4">
+          {/* Amount */}
+          <div>
+            <NumberInput
+              name="amount"
+              label={<span>المبلغ <span className="text-red-500">*</span></span> as any}
               value={amount}
               onChange={(e) => setAmount(e.target.value)}
-              className="w-full px-3 py-2 text-sm border border-input rounded-md bg-background pr-10"
               placeholder="0.00"
-              required
             />
-            <SaudiRiyalIcon
-              size={14}
-              className="absolute left-3 top-1/2 -translate-y-1/2 text-black/40"
+          </div>
+
+          {/* Date */}
+          <div>
+            <DateInput
+              name="effectiveDate"
+              label="تاريخ التنفيذ"
+              value={effectiveDate}
+              onChange={(e) => setEffectiveDate(e.target.value)}
             />
           </div>
         </div>
@@ -361,19 +364,6 @@ const ManualTransactionModal = ({
           />
         </div>
 
-        {/* Date */}
-        <div>
-          <label className="block text-sm font-medium text-black mb-1">
-            تاريخ التنفيذ
-          </label>
-          <input
-            type="date"
-            value={effectiveDate}
-            onChange={(e) => setEffectiveDate(e.target.value)}
-            className="w-full px-3 py-2 text-sm border border-input rounded-md bg-background"
-          />
-        </div>
-
         {/* Notes */}
         <div>
           <label className="block text-sm font-medium text-black mb-1">
@@ -383,7 +373,8 @@ const ManualTransactionModal = ({
             value={notes}
             onChange={(e) => setNotes(e.target.value)}
             className="w-full px-3 py-2 text-sm border border-input rounded-md bg-background"
-            rows={2}
+            rows={3}
+            style={{ width: '100%', resize: 'vertical' }}
             placeholder="ملاحظات إضافية للتدقيق..."
           />
         </div>

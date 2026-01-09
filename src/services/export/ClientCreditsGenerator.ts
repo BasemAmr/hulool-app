@@ -1,11 +1,11 @@
 // src/services/export/ClientCreditsGenerator.ts
 import type { Workbook } from 'exceljs';
-import { 
-  setupWorksheet, 
-  addReportHeader, 
-  styles, 
+import {
+  setupWorksheet,
+  addReportHeader,
+  styles,
   creditStatusStyles,
-  autoSizeColumns 
+  autoSizeColumns
 } from './excelStyles';
 import type { ClientCreditsReportData, ExportOptions } from './exportTypes';
 import { formatDateForExcel, calculatePercentage } from '../../utils/formatUtils';
@@ -15,8 +15,8 @@ import { formatDateForExcel, calculatePercentage } from '../../utils/formatUtils
  * Implements "ائتمانات العميل" specification
  */
 export function generateClientCreditsExcel(
-  workbook: Workbook, 
-  data: ClientCreditsReportData, 
+  workbook: Workbook,
+  data: ClientCreditsReportData,
   _options?: ExportOptions
 ) {
   const { client, credits, summary } = data;
@@ -42,7 +42,7 @@ export function generateClientCreditsExcel(
   // Main table headers
   const headerRow = worksheet.getRow(contentStartRow);
   headerRow.values = [
-    'تاريخ الائتمان', 'المبلغ الممنوح', 'المبلغ المستخدم', 'الرصيد المتاح', 
+    'تاريخ الائتمان', 'المبلغ الممنوح', 'المبلغ المستخدم', 'الرصيد المتاح',
     'تاريخ الاستحقاق', 'الحالة', 'نوع الائتمان'
   ];
   headerRow.eachCell(cell => {
@@ -54,7 +54,7 @@ export function generateClientCreditsExcel(
   let currentRow = contentStartRow + 1;
   credits.forEach((credit, index) => {
     const row = worksheet.getRow(currentRow);
-    
+
     // Map status to Arabic
     const statusArabic = {
       'active': 'نشط',
@@ -75,29 +75,29 @@ export function generateClientCreditsExcel(
 
     // Apply data cell styling with alternating rows
     const isEvenRow = index % 2 === 1;
-    
+
     // Date cells
     row.getCell(1).style = { ...styles.dataCellCenter(isEvenRow), ...styles.dateFormat };
     row.getCell(5).style = { ...styles.dataCellCenter(isEvenRow), ...styles.dateFormat };
-    
+
     // Amount cells
     row.getCell(2).style = { ...styles.dataCellCenter(isEvenRow), ...styles.currency };
-    row.getCell(3).style = { 
-      ...styles.dataCellCenter(isEvenRow), 
+    row.getCell(3).style = {
+      ...styles.dataCellCenter(isEvenRow),
       ...styles.currency,
       font: { ...styles.currency.font, color: { argb: 'FF9C0006' } } // Red for used
     };
-    row.getCell(4).style = { 
-      ...styles.dataCellCenter(isEvenRow), 
+    row.getCell(4).style = {
+      ...styles.dataCellCenter(isEvenRow),
       ...styles.currency,
       font: { ...styles.currency.font, color: { argb: 'FF006100' } } // Green for available
     };
-    
+
     // Status with conditional formatting
     const statusCell = row.getCell(6);
     const statusStyle = creditStatusStyles[credit.status as keyof typeof creditStatusStyles];
     statusCell.style = { ...styles.dataCellCenter(isEvenRow), ...(statusStyle || {}) };
-    
+
     // Credit type
     row.getCell(7).style = styles.dataCellCenter(isEvenRow);
 
@@ -139,10 +139,10 @@ export function generateClientCreditsExcel(
   summaryItems.forEach(([label, value]) => {
     const labelCell = worksheet.getCell(summaryRowIndex, summaryColumn);
     const valueCell = worksheet.getCell(summaryRowIndex, summaryColumn + 1);
-    
+
     labelCell.value = label;
     valueCell.value = value;
-    
+
     labelCell.style = {
       font: { bold: true },
       alignment: { horizontal: 'right' },
@@ -153,7 +153,7 @@ export function generateClientCreditsExcel(
         right: { style: 'thin' },
       },
     };
-    
+
     if (typeof value === 'number' && label.toString().includes('مبلغ')) {
       valueCell.style = {
         ...styles.currency,
@@ -178,7 +178,7 @@ export function generateClientCreditsExcel(
         },
       };
     }
-    
+
     summaryRowIndex++;
   });
 
@@ -201,7 +201,7 @@ export function generateClientCreditsExcel(
   finalSummaryItems.forEach(([label, value]) => {
     const summaryRow = worksheet.addRow(['', '', '', '', '', label, value]);
     summaryRow.getCell(6).style = styles.totalLabel;
-    
+
     if (typeof value === 'number') {
       summaryRow.getCell(7).style = styles.totalValue();
     } else {

@@ -47,8 +47,8 @@ const InvoicesHubPage = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const [search, setSearch] = useState('');
   const [clientIdFilter, setClientIdFilter] = useState('');
-  const [statusFilter, setStatusFilter] = useState<InvoiceStatus | 'partially_paid' | ''>(
-    (searchParams.get('status') as any) || ''
+  const [statusFilter, setStatusFilter] = useState<InvoiceStatus | 'partially_paid' | 'unpaid' | ''>(
+    (searchParams.get('status') as any) || 'unpaid'
   );
   const [viewMode, setViewMode] = useState<ViewMode>('table');
   const debouncedSearch = useDebounce(search, 500);
@@ -93,7 +93,7 @@ const InvoicesHubPage = () => {
     isFetchingNextPage,
   } = useGetInvoicesInfinite({
     search: debouncedSearch || undefined,
-    status: statusFilter || undefined,
+    status: (statusFilter || undefined) as any,
     client_id: clientIdFilter ? Number(clientIdFilter) : undefined,
     per_page: 10,
   }, viewMode === 'table');
@@ -153,9 +153,11 @@ const InvoicesHubPage = () => {
   // Status filter options
   const statusOptions = [
     { value: '', label: 'الكل' },
+    { value: 'unpaid', label: 'غير مدفوعة' },
     { value: 'pending', label: 'معلقة' },
     { value: 'paid', label: 'مدفوعة' },
     { value: 'partially_paid', label: 'مدفوعة جزئياً' },
+    { value: 'overdue', label: 'متأخرة' },
     { value: 'cancelled', label: 'ملغاة' },
   ];
 
@@ -444,24 +446,24 @@ const InvoicesHubPage = () => {
       </div>
 
       {modalType === 'edit' && selectedInvoice && (
-        <InvoiceEditModal 
-          isOpen={true} 
-          onClose={() => setModalType(null)} 
-          invoice={selectedInvoice} 
+        <InvoiceEditModal
+          isOpen={true}
+          onClose={() => setModalType(null)}
+          invoice={selectedInvoice}
         />
       )}
       {modalType === 'cancel' && selectedInvoice && (
-        <InvoiceCancelModal 
-          isOpen={true} 
-          onClose={() => setModalType(null)} 
-          invoice={selectedInvoice} 
+        <InvoiceCancelModal
+          isOpen={true}
+          onClose={() => setModalType(null)}
+          invoice={selectedInvoice}
         />
       )}
       {modalType === 'delete' && selectedInvoice && (
-        <InvoiceDeleteModal 
-          isOpen={true} 
-          onClose={() => setModalType(null)} 
-          invoice={selectedInvoice} 
+        <InvoiceDeleteModal
+          isOpen={true}
+          onClose={() => setModalType(null)}
+          invoice={selectedInvoice}
         />
       )}
     </div>

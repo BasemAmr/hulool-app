@@ -26,7 +26,7 @@ import type { Invoice, InvoiceStatus } from '../../api/types';
 
 const EmployeeClientReceivablesPage = () => {
     const [search, setSearch] = useState('');
-    const [statusFilter, setStatusFilter] = useState<InvoiceStatus | 'partially_paid' | ''>('');
+    const [statusFilter, setStatusFilter] = useState<InvoiceStatus | 'partially_paid' | 'unpaid' | ''>('unpaid');
     const debouncedSearch = useDebounce(search, 500);
     const openModal = useModalStore((state) => state.openModal);
 
@@ -39,7 +39,7 @@ const EmployeeClientReceivablesPage = () => {
         isFetchingNextPage,
     } = useGetEmployeeReceivables({
         search: debouncedSearch || undefined,
-        status: statusFilter || undefined,
+        status: (statusFilter || undefined) as any,
         per_page: 20,
     });
 
@@ -68,6 +68,7 @@ const EmployeeClientReceivablesPage = () => {
     // Status options
     const statusOptions = [
         { value: '', label: 'الكل' },
+        { value: 'unpaid', label: 'غير مدفوعة' },
         { value: 'pending', label: 'معلقة' },
         { value: 'partially_paid', label: 'مدفوعة جزئياً' },
         { value: 'overdue', label: 'متأخرة' },

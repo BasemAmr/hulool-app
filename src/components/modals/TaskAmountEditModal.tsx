@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import BaseModal from '../ui/BaseModal';
 import Button from '../ui/Button';
+import { NumberInput } from '../ui/NumberInput';
 import { useValidateTaskEdit, useUpdateTaskAmount, useUpdateTaskPrepaid } from '../../queries/taskQueries';
 import { useToast } from '../../hooks/useToast';
 import { TOAST_MESSAGES } from '../../constants/toastMessages';
@@ -114,13 +115,12 @@ const TaskAmountEditModal: React.FC<TaskAmountEditModalProps> = ({
           <label className="block text-sm font-medium text-gray-700">
             المبلغ الإجمالي
           </label>
-          <input
-            type="number"
+          <NumberInput
+            name="newAmount"
             value={newAmount}
             onChange={(e) => setNewAmount(parseFloat(e.target.value) || 0)}
-            className="mt-1 block w-full border rounded-md shadow-sm p-2"
-            step="0.01"
-            min="0"
+            className="mt-1"
+            min={0}
           />
           <p className="text-xs text-gray-500 mt-1">
             الحالي: {task?.amount} ر.س
@@ -132,13 +132,12 @@ const TaskAmountEditModal: React.FC<TaskAmountEditModalProps> = ({
           <label className="block text-sm font-medium text-gray-700">
             المبلغ المدفوع مسبقاً
           </label>
-          <input
-            type="number"
+          <NumberInput
+            name="newPrepaid"
             value={newPrepaid}
             onChange={(e) => setNewPrepaid(parseFloat(e.target.value) || 0)}
-            className="mt-1 block w-full border rounded-md shadow-sm p-2"
-            step="0.01"
-            min="0"
+            className="mt-1"
+            min={0}
             max={newAmount}
           />
           <p className="text-xs text-gray-500 mt-1">
