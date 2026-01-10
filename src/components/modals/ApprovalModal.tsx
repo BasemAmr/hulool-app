@@ -4,14 +4,19 @@ import { useModalStore } from '../../stores/modalStore';
 import { useApproveTask, useRejectTask } from '../../queries/taskQueries';
 import { useToast } from '../../hooks/useToast';
 import { useState } from 'react';
-import type { Task } from '../../api/types';
+import type { Task, Invoice } from '../../api/types';
 import { TOAST_MESSAGES } from '../../constants/toastMessages';
 import BaseModal from '../ui/BaseModal';
 import Button from '../ui/Button';
 import Input from '../ui/Input';
 
+import {
+  useGetInvoicesByTask
+} from '../../queries/invoiceQueries'; // Import new hook
+
 interface ApprovalModalProps {
   task: Task;
+  // Invoice prop removed
 }
 
 interface ApprovalFormData {
@@ -24,6 +29,11 @@ const ApprovalModal = () => {
   const closeModal = useModalStore((state) => state.closeModal);
   const props = useModalStore((state) => state.props as ApprovalModalProps);
   const { task } = props;
+  const openModal = useModalStore((state) => state.openModal);
+
+  // Fetch invoice associated with this task
+  const { data: invoices, isLoading: isLoadingInvoice } = useGetInvoicesByTask(task?.id, !!task?.id);
+  const invoice = invoices && invoices.length > 0 ? invoices[0] : undefined;
   const { success, error } = useToast();
 
   const [isRejecting, setIsRejecting] = useState(false);
@@ -117,6 +127,43 @@ const ApprovalModal = () => {
             </div>
           </div>
         </div>
+
+        {/* Invoice Status Section */}
+        {isLoadingInvoice ? (
+          <div className="bg-gray-50 border rounded-lg p-4 mb-4 flex justify-center items-center">
+            <span className="text-gray-500 text-sm">جاري تحميل بيانات الفاتورة...</span>
+          </div>
+        ) : invoice && (
+          <div className="bg-purple-50 p-4 rounded-lg border border-purple-100">
+            <h3 className="font-medium text-purple-900 mb-3">حالة الفاتورة المرتبطة</h3>
+            <div className="flex justify-between items-center">
+              <div>
+                <div className="flex items-center space-x-2 space-x-reverse mb-1">
+                  <span className="text-gray-600 text-sm">رقم الفاتورة:</span>
+                  <span className="font-mono font-medium">{invoice.invoice_number || `#${invoice.id}`}</span>
+                </div>
+                <div className="flex items-center space-x-2 space-x-reverse">
+                  <span className="text-gray-600 text-sm">الحالة:</span>
+                  <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium
+                    ${invoice.is_fully_paid ? 'bg-green-100 text-green-800' :
+                      invoice.is_partially_paid ? 'bg-yellow-100 text-yellow-800' :
+                        'bg-red-100 text-red-800'}`}>
+                    {invoice.is_fully_paid ? 'مدفوعة بالكامل' :
+                      invoice.is_partially_paid ? 'مدفوعة جزئياً' :
+                        'غير مدفوعة'}
+                  </span>
+                </div>
+              </div>
+              <Button
+                variant="outline-secondary"
+                size="default"
+                onClick={() => openModal('invoiceDetails', { invoiceId: invoice.id, isEmployeeView: false })}
+              >
+                عرض تفاصيل الفاتورة
+              </Button>
+            </div>
+          </div>
+        )}
 
         {!isRejecting ? (
           <form onSubmit={handleSubmit(onApprove)} className="space-y-4">

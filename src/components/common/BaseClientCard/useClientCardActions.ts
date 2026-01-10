@@ -5,13 +5,13 @@ import { useModalStore } from '../../../stores/modalStore';
 import { useDrawerStore } from '../../../stores/drawerStore';
 import { useToast } from '../../../hooks/useToast';
 import { useTranslation } from 'react-i18next';
-import { 
-  useDeferTask, 
-  useResumeTask, 
-  useUpdateTask, 
-  useCancelTask, 
+import {
+  useDeferTask,
+  useResumeTask,
+  useUpdateTask,
+  useCancelTask,
   useRestoreTask,
-  useCompleteTask 
+  useCompleteTask
 } from '../../../queries/taskQueries';
 import { useSubmitTaskForReview } from '../../../queries/employeeTasksQueries';
 import { useAdminSubmitTaskForReview } from '../../../employee_management_temp_page/employeeManagementQueries';
@@ -60,10 +60,10 @@ export const useClientCardActions = ({
 
   // Generic action handler
   const handleAction = (
-    mutation: any, 
-    task: Task, 
-    successKey: string, 
-    successMessageKey: string, 
+    mutation: any,
+    task: Task,
+    successKey: string,
+    successMessageKey: string,
     errorKey: string
   ) => {
     mutation.mutate({ id: task.id }, {
@@ -80,18 +80,18 @@ export const useClientCardActions = ({
   // Task Actions
   const taskActions: TaskActions = {
     onDefer: (task) => handleAction(
-      deferTaskMutation, 
-      task, 
-      'tasks.deferSuccess', 
-      'tasks.deferSuccessMessage', 
+      deferTaskMutation,
+      task,
+      'tasks.deferSuccess',
+      'tasks.deferSuccessMessage',
       'tasks.deferError'
     ),
 
     onResume: (task) => handleAction(
-      resumeTaskMutation, 
-      task, 
-      'tasks.resumeSuccess', 
-      'tasks.resumeSuccessMessage', 
+      resumeTaskMutation,
+      task,
+      'tasks.resumeSuccess',
+      'tasks.resumeSuccessMessage',
       'tasks.resumeError'
     ),
 
@@ -147,13 +147,13 @@ export const useClientCardActions = ({
 
     onSubmitForReview: (task) => {
       const mutation = role === 'admin' ? adminSubmitForReviewMutation : submitForReviewMutation;
-      
+
       mutation.mutate(task.id, {
         onSuccess: async (response: any) => {
           success('تم الإرسال', `تم إرسال المهمة "${task.task_name || 'مهمة'}" للمراجعة بنجاح`);
           await queryClient.invalidateQueries({ queryKey: getQueryKey() });
           await queryClient.invalidateQueries({ queryKey: ['tasks'] });
-          
+
           // For admin, open approval modal
           if (role === 'admin') {
             const updatedTask = {

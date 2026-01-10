@@ -109,7 +109,7 @@ const AdminEmployeeDashboardClientCard = ({
 
   const handleDefer = (task: Task) => handleAction(deferTaskMutation, task, 'tasks.deferSuccess', 'tasks.deferSuccessMessage', 'tasks.deferError');
   const handleResume = (task: Task) => handleAction(resumeTaskMutation, task, 'tasks.resumeSuccess', 'tasks.resumeSuccessMessage', 'tasks.resumeError');
-  
+
   const handleSubmitForReview = (task: Task) => {
     submitForReviewMutation.mutate(task.id, {
       onSuccess: async (response) => {
@@ -117,13 +117,13 @@ const AdminEmployeeDashboardClientCard = ({
         await queryClient.invalidateQueries({ queryKey: ['dashboard', 'clientsWithActiveTasks'] });
         await queryClient.invalidateQueries({ queryKey: ['tasks'] });
         await new Promise(resolve => setTimeout(resolve, 100));
-        
+
         const updatedTask = {
           ...task,
           status: 'Pending Review' as const,
           id: response?.data?.id || task.id
         };
-        
+
         openModal('approval', { task: updatedTask });
       },
       onError: (err: any) => {
@@ -330,10 +330,10 @@ const AdminEmployeeDashboardClientCard = ({
                       <Badge
                         variant={
                           task.status === 'New' ? 'default' :
-                          task.status === 'Deferred' ? 'destructive' :
-                          task.status === 'Pending Review' ? 'secondary' :
-                          task.status === 'Completed' ? 'default' :
-                          'outline'
+                            task.status === 'Deferred' ? 'destructive' :
+                              task.status === 'Pending Review' ? 'secondary' :
+                                task.status === 'Completed' ? 'default' :
+                                  'outline'
                         }
                         className={cn(
                           "text-[0.7em]",
@@ -368,7 +368,7 @@ const AdminEmployeeDashboardClientCard = ({
                           {/* Follow-up */}
                           <DropdownMenuItem
                             onClick={() => {
-                              openDrawer('taskFollowUp', { 
+                              openDrawer('taskFollowUp', {
                                 taskId: task.id,
                                 taskName: task.task_name || undefined,
                                 clientName: task.client?.name || client.name

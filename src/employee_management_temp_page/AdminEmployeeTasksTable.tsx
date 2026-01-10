@@ -6,12 +6,12 @@ import { Link } from 'react-router-dom';
 import { useQueryClient } from '@tanstack/react-query';
 import Button from '../components/ui/Button';
 import WhatsAppIcon from '../components/ui/WhatsAppIcon';
-import { 
-  Pause, 
-  Play, 
-  ExternalLink, 
-  MessageSquare, 
-  ClipboardCheck, 
+import {
+  Pause,
+  Play,
+  ExternalLink,
+  MessageSquare,
+  ClipboardCheck,
   RotateCcw,
   Upload,
   Filter,
@@ -50,7 +50,7 @@ const AdminEmployeeTasksTable = ({ userId }: AdminEmployeeTasksTableProps) => {
   const [appliedType, setAppliedType] = useState<string>('');
   const [appliedDateFrom, setAppliedDateFrom] = useState<string>('');
   const [appliedDateTo, setAppliedDateTo] = useState<string>('');
-  
+
   // Temporary filter states (changed in modal, not applied yet)
   const [tempStatuses, setTempStatuses] = useState<string[]>([]);
   const [tempType, setTempType] = useState<string>('');
@@ -76,9 +76,9 @@ const AdminEmployeeTasksTable = ({ userId }: AdminEmployeeTasksTableProps) => {
 
   // Handle temporary status checkbox change (in modal)
   const handleTempStatusChange = (status: string) => {
-    setTempStatuses(prev => 
-      prev.includes(status) 
-        ? prev.filter(s => s !== status) 
+    setTempStatuses(prev =>
+      prev.includes(status)
+        ? prev.filter(s => s !== status)
         : [...prev, status]
     );
   };
@@ -175,14 +175,14 @@ const AdminEmployeeTasksTable = ({ userId }: AdminEmployeeTasksTableProps) => {
     submitForReviewMutation.mutate(task.id, {
       onSuccess: async (response) => {
         success('تم الإرسال', `تم إرسال المهمة "${task.task_name || 'مهمة'}" للمراجعة بنجاح`);
-        
+
         // Invalidate queries to refresh data
         await queryClient.invalidateQueries({ queryKey: ['tasks'] });
         await queryClient.invalidateQueries({ queryKey: ['dashboard'] });
-        
+
         // Small delay to ensure database commit
         await new Promise(resolve => setTimeout(resolve, 100));
-        
+
         // Open approval modal with updated task status
         const updatedTask = {
           ...task,
@@ -245,7 +245,7 @@ const AdminEmployeeTasksTable = ({ userId }: AdminEmployeeTasksTableProps) => {
     if (!aIsUrgent && !bIsUrgent) {
       return bDate - aDate;
     }
-    
+
     return aIsUrgent ? -1 : 1;
   });
 
@@ -292,17 +292,17 @@ const AdminEmployeeTasksTable = ({ userId }: AdminEmployeeTasksTableProps) => {
 
       {/* Filters Modal */}
       {showFiltersModal && (
-        <div 
+        <div
           className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center"
           onClick={() => setShowFiltersModal(false)}
         >
-          <div 
+          <div
             className="bg-white rounded-lg shadow-xl w-full max-w-2xl mx-4"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex justify-between items-center p-4 border-b">
               <h5 className="font-semibold text-lg">تصفية المهام</h5>
-              <button 
+              <button
                 className="p-1 hover:bg-gray-100 rounded"
                 onClick={() => setShowFiltersModal(false)}
               >
@@ -316,11 +316,11 @@ const AdminEmployeeTasksTable = ({ userId }: AdminEmployeeTasksTableProps) => {
                 <div className="flex flex-wrap gap-2">
                   {['New', 'Pending Review', 'Deferred', 'Completed', 'Cancelled'].map(status => (
                     <Fragment key={status}>
-                      <label 
+                      <label
                         className={cn(
                           "px-3 py-1.5 rounded border cursor-pointer transition-colors",
-                          tempStatuses.includes(status) 
-                            ? "bg-primary text-white border-primary" 
+                          tempStatuses.includes(status)
+                            ? "bg-primary text-white border-primary"
                             : "bg-white border-gray-300 hover:bg-gray-50"
                         )}
                       >
@@ -403,7 +403,7 @@ const AdminEmployeeTasksTable = ({ userId }: AdminEmployeeTasksTableProps) => {
       {/* Tasks Table */}
       <div className="overflow-x-auto text-lg">
         <div ref={sentinelRef}></div>
-        
+
         <table className={cn("w-full text-sm", isSticky && "sticky-header")}>
           <thead className="bg-gray-100">
             <tr>
@@ -427,10 +427,10 @@ const AdminEmployeeTasksTable = ({ userId }: AdminEmployeeTasksTableProps) => {
               sortedTasks.map((task) => {
                 const isUrgent = task.tags?.some((tag: any) => tag.name === 'قصوى');
                 const typeClass = getTypeRowClass(task.type);
-                
+
                 return (
-                  <tr 
-                    key={task.id} 
+                  <tr
+                    key={task.id}
                     className={cn(
                       typeClass,
                       "border-b transition-colors",
@@ -442,7 +442,7 @@ const AdminEmployeeTasksTable = ({ userId }: AdminEmployeeTasksTableProps) => {
                       <div className="flex justify-between items-center">
                         <div>
                           {task.client ? (
-                            <Link 
+                            <Link
                               to={`/clients/${task.client.id}`}
                               className="font-medium text-black no-underline hover:underline"
                             >
@@ -501,10 +501,10 @@ const AdminEmployeeTasksTable = ({ userId }: AdminEmployeeTasksTableProps) => {
                       <Badge
                         variant={
                           task.status === 'New' ? 'default' :
-                          task.status === 'Deferred' ? 'destructive' :
-                          task.status === 'Pending Review' ? 'secondary' :
-                          task.status === 'Completed' ? 'default' :
-                          'outline'
+                            task.status === 'Deferred' ? 'destructive' :
+                              task.status === 'Pending Review' ? 'secondary' :
+                                task.status === 'Completed' ? 'default' :
+                                  'outline'
                         }
                         className={cn(
                           task.status === 'New' && "bg-yellow-500 text-black hover:bg-yellow-500",
@@ -521,9 +521,9 @@ const AdminEmployeeTasksTable = ({ userId }: AdminEmployeeTasksTableProps) => {
                       <div className="flex justify-start gap-1 flex-wrap">
                         {/* Google Drive Link */}
                         {task.client?.google_drive_link && (
-                          <Button 
-                            variant="outline-secondary" 
-                            size="sm" 
+                          <Button
+                            variant="outline-secondary"
+                            size="sm"
                             onClick={() => window.open(task.client!.google_drive_link!, '_blank')}
                             title="فتح Google Drive"
                           >
@@ -532,14 +532,14 @@ const AdminEmployeeTasksTable = ({ userId }: AdminEmployeeTasksTableProps) => {
                         )}
 
                         {/* Follow-up */}
-                        <Button 
-                          variant="outline-secondary" 
-                          size="sm" 
-                          onClick={() => openDrawer('taskFollowUp', { 
+                        <Button
+                          variant="outline-secondary"
+                          size="sm"
+                          onClick={() => openDrawer('taskFollowUp', {
                             taskId: task.id,
                             taskName: task.task_name || undefined,
                             clientName: task.client?.name || 'عميل غير محدد'
-                          })} 
+                          })}
                           title="عرض المراسلات والمتابعة"
                         >
                           <MessageSquare size={18} />

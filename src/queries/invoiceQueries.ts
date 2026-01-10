@@ -301,7 +301,31 @@ function normalizeInvoice(invoice: any): Invoice {
   };
 }
 
+/**
+ * Get invoices for a specific task
+ */
+const fetchInvoicesByTask = async (taskId: number): Promise<Invoice[]> => {
+  const { data } = await apiClient.get<ApiResponse<Invoice[]>>(`/invoices/task/${taskId}`);
+  // data is the body, which might be wrapped or not. 
+  // The controller returns `new WP_REST_Response($result['data'], 200);`. 
+  const responseData: any = data;
+  const invoices = Array.isArray(responseData) ? responseData : (responseData.data || []);
+  return invoices.map(normalizeInvoice);
+};
+
 // --- React Query Hooks ---
+
+/**
+ * Get invoices for a specific task
+ */
+export const useGetInvoicesByTask = (taskId: number, enabled: boolean = true) => {
+  return useQuery({
+    queryKey: ['invoices', 'task', taskId],
+    queryFn: () => fetchInvoicesByTask(taskId),
+    enabled: !!taskId && enabled,
+    staleTime: 10 * 1000,
+  });
+};
 
 /**
  * Get invoices with optional filters
