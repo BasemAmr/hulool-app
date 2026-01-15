@@ -17,17 +17,17 @@ import { Spinner } from '../../components/ui/spinner';
 import { Alert, AlertDescription, AlertTitle } from '../../components/ui/alert';
 import SaudiRiyalIcon from '../../components/ui/SaudiRiyalIcon';
 import { Badge } from '../../components/ui/badge';
-import { 
+import {
   useGetMyTransactions,
 } from '../../queries/employeeFinancialQueries';
 import { useGetMyPendingItems } from '../../queries/financialCenterQueries';
 import EmployeeTransactionsTable from '../../components/employees/EmployeeTransactionsTable';
 import { useModalStore } from '../../stores/modalStore';
-import { 
-  Wallet, 
-  TrendingUp, 
-  Clock, 
-  CreditCard, 
+import {
+  Wallet,
+  TrendingUp,
+  Clock,
+  CreditCard,
   FileText,
   CheckCircle,
   AlertCircle,
@@ -42,14 +42,14 @@ const EmployeeFinancialsPageRedesigned = () => {
   const [activeTab, setActiveTab] = useState<TabType>('summary');
   const [searchParams] = useSearchParams();
   const { openModal } = useModalStore();
-  
+
   // Get URL parameters for highlighting
   const highlightTransactionId = searchParams.get('highlight');
 
   // Queries
   const { data: transactionsData, isLoading: isTransactionsLoading, error: transactionsError } = useGetMyTransactions();
   const { data: pendingData, isLoading: isPendingLoading } = useGetMyPendingItems();
-  
+
   const transactions = transactionsData?.data?.transactions || [];
   const pendingItems = pendingData?.items || [];
 
@@ -92,7 +92,7 @@ const EmployeeFinancialsPageRedesigned = () => {
   const totals = useMemo(() => {
     let totalEarned = 0;
     let totalPaidOut = 0;
-    
+
     transactions.forEach(t => {
       const amount = parseFloat(t.amount) || 0;
       if (t.direction === 'CREDIT') {
@@ -101,7 +101,7 @@ const EmployeeFinancialsPageRedesigned = () => {
         totalPaidOut += amount;
       }
     });
-    
+
     return { totalEarned, totalPaidOut };
   }, [transactions]);
 
@@ -235,11 +235,10 @@ const EmployeeFinancialsPageRedesigned = () => {
           <button
             key={tab.key}
             onClick={() => setActiveTab(tab.key)}
-            className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
-              activeTab === tab.key
+            className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${activeTab === tab.key
                 ? 'border-primary text-primary'
                 : 'border-transparent text-black/70 hover:text-black'
-            }`}
+              }`}
           >
             {tab.label}
             {tab.count !== undefined && tab.count > 0 && (
@@ -402,9 +401,8 @@ const EmployeeFinancialsPageRedesigned = () => {
       {activeTab === 'history' && (
         <Card>
           <CardContent className="p-4">
-            <EmployeeTransactionsTable 
+            <EmployeeTransactionsTable
               transactions={mappedTransactions}
-              pendingCommissions={mappedPending}
               isLoading={isTransactionsLoading || isPendingLoading}
               onEdit={(transaction) => openModal('transactionEdit', { transaction })}
               onDelete={(transaction) => openModal('transactionDelete', { transaction })}

@@ -216,6 +216,33 @@ export interface Task {
   tags: Tag[];
 }
 
+/**
+ * Invoice totals aggregated from all invoices for a task
+ * Used in pending review tasks table
+ */
+export interface InvoiceTotals {
+  total_amount: number;
+  paid_amount: number;
+  remaining_amount: number;
+}
+
+/**
+ * Task with aggregated invoice payment data
+ * Used for pending review tasks table to avoid N+1 queries
+ */
+export interface TaskWithInvoiceData extends Task {
+  invoice_totals: InvoiceTotals;
+  assigned_employee_name?: string;
+}
+
+/**
+ * Response structure for pending review tasks with invoice data
+ */
+export interface PendingReviewTasksData {
+  tasks: TaskWithInvoiceData[];
+  pagination: Pagination;
+}
+
 export interface TaskPayload {
   client_id: number;
   assigned_to_id?: number | null;

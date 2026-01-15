@@ -19,7 +19,8 @@ import type {
   TaskCancellationDecisions,
   ResolutionSummary,
   ConcurrentModificationData,
-  TaskValidationResult
+  TaskValidationResult,
+  PendingReviewTasksData
 } from '../api/types';
 
 export interface TaskFilters {
@@ -238,14 +239,16 @@ const submitTaskForReview = async ({ id }: { id: number }): Promise<Task> => {
 };
 
 // API function to approve task with financial data
-const approveTask = async ({ id, expense_amount, notes }: {
+const approveTask = async ({ id, expense_amount, notes, approved_at }: {
   id: number;
   expense_amount: number;
-  notes?: string
+  notes?: string;
+  approved_at?: string;
 }): Promise<Task> => {
   const { data } = await apiClient.post<ApiResponse<Task>>(`/tasks/${id}/approve`, {
     expense_amount,
-    notes
+    notes,
+    approved_at
   });
   if (!data.success) throw new Error(data.message || 'Failed to approve task');
   return data.data;
@@ -287,6 +290,14 @@ const updateTaskWithConflictHandling = async ({
 };
 
 
+// API function to fetch pending review tasks with invoice totals
+const fetchPendingReviewTasksWithInvoices = async (): Promise<PendingReviewTasksData> => {
+  const { data } = await apiClient.get<ApiResponse<PendingReviewTasksData>>('/tasks/pending-review-with-invoices');
+  if (!data.success) throw new Error(data.message || 'Failed to fetch pending review tasks');
+  return data.data;
+};
+
+
 // --- React Query Hooks ---
 export const useGetTasks = (filters: TaskFilters) => {
   return useQuery({
@@ -324,6 +335,16 @@ export const useGetTask = (taskId: number) => {
     queryFn: () => fetchTaskById(taskId),
     enabled: !!taskId, // Only fetch if taskId is provided
     staleTime: 30 * 1000, // Keep data fresh for 30 seconds
+  });
+};
+
+// Query hook for pending review tasks with invoice data
+export const useGetPendingReviewTasksWithInvoices = () => {
+  return useQuery({
+    queryKey: ['tasks', 'pending-review-with-invoices'],
+    queryFn: fetchPendingReviewTasksWithInvoices,
+    staleTime: 30 * 1000, // Keep data fresh for 30 seconds
+    refetchInterval: 20 * 1000, // Refetch every 20 seconds
   });
 };
 

@@ -16,8 +16,8 @@ const customStyles = `
     border-radius: 0.375rem;
     box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
     font-family: 'Segoe UI', Roboto, Helvetica Neue, Arial, sans-serif !important;
-    direction: ltr !important;
-    text-align: left;
+    direction: rtl !important;
+    text-align: right;
   }
   .react-datepicker-popper {
     z-index: 9999 !important;

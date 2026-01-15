@@ -1,13 +1,13 @@
-import React, { useState } from 'react';
-import { Edit, Trash2, TrendingUp, TrendingDown, Clock, CheckCircle } from 'lucide-react';
-import Button from '../ui/Button';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../ui/table';
-import { useToast } from '../../hooks/useToast';
+import React, { useMemo } from 'react';
+import { Edit, Trash2 } from 'lucide-react';
 import { useModalStore } from '../../stores/modalStore';
-import { useGetEmployeeTransactions, useDeleteEmployeeTransaction, useGetEmployee } from '../../queries/employeeQueries';
-import { formatCurrency, formatDate } from '../../utils/formatUtils';
-// Step 17: Removed TransactionEditModal and TransactionDeleteModal imports - using ModalManager
+import { useGetEmployeeTransactions, useGetEmployee } from '../../queries/employeeQueries';
 import { useCurrentUserCapabilities } from '../../queries/userQueries';
+import type { CellProps } from 'react-datasheet-grid';
+import HuloolDataGrid from '../grid/HuloolDataGrid';
+import type { HuloolGridColumn } from '../grid/HuloolDataGrid';
+import GridActionBar from '../grid/GridActionBar';
+import type { GridAction } from '../grid/GridActionBar';
 
 // Confirmed transaction from ledger
 interface ConfirmedTransaction {
@@ -21,29 +21,8 @@ interface ConfirmedTransaction {
   related_object_type: string | null;
   related_object_id: string | null;
   task_name?: string | null;
+  task_type?: string | null;
   client_name?: string | null;
-}
-
-// Pending commission from pending_items table
-interface PendingCommission {
-  id: string;
-  item_type: string;
-  related_entity: string | null;
-  task_id: string | null;
-  expected_amount: string;
-  status: string;
-  notes: string | null;
-  created_at: string;
-  task_name?: string | null;
-  net_earning?: string | null;
-  task_status?: string | null;
-  client_name?: string | null;
-  invoice_id?: string | null;
-  invoice_status?: string | null;
-  invoice_amount?: string | null;
-  invoice_paid_amount?: string | null;
-  days_pending?: number;
-  invoice_payment_progress?: number;
 }
 
 // Legacy transaction format (for backward compatibility)
@@ -67,12 +46,9 @@ interface LegacyTransaction {
   transaction_type?: string;
 }
 
-type ViewTab = 'confirmed' | 'pending';
-
 interface EmployeeTransactionsTableProps {
   employeeId?: number;
   transactions?: ConfirmedTransaction[];
-  pendingCommissions?: PendingCommission[];
   isLoading?: boolean;
   page?: number;
   perPage?: number;
@@ -81,10 +57,167 @@ interface EmployeeTransactionsTableProps {
   onDelete?: (transaction: ConfirmedTransaction | LegacyTransaction) => void;
 }
 
+// ================================
+// CUSTOM CELL COMPONENTS
+// ================================
+
+/** Task Type Cell */
+const TaskTypeCell = React.memo(({ rowData, active }: CellProps<ConfirmedTransaction>) => {
+  const taskTypeMap: Record<string, string> = {
+    'Government': 'حكومي',
+    'RealEstate': 'عقارات',
+    'Accounting': 'محاسبي',
+    'Other': 'أخرى',
+  };
+
+  const transactionTypeMap: Record<string, string> = {
+    'EMPLOYEE_PAYOUT': 'صرف',
+    'EMPLOYEE_BORROW': 'سلفة',
+    'EMPLOYEE_EXPENSE': 'مصروف',
+    'EMPLOYEE_BONUS': 'مكافأة',
+    'EMPLOYEE_COMMISSION': 'عمولة',
+  };
+
+  const value = rowData.task_type;
+  const label = value ? (taskTypeMap[value] || value) : (transactionTypeMap[rowData.transaction_type] || rowData.transaction_type);
+
+  return (
+    <span
+      className="hulool-cell-content"
+      style={{
+        fontWeight: 700,
+        color: '#000000',
+        justifyContent: 'center',
+        textAlign: 'center'
+      }}
+    >
+      {label}
+    </span>
+  );
+});
+TaskTypeCell.displayName = 'TaskTypeCell';
+
+/** Combined Description Cell */
+const CombinedDescriptionCell = React.memo(({ rowData }: CellProps<ConfirmedTransaction>) => {
+  const isEarning = parseFloat(rowData.debit || '0') > 0;
+  const prefix = rowData.task_name ? rowData.task_name : (isEarning ? 'سند قبض' : 'سند صرف');
+
+  return (
+    <div
+      className="hulool-cell-content"
+      style={{
+        fontWeight: 700,
+        color: '#000000',
+        display: 'flex',
+        gap: '4px',
+        overflow: 'hidden',
+        textOverflow: 'ellipsis',
+        whiteSpace: 'nowrap'
+      }}
+    >
+      <span style={{ flexShrink: 0 }}>{prefix}</span>
+      {rowData.description && (
+        <span style={{ opacity: 0.9, fontWeight: 700 }}> - {rowData.description}</span>
+      )}
+    </div>
+  );
+});
+CombinedDescriptionCell.displayName = 'CombinedDescriptionCell';
+
+/** Amount Cell with Directional Color */
+const TransactionAmountCell = React.memo(({ rowData }: CellProps<ConfirmedTransaction>) => {
+  const debit = parseFloat(rowData.debit || '0');
+  const credit = parseFloat(rowData.credit || '0');
+  const amount = debit > 0 ? debit : credit;
+  const isPositive = debit > 0;
+
+  return (
+    <div
+      className="hulool-cell-content"
+      style={{
+        fontWeight: 700,
+        color: isPositive ? '#16a34a' : '#dc2626',
+        justifyContent: 'center',
+        textAlign: 'center'
+      }}
+    >
+      {isPositive ? '+' : '-'}{amount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+    </div>
+  );
+});
+TransactionAmountCell.displayName = 'TransactionAmountCell';
+
+/** Balance Cell */
+const BalanceCell = React.memo(({ rowData }: CellProps<ConfirmedTransaction>) => {
+  const balance = parseFloat(rowData.balance || '0');
+  return (
+    <div
+      className="hulool-cell-content"
+      style={{
+        fontWeight: 700,
+        color: '#000000',
+        justifyContent: 'center',
+        textAlign: 'center'
+      }}
+    >
+      {balance.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+    </div>
+  );
+});
+BalanceCell.displayName = 'BalanceCell';
+
+/** Transaction Date Cell */
+const TransactionDateCell = React.memo(({ rowData }: CellProps<ConfirmedTransaction>) => {
+  const date = rowData.transaction_date ? new Date(rowData.transaction_date) : null;
+  const formattedDate = date && !isNaN(date.getTime())
+    ? date.toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' })
+    : '—';
+
+  return (
+    <div
+      className="hulool-cell-content"
+      style={{
+        fontWeight: 700,
+        color: '#000000',
+        justifyContent: 'center',
+        textAlign: 'center'
+      }}
+    >
+      {formattedDate}
+    </div>
+  );
+});
+TransactionDateCell.displayName = 'TransactionDateCell';
+
+/** Actions Cell */
+const TransactionActionsCell = React.memo(({ rowData, rowIndex, columnData }: CellProps<ConfirmedTransaction, any>) => {
+  const { onEdit, onDelete, canEdit } = columnData;
+  if (!canEdit) return null;
+
+  const actions: GridAction<ConfirmedTransaction>[] = [
+    {
+      type: 'edit',
+      onClick: (item) => onEdit(item),
+      title: 'تعديل'
+    },
+    {
+      type: 'delete',
+      onClick: (item) => onDelete(item),
+      title: 'حذف'
+    }
+  ];
+
+  return <GridActionBar item={rowData} index={rowIndex} actions={actions} />;
+});
+TransactionActionsCell.displayName = 'TransactionActionsCell';
+
+// ================================
+// MAIN COMPONENT
+// ================================
+
 const EmployeeTransactionsTable: React.FC<EmployeeTransactionsTableProps> = ({
   employeeId,
   transactions: propTransactions,
-  pendingCommissions: propPendingCommissions,
   isLoading: propIsLoading,
   page = 1,
   perPage = 10,
@@ -92,359 +225,145 @@ const EmployeeTransactionsTable: React.FC<EmployeeTransactionsTableProps> = ({
   onEdit,
   onDelete,
 }) => {
-  const { success, error } = useToast();
   const { openModal } = useModalStore();
-  const [activeTab, setActiveTab] = useState<ViewTab>('confirmed');
   const { data: capabilities } = useCurrentUserCapabilities();
   const canEdit = capabilities?.manage_options || false;
-  // Step 17: Removed local modal state - now using ModalManager
 
-  // Fetch employee data - only if employeeId is provided
-  const { data: employee } = useGetEmployee(employeeId as number);
-
-  // Fetch employee transactions - only if employeeId is provided and no transactions prop
+  // Fetch employee transactions
   const {
     data: transactionsData,
     isLoading: isQueryLoading,
-    refetch
   } = useGetEmployeeTransactions(employeeId as number, { page, per_page: perPage });
 
   const isLoading = propIsLoading !== undefined ? propIsLoading : isQueryLoading;
 
-  const deleteTransactionMutation = useDeleteEmployeeTransaction();
-
-  // Extract confirmed transactions and pending commissions
-  const confirmedTransactions: ConfirmedTransaction[] = propTransactions
-    ? propTransactions
-    : (transactionsData?.data?.confirmed_transactions || []);
-
-  const pendingCommissions: PendingCommission[] = propPendingCommissions
-    ? propPendingCommissions
-    : (transactionsData?.data?.pending_commissions || []);
+  // Extract confirmed transactions
+  const confirmedTransactions: ConfirmedTransaction[] = useMemo(() => {
+    return propTransactions
+      ? propTransactions
+      : (transactionsData?.data?.confirmed_transactions || []);
+  }, [propTransactions, transactionsData]);
 
   const pagination = transactionsData?.pagination || {};
-  const summary = transactionsData?.data?.summary || {};
 
   const handleEditTransaction = (transaction: ConfirmedTransaction | LegacyTransaction) => {
     if (onEdit) {
       onEdit(transaction);
       return;
     }
-
-    // Step 17: Use ModalManager instead of local modal state
     openModal('transactionEdit', { transaction });
   };
 
-  const handleDeleteTransaction = async (transaction: ConfirmedTransaction | LegacyTransaction) => {
+  const handleDeleteTransaction = (transaction: ConfirmedTransaction | LegacyTransaction) => {
     if (onDelete) {
       onDelete(transaction);
       return;
     }
-
-    // Step 17: Use ModalManager instead of local modal state
     openModal('transactionDelete', { transaction });
   };
 
-  // Helper: Get transaction icon for confirmed transactions
-  const getConfirmedTransactionIcon = (transaction: ConfirmedTransaction) => {
-    const debit = parseFloat(transaction.debit || '0');
-
-    if (debit > 0) {
-      return <TrendingUp size={16} className="text-success" />; // Commission earned
-    } else {
-      return <TrendingDown size={16} className="text-danger" />; // Payout/expense
+  // Define Columns
+  const columns = useMemo((): HuloolGridColumn<ConfirmedTransaction>[] => [
+    {
+      id: 'date',
+      title: 'التاريخ',
+      key: 'transaction_date',
+      type: 'date',
+      width: 120,
+      grow: 0
+    },
+    {
+      id: 'type',
+      title: 'نوع المهمة',
+      key: 'task_type',
+      component: TaskTypeCell,
+      width: 120,
+      grow: 0
+    },
+    {
+      id: 'description',
+      title: 'الوصف والملاحظات',
+      key: 'description',
+      component: CombinedDescriptionCell,
+      grow: 1
+    },
+    {
+      id: 'amount',
+      title: 'المبلغ',
+      key: 'debit',
+      component: TransactionAmountCell,
+      width: 120,
+      grow: 0
+    },
+    {
+      id: 'balance',
+      title: 'الرصيد',
+      key: 'balance',
+      component: BalanceCell,
+      width: 120,
+      grow: 0
+    },
+    {
+      id: 'actions',
+      title: 'الإجراءات',
+      key: 'id',
+      component: TransactionActionsCell,
+      width: 100,
+      grow: 0,
+      columnData: {
+        onEdit: handleEditTransaction,
+        onDelete: handleDeleteTransaction,
+        canEdit
+      }
     }
-  };
-
-  // Helper: Format transaction type for display
-  const getTransactionTypeBadge = (type: string) => {
-    const typeMap: Record<string, { label: string; className: string }> = {
-      'EMPLOYEE_COMMISSION': { label: 'عمولة', className: 'bg-green-100 text-green-800' },
-      'EMPLOYEE_PAYOUT': { label: 'صرف', className: 'bg-red-100 text-red-800' },
-      'EMPLOYEE_EXPENSE': { label: 'مصروف', className: 'bg-orange-100 text-orange-800' },
-      'EMPLOYEE_BORROW': { label: 'سلفة', className: 'bg-blue-100 text-blue-800' },
-    };
-
-    const config = typeMap[type] || { label: type, className: 'bg-gray-100 text-gray-800' };
-    return (
-      <span className={`inline-flex items-center px-2 py-0.5 text-xs font-medium rounded ${config.className}`}>
-        {config.label}
-      </span>
-    );
-  };
+  ], [canEdit, handleEditTransaction, handleDeleteTransaction]);
 
   if (isLoading) {
-    return <div className="p-4 text-center">Loading transactions...</div>;
+    return (
+      <div className="p-8 text-center">
+        <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+        <p className="mt-2 text-gray-500">جاري تحميل المعاملات...</p>
+      </div>
+    );
   }
 
   return (
-    <div>
-      {/* Tab Navigation */}
-      <div className="flex border-b mb-4">
-        <button
-          className={`px-4 py-2 font-medium text-sm border-b-2 transition-colors ${activeTab === 'confirmed'
-            ? 'border-primary text-primary'
-            : 'border-transparent text-gray-500 hover:text-gray-700'
-            }`}
-          onClick={() => setActiveTab('confirmed')}
-        >
-          <div className="flex items-center gap-2">
-            <CheckCircle size={16} />
-            <span>المعاملات المؤكدة</span>
-            <span className="bg-green-100 text-green-800 text-xs px-2 py-0.5 rounded-full">
-              {confirmedTransactions.length}
-            </span>
-          </div>
-        </button>
-        <button
-          className={`px-4 py-2 font-medium text-sm border-b-2 transition-colors ${activeTab === 'pending'
-            ? 'border-primary text-primary'
-            : 'border-transparent text-gray-500 hover:text-gray-700'
-            }`}
-          onClick={() => setActiveTab('pending')}
-        >
-          <div className="flex items-center gap-2">
-            <Clock size={16} />
-            <span>العمولات المعلقة</span>
-            {pendingCommissions.length > 0 && (
-              <span className="bg-amber-100 text-amber-800 text-xs px-2 py-0.5 rounded-full">
-                {pendingCommissions.length}
-              </span>
-            )}
-          </div>
-        </button>
+    <div className="flex flex-col gap-4">
+      <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+        <HuloolDataGrid
+          data={confirmedTransactions}
+          columns={columns}
+          height="auto"
+          minHeight={300}
+          emptyMessage="لا توجد معاملات مؤكدة حالياً"
+          showId={false}
+        />
       </div>
 
-      {/* Confirmed Transactions Tab */}
-      {activeTab === 'confirmed' && (
-        <div className="overflow-x-auto">
-          <Table className="border-collapse border border-gray-300">
-            <TableHeader>
-              <TableRow>
-                <TableHead className="text-black border border-gray-300">التاريخ</TableHead>
-                <TableHead className="text-black border border-gray-300">الوصف</TableHead>
-                <TableHead className="text-black border border-gray-300">النوع</TableHead>
-                <TableHead className="text-black border border-gray-300">المهمة/العميل</TableHead>
-                <TableHead className="text-right text-black border border-gray-300">المبلغ</TableHead>
-                <TableHead className="text-right text-black border border-gray-300">الرصيد</TableHead>
-                <TableHead className="text-right text-black border border-gray-300">الإجراءات</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {confirmedTransactions.map((transaction) => {
-                const debit = parseFloat(transaction.debit || '0');
-                const credit = parseFloat(transaction.credit || '0');
-                const amount = debit > 0 ? debit : credit;
-                const isPositive = debit > 0;
-
-                return (
-                  <TableRow key={transaction.id}>
-                    <TableCell className="border border-gray-300">
-                      <div className="flex items-center gap-2">
-                        {getConfirmedTransactionIcon(transaction)}
-                        <div className="font-medium text-black">
-                          {formatDate(transaction.transaction_date)}
-                        </div>
-                      </div>
-                    </TableCell>
-                    <TableCell className="border border-gray-300">
-                      <div className="font-medium text-black">{transaction.description}</div>
-                    </TableCell>
-                    <TableCell className="border border-gray-300">
-                      {getTransactionTypeBadge(transaction.transaction_type)}
-                    </TableCell>
-                    <TableCell>
-                      {transaction.task_name ? (
-                        <div>
-                          <div className="font-medium text-black">{transaction.task_name}</div>
-                          {transaction.client_name && (
-                            <small className="text-gray-500">{transaction.client_name}</small>
-                          )}
-                        </div>
-                      ) : (
-                        <span className="text-gray-400">—</span>
-                      )}
-                    </TableCell>
-                    <TableCell className="text-right border border-gray-300">
-                      <div className={`font-medium ${isPositive ? 'text-green-600' : 'text-red-600'}`}>
-                        {isPositive ? '+' : '-'}{formatCurrency(amount)} <span className="text-xs">ر.س</span>
-                      </div>
-                    </TableCell>
-                    <TableCell className="text-right border border-gray-300">
-                      <span className="text-black">
-                        {transaction.balance ? formatCurrency(parseFloat(transaction.balance)) : '—'}
-                      </span>
-                    </TableCell>
-                    <TableCell className="text-right border border-gray-300">
-                      <div className="inline-flex gap-2">
-                        {canEdit && (
-                          <>
-                            <Button
-                              variant="outline-secondary"
-                              size="sm"
-                              onClick={() => handleEditTransaction(transaction)}
-                              title="Edit"
-                            >
-                              <Edit size={12} />
-                            </Button>
-                            <Button
-                              variant="outline-danger"
-                              size="sm"
-                              onClick={() => handleDeleteTransaction(transaction)}
-                              title="Delete"
-                            >
-                              <Trash2 size={12} />
-                            </Button>
-                          </>
-                        )}
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                );
-              })}
-            </TableBody>
-          </Table>
-
-          {confirmedTransactions.length === 0 && (
-            <div className="p-8 text-center text-gray-500">
-              <CheckCircle size={48} className="mx-auto mb-4 text-gray-300" />
-              <p>لا توجد معاملات مؤكدة حتى الآن</p>
-            </div>
-          )}
-        </div>
-      )}
-
-      {/* Pending Commissions Tab */}
-      {activeTab === 'pending' && (
-        <div className="overflow-x-auto">
-          <Table className="border-collapse border border-gray-300">
-            <TableHeader>
-              <TableRow>
-                <TableHead className="text-black">المهمة</TableHead>
-                <TableHead className="text-black">العميل</TableHead>
-                <TableHead className="text-right text-black">المبلغ المتوقع</TableHead>
-                <TableHead className="text-black">حالة الفاتورة</TableHead>
-                <TableHead className="text-black">تقدم السداد</TableHead>
-                <TableHead className="text-black">أيام الانتظار</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {pendingCommissions.map((pending) => {
-                const progress = pending.invoice_payment_progress || 0;
-                const invoiceStatus = pending.invoice_status || 'unknown';
-
-                return (
-                  <TableRow key={pending.id}>
-                    <TableCell className="border border-gray-300">
-                      <div className="flex items-center gap-2">
-                        <Clock size={16} className="text-amber-500" />
-                        <div className="font-medium text-black">
-                          {pending.task_name || `مهمة #${pending.task_id}`}
-                        </div>
-                      </div>
-                    </TableCell>
-                    <TableCell className="border border-gray-300">
-                      <span className="text-black">{pending.client_name || '—'}</span>
-                    </TableCell>
-                    <TableCell className="text-right border border-gray-300">
-                      <div className="font-medium text-amber-600">
-                        {formatCurrency(parseFloat(pending.expected_amount))} <span className="text-xs">ر.س</span>
-                      </div>
-                    </TableCell>
-                    <TableCell className="border border-gray-300">
-                      <span className={`inline-flex items-center px-2 py-0.5 text-xs font-medium rounded ${invoiceStatus === 'paid' ? 'bg-green-100 text-green-800' :
-                        invoiceStatus === 'partially_paid' ? 'bg-blue-100 text-blue-800' :
-                          invoiceStatus === 'pending' ? 'bg-yellow-100 text-yellow-800' :
-                            'bg-gray-100 text-gray-800'
-                        }`}>
-                        {invoiceStatus === 'paid' ? 'مدفوع' :
-                          invoiceStatus === 'partially_paid' ? 'مدفوع جزئياً' :
-                            invoiceStatus === 'pending' ? 'قيد الانتظار' :
-                              invoiceStatus}
-                      </span>
-                    </TableCell>
-                    <TableCell className="border border-gray-300">
-                      <div className="w-24">
-                        <div className="flex items-center gap-2">
-                          <div className="flex-1 bg-gray-200 rounded-full h-2">
-                            <div
-                              className={`h-2 rounded-full ${progress >= 100 ? 'bg-green-500' :
-                                progress > 50 ? 'bg-blue-500' :
-                                  progress > 0 ? 'bg-yellow-500' :
-                                    'bg-gray-300'
-                                }`}
-                              style={{ width: `${Math.min(progress, 100)}%` }}
-                            />
-                          </div>
-                          <span className="text-xs text-gray-500">{progress.toFixed(0)}%</span>
-                        </div>
-                      </div>
-                    </TableCell>
-                    <TableCell className="border border-gray-300">
-                      <span className={`text-sm ${(pending.days_pending || 0) > 30 ? 'text-red-600 font-medium' :
-                        (pending.days_pending || 0) > 14 ? 'text-orange-600' :
-                          'text-gray-600'
-                        }`}>
-                        {pending.days_pending || 0} يوم
-                      </span>
-                    </TableCell>
-                  </TableRow>
-                );
-              })}
-            </TableBody>
-          </Table>
-
-          {pendingCommissions.length === 0 && (
-            <div className="p-8 text-center text-gray-500">
-              <Clock size={48} className="mx-auto mb-4 text-gray-300" />
-              <p>لا توجد عمولات معلقة</p>
-              <p className="text-sm mt-1">ستظهر هنا العمولات في انتظار دفع الفاتورة</p>
-            </div>
-          )}
-
-          {/* Pending Summary */}
-          {pendingCommissions.length > 0 && (
-            <div className="p-4 bg-amber-50 border-t border-amber-200">
-              <div className="flex justify-between items-center">
-                <span className="text-amber-800 font-medium">
-                  إجمالي العمولات المعلقة: {pendingCommissions.length} عمولة
-                </span>
-                <span className="text-amber-800 font-bold">
-                  {formatCurrency(summary.total_pending || 0)} ر.س
-                </span>
-              </div>
-            </div>
-          )}
-        </div>
-      )}
-
       {/* Pagination */}
-      {pagination.total > perPage && activeTab === 'confirmed' && (
-        <div className="p-4 flex justify-between items-center border-t">
-          <div className="text-black text-sm">
-            Showing {((page - 1) * perPage) + 1} to {Math.min(page * perPage, pagination.total)} of {pagination.total} transactions
+      {pagination.total > perPage && (
+        <div className="flex justify-between items-center px-4 py-3 bg-white rounded-lg border border-gray-200">
+          <div className="text-sm text-gray-600 font-bold">
+            عرض {((page - 1) * perPage) + 1} إلى {Math.min(page * perPage, pagination.total)} من أصل {pagination.total} معاملة
           </div>
-          <div className="inline-flex gap-2">
-            <Button
-              variant="outline-secondary"
-              size="sm"
+          <div className="flex gap-2">
+            <button
+              className="px-4 py-2 text-sm font-bold text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
               disabled={page <= 1}
               onClick={() => onPageChange?.(page - 1)}
             >
-              Previous
-            </Button>
-            <Button
-              variant="outline-secondary"
-              size="sm"
+              السابق
+            </button>
+            <button
+              className="px-4 py-2 text-sm font-bold text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
               disabled={page >= Math.ceil(pagination.total / perPage)}
               onClick={() => onPageChange?.(page + 1)}
             >
-              Next
-            </Button>
+              التالي
+            </button>
           </div>
         </div>
       )}
-      {/* Step 17: Modals now handled by ModalManager */}
     </div>
   );
 };

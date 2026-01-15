@@ -75,7 +75,7 @@ export const useGetEmployeeStats = () => {
  */
 export const useCreateEmployee = () => {
   const queryClient = useQueryClient();
-  
+
   return useMutation({
     mutationFn: async (employeeData: CreateEmployeeRequest): Promise<Employee> => {
       const response = await apiClient.post('/employees', employeeData);
@@ -95,7 +95,7 @@ export const useCreateEmployee = () => {
  */
 export const useUpdateEmployee = () => {
   const queryClient = useQueryClient();
-  
+
   return useMutation({
     mutationFn: async ({ id, data }: { id: number; data: UpdateEmployeeRequest }): Promise<Employee> => {
       const response = await apiClient.put(`/employees/${id}`, data);
@@ -113,7 +113,7 @@ export const useUpdateEmployee = () => {
  */
 export const useDeleteEmployee = () => {
   const queryClient = useQueryClient();
-  
+
   return useMutation({
     mutationFn: async (id: number): Promise<void> => {
       await apiClient.delete(`/employees/${id}`);
@@ -129,7 +129,7 @@ export const useDeleteEmployee = () => {
  */
 export const useRemoveEmployeeStatus = () => {
   const queryClient = useQueryClient();
-  
+
   return useMutation({
     mutationFn: async (userId: number): Promise<void> => {
       await apiClient.delete(`/employees/user/${userId}`);
@@ -148,7 +148,7 @@ export const useRemoveEmployeeStatus = () => {
  */
 export const useAssignTask = () => {
   const queryClient = useQueryClient();
-  
+
   return useMutation({
     mutationFn: async ({ taskId, assignedToId }: { taskId: number; assignedToId: number | null }) => {
       const response = await apiClient.put(`/tasks/${taskId}/assign`, {
@@ -160,10 +160,10 @@ export const useAssignTask = () => {
       // Invalidate task queries to refresh the assignment
       queryClient.invalidateQueries({ queryKey: ['tasks'] });
       queryClient.invalidateQueries({ queryKey: ['tasks', taskId] });
-      
+
       // Also invalidate recent tasks in case they're displayed
       queryClient.invalidateQueries({ queryKey: ['tasks', 'recent'] });
-      
+
       // Invalidate dashboard queries since task assignment affects active tasks
       queryClient.invalidateQueries({ queryKey: ['dashboard', 'clientsWithActiveTasks'] });
       queryClient.invalidateQueries({ queryKey: ['dashboard', 'employee', 'clientsWithActiveTasks'] });
@@ -194,15 +194,15 @@ export const useGetEmployeeTransactions = (
  */
 export const useDeleteEmployeeTransaction = () => {
   const queryClient = useQueryClient();
-  
+
   return useMutation({
-    mutationFn: async ({ 
-      employeeUserId, 
-      transactionId 
-    }: { 
-      employeeTableId: number; 
-      employeeUserId: number; 
-      transactionId: number 
+    mutationFn: async ({
+      employeeUserId,
+      transactionId
+    }: {
+      employeeTableId: number;
+      employeeUserId: number;
+      transactionId: number
     }) => {
       // The DELETE API endpoint expects user_id in the URL
       const response = await apiClient.delete(`/employees/${employeeUserId}/transactions/${transactionId}`);
@@ -220,16 +220,16 @@ export const useDeleteEmployeeTransaction = () => {
  */
 export const useUpdateEmployeeTransaction = () => {
   const queryClient = useQueryClient();
-  
+
   return useMutation({
-    mutationFn: async ({ 
-      employeeUserId, 
-      transactionId, 
-      data 
-    }: { 
+    mutationFn: async ({
+      employeeUserId,
+      transactionId,
+      data
+    }: {
       employeeTableId: number;
-      employeeUserId: number; 
-      transactionId: number; 
+      employeeUserId: number;
+      transactionId: number;
       data: { amount?: number; notes?: string; }
     }) => {
       // The PUT API endpoint expects user_id in the URL
@@ -248,7 +248,7 @@ export const useUpdateEmployeeTransaction = () => {
  */
 export const useGetEmployeeTasks = (
   employeeId: number,
-  params?: { page?: number; per_page?: number }
+  params?: { page?: number; per_page?: number; status?: string | string[] }
 ) => {
   return useQuery({
     queryKey: ['employees', employeeId, 'tasks', params],
@@ -278,7 +278,7 @@ export const useGetEmployeeClients = (
       // We need to get employee details first to get the user_id
       const employeeResponse = await apiClient.get(`/employees/${employeeId}`);
       const employee = employeeResponse.data.data;
-      
+
       // Get clients associated with this employee's tasks
       const response = await apiClient.get(`/clients/admin/employee/${employee.user_id}`, { params });
       return response.data;
@@ -302,10 +302,10 @@ export const useGetEmployeeReceivablesSummary = (
       const employeeResponse = await apiClient.get<ApiResponse<Employee>>(`/employees/${employeeId}`);
       const employee = employeeResponse.data.data;
       // Use new accounts endpoint instead of deprecated receivables
-      const response = await apiClient.get<ApiResponse<EmployeeReceivablesData>>(`/accounts/clients/balances`, { 
-        params: { 
+      const response = await apiClient.get<ApiResponse<EmployeeReceivablesData>>(`/accounts/clients/balances`, {
+        params: {
           employee_user_id: employee.user_id,
-          ...params 
+          ...params
         }
       });
       return response.data;
@@ -326,8 +326,8 @@ export const useGetEmployeeReceivablesTotals = (employeeId: number) => {
       const employeeResponse = await apiClient.get<ApiResponse<Employee>>(`/employees/${employeeId}`);
       const employee = employeeResponse.data.data;
       // Use new accounts endpoint instead of deprecated receivables
-      const response = await apiClient.get('/accounts/clients/totals', { 
-        params: { 
+      const response = await apiClient.get('/accounts/clients/totals', {
+        params: {
           employee_user_id: employee.user_id
         }
       });
@@ -343,12 +343,12 @@ export const useGetEmployeeReceivablesTotals = (employeeId: number) => {
  */
 export const useAddEmployeePayout = () => {
   const queryClient = useQueryClient();
-  
+
   return useMutation({
-    mutationFn: async ({ 
-      employeeUserId, 
-      payoutData 
-    }: { 
+    mutationFn: async ({
+      employeeUserId,
+      payoutData
+    }: {
       employeeUserId: number;
       payoutData: { amount: number; notes?: string; type?: string; }
     }) => {
@@ -368,12 +368,12 @@ export const useAddEmployeePayout = () => {
  */
 export const useAddEmployeeBorrow = () => {
   const queryClient = useQueryClient();
-  
+
   return useMutation({
-    mutationFn: async ({ 
-      employeeUserId, 
-      borrowData 
-    }: { 
+    mutationFn: async ({
+      employeeUserId,
+      borrowData
+    }: {
       employeeUserId: number;
       borrowData: { amount: number; notes?: string; }
     }) => {

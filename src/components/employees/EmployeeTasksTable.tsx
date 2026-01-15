@@ -19,11 +19,15 @@ const EmployeeTasksTable: React.FC<EmployeeTasksTableProps> = ({
 }) => {
   const { openModal } = useModalStore();
 
-  // Fetch employee tasks
-  const { 
-    data: tasksData, 
-    isLoading 
-  } = useGetEmployeeTasks(employeeId, { page, per_page: perPage });
+  // Fetch employee tasks (only New or Pending Review)
+  const {
+    data: tasksData,
+    isLoading
+  } = useGetEmployeeTasks(employeeId, {
+    page,
+    per_page: perPage,
+    status: ['New', 'Pending Review']
+  });
 
   const tasks = tasksData?.data?.tasks || [];
   const pagination = tasksData?.data?.pagination || {};
@@ -71,7 +75,7 @@ const EmployeeTasksTable: React.FC<EmployeeTasksTableProps> = ({
         onComplete={handleCompleteTask}
         onViewAmountDetails={handleViewAmountDetails}
         onDelete={handleDeleteTask}
-        onShowRequirements={handleShowRequirements}
+        // onShowRequirements={handleShowRequirements}
         onAssign={handleAssignTask}
       />
 

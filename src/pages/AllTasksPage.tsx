@@ -1,12 +1,13 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useSearchParams } from 'react-router-dom';
-import { useGetTasksInfinite, useCancelTask } from '../queries/taskQueries';
+import { useGetTasksInfinite, useCancelTask, useGetPendingReviewTasksWithInvoices } from '../queries/taskQueries';
 import { useModalStore } from '../stores/modalStore';
 import { useDrawerStore } from '../stores/drawerStore';
 import { applyPageBackground } from '../utils/backgroundUtils';
-import type { Task, TaskCancellationConflictData } from '../api/types';
+import type { Task, TaskCancellationConflictData, TaskWithInvoiceData } from '../api/types';
 import AllTasksTable from '../components/tasks/AllTasksTable';
+import PendingReviewTasksTable from '../components/tasks/PendingReviewTasksTable';
 import TaskFilter from '../components/tasks/TaskFilter';
 import Button from '../components/ui/Button';
 import { PlusCircle, FileSpreadsheet } from 'lucide-react';
@@ -75,6 +76,12 @@ const AllTasksPage = () => {
     return t('tasks.title');
   }, [status, type, t]);
 
+  // Fetch pending review tasks with invoice data if status is 'Pending Review'
+  const {
+    data: pendingReviewData,
+    isLoading: isPendingReviewLoading,
+  } = useGetPendingReviewTasksWithInvoices();
+
   // Fetch tasks with current filters (excluding search) using infinite query
   const {
     data,
@@ -89,6 +96,10 @@ const AllTasksPage = () => {
 
   // Flatten the pages into a single array for rendering
   const allTasks = useMemo(() => data?.pages.flatMap(page => page.tasks) || [], [data]);
+
+  // Determine which tasks to display based on status filter
+  const isPendingReviewView = status === 'Pending Review';
+  const displayTasks = isPendingReviewView ? (pendingReviewData?.tasks || []) : allTasks;
 
   // Handle notification links - open task follow-up panel when taskId is provided
   useEffect(() => {
@@ -142,18 +153,18 @@ const AllTasksPage = () => {
 
   // Client-side filtering for search
   const filteredTasks = useMemo(() => {
-    if (!allTasks.length) return [];
-    if (!search.trim()) return allTasks;
+    if (!displayTasks.length) return [];
+    if (!search.trim()) return displayTasks;
 
     const searchLower = search.toLowerCase().trim();
-    return allTasks.filter(task =>
+    return displayTasks.filter(task =>
       task.task_name?.toLowerCase().includes(searchLower) ||
       task.client.name.toLowerCase().includes(searchLower) ||
       task.client.phone.includes(searchLower) ||
       task.notes?.toLowerCase().includes(searchLower) ||
       task.type.toLowerCase().includes(searchLower)
     );
-  }, [allTasks, search]);
+  }, [displayTasks, search]);
 
   const handleAddTask = () => openModal('taskForm', {});
   const handleEditTask = (task: Task) => openModal('taskForm', { taskToEdit: task });
@@ -298,32 +309,42 @@ const AllTasksPage = () => {
           />
         </div>
         <div className="p-0">
-          <AllTasksTable
-            tasks={filteredTasks}
-            isLoading={isLoading && !data}
-            onEdit={handleEditTask}
-            onComplete={handleCompleteTask}
-            onViewAmountDetails={handleViewAmountDetails}
-            onDelete={handleCancelTask}
-            onShowRequirements={handleShowRequirements}
-            onAssign={handleAssignTask}
-          />
+          {isPendingReviewView ? (
+            <PendingReviewTasksTable
+              tasks={filteredTasks as TaskWithInvoiceData[]}
+              isLoading={isPendingReviewLoading}
+              onEdit={handleEditTask}
+              onDelete={handleCancelTask}
+            />
+          ) : (
+            <AllTasksTable
+              tasks={filteredTasks as Task[]}
+              isLoading={isLoading && !data}
+              onEdit={handleEditTask}
+              onComplete={handleCompleteTask}
+              onViewAmountDetails={handleViewAmountDetails}
+              onDelete={handleCancelTask}
+              onAssign={handleAssignTask}
+            />
+          )}
 
           {/* --- NEW: Load More Button & Intersection Observer --- */}
-          <div ref={ref} className="text-center p-4">
-            {hasNextPage && (
-              <Button
-                onClick={() => fetchNextPage()}
-                isLoading={isFetchingNextPage}
-                variant="outline-primary"
-              >
-                {isFetchingNextPage ? 'جاري التحميل...' : 'تحميل المزيد'}
-              </Button>
-            )}
-            {!hasNextPage && !isLoading && allTasks.length > 0 && (
-              <p className="text-black mb-0">وصلت إلى نهاية القائمة</p>
-            )}
-          </div>
+          {!isPendingReviewView && (
+            <div ref={ref} className="text-center p-4">
+              {hasNextPage && (
+                <Button
+                  onClick={() => fetchNextPage()}
+                  isLoading={isFetchingNextPage}
+                  variant="outline-primary"
+                >
+                  {isFetchingNextPage ? 'جاري التحميل...' : 'تحميل المزيد'}
+                </Button>
+              )}
+              {!hasNextPage && !isLoading && allTasks.length > 0 && (
+                <p className="text-black mb-0">وصلت إلى نهاية القائمة</p>
+              )}
+            </div>
+          )}
         </div>
       </div>
     </div>

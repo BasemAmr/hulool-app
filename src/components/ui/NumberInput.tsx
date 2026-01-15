@@ -114,8 +114,8 @@ export const NumberInput: React.FC<NumberInputProps> = ({
                     }`}
                 style={{
                     fontFamily: 'Segoe UI, Roboto, Helvetica Neue, Arial, sans-serif',
-                    direction: 'ltr',
-                    textAlign: 'left'
+                    direction: 'rtl',
+                    textAlign: 'right'
                 }}
                 disabled={disabled}
                 {...props}

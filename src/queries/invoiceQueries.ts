@@ -461,6 +461,7 @@ export const useGetMyInvoiceStats = (enabled: boolean = true) => {
   });
 };
 
+
 /**
  * Get invoices from tasks assigned to current employee (for receivables page)
  */
@@ -496,6 +497,47 @@ export const useGetEmployeeReceivables = (filters: Omit<InvoiceFilters, 'employe
     staleTime: 30 * 1000,
   });
 };
+
+/**
+ * Get invoices for a specific employee (Admin View)
+ * Uses get_admin_employee_dashboard endpoint which returns invoices, pagination, and summary
+ */
+export const useGetAdminEmployeeInvoices = (
+  employeeId: number,
+  filters: Omit<InvoiceFilters, 'employee_user_id'> = {},
+  enabled: boolean = true
+) => {
+  return useQuery({
+    queryKey: ['invoices', 'admin', 'employee', employeeId, filters],
+    queryFn: async () => {
+      const params: Record<string, any> = {
+        page: filters.page || 1,
+        per_page: filters.per_page || 20,
+      };
+
+      if (filters.status) params.payment_status = [filters.status]; // Dashboard endpoint uses 'payment_status' array
+      if (filters.search) params.search = filters.search;
+      if (filters.client_id) params.client_id = filters.client_id;
+      if (filters.date_from) params.date_from = filters.date_from;
+      if (filters.date_to) params.date_to = filters.date_to;
+
+      // Endpoint: /invoices/admin/employee/:employee_id/dashboard
+      const { data } = await apiClient.get<InvoiceListResponse>(`/invoices/admin/employee/${employeeId}/dashboard`, { params });
+
+      // API returns { invoices: [...], pagination: {...}, summary: {...} }
+      const invoices = data.invoices || [];
+
+      return {
+        invoices: invoices.map(normalizeInvoice),
+        pagination: data.pagination,
+        summary: (data as any).summary // Include summary if needed
+      };
+    },
+    enabled: !!employeeId && enabled,
+    staleTime: 30 * 1000,
+  });
+};
+
 
 
 // --- Mutation Hooks ---

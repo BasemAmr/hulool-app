@@ -24,7 +24,7 @@ import {
   createRequirementsAction,
 } from '../grid';
 import type { GridAction } from '../grid';
-import { useDeferTask, useResumeTask, useRestoreTask } from '../../queries/taskQueries';
+import { useDeferTask, useResumeTask, useRestoreTask, useRejectTask } from '../../queries/taskQueries';
 import { useGetEmployeesForSelection } from '../../queries/employeeQueries';
 import { useToast } from '../../hooks/useToast';
 import { useModalStore } from '../../stores/modalStore';
@@ -42,7 +42,7 @@ interface AllTasksTableProps {
   onComplete: (task: Task) => void;
   onViewAmountDetails?: (task: Task) => void;
   onDelete: (task: Task) => void;
-  onShowRequirements?: (task: Task) => void;
+
   onAssign?: (task: Task) => void;
 }
 
@@ -228,12 +228,12 @@ interface TaskActionsCellData {
   onComplete: (task: Task) => void;
   onViewAmountDetails?: (task: Task) => void;
   onDelete: (task: Task) => void;
-  onShowRequirements?: (task: Task) => void;
   onAssign?: (task: Task) => void;
   handleDefer: (task: Task) => void;
   handleResume: (task: Task) => void;
   handleRestore: (task: Task) => void;
   handleApproveTask: (task: Task) => void;
+  handleRejectTask: (task: Task) => void;
   openDrawer: (drawer: string, data: any) => void;
   openModal: (modal: string, data: any) => void;
   isUserEmployee: (id: number | null) => boolean;
@@ -248,12 +248,12 @@ const ActionsCell = React.memo(({ rowData, rowIndex, columnData }: CellProps<Tas
     onComplete,
     onViewAmountDetails,
     onDelete,
-    onShowRequirements,
     onAssign,
     handleDefer,
     handleResume,
     handleRestore,
     handleApproveTask,
+    handleRejectTask,
     openDrawer,
     openModal,
     shouldShowCompleteButton,
@@ -342,6 +342,16 @@ const ActionsCell = React.memo(({ rowData, rowIndex, columnData }: CellProps<Tas
     });
   }
 
+  // Reject for Pending Review
+  if (task.status === 'Pending Review') {
+    actions.push({
+      type: 'reject',
+      onClick: () => handleRejectTask?.(task),
+      title: 'إعادة المهمة إلى الموظف',
+      className: 'bg-red-500 hover:bg-red-600 border-red-500 text-white',
+    });
+  }
+
   // Restore completed or cancelled
   if (task.status === 'Completed' || task.status === 'Cancelled') {
     actions.push({
@@ -355,11 +365,6 @@ const ActionsCell = React.memo(({ rowData, rowIndex, columnData }: CellProps<Tas
 
   // Edit
   actions.push(createEditAction<Task>(onEdit));
-
-  // Requirements
-  if (onShowRequirements) {
-    actions.push(createRequirementsAction<Task>(onShowRequirements));
-  }
 
   // Delete
   if (canDeleteTasks) {
@@ -396,12 +401,12 @@ const AllTasksTable: React.FC<AllTasksTableProps> = ({
   onComplete,
   onViewAmountDetails,
   onDelete,
-  onShowRequirements,
   onAssign
 }) => {
   const { t } = useTranslation();
   const deferTaskMutation = useDeferTask();
   const resumeTaskMutation = useResumeTask();
+  const rejectTaskMutation = useRejectTask();
   const { data: currentCapabilities } = useCurrentUserCapabilities();
   const { success, error } = useToast();
   const { openDrawer } = useDrawerStore();
@@ -431,6 +436,17 @@ const AllTasksTable: React.FC<AllTasksTableProps> = ({
 
   const handleApproveTask = (task: Task) => {
     openModal('approval', { task });
+  };
+
+  const handleRejectTask = (task: Task) => {
+    rejectTaskMutation.mutate({ id: task.id }, {
+      onSuccess: () => {
+        success('تم رفض المهمة', 'تم إعادة المهمة إلى الحالة "جديدة"');
+      },
+      onError: (err: any) => {
+        error(t('common.error'), err.message || 'فشل رفض المهمة');
+      }
+    });
   };
 
   const handleDefer = (task: Task) => {
@@ -575,12 +591,12 @@ const AllTasksTable: React.FC<AllTasksTableProps> = ({
             onComplete,
             onViewAmountDetails,
             onDelete,
-            onShowRequirements,
             onAssign,
             handleDefer,
             handleResume,
             handleRestore,
             handleApproveTask,
+            handleRejectTask,
             openDrawer,
             openModal,
             isUserEmployee,
@@ -591,7 +607,7 @@ const AllTasksTable: React.FC<AllTasksTableProps> = ({
       }
       return col;
     });
-  }, [columns, t, getEmployeeName, onEdit, onComplete, onViewAmountDetails, onDelete, onShowRequirements, onAssign, canDeleteTasks, openModal]);
+  }, [columns, t, getEmployeeName, onEdit, onComplete, onViewAmountDetails, onDelete, onAssign, canDeleteTasks, openModal]);
 
   return (
     <HuloolDataGrid

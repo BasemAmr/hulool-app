@@ -385,7 +385,6 @@ const ClientProfilePage = () => {
                             isLoading={isLoadingTasks}
                             onEdit={handleEditTask}
                             onDelete={handleCancelTask}
-                            onShowRequirements={handleShowRequirements}
                             onComplete={handleCompleteTask}
                             onAssign={handleAssignTask}
                         />

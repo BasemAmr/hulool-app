@@ -11,7 +11,7 @@ import { Card, CardHeader, CardContent } from '../components/ui/card';
 import EmployeeTransactionsTable from '../components/employees/EmployeeTransactionsTable';
 import EmployeeTasksTable from '../components/employees/EmployeeTasksTable';
 import EmployeeClientsTable from '../components/employees/EmployeeClientsTable';
-import EmployeeReceivablesTable from '../components/employees/EmployeeReceivablesTable';
+import EmployeeInvoicesTable from '../components/employees/EmployeeInvoicesTable';
 
 // Import admin employee management components
 import AdminEmployeeClientColumn from '../employee_management_temp_page/AdminEmployeeClientColumn';
@@ -19,7 +19,7 @@ import AdminEmployeeTasksTable from '../employee_management_temp_page/AdminEmplo
 import AdminEmployeeInvoicesPanel from '../components/employees/AdminEmployeeInvoicesPanel';
 import AdminEmployeeTransactionsPanel from '../components/employees/AdminEmployeeTransactionsPanel';
 
-type ViewMode = 'dashboard' | 'transactions' | 'tasks' | 'clients' | 'receivables';
+type ViewMode = 'dashboard' | 'transactions' | 'tasks' | 'clients' | 'invoices';
 
 interface FinancialSummaryCardProps {
   summary?: {
@@ -219,7 +219,7 @@ const EmployeeProfilePage = () => {
     { key: 'transactions', label: 'المعاملات', icon: Activity },
     { key: 'tasks', label: 'المهام', icon: FileText },
     { key: 'clients', label: 'العملاء', icon: UsersIcon },
-    { key: 'receivables', label: 'المستحقات', icon: CreditCard },
+    { key: 'invoices', label: 'الفواتير', icon: CreditCard },
   ] as const;
 
   return (
@@ -298,11 +298,12 @@ const EmployeeProfilePage = () => {
             />
           )}
 
-          {activeMode === 'receivables' && (
-            <EmployeeReceivablesTable
+          {activeMode === 'invoices' && (
+            <EmployeeInvoicesTable
               employeeId={employeeTableId}
               page={currentPage}
               perPage={perPage}
+              onPageChange={setCurrentPage}
             />
           )}
         </div>
