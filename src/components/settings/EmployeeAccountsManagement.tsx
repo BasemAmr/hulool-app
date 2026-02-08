@@ -94,18 +94,13 @@ const EmployeeAccountsManagement = () => {
     };
 
     const handleDeleteClick = (employee: EmployeeAccount) => {
-        openModal('deleteEmployee', {
+        // Open preview modal instead of direct delete confirmation
+        openModal('employeeDeletionPreview', {
             employee,
-            onConfirm: async () => {
-                try {
-                    await deleteEmployee.mutateAsync({ userId: employee.id });
-                    success('تم حذف الموظف بنجاح');
-                } catch (err: any) {
-                    const errorMessage = err.response?.data?.message || 'فشل في حذف الموظف';
-                    showError(errorMessage);
-                }
+            onConfirmDelete: async () => {
+                await deleteEmployee.mutateAsync({ userId: employee.id });
+                success('تم إلغاء تفعيل حساب الموظف بنجاح');
             },
-            isLoading: deleteEmployee.isPending,
         });
     };
 

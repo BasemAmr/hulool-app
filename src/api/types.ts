@@ -110,6 +110,35 @@ export interface UpdateUserCapabilitiesRequest {
   };
 }
 
+// Employee Deletion Preview Types
+export interface EmployeeDeletionPreview {
+  user: {
+    id: number;
+    display_name: string;
+    email: string;
+    username: string;
+    created_at: string;
+  };
+  employee: {
+    id: number;
+    commission_rate: number;
+  };
+  related_records: {
+    tasks_assigned: number;
+    tasks_created: number;
+    invoices_created: number;
+    transactions: number;
+    pending_commissions: number;
+    balance_due: number;
+  };
+  warnings: Array<{
+    type: 'info' | 'warning' | 'error';
+    message: string;
+  }>;
+  can_delete: boolean;
+  action_description: string;
+}
+
 export interface NonceData {
   nonce: string;
   expires: number;

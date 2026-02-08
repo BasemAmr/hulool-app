@@ -72,6 +72,7 @@ import { useToast } from '../../hooks/useToast';
 // EMPLOYEE ACCOUNT MANAGEMENT MODALS
 import EmployeeForm from '../settings/EmployeeForm';
 import EmployeeCredentialsModal from '../settings/EmployeeCredentialsModal';
+import EmployeeDeletionPreviewModal from '../settings/EmployeeDeletionPreviewModal';
 
 // Separate component for client receivables to avoid re-renders
 const ClientReceivablesFetcher = ({ client }: { client?: any }) => {
@@ -454,6 +455,17 @@ const ModalManager = () => {
               </div>
             </div>
           </BaseModal>
+        );
+
+      case 'employeeDeletionPreview':
+        return (
+          <EmployeeDeletionPreviewModal
+            key="employeeDeletionPreview"
+            isOpen={isOpen}
+            onClose={closeModal}
+            employee={props.employee}
+            onConfirmDelete={props.onConfirmDelete}
+          />
         );
 
       default:
