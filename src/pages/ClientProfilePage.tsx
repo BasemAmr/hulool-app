@@ -39,6 +39,7 @@ const ClientProfilePage = () => {
 
     const mode = (searchParams.get('mode') || 'general') as 'general' | 'tasks' | 'receivables';
     const filter = (searchParams.get('filter') || 'all') as 'all' | 'unpaid' | 'paid';
+    const highlightInvoice = searchParams.get('highlightInvoice');
 
     const { hasViewAllReceivablesPermission, hasViewAmountsPermission } = useReceivablesPermissions();
 
@@ -405,6 +406,7 @@ const ClientProfilePage = () => {
                                     client={client}
                                     filter={filter === 'all' ? 'all' : filter === 'unpaid' ? 'invoices' : 'all'}
                                     hideAmounts={!hasViewAmountsPermission}
+                                    highlightInvoiceId={highlightInvoice ? Number(highlightInvoice) : undefined}
                                 />
                             ) : (
                                 <ClientReceivablesTable

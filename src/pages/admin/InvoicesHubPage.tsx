@@ -9,7 +9,7 @@
  */
 
 import { useEffect, useState, useMemo } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { useSearchParams, useNavigate } from 'react-router-dom';
 import { applyPageBackground } from '../../utils/backgroundUtils';
 import { useGetInvoiceAgingAnalysis } from '../../queries/financialCenterQueries';
 import { useGetInvoicesInfinite } from '../../queries/invoiceQueries';
@@ -32,6 +32,7 @@ import {
   LayoutList,
   Filter,
   DollarSign,
+  Eye,
 } from 'lucide-react';
 import { useDebounce } from '../../hooks/useDebounce';
 import { useInView } from 'react-intersection-observer';
@@ -45,6 +46,7 @@ type ViewMode = 'table' | 'kanban';
 
 const InvoicesHubPage = () => {
   const [searchParams, setSearchParams] = useSearchParams();
+  const navigate = useNavigate();
   const [search, setSearch] = useState('');
   const [clientIdFilter, setClientIdFilter] = useState('');
   const [statusFilter, setStatusFilter] = useState<InvoiceStatus | 'partially_paid' | 'unpaid' | ''>(
@@ -378,6 +380,14 @@ const InvoicesHubPage = () => {
                         </TableCell>
                         <TableCell className="border border-gray-300 px-3 py-2">
                           <div className="flex justify-between gap-1 p-1 ">
+                            <Button
+                              variant="outline-secondary"
+                              size="sm"
+                              onClick={() => navigate(`/clients/${invoice.client_id}?mode=receivables&highlightInvoice=${invoice.id}`)}
+                              title="عرض في كشف الحساب"
+                            >
+                              <Eye size={14} className="text-blue-500" />
+                            </Button>
                             <Button
                               variant="outline-secondary"
                               size="sm"

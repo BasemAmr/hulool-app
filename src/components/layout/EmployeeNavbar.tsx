@@ -1,11 +1,12 @@
-import { NavLink, useNavigate } from 'react-router-dom';
+import { Link, NavLink, useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../../stores/authStore';
 import Logo from '../ui/Logo';
 import NotificationBell from './NotificationBell';
 import {
     Home, ClipboardList, Users, DollarSign, LogOut,
     Search, ChevronDown, FileText,
-    TrendingUp, TrendingDown, Receipt, UserPlus
+    TrendingUp, TrendingDown, Receipt, UserPlus,
+    Settings
 } from 'lucide-react';
 import { useModalStore } from '../../stores/modalStore';
 import {
@@ -155,6 +156,12 @@ const EmployeeNavbar = () => {
                         <DropdownMenuContent align="end" className="w-56 text-right">
                             <DropdownMenuLabel className="text-right">حسابي</DropdownMenuLabel>
                             <DropdownMenuSeparator />
+                            <DropdownMenuItem asChild className="cursor-pointer flex flex-row-reverse justify-end gap-2">
+                                <Link to="/employee/settings">
+                                    <span>الإعدادات</span>
+                                    <Settings size={16} />
+                                </Link>
+                            </DropdownMenuItem>
                             <DropdownMenuItem onClick={handleLogout} className="text-destructive focus:text-destructive cursor-pointer flex flex-row-reverse justify-end gap-2">
                                 <span>تسجيل الخروج</span>
                                 <LogOut size={16} />

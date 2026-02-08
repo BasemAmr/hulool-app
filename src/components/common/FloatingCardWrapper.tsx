@@ -20,7 +20,7 @@ export const FloatingCardWrapper: React.FC<FloatingCardWrapperProps> = ({
       className={`floating-card-container ${className}`}
       style={{
         position: 'relative',
-        zIndex: isHovered ? 10000 : 1,
+        zIndex: isHovered ? 40 : 1,
         isolation: 'isolate',
         overflow: 'visible',
       }}

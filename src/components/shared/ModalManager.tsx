@@ -69,6 +69,10 @@ import TaskRestoreValidationWrapper from '../modals/TaskRestoreValidationWrapper
 import { useRestoreTask } from '../../queries/taskQueries';
 import { useToast } from '../../hooks/useToast';
 
+// EMPLOYEE ACCOUNT MANAGEMENT MODALS
+import EmployeeForm from '../settings/EmployeeForm';
+import EmployeeCredentialsModal from '../settings/EmployeeCredentialsModal';
+
 // Separate component for client receivables to avoid re-renders
 const ClientReceivablesFetcher = ({ client }: { client?: any }) => {
   const { data: receivablesData, isLoading } = useGetClientReceivables(client?.id || 0);
@@ -386,6 +390,70 @@ const ModalManager = () => {
             taskId={Number(props.taskId)}
             onClose={closeModal}
           />
+        );
+
+      // EMPLOYEE ACCOUNT MANAGEMENT MODALS
+      case 'createEmployee':
+        return (
+          <BaseModal
+            key="createEmployee"
+            isOpen={isOpen}
+            onClose={closeModal}
+            title="إنشاء موظف جديد"
+          >
+            <EmployeeForm
+              onSubmit={props.onSubmit}
+              isLoading={props.isLoading}
+              onCancel={closeModal}
+            />
+          </BaseModal>
+        );
+
+      case 'employeeCredentials':
+        return (
+          <EmployeeCredentialsModal
+            key="employeeCredentials"
+            isOpen={isOpen}
+            onClose={closeModal}
+            credentials={props.credentials}
+          />
+        );
+
+      case 'deleteEmployee':
+        return (
+          <BaseModal
+            key="deleteEmployee"
+            isOpen={isOpen}
+            onClose={closeModal}
+            title="حذف الموظف"
+          >
+            <div className="space-y-4" dir="rtl">
+              <p className="text-foreground">
+                هل أنت متأكد من حذف الموظف <strong>{props.employee?.display_name}</strong>؟
+              </p>
+              <p className="text-sm text-foreground/60">
+                لا يمكن التراجع عن هذا الإجراء.
+              </p>
+              <div className="flex items-center justify-start gap-3 pt-4 border-t border-border">
+                <Button
+                  variant="danger"
+                  onClick={() => {
+                    props.onConfirm?.();
+                    closeModal();
+                  }}
+                  isLoading={props.isLoading}
+                >
+                  حذف
+                </Button>
+                <Button
+                  variant="outline-info"
+                  onClick={closeModal}
+                >
+                  إلغاء
+                </Button>
+              </div>
+            </div>
+          </BaseModal>
         );
 
       default:

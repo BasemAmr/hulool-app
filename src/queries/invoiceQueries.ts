@@ -741,18 +741,24 @@ export const useCancelInvoice = () => {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async ({ id, reason }: { id: number; reason?: string }) => {
-      const { data } = await apiClient.post<ApiResponse<Invoice>>(`/invoices/${id}/cancel`, { reason });
-      return data.data;
+      // API returns { invoice: {...}, transaction_id: number|null, reversed_amount: number }
+      // NOT wrapped in { success, data }
+      const { data } = await apiClient.post<{ invoice: Invoice; transaction_id: number | null; reversed_amount: number }>(`/invoices/${id}/cancel`, { reason });
+      return data;
     },
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ['invoices'] });
-      queryClient.invalidateQueries({ queryKey: ['invoice', data.id] });
+      // Safely access invoice id - data.invoice contains the cancelled invoice
+      if (data?.invoice?.id) {
+        queryClient.invalidateQueries({ queryKey: ['invoice', Number(data.invoice.id)] });
+      }
       queryClient.invalidateQueries({ queryKey: ['tasks'] });
       queryClient.invalidateQueries({ queryKey: ['transactions'] });
       queryClient.invalidateQueries({ queryKey: ['account'] });
     },
   });
 };
+
 
 // --- Query Key Factories ---
 // Useful for consistent query key patterns across the app

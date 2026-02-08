@@ -77,6 +77,8 @@ export interface HuloolGridProps<T extends Record<string, any>> {
   stickyHeader?: boolean;
   /** Minimum height when using 'auto' */
   minHeight?: number;
+  /** Custom row class name function */
+  rowClassName?: (row: T) => string;
 }
 
 // ================================
@@ -220,7 +222,7 @@ DateCell.displayName = 'DateCell';
 /** Phone Cell with WhatsApp */
 const PhoneCell = React.memo(({ rowData, columnData, active }: CellProps<any, { key: string }>) => {
   const phone = columnData?.key ? getNestedValue(rowData, columnData.key) : '';
-  
+
   const formatPhoneForWhatsApp = (phone: string) => {
     if (!phone) return '';
     const cleanPhone = phone.replace(/\D/g, '');
@@ -242,7 +244,7 @@ const PhoneCell = React.memo(({ rowData, columnData, active }: CellProps<any, { 
       <span className="hulool-phone-number">{phone}</span>
       <button onClick={handleWhatsAppClick} title="فتح واتساب" className="hulool-whatsapp-btn">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="#25D366">
-          <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z"/>
+          <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z" />
         </svg>
       </button>
     </div>
@@ -254,14 +256,14 @@ PhoneCell.displayName = 'PhoneCell';
 const BadgeCell = React.memo(({ rowData, columnData, active }: CellProps<any, { key: string; badgeColors?: Record<string, string>; formatter?: (val: any, row: any) => string }>) => {
   const value = columnData?.key ? getNestedValue(rowData, columnData.key) : '';
   const displayValue = columnData?.formatter ? columnData.formatter(value, rowData) : value;
-  
+
   const defaultColors: Record<string, string> = {
     Government: '#3b82f6', RealEstate: '#22c55e', Accounting: '#eab308', Other: '#6b7280',
     New: '#eab308', Deferred: '#ef4444', Completed: '#22c55e', 'Pending Review': '#f97316', Cancelled: '#6b7280',
   };
-  
+
   const bgColor = { ...defaultColors, ...columnData?.badgeColors }[value] || '#6b7280';
-  
+
   return (
     <span className="hulool-cell-content hulool-badge" style={{ backgroundColor: bgColor, fontWeight: active ? 700 : 600 }}>
       {displayValue ?? value ?? '—'}
@@ -279,10 +281,10 @@ function withActiveWrapper<T>(Component: React.ComponentType<CellProps<T, any>>)
   const WrappedComponent = React.memo((props: CellProps<T, any>) => {
     const { active } = props;
     return (
-      <div 
+      <div
         className={`hulool-active-wrapper hulool-cell-truncate ${active ? 'hulool-cell-active' : ''}`}
-        style={{ 
-          width: '100%', 
+        style={{
+          width: '100%',
           height: '100%',
           display: 'flex',
           alignItems: 'center',
@@ -306,7 +308,7 @@ function createCellComponent<T>(col: HuloolGridColumn<T>): React.ComponentType<C
   if (col.component) {
     return withActiveWrapper(col.component);
   }
-  
+
   // Built-in components already handle active prop internally
   switch (col.type) {
     case 'clientName': return ClientNameCell;
@@ -335,16 +337,16 @@ interface ContextMenuComponentProps {
 function CopyOnlyContextMenu({ clientX, clientY, items, close }: ContextMenuComponentProps): React.ReactElement | null {
   // Filter to only show COPY item
   const copyItem = items.find(item => item.type === 'COPY');
-  
+
   if (!copyItem) {
     return null;
   }
-  
+
   const handleCopy = () => {
     copyItem.action();
     close();
   };
-  
+
   return (
     <div
       className="hulool-context-menu"
@@ -409,8 +411,9 @@ function HuloolDataGrid<T extends Record<string, any>>({
   className = '',
   stickyHeader = true,
   minHeight = 400,
+  rowClassName,
 }: HuloolGridProps<T>) {
-  
+
   // Calculate actual height
   const calculatedHeight = useMemo(() => {
     if (height === 'auto' || height === 'fill') {
@@ -419,11 +422,11 @@ function HuloolDataGrid<T extends Record<string, any>>({
     }
     return height;
   }, [height, data.length, rowHeight, minHeight]);
-  
+
   // Filter hidden columns and add ID column if needed
   const processedColumns = useMemo(() => {
     let cols = columns.filter(c => !c.hidden);
-    
+
     // Auto-add ID column if data has id and showId is true
     const hasId = data.length > 0 && data[0]?.[idField] !== undefined;
     if (showId && hasId && !cols.find(c => c.key === idField)) {
@@ -432,26 +435,26 @@ function HuloolDataGrid<T extends Record<string, any>>({
         ...cols,
       ];
     }
-    
+
     return cols;
   }, [columns, data, showId, idField]);
-  
+
   // REVERSE columns for RTL - first column in definition = rightmost in display
   const reversedColumns = useMemo(() => {
     return [...processedColumns].reverse();
   }, [processedColumns]);
-  
+
   // Convert to DSG columns with copyValue for Ctrl+C support
   const dsgColumns = useMemo(() => {
     return reversedColumns.map(col => {
       const CellComponent = createCellComponent(col);
-      
+
       // Create copyValue function based on column type
       const getCopyValue = ({ rowData }: { rowData: T; rowIndex: number }): string | number | null => {
         const value = col.key ? getNestedValue(rowData, col.key as string) : null;
-        
+
         if (value === null || value === undefined) return null;
-        
+
         // Format based on column type
         switch (col.type) {
           case 'currency':
@@ -466,7 +469,7 @@ function HuloolDataGrid<T extends Record<string, any>>({
             return String(value);
         }
       };
-      
+
       return {
         id: col.id,
         title: col.title,
@@ -489,31 +492,36 @@ function HuloolDataGrid<T extends Record<string, any>>({
       } as Column<T>;
     });
   }, [reversedColumns]);
-  
+
   // Calculate row class for alternating colors
   const getRowClassName = useCallback(({ rowIndex, rowData }: { rowIndex: number; rowData: T }) => {
+    let baseClass = '';
+
     if (!typeField) {
-      return rowIndex % 2 === 0 ? 'hulool-row-even' : 'hulool-row-odd';
-    }
-    
-    const currentType = rowData[typeField] as string;
-    let sameTypeCount = 0;
-    
-    for (let i = rowIndex - 1; i >= 0; i--) {
-      if (data[i]?.[typeField] === currentType) {
-        sameTypeCount++;
-      } else {
-        break;
+      baseClass = rowIndex % 2 === 0 ? 'hulool-row-even' : 'hulool-row-odd';
+    } else {
+      const currentType = rowData[typeField] as string;
+      let sameTypeCount = 0;
+
+      for (let i = rowIndex - 1; i >= 0; i--) {
+        if (data[i]?.[typeField] === currentType) {
+          sameTypeCount++;
+        } else {
+          break;
+        }
       }
+
+      const isAlternate = sameTypeCount % 2 === 1;
+      const typeClass = `hulool-type-${currentType?.toLowerCase() || 'other'}`;
+      const alternateClass = isAlternate ? 'hulool-type-alternate' : 'hulool-type-base';
+
+      baseClass = `${typeClass} ${alternateClass}`;
     }
-    
-    const isAlternate = sameTypeCount % 2 === 1;
-    const typeClass = `hulool-type-${currentType?.toLowerCase() || 'other'}`;
-    const alternateClass = isAlternate ? 'hulool-type-alternate' : 'hulool-type-base';
-    
-    return `${typeClass} ${alternateClass}`;
-  }, [typeField, data]);
-  
+
+    // Append custom row class if provided
+    const customClass = rowClassName ? rowClassName(rowData) : '';
+    return customClass ? `${baseClass} ${customClass}` : baseClass;
+  }, [typeField, data, rowClassName]);
   // Loading state
   if (isLoading) {
     return (
@@ -523,12 +531,12 @@ function HuloolDataGrid<T extends Record<string, any>>({
       </div>
     );
   }
-  
+
   // Empty state
   if (!data.length) {
     return <div className="hulool-grid-empty">{emptyMessage}</div>;
   }
-  
+
   return (
     <div className={`hulool-data-grid ${className}`}>
       <DataSheetGrid<T>
@@ -543,7 +551,7 @@ function HuloolDataGrid<T extends Record<string, any>>({
         gutterColumn={false}
         contextMenuComponent={CopyOnlyContextMenu}
       />
-      
+
       <style>{`
         /* ================================
            HULOOL DATA GRID - BASE STYLES

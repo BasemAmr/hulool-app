@@ -242,7 +242,8 @@ const EmployeeProfilePage = () => {
           className="grid gap-2"
           style={{
             height: 'calc(100vh - 280px)',
-            gridTemplateColumns: '1fr 1fr 2fr'
+            // increatse the fraction of tasks admin row card SLIGHTLY on expense of tasks panel
+            gridTemplateColumns: '  1fr 1fr 1.5fr'
           }}
         >
           {/* Tasks Panel - 0.25 fraction */}

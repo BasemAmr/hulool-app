@@ -3,9 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { Upload, X, Settings, Image as ImageIcon } from 'lucide-react';
 import { useToast } from '../hooks/useToast';
 import { setPageBackground, removePageBackground, getPageBackground } from '../utils/backgroundUtils';
-import UserManagement from '../components/shared/UserManagement';
-import PasswordResetForm from '../components/settings/PasswordResetForm';
-import { useSetMyPassword, /*useSetEmployeePassword, useUsers*/ } from '../queries/userQueries';
+import EmployeeAccountsManagement from '../components/settings/EmployeeAccountsManagement';
 // import { useAuthStore } from '../stores/authStore';
 
 interface BackgroundSettings {
@@ -20,13 +18,11 @@ const SettingsPage: React.FC = () => {
   const { t } = useTranslation();
   const { showToast } = useToast();
   const [uploading, setUploading] = useState<string | null>(null);
-  
+
   // NEW: Auth and password management
   // const { user, isAdmin } = useAuthStore();
-  const setMyPasswordMutation = useSetMyPassword();
-  // const setEmployeePasswordMutation = useSetEmployeePassword();
   // const { data: users = [] } = useUsers();
-  
+
   // Background settings state
   const [backgrounds, setBackgrounds] = useState<BackgroundSettings>({
     dashboard: getPageBackground('dashboard'),
@@ -54,25 +50,25 @@ const SettingsPage: React.FC = () => {
     const wpApiUrl = import.meta.env.VITE_API_MEDIA_URL || `${window.location.origin}/wordpress`;
     const authStorage = localStorage.getItem('hulool-auth-storage');
     if (!authStorage) {
-        throw new Error('Authentication not found');
+      throw new Error('Authentication not found');
     }
 
     const { state } = JSON.parse(authStorage);
     if (!state?.token) {
-        throw new Error('Authentication token not found');
+      throw new Error('Authentication token not found');
     }
 
     const response = await fetch(`${wpApiUrl}/wp-json/hulool/v1/media/upload`, {
-        method: 'POST',
-        headers: {
-            'Authorization': `Basic ${state.token}`,
-        },
-        body: formData,
+      method: 'POST',
+      headers: {
+        'Authorization': `Basic ${state.token}`,
+      },
+      body: formData,
     });
 
     if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || 'Upload failed');
+      const errorData = await response.json();
+      throw new Error(errorData.message || 'Upload failed');
     }
 
     const result = await response.json();
@@ -90,20 +86,20 @@ const SettingsPage: React.FC = () => {
     }
 
     setUploading(pageType);
-    
+
     try {
       const imageUrl = await uploadImageToWordPress(file);
-      
+
       // Update state and localStorage
       const newBackgrounds = { ...backgrounds, [pageType]: imageUrl };
       setBackgrounds(newBackgrounds);
       setPageBackground(pageType, imageUrl);
-      
+
       showToast({
         type: 'success',
         title: t('settings.uploadSuccess') || 'تم رفع الصورة بنجاح'
       });
-      
+
     } catch (error) {
       console.error('Upload error:', error);
       showToast({
@@ -120,7 +116,7 @@ const SettingsPage: React.FC = () => {
     const newBackgrounds = { ...backgrounds, [pageType]: '' };
     setBackgrounds(newBackgrounds);
     removePageBackground(pageType);
-    
+
     showToast({
       type: 'success',
       title: t('settings.removeSuccess') || 'تم حذف الصورة بنجاح'
@@ -134,12 +130,6 @@ const SettingsPage: React.FC = () => {
     { key: 'receivables' as const, label: t('settings.receivablesBackground') || 'خلفية صفحة المستحقات' },
     { key: 'clientProfile' as const, label: t('settings.clientProfileBackground') || 'خلفية ملف العميل' },
   ];
-
-  // NEW: Password management handlers
-  const handleSetMyPassword = async (password: string) => {
-    await setMyPasswordMutation.mutateAsync({ new_password: password });
-    showToast({ type: 'success', title: 'Password Updated' });
-  };
 
   // const handleSetEmployeePassword = async (userId: number, password: string) => {
   //   await setEmployeePasswordMutation.mutateAsync({ userId, new_password: password });
@@ -158,40 +148,9 @@ const SettingsPage: React.FC = () => {
       </div>
 
       <div className="space-y-6">
-        {/* User Management Section */}
+        {/* Employee Accounts Management Section */}
         <div className="rounded-lg border bg-card p-6">
-          <UserManagement />
-        </div>
-
-        {/* NEW: Password Management Section */}
-        <div className="rounded-lg border bg-card p-6">
-          <h2 className="text-xl font-semibold text-black mb-4 flex items-center gap-2">Password Management</h2>
-          
-          {/* Change Own Password */}
-          <div className="mb-4">
-            <h3 className="h5">Change My Password</h3>
-            <p className="text-muted small">Update your short password for logging into this application.</p>
-            <PasswordResetForm
-              onSubmit={handleSetMyPassword}
-              isLoading={setMyPasswordMutation.isPending}
-            />
-          </div>
-          
-          {/* Admin: Reset Employee Passwords
-          {isAdmin() && (
-            <div className="mt-4 pt-4 border-top">
-              <h3 className="h5">Reset Employee Passwords</h3>
-              {users.filter(u => u.id !== user?.id && u.employee_id).map(employee => (
-                <div key={employee.id} className="mb-3 p-3 border rounded">
-                  <p className="fw-bold mb-1">{employee.display_name}</p>
-                  <PasswordResetForm
-                    onSubmit={(password) => handleSetEmployeePassword(employee.id, password)}
-                    isLoading={setEmployeePasswordMutation.isPending && setEmployeePasswordMutation.variables?.userId === employee.id}
-                  />
-                </div>
-              ))}
-            </div>
-          )} */}
+          <EmployeeAccountsManagement />
         </div>
 
         {/* Page Backgrounds Section */}
@@ -200,19 +159,19 @@ const SettingsPage: React.FC = () => {
             <ImageIcon size={20} />
             {t('settings.pageBackgrounds') || 'خلفيات الصفحات'}
           </h2>
-          
+
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {backgroundOptions.map((option) => (
               <div key={option.key} className="rounded-lg border bg-background overflow-hidden">
                 <div className="bg-primary p-3">
                   <h3 className="text-base font-semibold text-white">{option.label}</h3>
                 </div>
-                
+
                 <div className="p-4 space-y-3">
                   {backgrounds[option.key] ? (
                     <div className="relative group">
-                      <img 
-                        src={backgrounds[option.key]} 
+                      <img
+                        src={backgrounds[option.key]}
                         alt={option.label}
                         className="w-full h-40 object-cover rounded-md"
                       />
@@ -232,7 +191,7 @@ const SettingsPage: React.FC = () => {
                       <p className="text-sm text-black">لا توجد صورة خلفية</p>
                     </div>
                   )}
-                  
+
                   <div>
                     <input
                       type="file"
@@ -252,7 +211,7 @@ const SettingsPage: React.FC = () => {
                       className="w-full bg-primary hover:bg-primary/90 disabled:bg-primary/50 text-white px-4 py-2 rounded-md transition-colors flex items-center justify-center gap-2"
                     >
                       <Upload size={16} />
-                      {uploading === option.key 
+                      {uploading === option.key
                         ? (t('settings.uploadInProgress') || 'جاري الرفع...')
                         : (t('settings.uploadImage') || 'رفع صورة')
                       }

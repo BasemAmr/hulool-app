@@ -39,15 +39,29 @@ export interface User {
   capabilities: Record<string, boolean>;
 }
 
-// Employee Management Types
+// Employee Account Management Types
+// These fields match the API response from /users/employees endpoint (account management)
+export interface EmployeeAccount {
+  id: number;                    // WordPress user ID
+  username: string;              // WordPress username (user_login)
+  email: string;                 // User email
+  display_name: string;          // Display name
+  employee_id: number | null;    // ID in tm_employees table
+  commission_rate: number | null; // Commission rate percentage
+  created_at: string | null;     // Account creation date
+  roles: string[];               // WordPress roles
+}
+
+// Employee record from tm_employees table (for task assignment, ledger, payouts)
+// These fields match the API response from /employees endpoint
 export interface Employee {
-  id: number;
-  user_id: number;
-  commission_rate: number;
-  created_at: string;
-  user_login: string;
-  user_email: string;
-  display_name: string;
+  id: number;                    // Employee table ID
+  user_id: number;               // WordPress user ID
+  commission_rate: number;       // Commission rate percentage
+  created_at: string;            // Record creation date
+  user_login: string;            // WordPress username
+  user_email: string;            // User email
+  display_name: string;          // Display name
 }
 
 export interface CreateEmployeeRequest {
@@ -1574,4 +1588,42 @@ export interface InvoiceValidationResult {
       estimated_change: number;
     }>;
   };
+}
+
+// ========================================
+// EMPLOYEE ACCOUNT MANAGEMENT TYPES
+// ========================================
+
+/**
+ * Request payload for creating an employee account
+ * Password is optional - if not provided, backend auto-generates one
+ */
+export interface CreateEmployeeAccountRequest {
+  username: string;
+  display_name: string;
+  email: string;
+  password?: string; // Optional - auto-generate if not provided
+}
+
+/**
+ * Request payload for updating user profile information
+ */
+export interface UpdateUserProfileRequest {
+  userId: number;
+  username?: string;
+  display_name?: string;
+  email?: string;
+}
+
+/**
+ * Response containing employee credentials after creation
+ * Including both regular password and application password
+ */
+export interface EmployeeCredentials {
+  id: number;
+  username: string;
+  display_name: string;
+  email: string;
+  password: string;
+  app_password: string;
 }

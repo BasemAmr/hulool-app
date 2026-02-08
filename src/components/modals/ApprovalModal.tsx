@@ -174,6 +174,22 @@ const ApprovalModal = () => {
               >
                 عرض تفاصيل الفاتورة
               </Button>
+
+              {!invoice.is_fully_paid && (
+                <Button
+                  variant="primary"
+                  size="default"
+                  onClick={() => openModal('recordPayment', {
+                    invoiceId: invoice.id,
+                    invoice: invoice,
+                    amountDue: invoice.remaining_amount,
+                    clientId: invoice.client_id,
+                    clientName: invoice.client_name || task.client?.name
+                  })}
+                >
+                  تسديد الفاتورة
+                </Button>
+              )}
             </div>
           </div>
         )}

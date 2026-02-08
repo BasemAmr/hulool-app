@@ -47,8 +47,8 @@ const TaskRow = ({
 }: TaskRowComponentProps) => {
   const { t } = useTranslation();
   const isTaskUrgent = task.tags?.some(tag => tag.name === 'قصوى');
-  const isDeferred = task.status === 'Deferred';
-  
+
+
   // Build display name with optional employee prefix
   const taskDisplayName = showEmployeePrefix && employeeName
     ? `${employeeName}: ${task.task_name || t(`type.${task.type}`)}`
@@ -61,8 +61,7 @@ const TaskRow = ({
     <tr
       ref={rowRef}
       className={cn(
-        "task-row transition-all duration-200 relative",
-        isDeferred && "opacity-60"
+        "task-row transition-all duration-200 relative"
       )}
       data-task-id={task.id}
       style={{
@@ -71,8 +70,8 @@ const TaskRow = ({
       }}
     >
       {/* Task Name */}
-      <td 
-        className="text-[0.82em] px-2 py-2 text-black border-0" 
+      <td
+        className="text-[0.82em] px-2 py-2 text-black border-0 font-bold"
         style={{ backgroundColor }}
       >
         <div className="flex items-center gap-1">
@@ -86,16 +85,16 @@ const TaskRow = ({
       </td>
 
       {/* Date */}
-      <td 
-        className="text-[0.77em] px-2 py-2 text-black border-0" 
+      <td
+        className="text-[0.77em] px-2 py-2 text-black border-0 font-bold"
         style={{ backgroundColor }}
       >
         {formatShortDate(task.start_date)}
       </td>
 
       {/* Days Elapsed */}
-      <td 
-        className="text-[0.77em] px-2 py-2 text-black border-0" 
+      <td
+        className="text-[0.77em] px-2 py-2 text-black border-0 font-bold"
         style={{ backgroundColor }}
       >
         {formatDaysElapsed(task.start_date)}
@@ -103,8 +102,8 @@ const TaskRow = ({
 
       {/* Amount - optional based on context */}
       {showAmount && (
-        <td 
-          className="text-[0.77em] px-2 py-2 text-black border-0 font-bold" 
+        <td
+          className="text-[0.77em] px-2 py-2 text-black border-0 font-bold"
           style={{ backgroundColor }}
         >
           <div className="flex items-center text-danger">
@@ -116,17 +115,17 @@ const TaskRow = ({
 
       {/* Status - for admin-employee contexts */}
       {showStatus && (
-        <td 
-          className="text-[0.77em] px-2 py-2 text-black border-0 text-center" 
+        <td
+          className="text-[0.77em] px-2 py-2 text-black border-0 text-center font-bold"
           style={{ backgroundColor }}
         >
           <Badge
             variant={
               task.status === 'New' ? 'default' :
-              task.status === 'Deferred' ? 'destructive' :
-              task.status === 'Pending Review' ? 'secondary' :
-              task.status === 'Completed' ? 'default' :
-              'outline'
+                task.status === 'Deferred' ? 'destructive' :
+                  task.status === 'Pending Review' ? 'secondary' :
+                    task.status === 'Completed' ? 'default' :
+                      'outline'
             }
             className={cn(
               "text-[0.7em]",

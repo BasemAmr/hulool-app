@@ -8,7 +8,7 @@
  * balance_after field from the API response.
  */
 
-import React, { useMemo } from 'react';
+import React, { useMemo, useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import type {
   FinancialTransaction,
@@ -40,6 +40,7 @@ interface AccountLedgerTableProps {
   client: Client;
   filter?: 'all' | 'invoices' | 'payments' | 'credits';
   hideAmounts?: boolean;
+  highlightInvoiceId?: number;
 }
 
 // ================================
@@ -310,9 +311,11 @@ const AccountLedgerTable: React.FC<AccountLedgerTableProps> = ({
   client,
   filter = 'all',
   hideAmounts = false,
+  highlightInvoiceId,
 }) => {
   useTranslation();
   const openModal = useModalStore(state => state.openModal);
+  const tableRef = useRef<HTMLDivElement>(null);
 
   const [selectedTransaction, setSelectedTransaction] = React.useState<any>(null);
   const [selectedInvoice, setSelectedInvoice] = React.useState<any>(null);
@@ -383,9 +386,28 @@ const AccountLedgerTable: React.FC<AccountLedgerTableProps> = ({
         relatedType === 'invoice' &&
         payableMap.has(key);
 
-      return { ...tx, is_payable: isPayable };
+      // Check if this transaction matches the highlighted invoice
+      // Only match INVOICE_GENERATED/INVOICE_CREATED, not PAYMENT_RECEIVED
+      const isHighlighted = Boolean(
+        highlightInvoiceId &&
+        relatedType === 'invoice' &&
+        Number(relatedId) === highlightInvoiceId &&
+        isInvoiceType // Only invoice transactions, not payments
+      );
+
+      // Debug: log when we find a highlighted transaction
+      if (isHighlighted) {
+        console.log('🔵 Highlighted INVOICE transaction:', {
+          transactionId: tx.id,
+          transactionType: tx.transaction_type,
+          relatedId,
+          highlightInvoiceId,
+        });
+      }
+
+      return { ...tx, is_payable: isPayable, is_highlighted: isHighlighted };
     });
-  }, [filteredTransactions, payableMap]);
+  }, [filteredTransactions, payableMap, highlightInvoiceId]);
 
   // Generate a version key to force grid re-render when payable status changes
   const payableVersion = useMemo(() => {
@@ -474,6 +496,20 @@ const AccountLedgerTable: React.FC<AccountLedgerTableProps> = ({
     },
   ], [hideAmounts, client, payableMap, openModal]);
 
+  // Auto-scroll to highlighted transaction
+  useEffect(() => {
+    if (highlightInvoiceId && transactionsWithFlags.length > 0 && tableRef.current) {
+      // Small delay to ensure DOM is ready
+      const timer = setTimeout(() => {
+        const highlightedElement = tableRef.current?.querySelector('.transaction-row-highlighted');
+        if (highlightedElement) {
+          highlightedElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+      }, 500);
+      return () => clearTimeout(timer);
+    }
+  }, [highlightInvoiceId, transactionsWithFlags.length]);
+
   if (historyError) {
     return (
       <div className="text-center p-12 text-red-500">
@@ -484,7 +520,37 @@ const AccountLedgerTable: React.FC<AccountLedgerTableProps> = ({
   }
 
   return (
-    <div className="account-ledger-wrapper">
+    <div className="account-ledger-wrapper" ref={tableRef}>
+      <style>{`
+        /* Highlighted transaction row - use outline for reliable border */
+        .hulool-data-grid .dsg-row.transaction-row-highlighted {
+          outline: 3px solid #3b82f6 !important;
+          outline-offset: -2px;
+          z-index: 10;
+          position: relative;
+        }
+        
+        /* Highlighted cells get background color */
+        .hulool-data-grid .dsg-row.transaction-row-highlighted .dsg-cell {
+          background-color: rgba(191, 219, 254, 0.7) !important;
+        }
+        
+        /* Add pulsing animation to row */
+        .hulool-data-grid .dsg-row.transaction-row-highlighted {
+          animation: highlightPulse 1.5s ease-in-out 3;
+        }
+        
+        @keyframes highlightPulse {
+          0%, 100% {
+            outline-color: #3b82f6;
+            box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.2);
+          }
+          50% {
+            outline-color: #60a5fa;
+            box-shadow: 0 0 0 8px rgba(59, 130, 246, 0.3);
+          }
+        }
+      `}</style>
       {/* Balance Summary Header */}
       {historyData && (
         <div className="rounded-lg border border-border bg-card shadow-sm mb-4 p-4">
@@ -527,6 +593,7 @@ const AccountLedgerTable: React.FC<AccountLedgerTableProps> = ({
         showId={false}
         height="auto"
         minHeight={300}
+        rowClassName={(row: any) => row.is_highlighted ? 'transaction-row-highlighted' : ''}
       />
 
       {/* Summary Totals Row */}

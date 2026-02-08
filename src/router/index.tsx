@@ -31,6 +31,7 @@ import EmployeeFinancialsPage from '../pages/employee/EmployeeFinancialsPageRede
 import EmployeeClientProfilePage from '../pages/employee/EmployeeClientProfilePage';
 import EmployeeNotificationsPage from '../pages/employee/EmployeeNotificationsPage';
 import EmployeeClientReceivablesPage from '../pages/employee/EmployeeClientReceivablesPage';
+import EmployeeSettingsPage from '../pages/employee/EmployeeSettingsPage';
 import PendingCommissionsPage from '@/pages/admin/PendingCommissionsPage';
 
 const routes: RouteObject[] = [
@@ -178,6 +179,7 @@ const routes: RouteObject[] = [
               { path: 'clients/:id', element: <EmployeeClientProfilePage /> },
               { path: 'receivables', element: <EmployeeClientReceivablesPage /> },
               { path: 'financials', element: <EmployeeFinancialsPage /> },
+              { path: 'settings', element: <EmployeeSettingsPage /> },
               { path: 'notifications', element: <EmployeeNotificationsPage /> },
             ],
           },
