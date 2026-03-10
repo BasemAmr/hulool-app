@@ -10,7 +10,6 @@ import type {
   TaskCancellationAnalysis,
   ConcurrentModificationData,
   Employee,
-  EmployeeAccount,
   Invoice,
   UnifiedAccount,
   TransactionDirection
@@ -18,7 +17,7 @@ import type {
 
 // Define all possible modals in the app.
 // We will add more types like 'task' in later phases.
-export type ModalType = 'clientForm' | 'confirmDelete' | 'taskForm' | 'requirements' | 'manualReceivable' | 'clientReceivables' | 'paymentForm' | 'paymentHistory' | 'clientSearch' | 'tagForm' | 'tagManagement' | 'selectReceivableForPayment' | 'taskCompletion' | 'amountDetails' | 'subtasksModal' | 'taskSelection' | 'taskDetails' | 'taskSubtasks' | 'recordCreditModal' | 'applyCreditModal' | 'clientCreditHistory' | 'creditEdit' | 'creditDelete' | 'allocationEdit' | 'allocationDelete' | 'paymentEdit' | 'paymentDelete' | 'editReceivable' | 'deleteReceivable' | 'clientReceivablesEdit' | 'urgentAlert' | 'prepaidConflict' | 'taskAmountConflict' | 'taskCancellation' | 'concurrentModification' | 'assignTask' | 'approval' | 'employeePayout' | 'editEmployeePayout' | 'editTaskExpense' | 'submitForReview' | 'employeeBorrow' | 'invoiceForm' | 'recordPayment' | 'accountLedger' | 'invoiceDetails' | 'applyCreditToInvoice' | 'manualTransaction' | 'createInvoice' | 'journalEntryDetails' | 'taskRestore' | 'taskRestoreValidation' | 'taskAmountEdit' | 'invoiceEdit' | 'invoiceCancel' | 'invoiceDelete' | 'transactionEdit' | 'transactionDelete' | 'createEmployee' | 'employeeCredentials' | 'deleteEmployee' | 'employeeDeletionPreview';
+export type ModalType = 'clientForm' | 'confirmDelete' | 'taskForm' | 'requirements' | 'manualReceivable' | 'clientReceivables' | 'paymentForm' | 'paymentHistory' | 'clientSearch' | 'tagForm' | 'tagManagement' | 'selectReceivableForPayment' | 'taskCompletion' | 'amountDetails' | 'subtasksModal' | 'taskSelection' | 'taskDetails' | 'taskSubtasks' | 'recordCreditModal' | 'applyCreditModal' | 'clientCreditHistory' | 'creditEdit' | 'creditDelete' | 'allocationEdit' | 'allocationDelete' | 'paymentEdit' | 'paymentDelete' | 'editReceivable' | 'deleteReceivable' | 'clientReceivablesEdit' | 'urgentAlert' | 'prepaidConflict' | 'taskAmountConflict' | 'taskCancellation' | 'concurrentModification' | 'assignTask' | 'approval' | 'employeePayout' | 'editEmployeePayout' | 'editTaskExpense' | 'submitForReview' | 'employeeBorrow' | 'invoiceForm' | 'recordPayment' | 'recordBatchPayment' | 'accountLedger' | 'invoiceDetails' | 'applyCreditToInvoice' | 'manualTransaction' | 'createInvoice' | 'journalEntryDetails' | 'taskRestore' | 'taskRestoreValidation' | 'taskAmountEdit' | 'invoiceEdit' | 'invoiceCancel' | 'invoiceDelete' | 'transactionEdit' | 'transactionDelete' | 'createEmployee' | 'employeeCredentials' | 'deleteEmployee' | 'employeeDeletionPreview';
 
 // Define the props each modal type can receive.
 interface ModalProps {
@@ -111,6 +110,10 @@ interface ModalProps {
     clientName?: string;
     initialPaymentAmount?: number;
   };
+  recordBatchPayment: {
+    clientId: number;
+    allocations: { invoice: Invoice; amount: number }[];
+  };
   accountLedger: { clientId: number; clientName?: string; filter?: 'all' | 'invoices' | 'payments' | 'credits' };
   invoiceDetails: { invoice?: Invoice; invoiceId?: number; isEmployeeView?: boolean };
   applyCreditToInvoice: { invoice: Invoice; availableCredit: number };
@@ -132,37 +135,19 @@ interface ModalProps {
   invoiceDelete: { invoice: Invoice };
   transactionEdit: { transaction: any };
   transactionDelete: { transaction: any };
+
+  // EMPLOYEE ACCOUNT MANAGEMENT MODALS
+  createEmployee: { onSubmit?: (data: any) => void; isLoading?: boolean };
+  employeeCredentials: { credentials: any };
+  deleteEmployee: { employee?: any; onConfirm?: () => void; isLoading?: boolean };
+  employeeDeletionPreview: { employee?: any; onConfirmDelete?: () => void };
+
   taskRestoreValidation: {
     taskId: number;
     validation?: {
       allowed: boolean;
       consequences: any; // Using any for simplicity or import the type
     };
-  };
-
-  // EMPLOYEE ACCOUNT MANAGEMENT MODALS
-  createEmployee: {
-    onSubmit: (data: any) => void;
-    isLoading: boolean;
-  };
-  employeeCredentials: {
-    credentials: {
-      id: number;
-      username: string;
-      display_name: string;
-      email: string;
-      password: string;
-      app_password: string;
-    };
-  };
-  deleteEmployee: {
-    employee: Employee | EmployeeAccount;
-    onConfirm: () => void;
-    isLoading: boolean;
-  };
-  employeeDeletionPreview: {
-    employee: EmployeeAccount;
-    onConfirmDelete: () => Promise<void>;
   };
 }
 

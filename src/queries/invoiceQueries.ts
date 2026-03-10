@@ -24,6 +24,8 @@ import type {
   RecordPaymentResponse,
   ApplyCreditToInvoicePayload,
   ApplyCreditResponse,
+  BatchPaymentPayload,
+  BatchPaymentResponse,
   Pagination
 } from '../api/types';
 
@@ -218,6 +220,17 @@ const recordInvoicePayment = async ({
   );
 
   // API returns payment response directly, not wrapped
+  return data;
+};
+
+/**
+ * Record payments across multiple invoices atomically
+ */
+const recordBatchPayment = async (payload: BatchPaymentPayload): Promise<BatchPaymentResponse> => {
+  const { data } = await apiClient.post<BatchPaymentResponse>(
+    '/invoices/batch-payment',
+    payload
+  );
   return data;
 };
 
@@ -662,6 +675,41 @@ export const useRecordInvoicePayment = () => {
       queryClient.invalidateQueries({ queryKey: ['invoices'], refetchType: 'active' });
 
       // Invalidate payable invoices specifically
+      queryClient.invalidateQueries({ queryKey: ['invoices', 'payable'], refetchType: 'all' });
+
+      // Invalidate account/ledger data
+      queryClient.invalidateQueries({ queryKey: ['account'], refetchType: 'active' });
+
+      // Invalidate summary data
+      queryClient.invalidateQueries({ queryKey: ['clients'], refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: ['client'], refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: ['dashboard'], refetchType: 'active' });
+
+      // Invalidate tasks (payment affects task completion status)
+      queryClient.invalidateQueries({ queryKey: ['tasks'], refetchType: 'active' });
+
+      // Invalidate employee data
+      queryClient.invalidateQueries({ queryKey: ['employee'], refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: ['employees'], refetchType: 'active' });
+
+      // Invalidate receivables (for old system compatibility)
+      queryClient.invalidateQueries({ queryKey: ['receivables'], refetchType: 'active' });
+    },
+  });
+};
+
+/**
+ * Record batch payment across multiple invoices
+ */
+export const useRecordBatchPayment = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: recordBatchPayment,
+    onSuccess: () => {
+      // Invalidate all invoice-related queries
+      queryClient.invalidateQueries({ queryKey: ['invoices'], refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: ['invoice'], refetchType: 'active' });
       queryClient.invalidateQueries({ queryKey: ['invoices', 'payable'], refetchType: 'all' });
 
       // Invalidate account/ledger data

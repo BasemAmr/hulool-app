@@ -1056,6 +1056,45 @@ export interface RecordPaymentResponse {
 }
 
 /**
+ * Single allocation within a batch payment
+ */
+export interface BatchPaymentAllocation {
+  invoice_id: number;
+  amount: number;
+}
+
+/**
+ * Payload for recording payments across multiple invoices atomically
+ */
+export interface BatchPaymentPayload {
+  client_id: number;
+  payment_method_id: number;
+  paid_at: string;
+  note?: string;
+  reference_number?: string;
+  allocations: BatchPaymentAllocation[];
+}
+
+/**
+ * Single result from a batch payment allocation
+ */
+export interface BatchPaymentResult {
+  invoice_id: number;
+  amount_paid: number;
+  new_status: InvoiceStatus;
+  remaining: number;
+}
+
+/**
+ * Response from batch payment endpoint
+ */
+export interface BatchPaymentResponse {
+  total_paid: number;
+  invoices_count: number;
+  results: BatchPaymentResult[];
+}
+
+/**
  * Response from applying credit
  */
 export interface ApplyCreditResponse {

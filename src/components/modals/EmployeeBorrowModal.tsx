@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import { Save, X } from 'lucide-react';
 import BaseModal from '../ui/BaseModal';
 import Button from '../ui/Button';
-import { NumberInput } from '../ui/NumberInput';
 import { useModalStore } from '../../stores/modalStore';
 import { useToast } from '../../hooks/useToast';
 import { useAddEmployeeBorrow } from '../../queries/employeeQueries';
@@ -47,7 +46,7 @@ const EmployeeBorrowModal = () => {
     console.log('Employee Table ID:', employeeTableId);
     console.log('Employee User ID:', employeeUserId);
     console.log(validateForm());
-    if (!validateForm() || !employeeUserId) return;
+    if (!validateForm()  || !employeeUserId) return;
 
     try {
       const borrowData = {
@@ -112,13 +111,17 @@ const EmployeeBorrowModal = () => {
             المبلغ <span className="text-destructive">*</span>
           </label>
           <div className="flex items-center gap-2">
-            <NumberInput
-              name="borrow-amount" // Name is optional for NumberInput but good practice
+            <span className="px-3 py-2 border border-border rounded-md bg-muted text-sm font-medium">ريال</span>
+            <input
+              type="number"
+              step="0.01"
+              min="0.01"
+              className={`flex-1 px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary ${errors.amount ? 'border-destructive bg-destructive/5' : 'border-border'}`}
+              id="borrow-amount"
               value={formData.amount}
               onChange={(e) => handleInputChange('amount', e.target.value)}
               placeholder="أدخل مبلغ"
-              className="flex-1"
-              error={errors.amount}
+              required
             />
           </div>
           {errors.amount && (

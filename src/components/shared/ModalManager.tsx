@@ -52,7 +52,7 @@ import ApprovalModal from '../modals/ApprovalModal';
 import SubmitForReviewModal from '../modals/SubmitForReviewModal';
 
 // NEW INVOICE/LEDGER MODALS
-import { InvoiceFormModal, RecordPaymentModal, InvoiceDetailsModal } from '../invoices';
+import { InvoiceFormModal, RecordPaymentModal, RecordBatchPaymentModal, InvoiceDetailsModal } from '../invoices';
 import AccountLedgerModal from '../modals/AccountLedgerModal';
 
 // FINANCIAL CENTER MODALS
@@ -297,6 +297,9 @@ const ModalManager = () => {
 
       case 'recordPayment':
         return <RecordPaymentModal key="recordPayment" />;
+
+      case 'recordBatchPayment':
+        return <RecordBatchPaymentModal key="recordBatchPayment" />;
 
       case 'invoiceDetails':
         return <InvoiceDetailsModal key="invoiceDetails" />;
