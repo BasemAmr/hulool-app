@@ -1,0 +1,447 @@
+import { useEffect } from 'react';
+import { useParams, useSearchParams } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useModalStore } from '@/shared/stores/modalStore';
+import { applyPageBackground } from '@/shared/utils/backgroundUtils';
+import { useToast } from '@/shared/hooks/useToast';
+
+// Import all necessary query hooks
+import { useGetClient } from '@/features/clients/api/clientQueries';
+import { useCancelTask, useGetTasks } from '@/features/tasks/api/taskQueries';
+import { useGetClientReceivables } from '@/features/receivables/api/receivableQueries';
+import { useGetClientCredits } from '@/features/clients/api/clientCreditQueries';
+
+// Import components
+import ClientProfileHeader from '@/features/clients/components/ClientProfileHeader';
+import AllTasksTable from '@/features/tasks/components/tables/AllTasksTable';
+import ClientReceivablesTable from '@/features/receivables/components/ClientReceivablesTable';
+import AccountLedgerTable from '@/features/invoices/components/AccountLedgerTable';
+import { TrendingUp, TrendingDown } from 'lucide-react';
+import type { Task, StatementItem, TaskCancellationConflictData, UnifiedAccount } from '@/api/types';
+import { useReceivablesPermissions } from '@/shared/hooks/useReceivablesPermissions';
+import ClientCreditsHistoryTable from '@/features/clients/components/ClientCreditsHistoryTable';
+
+// Import export service
+import { exportService } from '@/services/export/ExportService';
+import type { ClientStatementReportData, ClientTasksReportData, ClientCreditsReportData } from '@/services/export/exportTypes';
+import { TOAST_MESSAGES } from '@/shared/constants/toastMessages';
+
+// Feature flag: Set to true to use new Invoice/Ledger system
+const USE_INVOICE_LEDGER_SYSTEM = true;
+
+const ClientProfilePage = () => {
+    const { t } = useTranslation();
+    const { id } = useParams<{ id: string }>();
+    const [searchParams] = useSearchParams();
+    const openModal = useModalStore((state) => state.openModal);
+    const clientId = Number(id);
+
+    const mode = (searchParams.get('mode') || 'general') as 'general' | 'tasks' | 'receivables';
+    const filter = (searchParams.get('filter') || 'all') as 'all' | 'unpaid' | 'paid';
+
+    const { hasViewAllReceivablesPermission, hasViewAmountsPermission } = useReceivablesPermissions();
+
+    // Apply client profile page background
+    useEffect(() => {
+        applyPageBackground('clientProfile');
+    }, []);
+
+    // Fetch all data in parallel
+    const { data: client, isLoading: isLoadingClient } = useGetClient(clientId);
+    const { data: tasksData, isLoading: isLoadingTasks } = useGetTasks({ client_id: clientId });
+    const { data: creditsData, isLoading: isLoadingCredits } = useGetClientCredits(clientId);
+
+    // Fetch the new statement data for display - only if user has permission
+    const { data: statementData, isLoading: isLoadingReceivables } = useGetClientReceivables(clientId, hasViewAllReceivablesPermission);
+
+    const isLoading = isLoadingClient || isLoadingTasks || isLoadingCredits || (hasViewAllReceivablesPermission && isLoadingReceivables);
+    const { success, error: showError } = useToast();
+
+    // Mutation hooks
+    const cancelTaskMutation = useCancelTask();
+
+    // Export mutations
+    const exportStatementMutation = useMutation({
+        mutationFn: async (data: ClientStatementReportData) => {
+            await exportService.exportClientStatement(data, { includeSubTables: true });
+        },
+        onSuccess: () => {
+            success(TOAST_MESSAGES.EXPORT_SUCCESS);
+        },
+        onError: (error) => {
+            console.error('Export failed:', error);
+            showError(TOAST_MESSAGES.EXPORT_FAILED);
+        },
+    });
+
+    const exportTasksMutation = useMutation({
+        mutationFn: async (data: ClientTasksReportData) => {
+            await exportService.exportClientTasks(data);
+        },
+        onSuccess: () => {
+            success(TOAST_MESSAGES.EXPORT_SUCCESS);
+        },
+        onError: (error) => {
+            console.error('Export failed:', error);
+            showError(TOAST_MESSAGES.EXPORT_FAILED);
+        },
+    });
+
+    const exportCreditsMutation = useMutation({
+        mutationFn: async (data: ClientCreditsReportData) => {
+            await exportService.exportClientCredits(data);
+        },
+        onSuccess: () => {
+            success(TOAST_MESSAGES.EXPORT_SUCCESS);
+        },
+        onError: (error) => {
+            console.error('Export failed:', error);
+            showError(TOAST_MESSAGES.EXPORT_FAILED);
+        },
+    });
+
+    const queryClient = useQueryClient();
+
+
+    // --- Handlers ---
+    const handleAddTask = () => {
+        if (client) openModal('taskForm', { client });
+    };
+
+    const handleAddReceivable = () => {
+        if (client) {
+            if (USE_INVOICE_LEDGER_SYSTEM) {
+                openModal('invoiceForm', { client_id: clientId, client });
+            } else {
+                openModal('manualReceivable', { client_id: clientId, client });
+            }
+        }
+    };
+
+    const handleAddCredit = () => {
+        if (client) openModal('recordCreditModal', { client });
+    };
+
+    const handleAddSarfVoucher = () => {
+        if (client) {
+            const clientAccount: UnifiedAccount = {
+                type: 'client',
+                id: client.id,
+                name: client.name,
+                email: null,
+                balance: statementData?.totals.balance || 0,
+                last_activity: null,
+                pending_count: 0,
+                pending_amount: 0
+            };
+            openModal('manualTransaction', {
+                preselectedAccount: clientAccount,
+                direction: 'payout'
+            });
+        }
+    };
+
+    const handleAddQabdVoucher = () => {
+        if (client) {
+            const clientAccount: UnifiedAccount = {
+                type: 'client',
+                id: client.id,
+                name: client.name,
+                email: null,
+                balance: statementData?.totals.balance || 0,
+                last_activity: null,
+                pending_count: 0,
+                pending_amount: 0
+            };
+            openModal('manualTransaction', {
+                preselectedAccount: clientAccount,
+                direction: 'repayment'
+            });
+        }
+    };
+
+    const handleEditTask = (task: Task) => openModal('taskForm', { taskToEdit: task });
+
+    const handleCancelTask = (task: Task) => {
+        cancelTaskMutation.mutate({
+            id: task.id,
+            decisions: {
+                task_action: 'cancel'
+            }
+        }, {
+            onSuccess: (result) => {
+                // Check if it's a conflict response
+                if ('success' in result && result.success === false && result.code === 'task_cancellation_conflict') {
+                    const conflictData = result.data as TaskCancellationConflictData;
+                    // Open the task cancellation modal with conflict data
+                    openModal('taskCancellation', {
+                        taskId: task.id,
+                        analysisData: {
+                            task_id: conflictData.task_id,
+                            prepaid_receivable: conflictData.prepaid_receivable,
+                            main_receivable: conflictData.main_receivable,
+                            total_funds_involved: conflictData.total_funds_involved
+                        },
+                        onResolved: () => {
+                            success(TOAST_MESSAGES.TASK_CANCELLED);
+                            queryClient.invalidateQueries({ queryKey: ['dashboard', 'clientsWithActiveTasks'] });
+                        }
+                    });
+                    return;
+                }
+
+                // It's a successful cancellation
+                success(TOAST_MESSAGES.TASK_CANCELLED);
+                queryClient.invalidateQueries({ queryKey: ['dashboard', 'clientsWithActiveTasks'] });
+            },
+            onError: (err: any) => {
+                showError(TOAST_MESSAGES.OPERATION_FAILED, err.message);
+            }
+        });
+    };
+
+    const handleShowRequirements = (task: Task) => openModal('requirements', { task });
+    const handleCompleteTask = (task: Task) => openModal('taskCompletion', { task });
+
+    // Export handlers
+    const handleExportStatement = () => {
+        if (!client || !statementData?.statementItems) return;
+
+        const statementItems = statementData.statementItems as any[];
+        const totalDebit = statementItems.reduce((sum, item) => sum + item.debit, 0);
+        const totalCredit = statementItems.reduce((sum, item) => sum + item.credit, 0);
+        const balance = statementItems.length > 0 ? statementItems[statementItems.length - 1].balance : 0;
+
+        const reportData: ClientStatementReportData = {
+            client: client,
+            clientName: client.name,
+            clientPhone: client.phone || '',
+            statementItems: statementItems.map(item => ({
+                id: Number(item.id),
+                description: item.description,
+                debit: item.debit,
+                credit: item.credit,
+                date: item.date,
+                type: item.type,
+                transaction_type: item.transaction_type,
+                reference_id: item.reference_id,
+                details: item.details
+            })),
+            totals: {
+                totalDebit,
+                totalCredit,
+                balance
+            },
+            period: {
+                from: new Date(Date.now() - 365 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+                to: new Date().toISOString().split('T')[0]
+            }
+        };
+
+        exportStatementMutation.mutate(reportData);
+    };
+
+    const handleExportTasks = () => {
+        if (!client || !tasksData?.tasks) return;
+
+        const tasks = tasksData.tasks.map(task => ({
+            ...task,
+            client_name: client.name,
+            client_phone: client.phone || '',
+            service_name: task.task_name || t(`type.${task.type}`),
+            task_type: t(`type.${task.type}`),
+            status_text: t(`status.${task.status}`),
+            amount_text: task.amount.toLocaleString(),
+            prepaid_amount_text: task.prepaid_amount.toLocaleString(),
+            formatted_start_date: new Date(task.start_date).toLocaleDateString('ar-SA'),
+            formatted_end_date: task.end_date ? new Date(task.end_date).toLocaleDateString('ar-SA') : '',
+            requirements_text: task.requirements.map(r => r.requirement_text).join('، '),
+            notes_text: task.notes || '',
+            tags_text: task.tags.map(t => t.name).join('، '),
+            duration_days: task.end_date
+                ? Math.ceil((new Date(task.end_date).getTime() - new Date(task.start_date).getTime()) / (1000 * 60 * 60 * 24))
+                : undefined,
+            is_completed: task.status === 'Completed',
+            is_active: task.status === 'New',
+            is_cancelled: task.status === 'Cancelled',
+            has_receivable: !!task.receivable,
+            has_prepaid: task.prepaid_amount > 0,
+            has_requirements: task.requirements.length > 0,
+            has_tags: task.tags.length > 0,
+            has_notes: !!task.notes,
+            // Use consistent payment calculation matching table display
+            amount_paid: task.receivable ? task.amount - task.receivable.amount : task.amount,
+            amount_remaining: task.receivable?.amount || 0,
+            is_overdue: task.receivable ? new Date(task.receivable.due_date || '') < new Date() && task.status !== 'Completed' : false
+        }));
+
+        const completedTasks = tasks.filter(t => t.is_completed).length;
+        const inProgressTasks = tasks.filter(t => !t.is_completed && !t.is_cancelled).length;
+        const newTasks = tasks.filter(t => t.is_active).length;
+        const cancelledTasks = tasks.filter(t => t.is_cancelled).length;
+        const totalAmount = tasks.reduce((sum, t) => sum + t.amount, 0);
+        const totalPaid = tasks.reduce((sum, t) => sum + t.amount_paid, 0);
+        const totalRemaining = tasks.reduce((sum, t) => sum + t.amount_remaining, 0);
+
+        const reportData: ClientTasksReportData = {
+            client: client,
+            tasks: tasks,
+            summary: {
+                total_tasks: tasks.length,
+                completed_tasks: completedTasks,
+                in_progress_tasks: inProgressTasks,
+                new_tasks: newTasks,
+                cancelled_tasks: cancelledTasks,
+                total_amount: totalAmount,
+                total_paid: totalPaid,
+                total_remaining: totalRemaining,
+                average_completion_days: 0
+            }
+        };
+
+        exportTasksMutation.mutate(reportData);
+    };
+
+    const handleExportCredits = () => {
+        if (!client || !creditsData?.credits) return;
+
+        const credits = creditsData.credits.map(credit => ({
+            id: credit.id,
+            client_id: credit.client_id,
+            credit_date: credit.received_at,
+            amount_granted: credit.amount,
+            amount_used: credit.allocated_amount,
+            amount_available: credit.remaining_amount,
+            due_date: credit.received_at, // Using received_at as placeholder
+            status: credit.remaining_amount > 0 ? 'active' as const : 'used' as const,
+            credit_type: 'Manual Credit',
+            notes: credit.description
+        }));
+
+        const totalGranted = credits.reduce((sum, c) => sum + c.amount_granted, 0);
+        const totalUsed = credits.reduce((sum, c) => sum + c.amount_used, 0);
+        const totalAvailable = credits.reduce((sum, c) => sum + c.amount_available, 0);
+
+        const reportData: ClientCreditsReportData = {
+            client: client,
+            credits: credits,
+            summary: {
+                total_granted: totalGranted,
+                total_used: totalUsed,
+                total_available: totalAvailable,
+                active_credits: credits.filter(c => c.status === 'active').length,
+                expired_credits: 0,
+                utilization_rate: totalGranted > 0 ? (totalUsed / totalGranted) * 100 : 0
+            }
+        };
+
+        exportCreditsMutation.mutate(reportData);
+    };
+
+    const handleAssignTask = (task: Task) => openModal('assignTask', { task });
+
+    if (isLoading) return <div>Loading...</div>;
+    if (!client) return <div>Client not found.</div>;
+
+    return (
+        <div>
+            <ClientProfileHeader
+                client={client}
+                mode={mode}
+                onAddTask={handleAddTask}
+                onAddInvoice={handleAddReceivable}
+                onAddCredit={handleAddCredit}
+                onAddSarfVoucher={handleAddSarfVoucher}
+                onAddQabdVoucher={handleAddQabdVoucher}
+                onExportStatement={handleExportStatement}
+                onExportTasks={handleExportTasks}
+                onExportCredits={handleExportCredits}
+                isExporting={exportStatementMutation.isPending || exportTasksMutation.isPending || exportCreditsMutation.isPending}
+            />
+
+
+
+            {/* Tasks Table - Show in general and tasks modes */}
+            {(mode === 'general' || mode === 'tasks') && (
+                <div className="rounded-lg border border-border bg-card shadow-sm mb-3">
+                    <div className="flex justify-between items-center px-4 py-3 border-b border-border">
+                        <h5 className="text-primary font-bold text-lg mb-0">{t('clientProfile.tasksSectionTitle')}</h5>
+                        {mode === 'tasks' && tasksData?.tasks && tasksData.tasks.length > 0 && (
+                            <button
+                                className="px-3 py-1.5 text-sm border border-primary text-primary rounded-md hover:bg-primary/10 transition-colors disabled:opacity-50"
+                                onClick={handleExportTasks}
+                                disabled={exportTasksMutation.isPending}
+                                title={t('export.exportTasks', 'تصدير المهام')}
+                            >
+                                <i className="fas fa-download me-1"></i>
+                                {exportTasksMutation.isPending ? t('common.exporting', 'جاري التصدير...') : t('export.exportTasks', 'تصدير المهام')}
+                            </button>
+                        )}
+                    </div>
+                    <div className="p-0">
+                        <AllTasksTable
+                            tasks={tasksData?.tasks || []}
+                            isLoading={isLoadingTasks}
+                            onEdit={handleEditTask}
+                            onDelete={handleCancelTask}
+                            onComplete={handleCompleteTask}
+                            onAssign={handleAssignTask}
+                        />
+                    </div>
+                </div>
+            )}
+
+            {/* Receivables Table - Show in general and receivables modes */}
+            {(mode === 'general' || mode === 'receivables') && (
+                hasViewAllReceivablesPermission ? (
+                    <div className="rounded-lg border border-border bg-card shadow-sm mb-3">
+                        <div className="px-4 py-3 border-b border-border">
+                            <h5 className="text-primary font-bold text-lg mb-0">كشف الحساب</h5>
+                        </div>
+                        <div className="p-0">
+                            {USE_INVOICE_LEDGER_SYSTEM ? (
+                                <AccountLedgerTable
+                                    client={client}
+                                    filter={filter === 'all' ? 'all' : filter === 'unpaid' ? 'invoices' : 'all'}
+                                    hideAmounts={!hasViewAmountsPermission}
+                                />
+                            ) : (
+                                <ClientReceivablesTable
+                                    receivables={statementData?.statementItems as StatementItem[] || []}
+                                    isLoading={isLoadingReceivables}
+                                    client={client}
+                                    filter={filter}
+                                    hideAmounts={!hasViewAmountsPermission}
+                                />
+                            )}
+                        </div>
+                    </div>
+                ) : (
+                    <div className="rounded-lg bg-status-warning-bg border-2 border-status-warning-border p-4 text-center">
+                        <h5 className="text-status-warning-text font-bold text-lg mb-2">Access Denied</h5>
+                        <p className="text-text-primary mb-0">You don't have permission to view receivables for this client.</p>
+                    </div>
+                )
+            )}
+
+            {/* Credits History Table - Show in general - receivables modes only */}
+            {(mode === 'general' || mode === 'receivables') && (
+                <div className="rounded-lg border border-border bg-card shadow-sm mb-3">
+                    <div className="px-4 py-3 border-b border-border">
+                        <h5 className="text-primary font-bold text-lg mb-0">{t('clients.creditsHistory')}</h5>
+                    </div>
+                    <div className="p-0">
+                        <ClientCreditsHistoryTable
+                            credits={creditsData?.credits || []}
+                            isLoading={isLoadingCredits}
+                            clientId={clientId}
+                        />
+                    </div>
+                </div>
+            )}
+        </div>
+    );
+};
+
+export default ClientProfilePage;

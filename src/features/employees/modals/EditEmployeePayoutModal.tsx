@@ -1,0 +1,164 @@
+import React, { useState, useEffect } from 'react';
+import { Save, X } from 'lucide-react';
+import BaseModal from '@/shared/ui/layout/BaseModal';
+import Button from '@/shared/ui/primitives/Button';
+import { NumberInput } from '@/shared/ui/primitives/NumberInput';
+import { useModalStore } from '@/shared/stores/modalStore';
+import { useToast } from '@/shared/hooks/useToast';
+import { useUpdateEmployeeTransaction } from '@/features/employees/api/employeeQueries';
+
+interface EditPayoutFormData {
+  amount: string;
+  notes: string;
+}
+
+const EditEmployeePayoutModal = () => {
+  const { success, error } = useToast();
+  const { isOpen, modalType, props, closeModal } = useModalStore();
+  const updateTransactionMutation = useUpdateEmployeeTransaction();
+
+  const [formData, setFormData] = useState<EditPayoutFormData>({
+    amount: '',
+    notes: '',
+  });
+
+  const [errors, setErrors] = useState<Partial<EditPayoutFormData>>({});
+
+  const isModalOpen = isOpen && modalType === 'editEmployeePayout';
+  const { employee, transaction } = props || {};
+  const employeeTableId = employee?.id;
+  const employeeUserId = employee?.user_id;
+
+  // Initialize form data when modal opens
+  useEffect(() => {
+    if (isModalOpen && transaction) {
+      setFormData({
+        amount: transaction.amount || '',
+        notes: transaction.notes || '',
+      });
+    }
+  }, [isModalOpen, transaction]);
+
+  const validateForm = (): boolean => {
+    const newErrors: Partial<EditPayoutFormData> = {};
+
+    if (!formData.amount || parseFloat(formData.amount) <= 0) {
+      newErrors.amount = 'Please enter a valid amount';
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    if (!validateForm() || !employeeTableId || !employeeUserId || !transaction) return;
+
+    try {
+      const updateData = {
+        amount: parseFloat(formData.amount),
+        notes: formData.notes,
+      };
+
+      await updateTransactionMutation.mutateAsync({
+        employeeTableId,
+        employeeUserId,
+        transactionId: parseInt(transaction.id, 10),
+        data: updateData
+      });
+
+      success('Payout updated successfully');
+      closeModal();
+
+      // Call onSuccess callback if provided
+      if (props?.onSuccess) {
+        props.onSuccess();
+      }
+    } catch (err: any) {
+      error(err.message || 'Failed to update payout');
+    }
+  };
+
+  const handleClose = () => {
+    // Reset form data on close
+    setFormData({
+      amount: '',
+      notes: '',
+    });
+    setErrors({});
+    closeModal();
+  };
+
+  const handleInputChange = (field: keyof EditPayoutFormData, value: string) => {
+    setFormData(prev => ({ ...prev, [field]: value }));
+    // Clear error when user starts typing
+    if (errors[field]) {
+      setErrors(prev => ({ ...prev, [field]: undefined }));
+    }
+  };
+
+  return (
+    <BaseModal
+      isOpen={isModalOpen}
+      onClose={handleClose}
+      title="Edit Payout"
+    >
+      <form onSubmit={handleSubmit} className="space-y-4">
+        <div className="space-y-2">
+          <label htmlFor="edit-payout-amount" className="font-semibold text-text-primary text-sm block">
+            Amount <span className="text-destructive">*</span>
+          </label>
+          <div className="flex items-center gap-2">
+            <NumberInput
+              name="edit-payout-amount"
+              value={formData.amount}
+              onChange={(e) => handleInputChange('amount', e.target.value)}
+              placeholder="Enter payout amount"
+              className="flex-1"
+              error={errors.amount}
+            />
+          </div>
+          {errors.amount && (
+            <div className="text-destructive text-sm">{errors.amount}</div>
+          )}
+        </div>
+
+        <div className="space-y-2">
+          <label htmlFor="edit-payout-notes" className="font-semibold text-text-primary text-sm block">
+            Notes
+          </label>
+          <textarea
+            className="w-full px-3 py-2 border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-primary resize-none"
+            id="edit-payout-notes"
+            rows={3}
+            value={formData.notes}
+            onChange={(e) => handleInputChange('notes', e.target.value)}
+            placeholder="Optional notes about this payout"
+          />
+        </div>
+
+        <div className="flex justify-end gap-2 pt-4 border-t border-border">
+          <Button
+            type="button"
+            variant="outline-secondary"
+            onClick={handleClose}
+          >
+            <X size={16} className="mr-1" />
+            Cancel
+          </Button>
+          <Button
+            type="submit"
+            variant="primary"
+            isLoading={updateTransactionMutation.isPending}
+          >
+            <Save size={16} className="mr-1" />
+            Update Payout
+          </Button>
+        </div>
+      </form>
+    </BaseModal>
+  );
+};
+
+export default EditEmployeePayoutModal;

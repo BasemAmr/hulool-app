@@ -10,7 +10,7 @@ import {
   autoSizeColumns
 } from './excelStyles';
 import type { ClientTasksReportData, ExportOptions } from './exportTypes';
-import { formatDateForExcel, formatTaskStatusArabic, formatTaskTypeArabic, calculateDurationDays } from '../../utils/formatUtils';
+import { formatDateForExcel, formatTaskStatusArabic, formatTaskTypeArabic, calculateDurationDays } from '@/shared/utils/formatUtils';
 
 /**
  * Generate Excel report for all tasks of a specific client

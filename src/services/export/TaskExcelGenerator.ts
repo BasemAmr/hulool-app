@@ -9,7 +9,7 @@ import {
   autoSizeColumns
 } from './excelStyles';
 import type { AllTasksReportData, ExportOptions } from './exportTypes';
-import { formatDateForExcel, formatTaskStatusArabic, formatTaskTypeArabic } from '../../utils/formatUtils';
+import { formatDateForExcel, formatTaskStatusArabic, formatTaskTypeArabic } from '@/shared/utils/formatUtils';
 
 /**
  * Generate Excel report for all tasks across all clients

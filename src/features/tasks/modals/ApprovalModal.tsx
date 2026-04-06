@@ -1,0 +1,240 @@
+import { useForm } from 'react-hook-form';
+import { useTranslation } from 'react-i18next';
+import { useModalStore } from '@/shared/stores/modalStore';
+import { useApproveTask, useRejectTask } from '@/features/tasks/api/taskQueries';
+import { useToast } from '@/shared/hooks/useToast';
+import { useState } from 'react';
+import type { Task } from '@/api/types';
+import { TOAST_MESSAGES } from '@/shared/constants/toastMessages';
+import BaseModal from '@/shared/ui/layout/BaseModal';
+import Button from '@/shared/ui/primitives/Button';
+import Input from '@/shared/ui/primitives/Input';
+
+interface ApprovalModalProps {
+  task: Task;
+}
+
+interface ApprovalFormData {
+  expense_amount: number;
+  notes?: string;
+}
+
+const ApprovalModal = () => {
+  const { t } = useTranslation();
+  const closeModal = useModalStore((state) => state.closeModal);
+  const props = useModalStore((state) => state.props as ApprovalModalProps);
+  const { task } = props;
+  const { success, error } = useToast();
+
+  const [isRejecting, setIsRejecting] = useState(false);
+
+  const approveTaskMutation = useApproveTask();
+  const rejectTaskMutation = useRejectTask();
+
+  const { register, handleSubmit, formState: { errors }, watch } = useForm<ApprovalFormData>({
+    defaultValues: {
+      expense_amount: 0,
+      notes: ''
+    }
+  });
+
+  const watchExpenseAmount = watch('expense_amount');
+  const netEarning = task.amount - (Number(watchExpenseAmount) || 0);
+
+  const onApprove = (data: ApprovalFormData) => {
+    if (data.expense_amount < 0) {
+      error(TOAST_MESSAGES.VALIDATION_ERROR, 'لا يمكن أن يكون مبلغ المصروف سلبياً');
+      return;
+    }
+
+    if (data.expense_amount > task.amount) {
+      error(TOAST_MESSAGES.VALIDATION_ERROR, 'لا يمكن أن يتجاوز مبلغ المصروف مبلغ المهمة');
+      return;
+    }
+
+    approveTaskMutation.mutate(
+      {
+        id: Number(task.id),
+        expense_amount: Number(data.expense_amount),
+        notes: data.notes
+      },
+      {
+        onSuccess: () => {
+          success(TOAST_MESSAGES.TASK_APPROVED);
+          closeModal();
+        },
+        onError: (err: any) => {
+          error(TOAST_MESSAGES.OPERATION_FAILED, err.message);
+        }
+      }
+    );
+  };
+
+  const onReject = () => {
+    rejectTaskMutation.mutate(
+      {
+        id: Number(task.id),
+        rejection_reason: 'Task rejected by admin'
+      },
+      {
+        onSuccess: () => {
+          success(TOAST_MESSAGES.TASK_REJECTED);
+          closeModal();
+        },
+        onError: (err: any) => {
+          error(TOAST_MESSAGES.OPERATION_FAILED, err.message);
+        }
+      }
+    );
+  };
+
+  return (
+    <BaseModal
+      isOpen={true}
+      onClose={closeModal}
+      title="الموافقة على المهمة"
+    >
+      <div className="space-y-6">
+        {/* Task Summary */}
+        <div className="bg-bg-surface-muted p-4 rounded-lg">
+          <h3 className="font-medium text-gray-900 mb-3">تفاصيل المهمة</h3>
+          <div className="grid grid-cols-2 gap-4 text-sm">
+            <div>
+              <span className="text-text-muted">اسم المهمة:</span>
+              <p className="font-medium">{task.task_name || `المهمة #${task.id}`}</p>
+            </div>
+            <div>
+              <span className="text-text-muted">العميل:</span>
+              <p className="font-medium">{task.client ? task.client.name : 'عميل غير معروف'}</p>
+            </div>
+            <div>
+              <span className="text-text-muted">مبلغ المهمة:</span>
+              <p className="font-medium">{task.amount.toFixed(2)}</p>
+            </div>
+            <div>
+              <span className="text-text-muted">الحالة:</span>
+              <p className="font-medium text-orange-600">{task.status}</p>
+            </div>
+          </div>
+        </div>
+
+        {!isRejecting ? (
+          <form onSubmit={handleSubmit(onApprove)} className="space-y-4">
+            <div>
+              <label htmlFor="expense_amount" className="block text-sm font-medium text-gray-700 mb-1">
+                مبلغ المصروف *
+              </label>
+              <Input
+                id="expense_amount"
+                type="number"
+                step="0.01"
+                min="0"
+                max={task.amount}
+                {...register('expense_amount', {
+                  required: 'مبلغ المصروف مطلوب',
+                  valueAsNumber: true,
+                  min: { value: 0, message: 'لا يمكن أن يكون مبلغ المصروف سلبياً' },
+                  max: { value: task.amount, message: 'لا يمكن أن يتجاوز مبلغ المصروف مبلغ المهمة' }
+                })}
+                error={errors.expense_amount?.message}
+                placeholder="أدخل مصروفات المهمة"
+              />
+            </div>
+
+            {/* Calculated Net Earning */}
+            <div className="bg-status-info-bg p-3 rounded-lg">
+              <div className="flex justify-between items-center">
+                <span className="text-sm text-text-secondary">صافي الربح:</span>
+                <span className={`font-semibold ${netEarning >= 0 ? 'text-status-success-text' : 'text-status-danger-text'}`}>
+                  {netEarning.toFixed(2)}
+                </span>
+              </div>
+              <div className="text-xs text-text-muted mt-1">
+                مبلغ المهمة ({task.amount.toFixed(2)}) - مبلغ المصروف ({(Number(watchExpenseAmount) || 0).toFixed(2)})
+              </div>
+            </div>
+
+            <div>
+              <label htmlFor="notes" className="block text-sm font-medium text-gray-700 mb-1">
+                ملاحظات (اختياري)
+              </label>
+              <textarea
+                id="notes"
+                rows={3}
+                {...register('notes')}
+                className="w-full px-3 py-2 border border-border-strong rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                placeholder="أضف أي ملاحظات إضافية حول موافقة هذه المهمة..."
+              />
+            </div>
+
+            <div className="flex justify-end space-x-3 pt-4">
+              <Button
+                type="button"
+                variant="outline-danger"
+                onClick={() => setIsRejecting(true)}
+                disabled={approveTaskMutation.isPending || rejectTaskMutation.isPending}
+              >
+                رفض
+              </Button>
+              <Button
+                type="button"
+                variant="outline-secondary"
+                onClick={closeModal}
+                disabled={approveTaskMutation.isPending || rejectTaskMutation.isPending}
+              >
+                إلغاء
+              </Button>
+              <Button
+                type="submit"
+                variant="primary"
+                isLoading={approveTaskMutation.isPending}
+                disabled={approveTaskMutation.isPending || rejectTaskMutation.isPending}
+              >
+                الموافقة وإكمال
+              </Button>
+            </div>
+          </form>
+        ) : (
+          <div className="space-y-4">
+            <div className="bg-status-danger-bg p-4 rounded-lg border border-status-danger-border">
+              <h3 className="font-medium text-status-danger-text mb-2">رفض المهمة</h3>
+              <p className="text-status-danger-text text-sm">
+                هل أنت متأكد أنك تريد رفض هذه المهمة؟ سيؤدي ذلك إلى إعادة حالة المهمة إلى "جديدة" وسيتعين على الموظف المعَيَّن إعادة تقديمها للمراجعة.
+              </p>
+            </div>
+
+            <div className="flex justify-end space-x-3 pt-4">
+              <Button
+                type="button"
+                variant="outline-secondary"
+                onClick={() => setIsRejecting(false)}
+                disabled={rejectTaskMutation.isPending}
+              >
+                عودة
+              </Button>
+              <Button
+                type="button"
+                variant="outline-secondary"
+                onClick={closeModal}
+                disabled={rejectTaskMutation.isPending}
+              >
+                إلغاء
+              </Button>
+              <Button
+                type="button"
+                variant="danger"
+                onClick={onReject}
+                isLoading={rejectTaskMutation.isPending}
+                disabled={rejectTaskMutation.isPending}
+              >
+                تأكيد الرفض
+              </Button>
+            </div>
+          </div>
+        )}
+      </div>
+    </BaseModal>
+  );
+};
+
+export default ApprovalModal;

@@ -8,7 +8,7 @@ import {
   autoSizeColumns
 } from './excelStyles';
 import type { ClientStatementReportData, ExportOptions } from './exportTypes';
-import { formatDateForExcel } from '../../utils/formatUtils';
+import { formatDateForExcel } from '@/shared/utils/formatUtils';
 
 /**
  * Generate Excel report for detailed client statement with transactions and allocations

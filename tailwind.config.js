@@ -8,7 +8,7 @@ export default {
     './src/**/*.{ts,tsx}',
   ],
   safelist: [
-    // Background colors
+    // Shadcn / Radix compat tokens
     'bg-primary', 'bg-primary-foreground',
     'bg-secondary', 'bg-secondary-foreground',
     'bg-destructive', 'bg-destructive-foreground',
@@ -17,7 +17,6 @@ export default {
     'bg-popover', 'bg-popover-foreground',
     'bg-card', 'bg-card-foreground',
     'bg-background', 'bg-foreground',
-    // Text colors
     'text-primary', 'text-primary-foreground',
     'text-secondary', 'text-secondary-foreground',
     'text-destructive', 'text-destructive-foreground',
@@ -26,25 +25,28 @@ export default {
     'text-popover', 'text-popover-foreground',
     'text-card', 'text-card-foreground',
     'text-background', 'text-foreground',
-    // Border colors
-    'border-primary', 'border-primary-foreground',
-    'border-secondary', 'border-secondary-foreground',
-    'border-destructive', 'border-destructive-foreground',
-    'border-muted', 'border-muted-foreground',
-    'border-accent', 'border-accent-foreground',
-    'border-popover', 'border-popover-foreground',
-    'border-card', 'border-card-foreground',
-    'border-background', 'border-foreground',
-    'border-input', 'border-border', 'border-ring',
-    // Hover states
+    'border-primary', 'border-secondary', 'border-destructive',
+    'border-muted', 'border-accent', 'border-input', 'border-border', 'border-ring',
     'hover:bg-primary', 'hover:bg-secondary', 'hover:bg-destructive',
-    'hover:bg-muted', 'hover:bg-accent', 'hover:bg-card',
+    'hover:bg-muted', 'hover:bg-accent',
     'hover:text-primary', 'hover:text-secondary',
-    'hover:border-primary', 'hover:border-secondary',
-    // Ring colors
+    'hover:border-primary',
     'ring-primary', 'ring-ring',
-    // Accent color for checkboxes/inputs
     'accent-primary',
+    // Semantic token utilities
+    'bg-bg-page', 'bg-bg-surface', 'bg-bg-surface-hover', 'bg-bg-surface-muted',
+    'text-text-primary', 'text-text-secondary', 'text-text-muted',
+    'text-text-inverse', 'text-text-brand', 'text-text-danger',
+    'text-text-success', 'text-text-warning',
+    'border-border-default', 'border-border-strong', 'border-border-focus', 'border-border-danger',
+    'bg-action-primary', 'bg-action-secondary', 'bg-action-danger',
+    'text-action-primary', 'text-action-secondary', 'text-action-danger',
+    // Status token utilities
+    'bg-status-success-bg', 'text-status-success-text', 'border-status-success-border',
+    'bg-status-warning-bg', 'text-status-warning-text', 'border-status-warning-border',
+    'bg-status-danger-bg',  'text-status-danger-text',  'border-status-danger-border',
+    'bg-status-info-bg',    'text-status-info-text',    'border-status-info-border',
+    'bg-status-neutral-bg', 'text-status-neutral-text', 'border-status-neutral-border',
   ],
   theme: {
     container: {

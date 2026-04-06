@@ -9,7 +9,7 @@ import {
     COLORS
 } from './excelStyles';
 import type { EmployeeStatementReportData, ExportOptions } from './exportTypes';
-import { formatDateForExcel } from '../../utils/formatUtils';
+import { formatDateForExcel } from '@/shared/utils/formatUtils';
 
 /**
  * Generate Excel report for employee financial statement

@@ -1,5 +1,5 @@
 // src/services/export/exportTypes.ts
-import type { Client, Task, PaymentMethod } from '../../api/types';
+import type { Client, Task, PaymentMethod } from '@/api/types';
 
 // Payment allocation detail for receivables
 export interface PaymentAllocation {

@@ -8,7 +8,7 @@ import {
   autoSizeColumns
 } from './excelStyles';
 import type { ClientCreditsReportData, ExportOptions } from './exportTypes';
-import { formatDateForExcel, calculatePercentage } from '../../utils/formatUtils';
+import { formatDateForExcel, calculatePercentage } from '@/shared/utils/formatUtils';
 
 /**
  * Generate Excel report for client credit information and history
