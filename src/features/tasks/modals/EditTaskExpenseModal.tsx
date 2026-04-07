@@ -126,10 +126,10 @@ const EditTaskExpenseModal = () => {
       title="تعديل مصاريف المهمة"
     >
       {/* Task Information */}
-      <div className="rounded-lg border border-blue-600 bg-status-info-bg p-4 space-y-2">
-        <div><strong className="text-text-primary">المهمة:</strong> <span className="text-blue-800">{transaction?.task_name || 'مهمة غير معروفة'}</span></div>
-        <div><strong className="text-text-primary">العميل:</strong> <span className="text-blue-800">{transaction?.client_name || 'عميل غير معروف'}</span></div>
-        <div><strong className="text-text-primary">العمولة الحالية:</strong> <span className="text-blue-800">{transaction?.amount ? `${transaction.amount} ريال` : 'قيد المراجعة'}</span></div>
+      <div className="space-y-2 rounded-lg border border-status-info-border bg-status-info-bg p-4">
+        <div><strong className="text-text-primary">المهمة:</strong> <span className="text-status-info-text">{transaction?.task_name || 'مهمة غير معروفة'}</span></div>
+        <div><strong className="text-text-primary">العميل:</strong> <span className="text-status-info-text">{transaction?.client_name || 'عميل غير معروف'}</span></div>
+        <div><strong className="text-text-primary">العمولة الحالية:</strong> <span className="text-status-info-text">{transaction?.amount ? `${transaction.amount} ريال` : 'قيد المراجعة'}</span></div>
       </div>
 
       {/* Financial Breakdown Visual Indicators */}
@@ -137,35 +137,35 @@ const EditTaskExpenseModal = () => {
         <h6 className="font-semibold text-text-primary text-sm">التفصيل المالي</h6>
         <div className="grid grid-cols-2 gap-3">
           {/* Task Amount */}
-          <div className="rounded-lg border border-primary bg-white p-3 text-center">
+          <div className="rounded-lg border border-primary bg-card p-3 text-center">
             <div className="text-primary text-lg font-semibold">
               {formatCurrency(breakdown.taskAmount)}
             </div>
-            <small className="text-muted-foreground text-xs block">مبلغ المهمة الإجمالي</small>
+            <small className="text-text-secondary text-xs block">مبلغ المهمة الإجمالي</small>
           </div>
 
           {/* Current Expense */}
-          <div className="rounded-lg border border-status-warning-border bg-white p-3 text-center">
+          <div className="rounded-lg border border-status-warning-border bg-card p-3 text-center">
             <div className="text-status-warning-text text-lg font-semibold">
               {formatCurrency(breakdown.currentExpense)}
             </div>
-            <small className="text-muted-foreground text-xs block">المصاريف الحالية</small>
+            <small className="text-text-secondary text-xs block">المصاريف الحالية</small>
           </div>
 
           {/* Net Amount */}
-          <div className="rounded-lg border border-blue-600 bg-white p-3 text-center">
+          <div className="rounded-lg border border-status-info-border bg-card p-3 text-center">
             <div className="text-status-info-text text-lg font-semibold">
               {formatCurrency(breakdown.netAmount)}
             </div>
-            <small className="text-muted-foreground text-xs block">المبلغ الصافي</small>
+            <small className="text-text-secondary text-xs block">المبلغ الصافي</small>
           </div>
 
           {/* Employee Commission */}
-          <div className="rounded-lg border border-status-success-border bg-white p-3 text-center">
+          <div className="rounded-lg border border-status-success-border bg-card p-3 text-center">
             <div className="text-status-success-text text-lg font-semibold">
               {formatCurrency(breakdown.employeeCommission)}
             </div>
-            <small className="text-muted-foreground text-xs block">
+            <small className="text-text-secondary text-xs block">
               عمولة الموظف ({breakdown.commissionRate}%)
             </small>
           </div>

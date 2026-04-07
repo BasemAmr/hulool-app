@@ -135,7 +135,7 @@ const UrgentAlertModal = () => {
       <div style={{ direction: 'rtl' }} className="space-y-4">
         {/* Search Input */}
         <div className="relative">
-          <Search className="absolute left-3 top-3 h-5 w-5 text-muted-foreground" />
+          <Search className="absolute left-3 top-3 h-5 w-5 text-text-secondary" />
           <input
             type="text"
             className="w-full pl-10 pr-3 py-2 border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
@@ -172,10 +172,10 @@ const UrgentAlertModal = () => {
           {isLoadingTasks ? (
             <div className="text-center py-8">
               <div className="inline-block h-6 w-6 animate-spin rounded-full border-2 border-primary border-r-transparent" />
-              <p className="mt-2 text-muted-foreground text-sm">جاري التحميل...</p>
+              <p className="mt-2 text-text-secondary text-sm">جاري التحميل...</p>
             </div>
           ) : filteredTasks.length === 0 ? (
-            <div className="text-center py-8 text-muted-foreground text-sm">
+            <div className="text-center py-8 text-text-secondary text-sm">
               {searchQuery ? 'لا توجد مهام تطابق البحث' : 'لا توجد مهام متاحة'}
             </div>
           ) : (
@@ -187,7 +187,7 @@ const UrgentAlertModal = () => {
                 return (
                   <div
                     key={task.id}
-                    className={`p-3 cursor-pointer transition-colors hover:bg-muted/50 ${
+                    className={`p-3 cursor-pointer transition-colors hover:bg-background ${
                       isSelected ? 'bg-primary/10 border-l-2 border-primary' : ''
                     }`}
                     onClick={() => handleTaskToggle(task.id)}
@@ -202,7 +202,7 @@ const UrgentAlertModal = () => {
                       />
                       <div className="flex-1 min-w-0">
                         <h6 className="font-semibold text-text-primary text-sm truncate">{task.task_name}</h6>
-                        <p className="text-muted-foreground text-xs mt-1">
+                        <p className="text-text-secondary text-xs mt-1">
                           العميل: {task.client?.name || 'غير محدد'} | المبلغ: {task.amount} ريال
                         </p>
                         {isUrgent && (
@@ -224,7 +224,7 @@ const UrgentAlertModal = () => {
 
         {/* Footer */}
         <div className="flex justify-between items-center pt-4 border-t border-border">
-          <div className="text-muted-foreground text-xs">
+          <div className="text-text-secondary text-xs">
             {selectedTasks.length > 0 && `تم اختيار ${selectedTasks.length} مهمة`}
           </div>
           <Button

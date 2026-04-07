@@ -240,7 +240,7 @@ const PendingCommissionsPage = () => {
     <div className="container mx-auto p-6" dir="rtl">
       {/* Header */}
       <div className="mb-6">
-        <h1 className="text-3xl font-bold text-gray-900">العمولات المعلقة</h1>
+        <h1 className="text-3xl font-bold text-text-primary">العمولات المعلقة</h1>
         <p className="text-text-secondary mt-2">
           إجمالي العمولات المعلقة: {totalItems} عمولة
         </p>
@@ -253,7 +253,7 @@ const PendingCommissionsPage = () => {
           <p className="text-text-secondary">لا توجد عمولات معلقة</p>
         </div>
       ) : (
-        <div className="bg-white rounded-lg shadow overflow-hidden">
+        <div className="rounded-lg border border-border bg-card shadow-sm overflow-hidden">
           <Table className="border-collapse border border-border-strong">
             <TableHeader>
               <TableRow>

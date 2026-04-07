@@ -71,7 +71,7 @@ const TaskFollowUpPanel: React.FC = () => {
         }}
       >
         {/* Header */}
-        <div className="border-b border-border bg-muted/30 px-4 py-3">
+        <div className="border-b border-border bg-background px-4 py-3">
           <div className="flex items-center">
             <div className="bg-primary/10 rounded p-2 mr-3">
               <MessageSquare className="text-primary" size={20} />
@@ -131,7 +131,7 @@ const TaskFollowUpPanel: React.FC = () => {
 
           {/* Message Input */}
           <div 
-            className="border-t border-border bg-white transition-transform"
+            className="border-t border-border bg-card transition-transform"
             style={{
               transform: isLoading ? 'translateY(5px)' : 'translateY(0)'
             }}

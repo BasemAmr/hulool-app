@@ -100,7 +100,7 @@ const ValidationPreviewModal: React.FC<ValidationPreviewModalProps> = ({
         {warnings.length > 0 && (
           <div className="bg-status-warning-bg border-2 border-status-warning-border rounded-lg p-4">
             <div className="flex items-start gap-3">
-              <div className="flex-shrink-0 text-yellow-500 mt-1">
+              <div className="flex-shrink-0 text-yellow-700 mt-1">
                 <AlertTriangle size={24} />
               </div>
               <div>
@@ -121,7 +121,7 @@ const ValidationPreviewModal: React.FC<ValidationPreviewModalProps> = ({
                 <AlertCircle size={24} />
               </div>
               <div>
-                <h3 className="text-lg font-bold text-red-900 mb-2">{AR_LABELS.errors}</h3>
+                <h3 className="text-lg font-bold text-status-danger-text mb-2">{AR_LABELS.errors}</h3>
                 <ul className="list-disc list-inside space-y-1 text-base text-status-danger-text">
                   {errors.map((e, i) => <li key={i}>{e}</li>)}
                 </ul>
@@ -134,7 +134,7 @@ const ValidationPreviewModal: React.FC<ValidationPreviewModalProps> = ({
         {cons.messages && cons.messages.length > 0 && (
           <div className="space-y-2">
             {cons.messages.map((m: any, i: number) => (
-              <div key={i} className={`flex items-center gap-3 p-3 rounded-lg border-2 ${m.type === 'warning' ? 'bg-status-warning-bg border-status-warning-border text-status-warning-text' : 'bg-status-info-bg border-status-info-border text-blue-800'
+              <div key={i} className={`flex items-center gap-3 rounded-lg border-2 p-3 ${m.type === 'warning' ? 'bg-status-warning-bg border-status-warning-border text-status-warning-text' : 'bg-status-info-bg border-status-info-border text-status-info-text'
                 }`}>
                 {m.type === 'warning' ? <AlertTriangle size={20} /> : <Info size={20} />}
                 <p className="text-base font-medium">{m.text_ar || m.text_en}</p>
@@ -146,20 +146,20 @@ const ValidationPreviewModal: React.FC<ValidationPreviewModalProps> = ({
         {/* Transaction Summary */}
         {cons.transaction_summary && (
           <div className="bg-status-info-bg border-2 border-status-info-border rounded-lg p-4">
-            <h3 className="text-lg font-bold text-blue-900 mb-3 flex items-center gap-2">
+            <h3 className="text-lg font-bold text-text-primary mb-3 flex items-center gap-2">
               <TrendingUp size={24} />
               {AR_LABELS.summary}
             </h3>
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <span className="text-sm text-status-info-text">{AR_LABELS.old_amount}</span>
-                <div className="text-xl font-bold text-blue-900">
+                <div className="text-xl font-bold text-text-primary">
                   {formatCurrency(cons.transaction_summary.old_debit || cons.transaction_summary.old_credit)}
                 </div>
               </div>
               <div>
                 <span className="text-sm text-status-info-text">{AR_LABELS.new_amount}</span>
-                <div className="text-xl font-bold text-blue-900">
+                <div className="text-xl font-bold text-text-primary">
                   {formatCurrency(cons.transaction_summary.new_debit || cons.transaction_summary.new_credit)}
                 </div>
               </div>
@@ -169,21 +169,21 @@ const ValidationPreviewModal: React.FC<ValidationPreviewModalProps> = ({
 
         {/* Invoice Summary */}
         {cons.invoice_summary && (
-          <div className="bg-purple-50 border-2 border-purple-200 rounded-lg p-4">
-            <h3 className="text-lg font-bold text-purple-900 mb-3 flex items-center gap-2">
+          <div className="bg-status-info-bg border-2 border-status-info-border rounded-lg p-4">
+            <h3 className="text-lg font-bold text-text-primary mb-3 flex items-center gap-2">
               <Info size={24} />
               {AR_LABELS.summary}
             </h3>
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <span className="text-sm text-purple-700">{AR_LABELS.old_amount}</span>
-                <div className="text-xl font-bold text-purple-900">
+                <span className="text-sm text-text-secondary">{AR_LABELS.old_amount}</span>
+                <div className="text-xl font-bold text-text-primary">
                   {formatCurrency(cons.invoice_summary.old_amount)}
                 </div>
               </div>
               <div>
-                <span className="text-sm text-purple-700">{AR_LABELS.new_amount}</span>
-                <div className="text-xl font-bold text-purple-900">
+                <span className="text-sm text-text-secondary">{AR_LABELS.new_amount}</span>
+                <div className="text-xl font-bold text-text-primary">
                   {formatCurrency(cons.invoice_summary.new_amount)}
                 </div>
               </div>
@@ -193,30 +193,30 @@ const ValidationPreviewModal: React.FC<ValidationPreviewModalProps> = ({
 
         {/* Invoice Impact */}
         {cons.invoice_impact && (
-          <div className="border-2 border-purple-200 rounded-lg p-4 bg-purple-50">
-            <h3 className="text-lg font-bold text-purple-900 mb-3">
+          <div className="border-2 border-status-info-border rounded-lg bg-status-info-bg p-4">
+            <h3 className="text-lg font-bold text-text-primary mb-3">
               تأثير على الفاتورة #{cons.invoice_impact.invoice_id}
             </h3>
 
             <div className="space-y-3">
               <div className="flex justify-between items-center">
-                <span className="text-base text-purple-800">الوصف:</span>
-                <span className="font-bold text-purple-900">{cons.invoice_impact.invoice_description}</span>
+                <span className="text-base text-text-secondary">الوصف:</span>
+                <span className="font-bold text-text-primary">{cons.invoice_impact.invoice_description}</span>
               </div>
 
-              <div className="grid grid-cols-3 gap-3 bg-white p-3 rounded border border-purple-200">
+              <div className="grid grid-cols-3 gap-3 rounded border border-border bg-card p-3">
                 <div>
-                  <div className="text-sm text-purple-700">المبلغ الكلي</div>
-                  <div className="text-lg font-bold text-purple-900">{formatCurrency(cons.invoice_impact.current_amount)}</div>
+                  <div className="text-sm text-text-secondary">المبلغ الكلي</div>
+                  <div className="text-lg font-bold text-text-primary">{formatCurrency(cons.invoice_impact.current_amount)}</div>
                 </div>
                 <div>
-                  <div className="text-sm text-purple-700">المدفوع</div>
+                  <div className="text-sm text-text-secondary">المدفوع</div>
                   <div className="text-lg font-bold text-status-success-text dir-ltr text-right">
                     {formatCurrency(cons.invoice_impact.current_paid)} → {formatCurrency(cons.invoice_impact.new_paid)}
                   </div>
                 </div>
                 <div>
-                  <div className="text-sm text-purple-700">المتبقي</div>
+                  <div className="text-sm text-text-secondary">المتبقي</div>
                   <div className="text-lg font-bold text-status-danger-text dir-ltr text-right">
                     {formatCurrency(cons.invoice_impact.current_remaining)} → {formatCurrency(cons.invoice_impact.new_remaining)}
                   </div>
@@ -224,7 +224,7 @@ const ValidationPreviewModal: React.FC<ValidationPreviewModalProps> = ({
               </div>
 
               {cons.invoice_impact.status_will_change && (
-                <div className="bg-yellow-100 border border-yellow-300 p-3 rounded">
+                <div className="rounded border border-status-warning-border bg-status-warning-bg p-3">
                   <div className="flex items-center gap-2">
                     <span className="text-status-warning-text font-bold">⚠️ تغيير الحالة:</span>
                     <span className="text-base">
@@ -239,13 +239,13 @@ const ValidationPreviewModal: React.FC<ValidationPreviewModalProps> = ({
 
         {/* Transaction Changes Table */}
         {(cons.transaction_changes?.length > 0 || cons.transactions_affected?.length > 0) && (
-          <div className="border-2 border-border-default rounded-lg p-4 bg-bg-surface-muted">
-            <h3 className="text-lg font-bold text-gray-900 mb-3">
+          <div className="border-2 border-border-default rounded-lg bg-background p-4">
+            <h3 className="text-lg font-bold text-text-primary mb-3">
               تغييرات المعاملات
             </h3>
             <div className="overflow-x-auto">
-              <table className="w-full border-collapse border border-border-strong bg-white">
-                <thead className="bg-bg-surface-muted">
+              <table className="w-full border-collapse border border-border-strong bg-card">
+                <thead className="bg-background">
                   <tr>
                     <th className="border border-border-strong px-3 py-2 text-right font-bold">المعاملة</th>
                     <th className="border border-border-strong px-3 py-2 text-right font-bold">المبلغ القديم</th>
@@ -257,7 +257,7 @@ const ValidationPreviewModal: React.FC<ValidationPreviewModalProps> = ({
                     <tr key={i}>
                       <td className="border border-border-strong px-3 py-2 text-sm">
                         <div className="font-bold">#{change.transaction_id || change.id}</div>
-                        <div className="text-xs text-text-muted">{change.account_name}</div>
+                        <div className="text-xs text-text-primary">{change.account_name}</div>
                       </td>
                       <td className="border border-border-strong px-3 py-2 text-sm">
                         {formatCurrency(change.old_debit || change.old_amount || 0)}
@@ -275,51 +275,51 @@ const ValidationPreviewModal: React.FC<ValidationPreviewModalProps> = ({
 
         {/* Commissions Impact */}
         {cons.commissions_affected && cons.commissions_affected.length > 0 && (
-          <div className="border-2 border-status-success-border rounded-lg p-4 bg-status-success-bg">
-            <h3 className="text-lg font-bold text-green-900 mb-3 flex items-center gap-2">
+          <div className="border-2 border-status-success-border rounded-lg bg-status-success-bg p-4">
+            <h3 className="text-lg font-bold text-status-success-text mb-3 flex items-center gap-2">
               <CheckCircle size={24} />
               تأثير العمولات
             </h3>
             <div className="space-y-4">
               {cons.commissions_affected.map((comm: any, i: number) => (
-                <div key={i} className="bg-white p-4 rounded-lg border border-status-success-border shadow-sm">
+                <div key={i} className="rounded-lg border border-status-success-border bg-card p-4 shadow-sm">
                   <div className="flex justify-between items-center mb-3">
-                    <span className="text-lg font-bold text-gray-900">{comm.employee_name}</span>
+                    <span className="text-lg font-bold text-text-primary">{comm.employee_name}</span>
                     <span className="bg-status-success-bg text-status-success-text px-2 py-1 rounded text-sm font-bold">
                       نسبة العمولة: {comm.commission_rate}%
                     </span>
                   </div>
 
                   <div className="grid grid-cols-2 gap-4 mb-4 text-sm">
-                    <div className="bg-bg-surface-muted p-2 rounded">
+                    <div className="bg-background p-2 rounded">
                       <span className="text-text-secondary block mb-1">صافي الربح الحالي</span>
-                      <span className="text-gray-900 font-bold">{formatCurrency(comm.old_net_earning)}</span>
+                      <span className="font-bold text-text-primary">{formatCurrency(comm.old_net_earning)}</span>
                     </div>
                     <div className="bg-status-success-bg p-2 rounded">
                       <span className="text-status-success-text block mb-1">صافي الربح الجديد</span>
-                      <span className="text-green-900 font-bold">{formatCurrency(comm.new_net_earning)}</span>
+                      <span className="font-bold text-status-success-text">{formatCurrency(comm.new_net_earning)}</span>
                     </div>
                   </div>
 
                   {comm.updates && comm.updates.length > 0 && (
                     <div className="mt-3 overflow-hidden rounded border border-border-default">
                       <table className="w-full text-sm border-collapse">
-                        <thead className="bg-bg-surface-muted text-gray-700 font-bold text-xs uppercase tracking-wider">
+                        <thead className="bg-background text-text-primary font-bold text-xs uppercase tracking-wider">
                           <tr>
                             <th className="px-3 py-2 text-right border-b font-bold">البند المتأثر</th>
                             <th className="px-3 py-2 text-right border-b font-bold">المبلغ الحالي</th>
                             <th className="px-3 py-2 text-right border-b font-bold">المبلغ الجديد</th>
                           </tr>
                         </thead>
-                        <tbody className="divide-y divide-gray-200">
+                        <tbody className="divide-y divide-border-default">
                           {comm.updates.map((upd: any, idx: number) => (
-                            <tr key={idx} className="hover:bg-bg-surface-muted">
+                            <tr key={idx} className="hover:bg-background">
                               <td className="px-3 py-2 flex items-center gap-2">
-                                <span className={`w-2 h-2 rounded-full ${upd.type === 'pending_item' ? 'bg-yellow-400' : 'bg-blue-400'}`}></span>
+                                <span className={`w-2 h-2 rounded-full ${upd.type === 'pending_item' ? 'bg-yellow-700' : 'bg-blue-700'}`}></span>
                                 <span>{upd.type === 'pending_item' ? 'عمولة معلقة' : 'عمولة نهائية'} #{upd.id}</span>
                               </td>
-                              <td className="px-3 py-2 text-text-muted">{formatCurrency(upd.old_amount)}</td>
-                              <td className="px-3 py-2 font-bold text-status-success-text font-bold">{formatCurrency(upd.new_amount)}</td>
+                              <td className="px-3 py-2 text-text-primary">{formatCurrency(upd.old_amount)}</td>
+                              <td className="px-3 py-2 font-bold text-status-success-text">{formatCurrency(upd.new_amount)}</td>
                             </tr>
                           ))}
                         </tbody>
@@ -342,13 +342,13 @@ const ValidationPreviewModal: React.FC<ValidationPreviewModalProps> = ({
 
         {/* Balance Recalculations */}
         {cons.balance_recalculations && cons.balance_recalculations.length > 0 && (
-          <div className="border-2 border-border-default rounded-lg p-4 bg-bg-surface-muted">
-            <h3 className="text-lg font-bold text-gray-900 mb-3">
+          <div className="border-2 border-border-default rounded-lg bg-background p-4">
+            <h3 className="text-lg font-bold text-text-primary mb-3">
               إعادة حساب الأرصدة
             </h3>
             <div className="overflow-x-auto">
-              <table className="w-full border-collapse border border-border-strong bg-white">
-                <thead className="bg-bg-surface-muted">
+              <table className="w-full border-collapse border border-border-strong bg-card">
+                <thead className="bg-background">
                   <tr>
                     <th className="border border-border-strong px-3 py-2 text-right text-base font-bold">الحساب</th>
                     <th className="border border-border-strong px-3 py-2 text-center text-base font-bold">الرصيد الحالي</th>
@@ -360,15 +360,15 @@ const ValidationPreviewModal: React.FC<ValidationPreviewModalProps> = ({
                   {cons.balance_recalculations.map((recalc: any, i: number) => {
                     const change = recalc.estimated_change || (recalc.estimated_new_balance - recalc.current_balance) || 0;
                     return (
-                      <tr key={i} className="hover:bg-bg-surface-muted">
-                        <td className="border border-border-strong px-3 py-2 text-base font-medium text-gray-900">
+                      <tr key={i} className="hover:bg-background">
+                        <td className="border border-border-strong px-3 py-2 text-base font-medium text-text-primary">
                           {recalc.account_name || `${recalc.account_type} #${recalc.account_id}`}
-                          <div className="text-xs text-text-muted font-normal">{recalc.reason}</div>
+                          <div className="text-xs text-text-primary font-medium">{recalc.reason}</div>
                         </td>
-                        <td className="border border-border-strong px-3 py-2 text-center text-base text-gray-900">
+                        <td className="border border-border-strong px-3 py-2 text-center text-base text-text-primary">
                           {formatCurrency(recalc.current_balance || 0)}
                         </td>
-                        <td className="border border-border-strong px-3 py-2 text-center text-base font-bold text-gray-900">
+                        <td className="border border-border-strong px-3 py-2 text-center text-base font-bold text-text-primary">
                           {formatCurrency(recalc.estimated_new_balance || (recalc.current_balance + change) || 0)}
                         </td>
                         <td className={`border border-border-strong px-3 py-2 text-center text-base font-bold ltr ${change > 0 ? 'text-status-success-text' : change < 0 ? 'text-status-danger-text' : 'text-text-secondary'

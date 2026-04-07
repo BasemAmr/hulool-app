@@ -206,7 +206,7 @@ const EditManualReceivableModal = () => {
                       <div>
                         <strong className={option.recommended ? 'text-status-success-text' : 'text-text-primary'}>
                           {option.label}
-                          {option.recommended && <span className="ml-2 inline-block px-2 py-1 rounded-full bg-green-600 text-white text-xs">Recommended</span>}
+                          {option.recommended && <span className="ml-2 inline-block rounded-full bg-status-success-bg px-2 py-1 text-xs text-status-success-text">Recommended</span>}
                         </strong>
                         <div className="text-muted-foreground text-sm mt-1">{option.description}</div>
                       </div>

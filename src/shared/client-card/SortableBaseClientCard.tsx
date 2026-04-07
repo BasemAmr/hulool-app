@@ -70,7 +70,7 @@ const SortableBaseClientCard = ({
           {...listeners}
           className={cn(
             "cursor-grab p-1.5 border-b border-border-default text-xs text-center",
-            "bg-bg-surface-muted text-text-muted",
+            "bg-background text-text-primary",
             "hover:bg-bg-surface-hover active:cursor-grabbing",
             "select-none"
           )}

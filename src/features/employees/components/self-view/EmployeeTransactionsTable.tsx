@@ -46,13 +46,13 @@ const ClientTaskCell = React.memo(({ rowData }: CellProps<EmployeeTransaction>) 
   return (
     <div style={{ textAlign: 'center' }}>
       {rowData.client_name && (
-        <span style={{ fontWeight: 500, fontSize: '0.9em', color: '#000000' }}>
+        <span style={{ fontWeight: 500, fontSize: '0.9em', color: 'var(--token-text-primary)' }}>
           {rowData.client_name}
         </span>
       )}
       {rowData.task_name && (
         <div>
-          <span style={{ fontSize: '0.8em', color: '#000000' }}>
+          <span style={{ fontSize: '0.8em', color: 'var(--token-text-primary)' }}>
             {rowData.task_name}
           </span>
         </div>
@@ -70,7 +70,7 @@ ClientTaskCell.displayName = 'ClientTaskCell';
 // Task Amount Cell
 const TaskAmountCell = React.memo(({ rowData }: CellProps<EmployeeTransaction>) => {
   return (
-    <div style={{ textAlign: 'center', color: '#000000' }}>
+    <div style={{ textAlign: 'center', color: 'var(--token-text-primary)' }}>
       {rowData.task_amount ? (
         <>{formatCurrency(parseFloat(rowData.task_amount))} ر.س</>
       ) : (
@@ -137,7 +137,7 @@ BalanceCell.displayName = 'BalanceCell';
 // Date Cell
 const DateCell = React.memo(({ rowData }: CellProps<EmployeeTransaction>) => {
   return (
-    <div style={{ textAlign: 'center', fontSize: '0.8em', color: '#000000' }}>
+    <div style={{ textAlign: 'center', fontSize: '0.8em', color: 'var(--token-text-primary)' }}>
       {formatDate(rowData.transaction_date).replace(/\/20/, '/')}
     </div>
   );
@@ -208,7 +208,7 @@ StatusCell.displayName = 'StatusCell';
 // Notes Cell
 const NotesCell = React.memo(({ rowData }: CellProps<EmployeeTransaction>) => {
   return (
-    <div style={{ textAlign: 'center', fontSize: '0.9em', color: '#000000' }}>
+    <div style={{ textAlign: 'center', fontSize: '0.9em', color: 'var(--token-text-primary)' }}>
       {rowData.notes || rowData.transaction_name || '—'}
     </div>
   );
@@ -243,8 +243,8 @@ const EmployeeTransactionsTable: React.FC<EmployeeTransactionsTableProps> = ({
   isLoading,
   highlightTransactionId: _highlightTransactionId,
 }) => {
-  const neutralActionButtonClass = 'inline-flex items-center justify-center rounded p-1.5 text-gray-400 hover:text-gray-700 cursor-pointer transition-colors duration-150';
-  const destructiveActionButtonClass = 'inline-flex items-center justify-center rounded p-1.5 text-gray-400 hover:text-red-600 cursor-pointer transition-colors duration-150';
+  const neutralActionButtonClass = 'inline-flex items-center justify-center rounded p-1.5 text-text-secondary hover:text-text-primary cursor-pointer transition-colors duration-150';
+  const destructiveActionButtonClass = 'inline-flex items-center justify-center rounded p-1.5 text-text-secondary hover:text-text-danger cursor-pointer transition-colors duration-150';
 
   // Note: highlightTransactionId is reserved for future row highlighting feature
 
@@ -346,7 +346,7 @@ const EmployeeTransactionsTable: React.FC<EmployeeTransactionsTableProps> = ({
   if (!transactions.length) {
     return (
       <div className="text-center p-5 text-text-primary">
-        <FileText size={48} className="mb-3 opacity-50 mx-auto" />
+        <FileText size={48} className="mb-3 text-text-secondary mx-auto" />
         <p className="mb-0">لا توجد معاملات مالية</p>
       </div>
     );
@@ -362,7 +362,7 @@ const EmployeeTransactionsTable: React.FC<EmployeeTransactionsTableProps> = ({
         typeField="direction"
       />
 
-      <div className="rounded-lg border border-border bg-bg-surface-muted mt-2 p-3">
+      <div className="rounded-lg border border-border bg-background mt-2 p-3">
         <div className="grid grid-cols-4 gap-4 text-center">
           <div className="flex flex-col items-center">
             <span className="text-sm text-text-secondary">إجمالي المستلم</span>
@@ -381,7 +381,7 @@ const EmployeeTransactionsTable: React.FC<EmployeeTransactionsTableProps> = ({
           <div className="flex flex-col items-center">
             <span className="text-sm text-text-secondary">الحالة</span>
             {totals.pendingCount > 0 ? (
-              <span className="inline-flex items-center px-2 py-0.5 text-xs font-medium bg-bg-surface-muted text-text-primary rounded">
+              <span className="inline-flex items-center px-2 py-0.5 text-xs font-medium bg-background text-text-primary rounded border border-border">
                 {totals.pendingCount} معلق
               </span>
             ) : (

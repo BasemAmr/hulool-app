@@ -32,7 +32,7 @@ interface AdminEmployeeTasksTableProps {
   userId: number;
 }
 
-const neutralActionButtonClass = 'inline-flex items-center justify-center rounded p-1.5 text-gray-400 hover:text-gray-700 cursor-pointer transition-colors duration-150';
+const neutralActionButtonClass = 'inline-flex items-center justify-center rounded p-1.5 text-text-secondary hover:text-text-primary cursor-pointer transition-colors duration-150';
 
 const AdminEmployeeTasksTable = ({ userId }: AdminEmployeeTasksTableProps) => {
   const { t } = useTranslation();
@@ -214,7 +214,7 @@ const AdminEmployeeTasksTable = ({ userId }: AdminEmployeeTasksTableProps) => {
       case 'Accounting':
         return 'bg-status-warning-bg/50 hover:bg-status-warning-bg/50';
       default:
-        return 'bg-bg-surface-muted/50 hover:bg-bg-surface-muted/50';
+        return 'bg-background hover:bg-background';
     }
   };
 
@@ -299,7 +299,7 @@ const AdminEmployeeTasksTable = ({ userId }: AdminEmployeeTasksTableProps) => {
           onClick={() => setShowFiltersModal(false)}
         >
           <div
-            className="bg-white rounded-lg shadow-xl w-full max-w-2xl mx-4"
+            className="bg-card rounded-lg shadow-xl w-full max-w-2xl mx-4 border border-border"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex justify-between items-center p-4 border-b">
@@ -323,7 +323,7 @@ const AdminEmployeeTasksTable = ({ userId }: AdminEmployeeTasksTableProps) => {
                           "px-3 py-1.5 rounded border cursor-pointer transition-colors",
                           tempStatuses.includes(status)
                             ? "bg-primary text-white border-primary"
-                            : "bg-white border-border-strong hover:bg-bg-surface-muted"
+                            : "bg-card border-border-strong hover:bg-bg-surface-muted"
                         )}
                       >
                         <input

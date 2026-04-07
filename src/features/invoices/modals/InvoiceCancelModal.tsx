@@ -44,7 +44,7 @@ const InvoiceCancelModal: React.FC<InvoiceCancelModalProps> = ({
         <div className="bg-status-warning-bg border-l-4 border-status-warning-border p-4">
           <div className="flex">
             <div className="flex-shrink-0">
-              <span className="text-yellow-400 text-xl">⚠️</span>
+              <span className="text-yellow-700 text-xl">⚠️</span>
             </div>
             <div className="ml-3">
               <h3 className="text-sm font-medium text-status-warning-text">Warning</h3>
@@ -57,7 +57,7 @@ const InvoiceCancelModal: React.FC<InvoiceCancelModalProps> = ({
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700">Reason for Cancellation (Optional)</label>
+          <label className="block text-sm font-medium text-text-primary">Reason for Cancellation (Optional)</label>
           <textarea
             value={reason}
             onChange={(e) => setReason(e.target.value)}

@@ -320,7 +320,7 @@ const AdminEmployeeClientCard = ({
 
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <button className="p-1 rounded hover:bg-white/20 transition-all duration-200 cursor-pointer border-0 bg-transparent text-text-primary">
+              <button className="p-1 rounded border-0 bg-transparent text-text-primary transition-all duration-200 cursor-pointer hover:bg-background/40">
                 <MoreVertical size={14} />
               </button>
             </DropdownMenuTrigger>
@@ -405,7 +405,7 @@ const AdminEmployeeClientCard = ({
                     <td className="px-2 py-2 static border-0 min-w-[50px] whitespace-nowrap">
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
-                          <button className="p-1 rounded border border-border-strong bg-white hover:bg-bg-surface-muted transition-all duration-200 cursor-pointer text-[10px] leading-none">
+                          <button className="p-1 rounded border border-border-strong bg-card text-[10px] leading-none transition-all duration-200 cursor-pointer hover:bg-background">
                             <MoreVertical size={12} />
                           </button>
                         </DropdownMenuTrigger>

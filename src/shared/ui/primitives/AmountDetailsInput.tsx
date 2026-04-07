@@ -36,7 +36,7 @@ const AmountDetailsInput = ({ control, register, totalAmount }: AmountDetailsInp
       </div>
 
       {fields.length > 0 && (
-        <div className="p-3 border border-border rounded-md bg-muted/50 mb-2">
+        <div className="p-3 border border-border rounded-md bg-background mb-2">
           {fields.map((field, index) => (
             <div key={field.id} className="flex gap-2 mb-2 items-center">
               <input

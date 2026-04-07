@@ -125,7 +125,7 @@ const NotificationBell: React.FC<NotificationBellProps> = ({ className = '' }) =
         ref={buttonRef}
         onClick={handleToggleDropdown}
         className={`relative p-2 rounded-lg border-0 transition-all duration-200 ${
-          isOpen ? 'bg-gray-300 scale-95' : 'bg-bg-surface-muted hover:bg-gray-200'
+          isOpen ? 'bg-gray-300 scale-95' : 'bg-background hover:bg-gray-200'
         } ${
           error ? 'text-status-danger-text' : 'text-text-secondary'
         }`}
@@ -172,7 +172,7 @@ const NotificationBell: React.FC<NotificationBellProps> = ({ className = '' }) =
       {isOpen && createPortal(
         <div
           ref={dropdownRef}
-          className="fixed shadow-2xl border-0 bg-white rounded-xl overflow-hidden transition-all duration-300"
+          className="fixed rounded-xl border border-border bg-card shadow-2xl overflow-hidden transition-all duration-300"
           style={{
             position: 'fixed',
             top: dropdownPosition.top,

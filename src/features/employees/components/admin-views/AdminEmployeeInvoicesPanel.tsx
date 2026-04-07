@@ -112,7 +112,7 @@ const AdminEmployeeInvoicesPanel: React.FC<AdminEmployeeInvoicesPanelProps> = ({
         ) : (
           <div className="w-full h-full overflow-auto">
             <table className="w-full text-base border-collapse">
-              <thead className="sticky top-0 bg-bg-surface-muted z-10">
+              <thead className="sticky top-0 bg-background z-10">
                 <tr>
                   <th className="text-sm px-1.5 py-1.5 border border-border-default text-start font-bold">العميل</th>
                   <th className="text-sm px-1.5 py-1.5 border border-border-default text-start font-bold">الفاتورة</th>
@@ -175,8 +175,8 @@ const AdminEmployeeInvoicesPanel: React.FC<AdminEmployeeInvoicesPanelProps> = ({
       </div>
 
       {/* Footer */}
-      <div className="px-4 py-2 bg-bg-surface-muted border-t border-border text-center flex-shrink-0">
-        <span className="text-base text-gray-700 font-bold">
+      <div className="px-4 py-2 bg-background border-t border-border text-center flex-shrink-0">
+        <span className="text-base text-text-primary font-bold">
           إجمالي المتبقي: {formatCurrency(invoices.reduce((sum, inv) => sum + (inv.remaining_amount || (inv.amount - inv.paid_amount)), 0))} ر.س
         </span>
       </div>

@@ -152,8 +152,8 @@ const InvoicesKanban = ({ search, clientId }: InvoicesKanbanProps) => {
                 title="جزئية"
                 icon={DollarSign}
                 status="partially_paid"
-                colorClass="text-yellow-500"
-                bgClass="bg-muted/30"
+                    colorClass="text-yellow-700"
+                    bgClass="bg-background"
                 search={search}
                 clientId={clientId}
             />

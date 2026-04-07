@@ -21,8 +21,8 @@ import HuloolDataGrid from '@/shared/grid/HuloolDataGrid';
 import type { HuloolGridColumn } from '@/shared/grid/HuloolDataGrid';
 import type { CellProps } from 'react-datasheet-grid';
 
-const neutralActionButtonClass = 'inline-flex items-center justify-center rounded p-1.5 text-gray-400 hover:text-gray-700 cursor-pointer transition-colors duration-150';
-const destructiveActionButtonClass = 'inline-flex items-center justify-center rounded p-1.5 text-gray-400 hover:text-red-600 cursor-pointer transition-colors duration-150';
+const neutralActionButtonClass = 'inline-flex items-center justify-center rounded p-1.5 text-text-secondary hover:text-text-primary cursor-pointer transition-colors duration-150';
+const destructiveActionButtonClass = 'inline-flex items-center justify-center rounded p-1.5 text-text-secondary hover:text-text-danger cursor-pointer transition-colors duration-150';
 
 interface ClientReceivablesTableProps {
   receivables: StatementItem[];
@@ -308,7 +308,7 @@ const ActionsCell = React.memo(({ rowData, columnData }: CellProps<StatementItem
         <button
           type="button"
           onClick={handlePayment}
-          className="inline-flex items-center gap-1 rounded px-3 py-1.5 text-gray-400 hover:text-gray-700 cursor-pointer transition-colors duration-150 whitespace-nowrap"
+          className="inline-flex items-center gap-1 rounded px-3 py-1.5 text-text-secondary hover:text-text-primary cursor-pointer transition-colors duration-150 whitespace-nowrap"
           title="سداد"
         >
           <CreditCard size={14} />
@@ -541,7 +541,7 @@ const ClientReceivablesTable: React.FC<ClientReceivablesTableProps> = ({
                 <div className="text-sm text-text-secondary mb-2 font-medium">
                   💳 تفاصيل المدفوعات ({item.details.payments.length}):
                 </div>
-                <div className="bg-white rounded-lg overflow-hidden border border-border">
+                <div className="rounded-lg border border-border bg-card overflow-hidden">
                   <div className="grid grid-cols-4 gap-2 p-2 bg-bg-surface-muted font-bold text-text-primary text-center text-sm">
                     <div>المبلغ</div>
                     <div>التاريخ</div>
@@ -594,7 +594,7 @@ const ClientReceivablesTable: React.FC<ClientReceivablesTableProps> = ({
                 <div className="text-sm text-text-secondary mb-2 font-medium">
                   🔄 تفاصيل التخصيصات ({item.details.allocations.length}):
                 </div>
-                <div className="bg-white rounded-lg overflow-hidden border border-border">
+                <div className="rounded-lg border border-border bg-card overflow-hidden">
                   <div className="grid grid-cols-5 gap-2 p-2 bg-bg-surface-muted font-bold text-text-primary text-center text-sm">
                     <div>المبلغ</div>
                     <div>التاريخ</div>

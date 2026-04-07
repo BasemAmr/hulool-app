@@ -131,7 +131,7 @@ const TaskCancellationModal: React.FC<TaskCancellationModalProps> = ({
           تعارض في إلغاء المهمة
         </h3>
       </div>
-      <div className="space-y-2 text-sm text-gray-700">
+      <div className="space-y-2 text-sm text-text-secondary">
         <p className="font-medium">
           ⚠️ هذه المهمة تحتوي على سجلات مالية مرتبطة بها
         </p>
@@ -182,11 +182,11 @@ const TaskCancellationModal: React.FC<TaskCancellationModalProps> = ({
       
       {receivable.payments.length > 0 && (
         <div className="payments-section mb-4">
-          <h4 className="font-semibold mb-3 text-gray-700">كيف تريد التعامل مع المدفوعات؟</h4>
+          <h4 className="font-semibold mb-3 text-text-secondary">كيف تريد التعامل مع المدفوعات؟</h4>
           {receivable.payments.map((payment) => (
-            <div key={payment.id} className="payment-item border p-4 rounded-lg mb-3 bg-bg-surface-muted">
+            <div key={payment.id} className="payment-item border p-4 rounded-lg mb-3 bg-background">
               <div className="payment-info mb-3">
-                <p className="font-medium text-gray-800">
+                <p className="font-medium text-text-primary">
                   دفعة بقيمة {payment.amount.toLocaleString()} ريال
                 </p>
                 <p className="text-sm text-text-secondary">
@@ -195,7 +195,7 @@ const TaskCancellationModal: React.FC<TaskCancellationModalProps> = ({
               </div>
               
               <div className="decision-options space-y-2">
-                <label className="flex items-center p-2 rounded hover:bg-white cursor-pointer">
+                <label className="flex cursor-pointer items-center rounded p-2 transition-colors hover:bg-background">
                   <input 
                     type="radio" 
                     name={`${paymentNamePrefix}-payment-${payment.id}`}
@@ -208,7 +208,7 @@ const TaskCancellationModal: React.FC<TaskCancellationModalProps> = ({
                     <p className="text-sm text-text-secondary">الدفعة ستظل مرتبطة بالعميل</p>
                   </div>
                 </label>
-                <label className="flex items-center p-2 rounded hover:bg-white cursor-pointer">
+                <label className="flex cursor-pointer items-center rounded p-2 transition-colors hover:bg-background">
                   <input 
                     type="radio" 
                     name={`${paymentNamePrefix}-payment-${payment.id}`}
@@ -220,7 +220,7 @@ const TaskCancellationModal: React.FC<TaskCancellationModalProps> = ({
                     <p className="text-sm text-text-secondary">سيتم حذف سجل الدفعة نهائياً</p>
                   </div>
                 </label>
-                <label className="flex items-center p-2 rounded hover:bg-white cursor-pointer">
+                <label className="flex cursor-pointer items-center rounded p-2 transition-colors hover:bg-background">
                   <input 
                     type="radio" 
                     name={`${paymentNamePrefix}-payment-${payment.id}`}
@@ -243,11 +243,11 @@ const TaskCancellationModal: React.FC<TaskCancellationModalProps> = ({
 
       {receivable.allocations.length > 0 && (
         <div className="allocations-section mb-4">
-          <h4 className="font-semibold mb-3 text-gray-700">كيف تريد التعامل مع التخصيصات؟</h4>
+          <h4 className="font-semibold mb-3 text-text-secondary">كيف تريد التعامل مع التخصيصات؟</h4>
           {receivable.allocations.map((allocation) => (
-            <div key={allocation.id} className="allocation-item border p-4 rounded-lg mb-3 bg-bg-surface-muted">
+            <div key={allocation.id} className="allocation-item border p-4 rounded-lg mb-3 bg-background">
               <div className="allocation-info mb-3">
-                <p className="font-medium text-gray-800">
+                <p className="font-medium text-text-primary">
                   تخصيص بقيمة {allocation.amount.toLocaleString()} ريال
                 </p>
                 <p className="text-sm text-text-secondary">
@@ -256,7 +256,7 @@ const TaskCancellationModal: React.FC<TaskCancellationModalProps> = ({
               </div>
               
               <div className="decision-options space-y-2">
-                <label className="flex items-center p-2 rounded hover:bg-white cursor-pointer">
+                <label className="flex cursor-pointer items-center rounded p-2 transition-colors hover:bg-background">
                   <input 
                     type="radio" 
                     name={`${paymentNamePrefix}-allocation-${allocation.id}`}
@@ -269,7 +269,7 @@ const TaskCancellationModal: React.FC<TaskCancellationModalProps> = ({
                     <p className="text-sm text-text-secondary">التخصيص سيظل مرتبط بالرصيد</p>
                   </div>
                 </label>
-                <label className="flex items-center p-2 rounded hover:bg-white cursor-pointer">
+                <label className="flex cursor-pointer items-center rounded p-2 transition-colors hover:bg-background">
                   <input 
                     type="radio" 
                     name={`${paymentNamePrefix}-allocation-${allocation.id}`}
@@ -281,7 +281,7 @@ const TaskCancellationModal: React.FC<TaskCancellationModalProps> = ({
                     <p className="text-sm text-text-secondary">سيتم إرجاع المبلغ إلى رصيد العميل</p>
                   </div>
                 </label>
-                <label className="flex items-center p-2 rounded hover:bg-white cursor-pointer">
+                <label className="flex cursor-pointer items-center rounded p-2 transition-colors hover:bg-background">
                   <input 
                     type="radio" 
                     name={`${paymentNamePrefix}-allocation-${allocation.id}`}
@@ -314,7 +314,7 @@ const TaskCancellationModal: React.FC<TaskCancellationModalProps> = ({
         <div className="task-action-decision mb-6">
           <h3 className="text-lg font-semibold mb-3">اختر نوع الإلغاء</h3>
           <div className="space-y-3">
-            <label className="flex items-center p-3 border rounded-lg hover:bg-bg-surface-muted cursor-pointer">
+            <label className="flex items-center p-3 border rounded-lg hover:bg-background cursor-pointer">
               <input 
                 type="radio" 
                 name="task-action"
@@ -324,13 +324,13 @@ const TaskCancellationModal: React.FC<TaskCancellationModalProps> = ({
                 className="mr-3 text-status-info-text"
               />
               <div className="flex-1">
-                <span className="font-semibold text-gray-800">إلغاء المهمة</span>
+                <span className="font-semibold text-text-primary">إلغاء المهمة</span>
                 <p className="text-sm text-text-secondary mt-1">
                   المهمة ستظل موجودة في السجلات مع وضع "ملغية" ويمكن استعراضها لاحقاً
                 </p>
               </div>
             </label>
-            <label className="flex items-center p-3 border rounded-lg hover:bg-bg-surface-muted cursor-pointer border-status-danger-border">
+            <label className="flex items-center p-3 border rounded-lg hover:bg-background cursor-pointer border-status-danger-border">
               <input 
                 type="radio" 
                 name="task-action"

@@ -39,7 +39,7 @@ const InvoiceDeleteModal: React.FC<InvoiceDeleteModalProps> = ({
         <div className="bg-status-danger-bg border-r-4 border-red-400 p-4">
           <div className="flex">
             <div className="flex-shrink-0 ml-3">
-              <span className="text-red-400 text-xl">⚠️</span>
+              <span className="text-red-700 text-xl">⚠️</span>
             </div>
             <div>
               <h3 className="text-sm font-medium text-status-danger-text">تنبيه</h3>

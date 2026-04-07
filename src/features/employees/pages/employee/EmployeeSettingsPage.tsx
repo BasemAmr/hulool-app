@@ -117,7 +117,7 @@ const EmployeeSettingsPage = () => {
                                 required
                                 disabled={updateProfileMutation.isPending}
                             />
-                            <p className="text-xs text-muted-foreground mt-1">
+                            <p className="text-xs text-text-secondary mt-1">
                                 يستخدم لتسجيل الدخول إلى النظام
                             </p>
                         </div>
@@ -134,7 +134,7 @@ const EmployeeSettingsPage = () => {
                                 required
                                 disabled={updateProfileMutation.isPending}
                             />
-                            <p className="text-xs text-muted-foreground mt-1">
+                            <p className="text-xs text-text-secondary mt-1">
                                 يظهر في النظام والإشعارات
                             </p>
                         </div>

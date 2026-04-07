@@ -145,7 +145,7 @@ const SelectReceivableForPaymentModal = ({ isOpen, onClose, clientId }: SelectRe
             </div>
           </div>
         ) : !invoices || invoices.length === 0 ? (
-          <div className="text-center text-muted-foreground py-4">
+          <div className="text-center text-text-secondary py-4">
             <p>لا توجد فواتير قابلة للسداد لهذا العميل</p>
           </div>
         ) : (
@@ -174,7 +174,7 @@ const SelectReceivableForPaymentModal = ({ isOpen, onClose, clientId }: SelectRe
                     key={invoice.id}
                     className={`p-4 rounded-lg border transition-colors ${isSelected
                         ? 'border-primary bg-primary/5'
-                        : 'border-border hover:bg-muted/50'
+                        : 'border-border hover:bg-background'
                       }`}
                   >
                     {/* Clickable header area */}
@@ -193,7 +193,7 @@ const SelectReceivableForPaymentModal = ({ isOpen, onClose, clientId }: SelectRe
                           <div className="flex items-center gap-2">
                             <span className="font-bold text-sm">#{invoice.id}</span>
                             <span className={`text-xs px-2 py-0.5 rounded-full ${invoice.status === 'paid' ? 'bg-status-success-bg text-status-success-text' :
-                                invoice.status === 'partially_paid' ? 'bg-yellow-100 text-status-warning-text' :
+                                invoice.status === 'partially_paid' ? 'bg-status-warning-bg text-status-warning-text' :
                                   'bg-status-danger-bg text-status-danger-text'
                               }`}>
                               {invoice.status === 'paid' ? 'مدفوعة' :
@@ -201,7 +201,7 @@ const SelectReceivableForPaymentModal = ({ isOpen, onClose, clientId }: SelectRe
                             </span>
                           </div>
                           <h6 className="font-semibold text-text-primary text-sm mt-1">{invoice.description || 'بدون وصف'}</h6>
-                          <small className="text-muted-foreground text-xs block mt-1">
+                          <small className="text-text-secondary text-xs block mt-1">
                             تاريخ الاستحقاق: {formatDate(invoice.due_date)}
                           </small>
                         </div>

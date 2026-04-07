@@ -107,7 +107,7 @@ const TaskFilter = ({
                 {t('common.search')}: {search}
                 <button
                   type="button"
-                  className="ml-1 text-white hover:text-gray-200 transition-colors"
+                  className="ml-1 text-primary-foreground/90 transition-colors hover:text-primary-foreground"
                   style={{ fontSize: '0.7em' }}
                   onClick={() => onSearchChange('')}
                   aria-label={t('common.remove')}
@@ -119,7 +119,7 @@ const TaskFilter = ({
                 {t('common.status')}: {statusOptions.find(opt => opt.value === status)?.label}
                 <button
                   type="button"
-                  className="ml-1 text-white hover:text-gray-200 transition-colors"
+                  className="ml-1 text-primary-foreground/90 transition-colors hover:text-primary-foreground"
                   style={{ fontSize: '0.7em' }}
                   onClick={() => onStatusChange('')}
                   aria-label={t('common.remove')}
@@ -131,7 +131,7 @@ const TaskFilter = ({
                 {t('common.type')}: {typeOptions.find(opt => opt.value === type)?.label}
                 <button
                   type="button"
-                  className="ml-1 text-white hover:text-gray-200 transition-colors"
+                  className="ml-1 text-primary-foreground/90 transition-colors hover:text-primary-foreground"
                   style={{ fontSize: '0.7em' }}
                   onClick={() => onTypeChange('')}
                   aria-label={t('common.remove')}

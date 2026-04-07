@@ -122,7 +122,7 @@ const TaskSelectionModal = () => {
       <div className="task-selection-modal space-y-4">
         {/* Search Input */}
         <div className="flex items-center gap-2 border border-border rounded-md">
-          <span className="px-3 text-muted-foreground">
+          <span className="px-3 text-text-secondary">
             <Search size={16} />
           </span>
           <input
@@ -141,10 +141,10 @@ const TaskSelectionModal = () => {
               <div className="inline-block animate-spin text-primary">
                 <div className="h-6 w-6 border-3 border-primary border-t-transparent rounded-full"></div>
               </div>
-              <p className="text-sm text-muted-foreground mt-2">جاري التحميل...</p>
+              <p className="text-sm text-text-secondary mt-2">جاري التحميل...</p>
             </div>
           ) : filteredTasks.length === 0 ? (
-            <div className="text-center py-4 text-muted-foreground">
+            <div className="text-center py-4 text-text-secondary">
               {searchQuery ? 'لا توجد مهام تطابق البحث' : 'لا توجد مهام متاحة'}
             </div>
           ) : (
@@ -156,7 +156,7 @@ const TaskSelectionModal = () => {
                 <div
                   key={task.id}
                   className={`task-item p-3 rounded-lg border cursor-pointer transition-colors ${
-                    isSelected ? 'border-primary bg-primary/5' : 'border-border hover:bg-muted/50'
+                    isSelected ? 'border-primary bg-primary/5' : 'border-border hover:bg-background'
                   }`}
                   onClick={() => handleTaskToggle(task.id)}
                 >
@@ -170,12 +170,12 @@ const TaskSelectionModal = () => {
                     />
                     <div className="flex-1">
                       <h6 className="font-semibold text-text-primary text-sm">{task.task_name}</h6>
-                      <small className="text-muted-foreground text-xs block">
+                      <small className="text-text-secondary text-xs block">
                         العميل: {task.client?.name || 'غير محدد'} | 
                         المبلغ: {task.amount} ريال
                       </small>
                       <div className="mt-2">
-                        <span className={`px-2 py-1 rounded-full text-xs font-semibold text-white ${isTagged ? 'bg-green-600' : 'bg-gray-400'}`}>
+                        <span className={`px-2 py-1 rounded-full text-xs font-semibold ${isTagged ? 'border border-status-success-border bg-status-success-bg text-status-success-text' : 'border border-border-default bg-border-default text-text-secondary'}`}>
                           <Check size={12} className="inline mr-1" />
                           {isTagged ? 'مرتبط' : 'غير مرتبط'}
                         </span>
@@ -190,7 +190,7 @@ const TaskSelectionModal = () => {
 
         {/* Footer */}
         <div className="flex justify-between items-center pt-4 border-t border-border">
-          <div className="text-muted-foreground text-xs">
+          <div className="text-text-secondary text-xs">
             {selectedTasks.length > 0 && `تم اختيار ${selectedTasks.length} مهمة`}
           </div>
           <div className="flex gap-2">
@@ -211,7 +211,7 @@ const TaskSelectionModal = () => {
 
       <style>{`
         .task-item:hover:not(.opacity-50) {
-          background-color: var(--color-muted-50) ;
+          background-color: var(--color-bg-surface-hover);
         }
       `}</style>
     </BaseModal>

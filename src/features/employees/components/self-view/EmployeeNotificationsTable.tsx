@@ -34,8 +34,8 @@ const EmployeeNotificationsTable: React.FC<EmployeeNotificationsTableProps> = ({
 
   if (!notifications.length) {
     return (
-      <div className="text-center p-5 text-muted-foreground">
-        <Bell size={48} className="mb-3 opacity-50" />
+      <div className="text-center p-5 text-text-secondary">
+        <Bell size={48} className="mb-3 text-text-secondary" />
         <p className="mb-0">لا توجد إشعارات</p>
       </div>
     );
@@ -144,7 +144,7 @@ const EmployeeNotificationsTable: React.FC<EmployeeNotificationsTableProps> = ({
           {notifications.map((notification) => (
             <tr
               key={notification.id}
-              className={`${!notification.is_read ? 'bg-yellow-100/50' : ''} cursor-pointer hover:bg-muted/50 transition-colors`}
+              className={`${!notification.is_read ? 'bg-status-warning-bg/50' : ''} cursor-pointer hover:bg-background transition-colors`}
               style={{ cursor: 'pointer' }}
               onClick={() => handleNotificationClick(notification)}
             >
@@ -178,13 +178,13 @@ const EmployeeNotificationsTable: React.FC<EmployeeNotificationsTableProps> = ({
                 </span>
               </td>
               <td className="text-center py-3 px-2">
-                <span className="text-muted-foreground">
+                <span className="text-text-secondary">
                   {notification.client_name || '—'}
                 </span>
               </td>
               <td className="text-center py-3 px-2">
                 <div className="flex flex-col items-center">
-                  <span className="text-muted-foreground text-sm">
+                  <span className="text-text-secondary text-sm">
                     {formatDate(notification.created_at)}
                   </span>
                   {notification.read_at && (

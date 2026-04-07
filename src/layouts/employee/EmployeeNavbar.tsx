@@ -2,6 +2,7 @@ import { Link, NavLink, useNavigate } from 'react-router-dom';
 import { useAuthStore } from '@/features/auth/store/authStore';
 import Logo from '@/shared/ui/primitives/Logo';
 import NotificationBell from '@/layouts/admin/NotificationBell';
+import ThemeToggleButton from '@/shared/ui/primitives/ThemeToggleButton';
 import {
     Home, ClipboardList, Users, DollarSign, LogOut,
     Search, ChevronDown, FileText,
@@ -72,7 +73,7 @@ const EmployeeNavbar = () => {
                                 className={({ isActive }) =>
                                     `flex items-center gap-2 px-3 py-2 text-sm font-bold rounded-md transition-colors whitespace-nowrap ${isActive
                                         ? 'bg-primary/10 text-primary'
-                                        : 'text-muted-foreground hover:bg-accent hover:text-accent-foreground'
+                                        : 'text-text-secondary hover:bg-accent hover:text-accent-foreground'
                                     }`
                                 }
                             >
@@ -87,7 +88,7 @@ const EmployeeNavbar = () => {
                 <div className="hidden lg:flex items-center gap-2 flex-shrink-0">
                     <button
                         onClick={() => openModal('clientForm', {})}
-                        className="px-3 py-1.5 text-sm font-bold border border-blue-600 text-status-info-text rounded-md hover:bg-blue-600 hover:text-white transition-colors"
+                        className="px-3 py-1.5 text-sm font-bold border border-primary text-primary rounded-md hover:bg-primary hover:text-primary-foreground transition-colors"
                     >
                         <UserPlus size={14} className="inline me-1" />
                         إضافة عميل
@@ -108,7 +109,7 @@ const EmployeeNavbar = () => {
                     </button>
                     <button
                         onClick={() => openModal('manualTransaction', { direction: 'repayment', accountType: 'client' })}
-                        className="px-3 py-1.5 text-sm font-bold border border-status-success-border text-status-success-text rounded-md hover:bg-green-600 hover:text-white transition-colors"
+                        className="px-3 py-1.5 text-sm font-bold border border-status-success-border text-status-success-text rounded-md hover:bg-status-success-text hover:text-primary-foreground transition-colors"
                     >
                         <TrendingUp size={14} className="inline me-1" />
                         سند قبض
@@ -127,13 +128,15 @@ const EmployeeNavbar = () => {
                     {/* Search */}
                     <div className="relative hidden xxl:block w-48 ml-2">
                         <div
-                            className="flex items-center w-full px-3 py-1.5 bg-muted/50 border border-input rounded-md text-sm text-muted-foreground cursor-pointer hover:bg-muted transition-colors"
+                            className="flex items-center w-full px-3 py-1.5 bg-background border border-input rounded-md text-sm text-text-secondary cursor-pointer hover:bg-background transition-colors"
                             onClick={handleSearchFocus}
                         >
                             <Search size={16} className="ml-2" />
                             <span>بحث...</span>
                         </div>
                     </div>
+
+                    <ThemeToggleButton />
 
                     {/* Notifications */}
                     <NotificationBell />
@@ -144,7 +147,7 @@ const EmployeeNavbar = () => {
                             <div className="flex items-center gap-2 hover:bg-accent rounded-full p-1 pr-2 transition-colors border border-transparent hover:border-border">
                                 <div className="text-right hidden md:block">
                                     <div className="text-sm font-medium leading-none">{user?.display_name || 'موظف'}</div>
-                                    <div className="text-xs text-muted-foreground mt-1 text-[10px]">
+                                    <div className="text-xs text-text-secondary mt-1 text-[10px]">
                                         {user?.commission_rate && `عمولة ${user.commission_rate}%`}
                                     </div>
                                 </div>

@@ -198,7 +198,7 @@ const EmployeeFinancialsPageRedesigned = () => {
               {new Intl.NumberFormat('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 2 }).format(currentBalance)}
             </span>
             {pendingTotal > 0 && (
-              <span className="text-text-muted">
+              <span className="text-text-primary">
                 + {new Intl.NumberFormat('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 2 }).format(pendingTotal)} معلق = {new Intl.NumberFormat('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 2 }).format(currentBalance + pendingTotal)} إجمالي
               </span>
             )}
@@ -278,7 +278,7 @@ const EmployeeFinancialsPageRedesigned = () => {
                       </div>
                       {/* Show notes if available */}
                       {item.notes && (
-                        <p className="text-xs text-text-secondary bg-bg-surface-muted p-1.5 rounded border border-border-default ml-6">
+                        <p className="text-xs text-text-secondary bg-background p-1.5 rounded border border-border-default ml-6">
                           {item.notes}
                         </p>
                       )}
@@ -370,7 +370,7 @@ const EmployeeFinancialsPageRedesigned = () => {
                           </p>
                           {/* Show notes field */}
                           {item.notes && (
-                            <p className="text-xs text-text-secondary mt-1 bg-bg-surface-muted p-2 rounded border border-border-default">
+                            <p className="text-xs text-text-secondary mt-1 bg-background p-2 rounded border border-border-default">
                               {item.notes}
                             </p>
                           )}

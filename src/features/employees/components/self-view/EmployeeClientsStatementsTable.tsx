@@ -49,7 +49,7 @@ const getTypeColor = (type: string): { bgVar: string; textVar: string; label: st
 const ClientNameCell = React.memo(({ rowData }: CellProps<EmployeeReceivableDashboardItem>) => {
   return (
     <div>
-      <div style={{ fontWeight: 600, color: '#000000' }}>
+      <div style={{ fontWeight: 600, color: 'var(--token-text-primary)' }}>
         {rowData.client_name}
       </div>
       <div style={{ fontSize: '0.875rem', color: '#666666' }}>
@@ -64,7 +64,7 @@ ClientNameCell.displayName = 'ClientNameCell';
 const DescriptionCell = React.memo(({ rowData }: CellProps<EmployeeReceivableDashboardItem>) => {
   return (
     <div>
-      <div style={{ fontWeight: 500, color: '#000000' }}>
+      <div style={{ fontWeight: 500, color: 'var(--token-text-primary)' }}>
         {rowData.description || rowData.task_name || '—'}
       </div>
       {rowData.task_name && (
@@ -80,7 +80,7 @@ DescriptionCell.displayName = 'DescriptionCell';
 // Debit (Amount) Cell
 const DebitCell = React.memo(({ rowData, columnData }: CellProps<EmployeeReceivableDashboardItem, { hideAmounts: boolean }>) => {
   return (
-    <div style={{ textAlign: 'center', fontWeight: 600, color: '#000000' }}>
+    <div style={{ textAlign: 'center', fontWeight: 600, color: 'var(--token-text-primary)' }}>
       {columnData?.hideAmounts ? '***' : formatCurrency(Number(rowData.amount))}
     </div>
   );
@@ -112,7 +112,7 @@ DueCell.displayName = 'DueCell';
 // Due Date Cell
 const DateCell = React.memo(({ rowData }: CellProps<EmployeeReceivableDashboardItem>) => {
   return (
-    <div style={{ textAlign: 'center', fontSize: '0.875rem', color: '#000000' }}>
+    <div style={{ textAlign: 'center', fontSize: '0.875rem', color: 'var(--token-text-primary)' }}>
       {formatDate(rowData.due_date)}
     </div>
   );
@@ -431,7 +431,7 @@ const EmployeeClientsStatementsTable: React.FC<EmployeeClientsStatementsTablePro
     if (!receivables.length) {
         return (
             <div className="text-center p-5 text-text-primary">
-                <FileText size={48} className="mb-3 opacity-50" />
+                <FileText size={48} className="mb-3 text-text-secondary" />
                 <p className="mb-0">لا توجد مستحقات</p>
             </div>
         );
@@ -452,13 +452,13 @@ const EmployeeClientsStatementsTable: React.FC<EmployeeClientsStatementsTablePro
             <div className="rounded-lg border border-border bg-card shadow-sm mt-2">
                 <div className="p-2">
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-2 text-center">
-                        <div className="flex justify-between items-center p-2 bg-bg-surface-muted rounded">
+                        <div className="flex justify-between items-center p-2 bg-background rounded">
                             <span className="text-text-secondary text-sm">إجمالي المدين:</span>
                             <span className="font-bold text-status-danger-text">
                                 {hideAmounts ? '***' : formatCurrency(totals.totalDebit)}
                             </span>
                         </div>
-                        <div className="flex justify-between items-center p-2 bg-bg-surface-muted rounded">
+                        <div className="flex justify-between items-center p-2 bg-background rounded">
                             <span className="text-text-secondary text-sm">إجمالي الدائن:</span>
                             <span className="font-bold text-status-success-text">
                                 {hideAmounts ? '***' : formatCurrency(totals.totalCredit)}

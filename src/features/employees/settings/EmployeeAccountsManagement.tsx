@@ -131,8 +131,8 @@ const EmployeeAccountsManagement = () => {
         return (
             <div className="p-6">
                 <div className="animate-pulse space-y-4">
-                    <div className="h-8 bg-muted rounded w-1/3"></div>
-                    <div className="h-64 bg-muted rounded"></div>
+                    <div className="h-8 bg-background rounded w-1/3"></div>
+                    <div className="h-64 bg-background rounded"></div>
                 </div>
             </div>
         );
@@ -172,7 +172,7 @@ const EmployeeAccountsManagement = () => {
 
             {/* Employee List Table */}
             {!employees || employees.length === 0 ? (
-                <div className="p-12 text-center bg-muted/30 rounded-lg border border-dashed border-border">
+                <div className="p-12 text-center bg-background rounded-lg border border-dashed border-border">
                     <p className="text-foreground/60 text-lg mb-4">لا يوجد موظفين. قم بإنشاء أول موظف.</p>
                     <Button
                         variant="primary"
@@ -187,7 +187,7 @@ const EmployeeAccountsManagement = () => {
             ) : (
                 <div className="overflow-x-auto">
                     <table className="w-full border-collapse">
-                        <thead className="bg-bg-surface-muted sticky top-0">
+                        <thead className="bg-background sticky top-0">
                             <tr>
                                 <th className="px-4 py-3 text-right text-sm font-semibold text-foreground border-b border-border">
                                     اسم المستخدم
@@ -211,7 +211,7 @@ const EmployeeAccountsManagement = () => {
                         </thead>
                         <tbody>
                             {employees.map((employee) => (
-                                <tr key={employee.id} className="hover:bg-bg-surface-muted transition-colors">
+                                <tr key={employee.id} className="hover:bg-background transition-colors">
                                     {/* Username - Editable */}
                                     <td className="px-4 py-3 text-sm border-b border-border">
                                         {editingField?.id === employee.id && editingField?.field === 'username' ? (

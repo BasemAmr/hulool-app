@@ -40,8 +40,8 @@ const TaskActionDropdown = ({
       <DropdownMenuTrigger asChild>
         <button
           className={cn(
-            "p-1.5 rounded border border-border-strong bg-white",
-            "hover:bg-bg-surface-muted hover:border-gray-400",
+            "p-1.5 rounded border border-border-strong bg-card",
+            "hover:bg-background hover:border-border-strong",
             "transition-all duration-200 cursor-pointer",
             "focus:outline-none focus:ring-2 focus:ring-primary/20"
           )}

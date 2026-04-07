@@ -124,7 +124,7 @@ const InvoiceDetailsModal = () => {
       ) : invoice ? (
         <div className="space-y-4">
           {/* Header Info */}
-          <div className="bg-bg-surface-muted rounded-lg p-4 border border-border-default">
+          <div className="bg-background rounded-lg p-4 border border-border-default">
             <div className="grid grid-cols-2 gap-4 text-sm">
               <div className="flex items-center gap-2">
                 <FileText size={16} className="text-text-muted" />
@@ -163,8 +163,8 @@ const InvoiceDetailsModal = () => {
           {/* Description */}
           {invoice.description && (
             <div className="bg-status-info-bg rounded-lg p-3 border border-status-info-border">
-              <p className="text-sm text-gray-700">
-                <span className="font-medium text-gray-900">الوصف: </span>
+              <p className="text-sm text-text-primary">
+                <span className="font-medium text-text-primary">الوصف: </span>
                 {invoice.description}
               </p>
             </div>
@@ -172,9 +172,9 @@ const InvoiceDetailsModal = () => {
 
           {/* Notes */}
           {invoice.notes && (
-            <div className="bg-bg-surface-muted rounded-lg p-3 border border-border-default">
-              <p className="text-sm text-gray-700">
-                <span className="font-medium text-gray-900">ملاحظات: </span>
+            <div className="bg-background rounded-lg p-3 border border-border-default">
+              <p className="text-sm text-text-primary">
+                <span className="font-medium text-text-primary">ملاحظات: </span>
                 {invoice.notes}
               </p>
             </div>
@@ -200,7 +200,7 @@ const InvoiceDetailsModal = () => {
                 {new Intl.NumberFormat('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 2 }).format(Number(invoice.paid_amount))}
               </p>
             </div>
-            <div className={`rounded-lg p-3 border ${Number(invoice.remaining_amount) > 0 ? 'bg-orange-50 border-orange-200' : 'bg-bg-surface-muted border-border-default'}`}>
+            <div className={`rounded-lg p-3 border ${Number(invoice.remaining_amount) > 0 ? 'bg-orange-50 border-orange-200' : 'bg-background border-border-default'}`}>
               <div className="flex items-center gap-2 mb-1">
                 <AlertCircle size={14} className={Number(invoice.remaining_amount) > 0 ? 'text-orange-600' : 'text-text-muted'} />
                 <span className="text-xs text-text-secondary">المتبقي</span>
@@ -213,7 +213,7 @@ const InvoiceDetailsModal = () => {
 
           {/* Payment History */}
           <div>
-            <h3 className="font-semibold text-sm text-gray-900 mb-2 flex items-center gap-2">
+            <h3 className="font-semibold text-sm text-text-primary mb-2 flex items-center gap-2">
               <CreditCard size={16} />
               سجل الدفعات ({invoice.payments?.length || 0})
             </h3>
@@ -251,7 +251,7 @@ const InvoiceDetailsModal = () => {
                 </TableBody>
               </Table>
             ) : (
-              <div className="text-center py-4 bg-bg-surface-muted rounded border border-border-default">
+              <div className="text-center py-4 bg-background rounded border border-border-default">
                 <p className="text-sm text-text-muted">لا توجد دفعات مسجلة</p>
               </div>
             )}
@@ -268,7 +268,7 @@ const InvoiceDetailsModal = () => {
                   <Button
                     variant="primary"
                     onClick={handleWhatsAppReminder}
-                    className="bg-green-600 hover:bg-green-700"
+                    className="bg-status-success-text hover:bg-status-success-border"
                   >
                     <WhatsAppIcon size={16} className="me-1" />
                     إرسال تذكير دفع

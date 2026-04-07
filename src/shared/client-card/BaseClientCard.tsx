@@ -71,11 +71,11 @@ const BaseClientCard = ({
       />
 
       {/* Body - Tasks Table */}
-      <div className="p-0 relative overflow-visible bg-bg-surface">
+      <div className="p-0 relative overflow-visible bg-background">
         <div className="overflow-hidden relative">
           <table className="w-full text-sm">
             <thead className="sticky top-0 z-[2]">
-              <tr className="bg-bg-surface-muted">
+              <tr className="bg-background">
                 <th className="text-[0.8em] px-2 py-1.5 border-0 text-text-secondary font-semibold">
                   المهمة
                 </th>

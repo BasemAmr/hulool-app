@@ -202,7 +202,7 @@ const JournalEntryDetailsModal: React.FC<JournalEntryDetailsModalProps> = () => 
           <>
             {/* Transaction Info */}
             {data?.original && (
-              <div className="bg-bg-surface-muted rounded-lg p-3 text-sm space-y-2">
+              <div className="bg-background rounded-lg p-3 text-sm space-y-2 border border-border-default">
                 <div className="flex items-center gap-2">
                   <span className="text-text-secondary">التاريخ:</span>
                   <span className="font-medium">
@@ -231,21 +231,21 @@ const JournalEntryDetailsModal: React.FC<JournalEntryDetailsModalProps> = () => 
             {/* Double Entry Table */}
             <div className="border border-border-strong rounded-lg overflow-hidden">
               <table className="w-full border-collapse">
-                <thead className="bg-bg-surface-muted">
+                <thead className="bg-background">
                   <tr>
-                    <th className="px-3 py-2 text-start text-sm font-semibold text-gray-700 border border-border-strong">
+                    <th className="px-3 py-2 text-start text-sm font-semibold text-text-secondary border border-border-strong">
                       الحساب
                     </th>
-                    <th className="px-3 py-2 text-start text-sm font-semibold text-gray-700 border border-border-strong">
+                    <th className="px-3 py-2 text-start text-sm font-semibold text-text-secondary border border-border-strong">
                       نوع الحساب
                     </th>
-                    <th className="px-3 py-2 text-start text-sm font-semibold text-gray-700 border border-border-strong">
+                    <th className="px-3 py-2 text-start text-sm font-semibold text-text-secondary border border-border-strong">
                       مدين (Debit)
                     </th>
-                    <th className="px-3 py-2 text-start text-sm font-semibold text-gray-700 border border-border-strong">
+                    <th className="px-3 py-2 text-start text-sm font-semibold text-text-secondary border border-border-strong">
                       دائن (Credit)
                     </th>
-                    <th className="px-3 py-2 text-start text-sm font-semibold text-gray-700 border border-border-strong">
+                    <th className="px-3 py-2 text-start text-sm font-semibold text-text-secondary border border-border-strong">
                       الرصيد بعد
                     </th>
                   </tr>
@@ -253,7 +253,7 @@ const JournalEntryDetailsModal: React.FC<JournalEntryDetailsModalProps> = () => 
                 <tbody>
                   {/* Original Transaction */}
                   {data?.original && (
-                    <tr className="hover:bg-bg-surface-muted">
+                    <tr className="hover:bg-background">
                       <td className="px-3 py-2 border border-border-strong">
                         <div className="flex items-center gap-2">
                           <span className="text-text-secondary">{getAccountIcon(data.original.account_type)}</span>
@@ -308,7 +308,7 @@ const JournalEntryDetailsModal: React.FC<JournalEntryDetailsModalProps> = () => 
 
                   {/* Related Transaction */}
                   {data?.related ? (
-                    <tr className="hover:bg-bg-surface-muted bg-purple-50">
+                    <tr className="hover:bg-background bg-status-info-bg">
                       <td className="px-3 py-2 border border-border-strong">
                         <div className="flex items-center gap-2">
                           <span className="text-text-secondary">{getAccountIcon(data.related.account_type)}</span>
@@ -367,7 +367,7 @@ const JournalEntryDetailsModal: React.FC<JournalEntryDetailsModalProps> = () => 
                     </tr>
                   )}
                 </tbody>
-                <tfoot className="bg-bg-surface-muted font-semibold text-sm">
+                <tfoot className="bg-background font-semibold text-sm">
                   <tr>
                     <td colSpan={2} className="px-3 py-2 text-start border border-border-strong">
                       الإجمالي:
@@ -394,7 +394,7 @@ const JournalEntryDetailsModal: React.FC<JournalEntryDetailsModalProps> = () => 
             {data?.original && data?.related && (
               <div className="bg-status-success-bg border border-status-success-border rounded-lg p-3 text-sm">
                 <div className="flex items-center gap-2 text-status-success-text">
-                  <div className="w-5 h-5 bg-green-600 text-white rounded-full flex items-center justify-center text-xs">
+                  <div className="flex h-5 w-5 items-center justify-center rounded-full bg-status-success-bg text-xs text-status-success-text">
                     ✓
                   </div>
                   <div>

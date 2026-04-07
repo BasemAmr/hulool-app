@@ -83,7 +83,7 @@ const EmployeeClientReceivablesPage = () => {
             return <Badge className="bg-status-success-bg text-status-success-text">مدفوعة</Badge>;
         }
         if (isPartial) {
-            return <Badge className="bg-yellow-100 text-status-warning-text">جزئية</Badge>;
+            return <Badge className="bg-status-warning-bg text-status-warning-text">جزئية</Badge>;
         }
         if (status === 'overdue') {
             return <Badge className="bg-status-danger-bg text-status-danger-text">متأخرة</Badge>;
@@ -120,7 +120,7 @@ const EmployeeClientReceivablesPage = () => {
         <div className="w-full h-full flex flex-col" dir="rtl">
             {/* Header */}
             <div className="mb-6">
-                <h1 className="text-2xl font-bold text-gray-900 mb-2">مستحقات العملاء</h1>
+                <h1 className="text-2xl font-bold text-text-primary mb-2">مستحقات العملاء</h1>
                 <p className="text-text-secondary">الفواتير من المهام المكلف بها</p>
             </div>
 
@@ -182,41 +182,41 @@ const EmployeeClientReceivablesPage = () => {
                         </div>
                     ) : allInvoices.length === 0 ? (
                         <div className="text-center py-20">
-                            <FileText size={48} className="text-gray-200 mx-auto mb-4" />
-                            <h3 className="text-lg font-medium text-gray-900">لا توجد مستحقات</h3>
+                            <FileText size={48} className="text-border-default mx-auto mb-4" />
+                            <h3 className="text-lg font-medium text-text-primary">لا توجد مستحقات</h3>
                             <p className="text-text-muted mt-1">
                                 {search || statusFilter ? 'جرب تغيير شروط البحث' : 'جميع الفواتير مدفوعة'}
                             </p>
                         </div>
                     ) : (
                         <Table className="border-collapse border border-border-strong">
-                            <TableHeader className="bg-muted/50 sticky top-0 z-10">
+                            <TableHeader className="bg-background sticky top-0 z-10">
                                 <TableRow>
-                                    <TableHead className="text-start border border-border-strong px-3 py-2">#</TableHead>
-                                    <TableHead className="text-start border border-border-strong px-3 py-2">العميل</TableHead>
-                                    <TableHead className="text-start border border-border-strong px-3 py-2">الهاتف</TableHead>
-                                    <TableHead className="text-start border border-border-strong px-3 py-2">المهمة</TableHead>
-                                    <TableHead className="text-start border border-border-strong px-3 py-2">المبلغ</TableHead>
-                                    <TableHead className="text-start border border-border-strong px-3 py-2">المدفوع</TableHead>
-                                    <TableHead className="text-start border border-border-strong px-3 py-2">المتبقي</TableHead>
-                                    <TableHead className="text-start border border-border-strong px-3 py-2">الاستحقاق</TableHead>
-                                    <TableHead className="text-start border border-border-strong px-3 py-2">الحالة</TableHead>
-                                    <TableHead className="text-start border border-border-strong px-3 py-2 w-[120px]">إجراءات</TableHead>
+                                    <TableHead className="bg-card text-start border border-border-strong px-3 py-2">#</TableHead>
+                                    <TableHead className="bg-card text-start border border-border-strong px-3 py-2">العميل</TableHead>
+                                    <TableHead className="bg-card text-start border border-border-strong px-3 py-2">الهاتف</TableHead>
+                                    <TableHead className="bg-card text-start border border-border-strong px-3 py-2">المهمة</TableHead>
+                                    <TableHead className="bg-card text-start border border-border-strong px-3 py-2">المبلغ</TableHead>
+                                    <TableHead className="bg-card text-start border border-border-strong px-3 py-2">المدفوع</TableHead>
+                                    <TableHead className="bg-card text-start border border-border-strong px-3 py-2">المتبقي</TableHead>
+                                    <TableHead className="bg-card text-start border border-border-strong px-3 py-2">الاستحقاق</TableHead>
+                                    <TableHead className="bg-card text-start border border-border-strong px-3 py-2">الحالة</TableHead>
+                                    <TableHead className="bg-card text-start border border-border-strong px-3 py-2 w-[120px]">إجراءات</TableHead>
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
                                 {allInvoices.map((invoice) => (
-                                    <TableRow key={invoice.id} className="hover:bg-muted/20">
+                                    <TableRow key={invoice.id} className="hover:bg-bg-surface-hover">
                                         <TableCell className="border border-border-strong px-3 py-2 font-mono text-xs">
                                             {invoice.id}
                                         </TableCell>
                                         <TableCell className="border border-border-strong px-3 py-2">
-                                            <span className="font-medium text-sm">
+                                            <span className="font-medium text-sm text-text-primary">
                                                 {invoice.client?.name || `عميل #${invoice.client_id}`}
                                             </span>
                                         </TableCell>
                                         <TableCell className="border border-border-strong px-3 py-2">
-                                            <span className="text-sm font-mono">
+                                            <span className="text-sm font-mono text-text-primary">
                                                 {invoice.client?.phone || '-'}
                                             </span>
                                         </TableCell>
@@ -226,7 +226,7 @@ const EmployeeClientReceivablesPage = () => {
                                             </span>
                                         </TableCell>
                                         <TableCell className="border border-border-strong px-3 py-2">
-                                            <span className="font-medium">{formatCurrency(Number(invoice.amount))}</span>
+                                            <span className="font-medium text-text-primary">{formatCurrency(Number(invoice.amount))}</span>
                                         </TableCell>
                                         <TableCell className="border border-border-strong px-3 py-2">
                                             <span className={`text-sm ${Number(invoice.paid_amount) > 0 ? 'text-status-success-text font-medium' : 'text-text-muted'}`}>

@@ -157,7 +157,7 @@ const EmployeeDeletionPreviewModal = ({
                                 </thead>
                                 <tbody>
                                     {recordsTableData.map((row, index) => (
-                                        <tr key={index} className={index % 2 === 0 ? 'bg-white' : 'bg-bg-surface-muted'}>
+                                        <tr key={index} className={index % 2 === 0 ? 'bg-card' : 'bg-bg-surface-muted'}>
                                             <td className="px-4 py-3 text-right font-bold text-text-primary border-b border-gray-100">{row.label}</td>
                                             <td className="px-4 py-3 text-center font-bold text-text-primary border-b border-gray-100">
                                                 {formatNumber(row.count)}

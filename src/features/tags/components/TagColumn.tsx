@@ -76,7 +76,7 @@ const TagColumn = ({ tagCollection, isLoading = false }: TagColumnProps) => {
                     <div className="flex justify-center">
                         <button
                             onClick={handleSelectTasks}
-                            className="text-white border border-white text-xs px-2 py-1 rounded hover:bg-white/20 transition-colors"
+                            className="text-primary-foreground border border-primary-foreground/40 text-xs px-2 py-1 rounded hover:bg-primary-foreground/20 transition-colors"
                             style={{ backgroundColor: 'rgba(255, 255, 255, 0.1)' }}
                             title="اختيار مهام لربطها أو فك ربطها بهذه العلامة"
                         >

@@ -38,7 +38,7 @@ const SortableEmployeeClientCard = ({ clientData }: SortableEmployeeClientCardPr
             {/* Add a drag handle area */}
             <div
                 {...listeners}
-                className="cursor-grab px-2 py-0.5 bg-bg-surface-muted border-b border-border-default text-[10px] text-text-muted text-center select-none"
+                className="cursor-grab px-2 py-0.5 bg-background border-b border-border-default text-[10px] text-text-primary text-center select-none"
             >
                 ⋮⋮ اسحب لإعادة الترتيب
             </div>

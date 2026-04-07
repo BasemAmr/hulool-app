@@ -78,7 +78,7 @@ const EmployeeNotificationsStats: React.FC<EmployeeNotificationsStatsProps> = ({
                   />
                 </div>
                 <h5 className="mb-1 font-bold">{stat.count}</h5>
-                <p className="text-muted-foreground mb-1 text-sm">{stat.title}</p>
+                <p className="text-text-secondary mb-1 text-sm">{stat.title}</p>
                 {stat.unread > 0 && (
                   <div className="mt-2">
                     <span className={`inline-block px-2.5 py-1 bg-${stat.color} text-white rounded text-xs`}>

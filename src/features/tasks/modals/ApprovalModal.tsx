@@ -97,7 +97,7 @@ const ApprovalModal = () => {
       <div className="space-y-6">
         {/* Task Summary */}
         <div className="bg-bg-surface-muted p-4 rounded-lg">
-          <h3 className="font-medium text-gray-900 mb-3">تفاصيل المهمة</h3>
+          <h3 className="font-medium text-text-primary mb-3">تفاصيل المهمة</h3>
           <div className="grid grid-cols-2 gap-4 text-sm">
             <div>
               <span className="text-text-muted">اسم المهمة:</span>
@@ -121,7 +121,7 @@ const ApprovalModal = () => {
         {!isRejecting ? (
           <form onSubmit={handleSubmit(onApprove)} className="space-y-4">
             <div>
-              <label htmlFor="expense_amount" className="block text-sm font-medium text-gray-700 mb-1">
+              <label htmlFor="expense_amount" className="mb-1 block text-sm font-medium text-text-secondary">
                 مبلغ المصروف *
               </label>
               <Input
@@ -155,7 +155,7 @@ const ApprovalModal = () => {
             </div>
 
             <div>
-              <label htmlFor="notes" className="block text-sm font-medium text-gray-700 mb-1">
+              <label htmlFor="notes" className="mb-1 block text-sm font-medium text-text-secondary">
                 ملاحظات (اختياري)
               </label>
               <textarea

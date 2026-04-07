@@ -111,7 +111,7 @@ const StatusCell = React.memo(({ rowData }: CellProps<Invoice>) => {
 
     if (status === 'cancelled') {
         label = 'ملغاة';
-        bgColor = 'bg-bg-surface-muted';
+        bgColor = 'bg-background';
         textColor = 'text-text-secondary';
     } else if (isPaid) {
         label = 'مدفوعة';
@@ -119,7 +119,7 @@ const StatusCell = React.memo(({ rowData }: CellProps<Invoice>) => {
         textColor = 'text-status-success-text';
     } else if (isPartial) {
         label = 'جزئية';
-        bgColor = 'bg-yellow-100';
+        bgColor = 'bg-status-warning-bg';
         textColor = 'text-status-warning-text';
     } else if (status === 'overdue') {
         label = 'متأخرة';
@@ -291,7 +291,7 @@ const EmployeeInvoicesTable: React.FC<EmployeeInvoicesTableProps> = ({
 
     return (
         <div className="flex flex-col gap-4">
-            <div className="bg-white rounded-lg shadow-sm border border-border-default overflow-hidden">
+            <div className="rounded-lg border border-border-default bg-card shadow-sm overflow-hidden">
                 <HuloolDataGrid
                     data={invoices}
                     columns={columns}
@@ -303,20 +303,20 @@ const EmployeeInvoicesTable: React.FC<EmployeeInvoicesTableProps> = ({
 
             {/* Pagination */}
             {pagination && pagination.total > perPage && (
-                <div className="flex justify-between items-center px-4 py-3 bg-white rounded-lg border border-border-default">
+                <div className="flex items-center justify-between rounded-lg border border-border-default bg-background px-4 py-3">
                     <div className="text-sm text-text-secondary font-bold">
                         عرض {((page - 1) * perPage) + 1} إلى {Math.min(page * perPage, pagination.total)} من أصل {pagination.total} فاتورة
                     </div>
                     <div className="flex gap-2">
                         <button
-                            className="px-4 py-2 text-sm font-bold text-gray-700 bg-white border border-border-strong rounded-md hover:bg-bg-surface-muted disabled:opacity-50 disabled:cursor-not-allowed"
+                            className="rounded-md border border-border-strong bg-card px-4 py-2 text-sm font-bold text-text-primary hover:bg-background disabled:cursor-not-allowed disabled:opacity-50"
                             disabled={page <= 1}
                             onClick={() => onPageChange?.(page - 1)}
                         >
                             السابق
                         </button>
                         <button
-                            className="px-4 py-2 text-sm font-bold text-gray-700 bg-white border border-border-strong rounded-md hover:bg-bg-surface-muted disabled:opacity-50 disabled:cursor-not-allowed"
+                            className="rounded-md border border-border-strong bg-card px-4 py-2 text-sm font-bold text-text-primary hover:bg-background disabled:cursor-not-allowed disabled:opacity-50"
                             disabled={page >= Math.ceil(pagination.total / perPage)}
                             onClick={() => onPageChange?.(page + 1)}
                         >

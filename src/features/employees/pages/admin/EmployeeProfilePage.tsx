@@ -38,7 +38,7 @@ const FinancialSummaryCard: React.FC<FinancialSummaryCardProps> = ({ summary, pe
   const totalPaidOut = summary.total_paid_out ?? summary.total_expenses ?? 0;
 
   return (
-    <div className="flex gap-4 items-center bg-bg-surface-muted p-2">
+    <div className="flex gap-4 items-center bg-background p-2">
       {/* Total Earned */}
       <div className="flex items-center gap-1">
         <span className="text-sm font-medium text-text-secondary">إجمالي المستحق:</span>
@@ -105,7 +105,7 @@ const EmployeeHeader: React.FC<EmployeePageHeader> = ({ employee, onSarf, onQabd
             onClick={() => onModeChange(key)}
             className={`px-4 py-2 rounded-md font-bold text-lg transition-colors ${activeMode === key
               ? 'bg-primary text-primary-foreground shadow-sm'
-              : 'bg-bg-surface-muted text-text-secondary hover:bg-bg-surface-hover hover:text-text-primary'
+              : 'bg-background text-text-secondary hover:bg-background hover:text-text-primary'
               }`}
           >
             <Icon size={20} className="mr-2 inline" />

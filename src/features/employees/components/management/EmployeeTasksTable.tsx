@@ -87,14 +87,14 @@ const EmployeeTasksTable: React.FC<EmployeeTasksTableProps> = ({
           </div>
           <div className="inline-flex gap-2">
             <button
-              className="px-3 py-1.5 text-sm border rounded-md hover:bg-muted disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              className="px-3 py-1.5 text-sm border rounded-md hover:bg-background disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
               disabled={page <= 1}
               onClick={() => onPageChange(page - 1)}
             >
               Previous
             </button>
             <button
-              className="px-3 py-1.5 text-sm border rounded-md hover:bg-muted disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              className="px-3 py-1.5 text-sm border rounded-md hover:bg-background disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
               disabled={page >= Math.ceil(pagination.total / perPage)}
               onClick={() => onPageChange(page + 1)}
             >

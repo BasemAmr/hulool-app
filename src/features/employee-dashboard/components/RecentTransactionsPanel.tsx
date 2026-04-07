@@ -168,16 +168,16 @@ const RecentTransactionsPanel: React.FC<RecentTransactionsPanelProps> = ({
   const yearOptions = Array.from({ length: 11 }, (_, i) => 2020 + i);
 
   return (
-    <div className="rounded-lg border border-gray-200 bg-white shadow-sm h-full flex flex-col">
+    <div className="rounded-lg border border-border bg-card shadow-sm h-full flex flex-col">
       {/* Header — single left-border accent, white background */}
-      <div className="px-4 py-3 border-b border-gray-200 border-l-4 border-l-primary bg-white flex-shrink-0">
+      <div className="px-4 py-3 border-b border-border border-l-4 border-l-primary bg-background flex-shrink-0">
           <div className="flex justify-between items-center">
           <div className="flex items-center gap-2">
-            <h6 className="mb-0 font-semibold text-gray-900 text-sm">
+            <h6 className="mb-0 font-semibold text-text-primary text-sm">
               كشف حساب
             </h6>
             <Select value={period.month.toString()} onValueChange={handleMonthChange}>
-              <SelectTrigger className="w-[120px] h-8 bg-white text-text-primary text-xs">
+              <SelectTrigger className="h-8 w-[120px] bg-background text-xs text-text-primary">
                 <SelectValue placeholder="الشهر" />
               </SelectTrigger>
               <SelectContent>
@@ -189,7 +189,7 @@ const RecentTransactionsPanel: React.FC<RecentTransactionsPanelProps> = ({
               </SelectContent>
             </Select>
             <Select value={period.year.toString()} onValueChange={handleYearChange}>
-              <SelectTrigger className="w-[100px] h-8 bg-white text-text-primary text-xs">
+              <SelectTrigger className="h-8 w-[100px] bg-background text-xs text-text-primary">
                 <SelectValue placeholder="السنة" />
               </SelectTrigger>
               <SelectContent>
@@ -220,7 +220,7 @@ const RecentTransactionsPanel: React.FC<RecentTransactionsPanelProps> = ({
         ) : (
           <div ref={scrollContainerRef} className="w-full h-full overflow-auto">
             <table ref={tableRef} className="w-full text-sm mb-0 border-collapse">
-              <thead className="sticky top-0 z-10 bg-bg-surface-muted">
+              <thead className="sticky top-0 z-10 bg-background">
                 <tr>
                   <th className="px-2 py-2 border border-border-strong text-start font-bold text-base text-text-primary" style={{ width: `${maxClientWidth + 40}px`, minWidth: `${maxClientWidth + 40}px` }}>اسم العميل</th>
                   <th className="px-2 py-2 border border-border-strong text-start font-bold text-base text-text-primary">البيان</th>
@@ -261,7 +261,7 @@ const RecentTransactionsPanel: React.FC<RecentTransactionsPanelProps> = ({
                   const direction = (t.direction as 'income' | 'expense') ?? 'income';
                   const clientDisplay = t.client_name || getTransactionTypeLabel(t.transaction_type, direction);
                   return (
-                    <tr key={transaction.id} className={`${rowBg} hover:bg-bg-surface-muted transition-colors`}>
+                    <tr key={transaction.id} className={`${rowBg} hover:bg-background transition-colors`}>
                       <td
                         ref={(el) => {
                           if (el) clientCellsRef.current.set(transaction.id, el);
@@ -279,12 +279,12 @@ const RecentTransactionsPanel: React.FC<RecentTransactionsPanelProps> = ({
                         {transaction.direction === 'income' ? (
                           <span className="text-status-success-text">{formatCurrency(transaction.amount)}</span>
                         ) : (
-                          <span className="text-text-muted">-</span>
+                          <span className="text-text-primary">-</span>
                         )}
                       </td>
                       {/* Credit (expense): only red when it IS expense */}
                       <td className="px-2 py-1.5 border border-border-default text-center font-semibold text-sm">
-                        <span className={transaction.direction === 'expense' ? 'text-status-danger-text' : 'text-text-muted'}>
+                        <span className={transaction.direction === 'expense' ? 'text-status-danger-text' : 'text-text-primary'}>
                           {transaction.direction === 'expense' ? (
                             formatCurrency(transaction.amount)
                           ) : (
@@ -298,7 +298,7 @@ const RecentTransactionsPanel: React.FC<RecentTransactionsPanelProps> = ({
                           {formatCurrency(transaction.running_balance)}
                         </span>
                       </td>
-                      <td className="px-2 py-1.5 border border-border-default text-center text-sm text-text-muted" style={{ width: '60px', minWidth: '60px' }}>
+                      <td className="px-2 py-1.5 border border-border-default text-center text-sm text-text-primary" style={{ width: '60px', minWidth: '60px' }}>
                         {formatDate(transaction.date).replace(/\/20/, '/')}
                       </td>
                     </tr>
@@ -306,14 +306,14 @@ const RecentTransactionsPanel: React.FC<RecentTransactionsPanelProps> = ({
                 })}
                 {/* Loading Row */}
                 {isAutoLoading && (
-                  <tr className="bg-bg-surface-muted">
+                  <tr className="bg-background">
                     <td colSpan={6} className="px-2 py-4 text-center">
-                      <Loader2 className="inline animate-spin text-text-muted" size={20} />
+                      <Loader2 className="inline animate-spin text-text-primary" size={20} />
                     </td>
                   </tr>
                 )}
                 {/* Totals Footer Row */}
-                <tr className="bg-bg-surface-muted border-t-2 border-border-strong">
+                <tr className="bg-background border-t-2 border-border-strong">
                   <td className="px-2 py-2 border border-border-default text-center font-semibold text-sm text-text-primary" style={{ width: `${maxClientWidth + 40}px`, minWidth: `${maxClientWidth + 40}px` }}>-</td>
                   <td className="px-2 py-2 border border-border-default text-center font-semibold text-sm text-text-primary">الإجماليات</td>
                   <td className="px-2 py-2 border border-border-default text-center font-semibold text-sm">
@@ -327,7 +327,7 @@ const RecentTransactionsPanel: React.FC<RecentTransactionsPanelProps> = ({
                       {formatCurrency(summary.balance_due)}
                     </span>
                   </td>
-                  <td className="px-2 py-2 border border-border-default text-center text-sm text-text-muted" style={{ width: '60px', minWidth: '60px' }}>-</td>
+                  <td className="px-2 py-2 border border-border-default text-center text-sm text-text-primary" style={{ width: '60px', minWidth: '60px' }}>-</td>
                 </tr>
               </tbody>
             </table>
@@ -336,7 +336,7 @@ const RecentTransactionsPanel: React.FC<RecentTransactionsPanelProps> = ({
       </div>
 
       {/* Footer */}
-      <div className="px-4 py-2 bg-bg-surface-muted border-t border-border-default text-center flex-shrink-0">
+      <div className="px-4 py-2 bg-background border-t border-border-default text-center flex-shrink-0">
         {hasMoreTransactions && (
           <button
             onClick={handleShowMore}

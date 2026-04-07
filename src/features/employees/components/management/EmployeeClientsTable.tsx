@@ -81,7 +81,7 @@ const PhoneCell = React.memo(({ rowData }: CellProps<EmployeeClient>) => {
 
   return (
     <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-      <span style={{ color: '#000000' }}>{rowData.phone}</span>
+      <span className="text-text-primary">{rowData.phone}</span>
       <button
         onClick={handleWhatsAppClick}
         title="إرسال رسالة واتساب"
@@ -119,7 +119,7 @@ const RegionCell = React.memo(({ rowData }: CellProps<EmployeeClient>) => {
   };
 
   if (!rowData.region_name) {
-    return <span style={{ color: '#000000' }}>—</span>;
+    return <span className="text-text-primary">—</span>;
   }
 
   return (
@@ -144,7 +144,7 @@ const NotesCell = React.memo(({ rowData }: CellProps<EmployeeClient>) => {
     : '—';
   
   return (
-    <span style={{ color: '#000000', fontSize: '0.875rem' }}>
+    <span className="text-text-secondary" style={{ fontSize: '0.875rem' }}>
       {displayNotes}
     </span>
   );
@@ -156,7 +156,7 @@ const DebitCell = React.memo(({ rowData }: CellProps<EmployeeClient>) => {
   const amount = Number(rowData.total_debit || rowData.total_receivables || 0);
   
   return (
-    <div style={{ textAlign: 'center', fontWeight: 600, color: '#000000' }}>
+    <div className="text-text-primary" style={{ textAlign: 'center', fontWeight: 600 }}>
       {amount.toFixed(2)}
     </div>
   );
@@ -178,10 +178,10 @@ CreditCell.displayName = 'CreditCell';
 // Outstanding Cell
 const OutstandingCell = React.memo(({ rowData }: CellProps<EmployeeClient>) => {
   const amount = Number(rowData.total_outstanding || 0);
-  const color = amount > 0 ? '#dc2626' : '#000000';
+  const colorClass = amount > 0 ? 'text-status-danger-text' : 'text-text-primary';
   
   return (
-    <div style={{ textAlign: 'center', fontWeight: 600, color }}>
+    <div className={colorClass} style={{ textAlign: 'center', fontWeight: 600 }}>
       {amount.toFixed(2)}
     </div>
   );

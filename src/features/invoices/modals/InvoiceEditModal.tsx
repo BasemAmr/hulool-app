@@ -96,16 +96,16 @@ const InvoiceEditModal: React.FC<InvoiceEditModalProps> = ({
     >
       <div className="space-y-4 dir-rtl" dir="rtl">
         <div>
-          <label className="block text-sm font-medium text-gray-700">
+          <label className="block text-sm font-medium text-text-primary">
             المبلغ الحالي
           </label>
-          <div className="mt-1 p-2 bg-bg-surface-muted rounded-md font-medium">
+          <div className="mt-1 p-2 bg-background rounded-md font-medium border border-border">
             {invoice?.amount} SAR
           </div>
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700">
+          <label className="block text-sm font-medium text-text-primary">
             المبلغ الجديد *
           </label>
           <input

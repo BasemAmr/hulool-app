@@ -34,44 +34,33 @@ const BaseModal = ({ isOpen, onClose, title, children, className, allowOutsideCl
   const handleBackdropClick = allowOutsideClick ? onClose : undefined;
 
   return (
-  <div
-    className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm overflow-y-auto"
-    onClick={handleBackdropClick}
-  >
-    <div className="flex items-start justify-center p-4">
-      <div
-        className={`bg-card rounded-xl shadow-2xl
-                    max-w-4xl w-full
-                    flex flex-col
-                    animate-in fade-in-0 zoom-in-95 duration-200
-                    ${className || ''}`}
-        onClick={(e) => e.stopPropagation()}
-      >
-        <header className="flex items-center justify-between
-                           px-6 py-4 border-b border-primary/20
-                           bg-primary text-primary-foreground">
-          <h5 className="text-lg font-semibold tracking-tight">{title}</h5>
-          <button
-            type="button"
-            className="rounded-lg p-1.5 transition-colors
-                       text-primary-foreground/80
-                       hover:text-primary-foreground hover:bg-white/10"
-            onClick={onClose}
-          >
-            <X className="h-5 w-5" />
-          </button>
-        </header>
+    <div
+      className="fixed inset-0 z-50 overflow-y-auto bg-black/60 backdrop-blur-sm"
+      onClick={handleBackdropClick}
+    >
+      <div className="flex items-start justify-center p-4">
+        <div
+          className={`flex w-full max-w-4xl flex-col rounded-xl border border-border bg-card shadow-2xl animate-in fade-in-0 zoom-in-95 duration-200 ${className || ''}`}
+          onClick={(e) => e.stopPropagation()}
+        >
+          <header className="flex items-center justify-between border-b border-border bg-background px-6 py-4">
+            <h5 className="text-lg font-semibold tracking-tight text-text-primary">{title}</h5>
+            <button
+              type="button"
+              className="rounded-lg p-1.5 text-text-secondary transition-colors hover:bg-muted/50 hover:text-text-primary"
+              onClick={onClose}
+            >
+              <X className="h-5 w-5" />
+            </button>
+          </header>
 
-        <div className="p-6 bg-card flex justify-center w-full">
-          <div className="w-full">
-
-          {children}
+          <div className="flex w-full justify-center bg-card p-6">
+            <div className="w-full">{children}</div>
           </div>
         </div>
       </div>
     </div>
-  </div>
-);
+  );
 
 
 };

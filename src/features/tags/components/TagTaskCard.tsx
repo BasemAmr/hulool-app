@@ -198,7 +198,7 @@ const TagTaskCard = ({ task, index = 0 }: TagTaskCardProps) => {
                     </button>
                     <button
                         onClick={handleShowRequirements}
-                        className="rounded hover:bg-yellow-100 transition-colors"
+                        className="rounded hover:bg-status-warning-bg transition-colors"
                         style={{ 
                             fontSize: '11px',
                             padding: '6px 8px',

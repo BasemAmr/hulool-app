@@ -80,7 +80,7 @@ const CardColumnContainer = ({
             </h6>
           )}
           {typeof itemCount === 'number' && (
-            <Badge className="bg-bg-surface-muted border border-border-default rounded-full px-2 py-0.5 text-text-secondary text-xs font-semibold">
+            <Badge className="bg-background border border-border-default rounded-full px-2 py-0.5 text-text-primary text-xs font-semibold">
               {itemCount}
             </Badge>
           )}
@@ -105,7 +105,7 @@ const CardColumnContainer = ({
 
       {/* Fixed Footer - optional */}
       {moreLink && (
-        <div className="py-2 border-t border-border-default flex-shrink-0 bg-bg-surface-muted">
+        <div className="py-2 border-t border-border-default flex-shrink-0 bg-background">
           <Link
             to={moreLink}
             className="block w-full text-center font-medium py-1.5 rounded text-text-secondary hover:text-text-primary transition-colors text-sm"

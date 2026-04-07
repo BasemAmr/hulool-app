@@ -262,7 +262,7 @@ const AccountsOverviewPage = () => {
                   <>
                     <TableRow 
                       key={`${account.type}-${account.id}`}
-                      className="cursor-pointer hover:bg-muted/80"
+                      className="cursor-pointer hover:bg-background"
                       onClick={() => handleAccountClick(account)}
                     >
                       <TableCell className="border border-border-strong text-start text-base px-3 py-2">
@@ -298,7 +298,7 @@ const AccountsOverviewPage = () => {
                     
                     {/* Expanded Details Row */}
                     {selectedAccount?.id === account.id && selectedAccount?.type === account.type && (
-                      <TableRow className="bg-muted/30">
+                      <TableRow className="bg-background">
                         <TableCell colSpan={5} className="border border-border-strong p-4">
                           <div className="flex items-start justify-between">
                             <div className="space-y-2">

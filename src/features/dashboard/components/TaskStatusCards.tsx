@@ -38,50 +38,50 @@ const TaskStatusCards = ({ stats, totalPaidAmount = 0, isLoading }: TaskStatusCa
       icon: Clock,
       label: 'مهام جديدة',
       value: stats.new_tasks,
-      bgClass: 'bg-white',
-      borderClass: 'border-gray-200',
-      iconClass: 'text-gray-500',
-      textClass: 'text-gray-900',
+      bgClass: 'bg-card',
+      borderClass: 'border-border',
+      iconClass: 'text-text-primary',
+      textClass: 'text-text-primary',
     },
     {
       to: '/tasks?status=Deferred',
       icon: PauseCircle,
       label: 'مهام مؤجلة',
       value: stats.deferred_tasks,
-      bgClass: 'bg-white',
-      borderClass: 'border-gray-200',
-      iconClass: 'text-gray-500',
-      textClass: 'text-gray-900',
+      bgClass: 'bg-card',
+      borderClass: 'border-border',
+      iconClass: 'text-text-primary',
+      textClass: 'text-text-primary',
     },
     {
       to: '/tasks?status=Pending Review',
       icon: ClipboardCheck,
       label: 'مهام قيد المراجعة',
       value: stats.pending_review_tasks || 0,
-      bgClass: 'bg-white',
-      borderClass: 'border-gray-200',
-      iconClass: 'text-gray-500',
-      textClass: 'text-gray-900',
+      bgClass: 'bg-card',
+      borderClass: 'border-border',
+      iconClass: 'text-text-primary',
+      textClass: 'text-text-primary',
     },
     {
       to: '/tasks?status=Completed',
       icon: CheckCircle,
       label: 'مهام مكتملة',
       value: stats.completed_tasks,
-      bgClass: 'bg-white',
-      borderClass: 'border-gray-200',
-      iconClass: 'text-gray-500',
-      textClass: 'text-gray-900',
+      bgClass: 'bg-card',
+      borderClass: 'border-border',
+      iconClass: 'text-text-primary',
+      textClass: 'text-text-primary',
     },
     {
       to: '/tasks?status=Late',
       icon: AlertTriangle,
       label: 'مهام متأخرة',
       value: stats.late_tasks,
-      bgClass: 'bg-white',
-      borderClass: 'border-gray-200',
-      iconClass: 'text-gray-500',
-      textClass: 'text-gray-900',
+      bgClass: 'bg-card',
+      borderClass: 'border-border',
+      iconClass: 'text-text-primary',
+      textClass: 'text-text-primary',
       isClickable: true,
     },
     {
@@ -89,10 +89,10 @@ const TaskStatusCards = ({ stats, totalPaidAmount = 0, isLoading }: TaskStatusCa
       icon: SaudiRiyalIcon,
       label: 'مستحقات مسددة',
       value: hasViewAmountsPermission ? totalPaidAmount : '***',
-      bgClass: 'bg-white',
-      borderClass: 'border-gray-200',
-      iconClass: 'text-gray-500',
-      textClass: 'text-gray-900',
+      bgClass: 'bg-card',
+      borderClass: 'border-border',
+      iconClass: 'text-text-primary',
+      textClass: 'text-text-primary',
       isClickable: hasViewPaidReceivablesPermission,
     },
     {
@@ -100,10 +100,10 @@ const TaskStatusCards = ({ stats, totalPaidAmount = 0, isLoading }: TaskStatusCa
       icon: SaudiRiyalIcon,
       label: 'مستحقات متأخرة',
       value: hasViewAmountsPermission ? (stats.total_unpaid_amount || 0) : '***',
-      bgClass: 'bg-white',
-      borderClass: 'border-gray-200',
-      iconClass: 'text-gray-500',
-      textClass: 'text-gray-900',
+      bgClass: 'bg-card',
+      borderClass: 'border-border',
+      iconClass: 'text-text-primary',
+      textClass: 'text-text-primary',
       isClickable: hasViewOverdueReceivablesPermission,
     },
   ];
@@ -114,7 +114,7 @@ const TaskStatusCards = ({ stats, totalPaidAmount = 0, isLoading }: TaskStatusCa
         {[1, 2, 3, 4, 5, 6, 7].map(i => (
           <div
             key={i}
-            className="rounded-lg shadow-sm bg-white border border-gray-200 min-w-[140px] flex-1"
+            className="rounded-lg shadow-sm bg-card border border-border min-w-[140px] flex-1"
           >
             <div className="p-2">
               <div className="flex items-center gap-2">
@@ -155,7 +155,7 @@ const TaskStatusCards = ({ stats, totalPaidAmount = 0, isLoading }: TaskStatusCa
                   )}
                 </div>
                 <div className="flex-1">
-                  <p className={`mb-0 text-[0.7rem] font-semibold opacity-90 leading-tight ${card.textClass}`}>
+                  <p className={`mb-0 text-[0.7rem] font-semibold leading-tight ${card.textClass}`}>
                     {card.label}
                   </p>
                   <h6 className={`mb-0 font-bold text-base leading-tight ${card.textClass}`}>

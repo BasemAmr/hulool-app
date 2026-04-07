@@ -109,9 +109,9 @@ const RecentClientsReceivablesPanel: React.FC<RecentClientsReceivablesPanelProps
 
   if (isLoading) {
     return (
-      <div className="rounded-lg border border-gray-200 bg-white shadow-sm h-full flex flex-col">
-        <div className="px-4 py-3 border-b border-gray-200 border-l-4 border-l-primary bg-white flex-shrink-0">
-          <h6 className="mb-0 font-semibold text-gray-900 text-sm">المستحقات الأخيرة</h6>
+      <div className="rounded-lg border border-border bg-card shadow-sm h-full flex flex-col">
+        <div className="px-4 py-3 border-b border-border border-l-4 border-l-primary bg-background flex-shrink-0">
+          <h6 className="mb-0 font-semibold text-text-primary text-sm">المستحقات الأخيرة</h6>
         </div>
         <div className="flex-1 flex justify-center items-center">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
@@ -126,10 +126,10 @@ const RecentClientsReceivablesPanel: React.FC<RecentClientsReceivablesPanelProps
   );
 
   return (
-    <div className="rounded-lg border border-gray-200 bg-white shadow-sm h-full flex flex-col">
+    <div className="rounded-lg border border-border bg-card shadow-sm h-full flex flex-col">
       {/* Header — single left-border accent, white background */}
-      <div className="px-4 py-3 border-b border-gray-200 border-l-4 border-l-primary bg-white flex-shrink-0 flex justify-center items-center">
-        <h6 className="mb-0 font-semibold text-gray-900 text-sm">المستحقات عند العملاء</h6>
+      <div className="px-4 py-3 border-b border-border border-l-4 border-l-primary bg-background flex-shrink-0 flex items-center justify-center">
+        <h6 className="mb-0 font-semibold text-text-primary text-sm">المستحقات عند العملاء</h6>
       </div>
 
       {/* Body - Invoices Table */}
@@ -145,7 +145,7 @@ const RecentClientsReceivablesPanel: React.FC<RecentClientsReceivablesPanelProps
         ) : (
           <div className="w-full h-full overflow-auto">
             <table className="w-full text-sm mb-0 border-collapse">
-              <thead className="sticky top-0 z-10 bg-bg-surface-muted">
+              <thead className="sticky top-0 z-10 bg-background">
                 <tr>
                   <th className="px-2 py-2 border border-border-strong text-start font-bold text-base text-text-primary">
                     العميل
@@ -165,7 +165,7 @@ const RecentClientsReceivablesPanel: React.FC<RecentClientsReceivablesPanelProps
                 {filteredReceivables.map((invoice: DisplayInvoice, index: number) => {
                   const rowBg = index % 2 === 0 ? 'bg-bg-surface' : 'bg-bg-surface-hover';
                   return (
-                    <tr key={invoice.id} className={`${rowBg} hover:bg-bg-surface-muted transition-colors`}>
+                    <tr key={invoice.id} className={`${rowBg} hover:bg-background transition-colors`}>
                       <td className="px-2 py-1.5 border border-border-default text-start font-semibold text-sm text-text-primary overflow-hidden text-ellipsis whitespace-nowrap" style={{ maxWidth: '120px' }} title={invoice.client_name}>
                         {invoice.client_name}
                       </td>
@@ -179,7 +179,7 @@ const RecentClientsReceivablesPanel: React.FC<RecentClientsReceivablesPanelProps
                         <div className="flex justify-center gap-0.5">
                           {/* Edit */}
                           <button
-                            className="inline-flex items-center justify-center rounded p-1.5 text-text-muted hover:text-text-secondary bg-transparent hover:bg-bg-surface-muted border border-transparent hover:border-border-default transition-colors duration-150"
+                            className="inline-flex items-center justify-center rounded p-1.5 text-text-secondary hover:text-text-primary bg-transparent hover:bg-background border border-transparent hover:border-border-default transition-colors duration-150"
                             onClick={() => openModal('editReceivable', { receivable: {
                               id: invoice.id,
                               client_id: invoice.client_id,
@@ -197,7 +197,7 @@ const RecentClientsReceivablesPanel: React.FC<RecentClientsReceivablesPanelProps
 
                           {/* Record Payment */}
                           <button
-                            className="inline-flex items-center justify-center rounded p-1.5 text-text-muted hover:text-text-secondary bg-transparent hover:bg-bg-surface-muted border border-transparent hover:border-border-default transition-colors duration-150 disabled:opacity-40"
+                            className="inline-flex items-center justify-center rounded p-1.5 text-text-secondary hover:text-text-primary bg-transparent hover:bg-background border border-transparent hover:border-border-default transition-colors duration-150 disabled:opacity-40"
                             onClick={() => openModal('recordPayment', {
                               invoiceId: invoice.id,
                               clientId: invoice.client_id,
@@ -212,7 +212,7 @@ const RecentClientsReceivablesPanel: React.FC<RecentClientsReceivablesPanelProps
 
                           {/* WhatsApp reminder — brand color is a confirmed exception */}
                           <button
-                            className="inline-flex items-center justify-center rounded p-1.5 text-text-muted hover:text-text-secondary bg-transparent hover:bg-bg-surface-muted border border-transparent hover:border-border-default transition-colors duration-150 disabled:opacity-40"
+                            className="inline-flex items-center justify-center rounded p-1.5 text-text-secondary hover:text-text-primary bg-transparent hover:bg-background border border-transparent hover:border-border-default transition-colors duration-150 disabled:opacity-40"
                             onClick={() => handleWhatsAppPaymentReminder(invoice.client_phone, invoice.client_name, invoice.remaining_amount)}
                             disabled={invoice.remaining_amount <= 0}
                             title="إرسال تذكير دفع عبر واتساب"
@@ -223,7 +223,7 @@ const RecentClientsReceivablesPanel: React.FC<RecentClientsReceivablesPanelProps
                           {/* Restore */}
                           {invoice.task_id && (
                             <button
-                              className="inline-flex items-center justify-center rounded p-1.5 text-text-muted hover:text-text-secondary bg-transparent hover:bg-bg-surface-muted border border-transparent hover:border-border-default transition-colors duration-150 disabled:opacity-40"
+                              className="inline-flex items-center justify-center rounded p-1.5 text-text-secondary hover:text-text-primary bg-transparent hover:bg-background border border-transparent hover:border-border-default transition-colors duration-150 disabled:opacity-40"
                               onClick={() => handleRestore({ task_id: invoice.task_id })}
                               disabled={restoreTaskMutation.isPending}
                               title="استرداد المهمة"
@@ -243,7 +243,7 @@ const RecentClientsReceivablesPanel: React.FC<RecentClientsReceivablesPanelProps
       </div>
 
       {/* Footer */}
-      <div className="px-4 py-2 bg-bg-surface-muted border-t border-border-default text-center flex-shrink-0">
+      <div className="px-4 py-2 bg-background border-t border-border-default text-center flex-shrink-0">
         <button
           onClick={navigateToFinancials}
           className="text-text-secondary p-0 flex items-center justify-center gap-1 w-full hover:text-text-primary transition-colors text-sm"

@@ -85,7 +85,7 @@ export interface HuloolGridProps<T extends Record<string, any>> {
 
 const DEFAULT_ALTERNATE_COLORS = {
   even: 'var(--token-bg-surface)',
-  odd: 'var(--token-bg-surface-hover)',
+  odd: 'var(--token-bg-surface)',
 };
 
 // ================================
@@ -133,7 +133,7 @@ const TextCell = React.memo(({ rowData, columnData, active }: CellProps<any, { k
   const value = columnData?.key ? getNestedValue(rowData, columnData.key) : '';
   const displayValue = columnData?.formatter ? columnData.formatter(value, rowData) : value;
   return (
-    <span className="hulool-cell-content hulool-text" style={{ fontWeight: active ? 700 : 400 }}>
+    <span className="hulool-cell-content hulool-text" style={{ fontWeight: active ? 700 : 500 }}>
       {displayValue ?? '—'}
     </span>
   );
@@ -203,7 +203,7 @@ DueCell.displayName = 'DueCell';
 const DateCell = React.memo(({ rowData, columnData, active }: CellProps<any, { key: string }>) => {
   const value = columnData?.key ? getNestedValue(rowData, columnData.key) : '';
   return (
-    <span className="hulool-cell-content hulool-date" style={{ fontWeight: active ? 700 : 400 }}>
+    <span className="hulool-cell-content hulool-date" style={{ fontWeight: active ? 700 : 500 }}>
       {formatDate(value)}
     </span>
   );
@@ -228,10 +228,10 @@ const PhoneCell = React.memo(({ rowData, columnData, active }: CellProps<any, { 
     if (whatsappPhone) window.open(`https://wa.me/${whatsappPhone}`, '_blank');
   };
 
-  if (!phone) return <span className="hulool-cell-content hulool-phone" style={{ fontWeight: active ? 700 : 400 }}>—</span>;
+  if (!phone) return <span className="hulool-cell-content hulool-phone" style={{ fontWeight: active ? 700 : 500 }}>—</span>;
 
   return (
-    <div className="hulool-cell-content hulool-phone-container" style={{ fontWeight: active ? 700 : 400 }}>
+    <div className="hulool-cell-content hulool-phone-container" style={{ fontWeight: active ? 700 : 500 }}>
       <span className="hulool-phone-number">{phone}</span>
       <button onClick={handleWhatsAppClick} title="فتح واتساب" className="hulool-whatsapp-btn">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="#25D366">
@@ -579,7 +579,7 @@ function HuloolDataGrid<T extends Record<string, any>>({
           padding: 48px;
           text-align: center;
           font-family: 'Cairo', sans-serif;
-          color: var(--token-text-secondary);
+          color: var(--token-text-primary);
         }
         
         /* ================================
@@ -597,14 +597,17 @@ function HuloolDataGrid<T extends Record<string, any>>({
            HEADER STYLES
            ================================ */
         
-        .hulool-data-grid .dsg-header-row {
+        .hulool-data-grid .dsg-row-header {
           background-color: var(--token-action-primary-bg) !important;
           position: ${stickyHeader ? 'sticky' : 'relative'};
           top: 0;
           z-index: 10;
         }
         
-        .hulool-data-grid .dsg-header-row .dsg-cell {
+        .hulool-data-grid .dsg-row-header .dsg-cell,
+        .hulool-data-grid .dsg-row-header .dsg-cell-header,
+        .hulool-data-grid .dsg-row-header .dsg-cell-gutter {
+          background-color: var(--token-action-primary-bg) !important;
           color: var(--token-text-inverse) !important;
           font-weight: 700 !important;
           font-family: 'Cairo', sans-serif !important;
@@ -756,8 +759,8 @@ function HuloolDataGrid<T extends Record<string, any>>({
            HOVER & INTERACTIONS
            ================================ */
         
-        .hulool-data-grid .dsg-row:hover .dsg-cell {
-          filter: brightness(0.97);
+        .hulool-data-grid .dsg-row:not(.dsg-row-header):hover .dsg-cell {
+          background-color: var(--token-bg-surface-hover) !important;
         }
         
         /* Enable pointer events for buttons in cells */

@@ -233,7 +233,7 @@ const InvoiceFormModal = () => {
         {step === 2 && (
           <div>
             {/* Summary Header */}
-            <div className="mb-4 p-3 bg-bg-surface-muted rounded-lg">
+            <div className="mb-4 p-3 bg-background rounded-lg border border-border">
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="text-sm text-text-muted">النوع</label>
@@ -294,7 +294,7 @@ const InvoiceFormModal = () => {
 
               {lineItems.length > 0 ? (
                 <div className="border rounded-lg overflow-hidden">
-                  <div className="grid grid-cols-12 gap-2 p-2 bg-bg-surface-muted text-sm font-medium">
+                  <div className="grid grid-cols-12 gap-2 p-2 bg-background text-sm font-medium">
                     <div className="col-span-5">الوصف</div>
                     <div className="col-span-2 text-center">الكمية</div>
                     <div className="col-span-2 text-center">السعر</div>
@@ -347,7 +347,7 @@ const InvoiceFormModal = () => {
                       </div>
                     </div>
                   ))}
-                  <div className="grid grid-cols-12 gap-2 p-2 bg-bg-surface-muted border-t font-bold">
+                  <div className="grid grid-cols-12 gap-2 p-2 bg-background border-t font-bold">
                     <div className="col-span-9 text-left">المجموع:</div>
                     <div className="col-span-2 text-center text-primary">
                       {lineItemsTotal.toFixed(2)} ر.س
@@ -356,7 +356,7 @@ const InvoiceFormModal = () => {
                   </div>
                 </div>
               ) : (
-                <div className="text-center py-4 border rounded-lg bg-bg-surface-muted">
+                <div className="text-center py-4 border rounded-lg bg-background">
                   <p className="text-muted mb-2">لم تتم إضافة بنود بعد</p>
                   <p className="text-sm text-text-muted">أضف بنود أو أدخل المبلغ الإجمالي مباشرة</p>
                 </div>

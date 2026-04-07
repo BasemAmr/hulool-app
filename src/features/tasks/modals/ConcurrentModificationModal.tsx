@@ -102,7 +102,7 @@ const ConcurrentModificationModal: React.FC<ConcurrentModificationModalProps> = 
         <div className="space-y-3">
           <h3 className="text-lg font-semibold text-text-primary">{t('tasks.chooseResolution')}</h3>
           <div className="space-y-2">
-            <label className="flex gap-3 p-3 border border-border rounded-lg cursor-pointer hover:bg-muted/50 transition-colors">
+            <label className="flex gap-3 p-3 border border-border rounded-lg cursor-pointer hover:bg-background transition-colors">
               <input 
                 type="radio" 
                 name="resolution"
@@ -113,11 +113,11 @@ const ConcurrentModificationModal: React.FC<ConcurrentModificationModalProps> = 
               />
               <div className="min-w-0">
                 <span className="font-semibold text-status-success-text text-sm block">{t('tasks.useCurrentData')}</span>
-                <p className="text-xs text-muted-foreground mt-1">{t('tasks.useCurrentDataDescription')}</p>
+                <p className="text-xs text-text-secondary mt-1">{t('tasks.useCurrentDataDescription')}</p>
               </div>
             </label>
             
-            <label className="flex gap-3 p-3 border border-border rounded-lg cursor-pointer hover:bg-muted/50 transition-colors">
+            <label className="flex gap-3 p-3 border border-border rounded-lg cursor-pointer hover:bg-background transition-colors">
               <input 
                 type="radio" 
                 name="resolution"
@@ -128,11 +128,11 @@ const ConcurrentModificationModal: React.FC<ConcurrentModificationModalProps> = 
               />
               <div className="min-w-0">
                 <span className="font-semibold text-status-info-text text-sm block">{t('tasks.overwriteChanges')}</span>
-                <p className="text-xs text-muted-foreground mt-1">{t('tasks.overwriteChangesDescription')}</p>
+                <p className="text-xs text-text-secondary mt-1">{t('tasks.overwriteChangesDescription')}</p>
               </div>
             </label>
             
-            <label className="flex gap-3 p-3 border border-border rounded-lg cursor-pointer hover:bg-muted/50 transition-colors">
+            <label className="flex gap-3 p-3 border border-border rounded-lg cursor-pointer hover:bg-background transition-colors">
               <input 
                 type="radio" 
                 name="resolution"
@@ -142,8 +142,8 @@ const ConcurrentModificationModal: React.FC<ConcurrentModificationModalProps> = 
                 className="mt-1 rounded"
               />
               <div className="min-w-0">
-                <span className="font-semibold text-gray-700 text-sm block">{t('tasks.cancelUpdate')}</span>
-                <p className="text-xs text-muted-foreground mt-1">{t('tasks.cancelUpdateDescription')}</p>
+                <span className="font-semibold text-text-primary text-sm block">{t('tasks.cancelUpdate')}</span>
+                <p className="text-xs text-text-secondary mt-1">{t('tasks.cancelUpdateDescription')}</p>
               </div>
             </label>
           </div>

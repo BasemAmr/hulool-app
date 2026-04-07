@@ -65,7 +65,7 @@ const FilteredReceivablesTable: React.FC<FilteredReceivablesTableProps> = ({
   const getTypeBadge = (type: string) => {
     const badgeClasses = {
       'Accounting': 'px-2.5 py-1 rounded-full bg-status-warning-bg0 text-white font-semibold text-sm',
-      'RealEstate': 'px-2.5 py-1 rounded-full bg-green-600 text-white font-semibold text-sm',
+      'RealEstate': 'px-2.5 py-1 rounded-full bg-status-success-bg text-status-success-text font-semibold text-sm',
       'Government': 'px-2.5 py-1 rounded-full bg-primary text-white font-semibold text-sm',
       'Other': 'px-2.5 py-1 rounded-full bg-bg-surface-muted0 text-white font-semibold text-sm'
     };
@@ -147,7 +147,7 @@ const FilteredReceivablesTable: React.FC<FilteredReceivablesTableProps> = ({
             
             return (
               <React.Fragment key={receivable.id}>
-                <TableRow className="hover:bg-muted/30 transition-colors">
+                <TableRow className="hover:bg-bg-surface-hover transition-colors">
                   <TableCell className="text-center">
                     {hasPayments && (
                       <button

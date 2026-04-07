@@ -53,7 +53,7 @@ interface AllTasksTableProps {
 // Client Name Cell with Link
 const ClientLinkCell = React.memo(({ rowData }: CellProps<Task>) => {
   if (!rowData.client) {
-    return <span className="hulool-cell-content" style={{ color: 'var(--token-text-muted)' }}>لا يوجد عميل</span>;
+    return <span className="hulool-cell-content" style={{ color: 'var(--token-text-primary)' }}>لا يوجد عميل</span>;
   }
 
   return (
@@ -73,7 +73,7 @@ ClientLinkCell.displayName = 'ClientLinkCell';
 // Phone Cell with WhatsApp
 const PhoneWhatsAppCell = React.memo(({ rowData }: CellProps<Task>) => {
   if (!rowData.client?.phone) {
-    return <span className="hulool-cell-content" style={{ color: 'var(--token-text-muted)' }}>—</span>;
+    return <span className="hulool-cell-content" style={{ color: 'var(--token-text-primary)' }}>—</span>;
   }
 
   const phone = rowData.client.phone;

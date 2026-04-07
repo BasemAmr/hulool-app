@@ -140,7 +140,7 @@ const LoginPage = () => {
           <div className="p-6 lg:p-10">
             <div className="text-center mb-6">
               <h2 className="text-primary text-3xl font-bold tracking-wide">HULOOL</h2>
-              <h5 className="font-normal text-muted-foreground mt-2">{t('login.title')}</h5>
+              <h5 className="font-medium text-text-secondary mt-2">{t('login.title')}</h5>
             </div>
 
             <form onSubmit={handleLogin}>
@@ -174,7 +174,7 @@ const LoginPage = () => {
                   autoComplete="current-password"
                   placeholder="Enter your password"
                 />
-                <small className="text-muted-foreground text-xs mt-1 block">Use your short password OR WordPress password</small>
+                <small className="text-text-secondary text-xs mt-1 block">Use your short password OR WordPress password</small>
               </div>
 
               <div className="grid">
@@ -200,7 +200,7 @@ const LoginPage = () => {
                     // REQUEST STEP: Send email
                     <>
                       <h6 className="mb-2 text-sm font-semibold">إعادة تعيين كلمة المرور</h6>
-                      <p className="text-muted-foreground text-xs mb-3">
+                      <p className="text-text-secondary text-xs mb-3">
                         أدخل اسم المستخدم أو البريد الإلكتروني وسنرسل لك رابط إعادة التعيين
                       </p>
 

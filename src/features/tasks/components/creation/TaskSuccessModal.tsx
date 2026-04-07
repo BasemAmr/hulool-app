@@ -36,18 +36,18 @@ const TaskSuccessModal = ({ isOpen, onClose, onViewAllTasks, onAddNewTask }: Tas
       
       {/* Modal */}
       <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-        <div className="relative w-full max-w-md bg-white rounded-lg shadow-2xl animate-scaleIn">
+        <div className="relative w-full max-w-md rounded-lg border border-border bg-card shadow-2xl animate-scaleIn">
           {/* Close button */}
           <button
             onClick={onClose}
-            className="absolute top-4 right-4 text-text-muted hover:text-text-secondary transition-colors"
+            className="absolute right-4 top-4 text-text-muted transition-colors hover:text-text-secondary"
           >
             <X size={20} />
           </button>
 
           {/* Header with gradient */}
-          <div className="bg-gradient-to-r from-green-500 to-emerald-600 text-white px-6 py-4 rounded-t-lg">
-            <h3 className="text-xl font-bold text-center">تم إنشاء المهمة بنجاح! ✨</h3>
+          <div className="rounded-t-lg border-b border-status-success-border bg-status-success-bg px-6 py-4 text-status-success-text">
+            <h3 className="text-center text-xl font-bold">تم إنشاء المهمة بنجاح! ✨</h3>
           </div>
 
           {/* Body */}
@@ -68,7 +68,7 @@ const TaskSuccessModal = ({ isOpen, onClose, onViewAllTasks, onAddNewTask }: Tas
             <div className="flex flex-col gap-3">
               <button
                 onClick={onViewAllTasks}
-                className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-md transition-colors font-medium"
+                className="flex w-full items-center justify-center gap-2 rounded-md bg-primary px-4 py-3 font-medium text-primary-foreground transition-colors hover:bg-primary/90"
               >
                 <ListTodo size={20} />
                 عرض جميع المهام
@@ -76,7 +76,7 @@ const TaskSuccessModal = ({ isOpen, onClose, onViewAllTasks, onAddNewTask }: Tas
 
               <button
                 onClick={onAddNewTask}
-                className="w-full flex items-center justify-center gap-2 px-4 py-3 border-2 border-blue-600 text-status-info-text hover:bg-status-info-bg rounded-md transition-colors font-medium"
+                className="flex w-full items-center justify-center gap-2 rounded-md border-2 border-primary px-4 py-3 font-medium text-primary hover:bg-primary/10 transition-colors"
               >
                 <Plus size={20} />
                 إضافة مهمة جديدة
@@ -84,7 +84,7 @@ const TaskSuccessModal = ({ isOpen, onClose, onViewAllTasks, onAddNewTask }: Tas
 
               <button
                 onClick={onClose}
-                className="w-full px-4 py-3 text-text-secondary hover:bg-bg-surface-muted rounded-md transition-colors font-medium"
+                className="w-full rounded-md px-4 py-3 font-medium text-text-secondary transition-colors hover:bg-background"
               >
                 إغلاق
               </button>

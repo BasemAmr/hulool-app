@@ -73,7 +73,7 @@ const EmployeeTasksPage = () => {
         </div>
         <div>
           <div className="flex items-center border border-border rounded-md overflow-hidden">
-            <span className="px-3 py-2 bg-muted border-r border-border">
+            <span className="px-3 py-2 bg-background border-r border-border">
               <Search size={16} className="text-text-primary" />
             </span>
             <input
@@ -88,7 +88,7 @@ const EmployeeTasksPage = () => {
         </div>
         <div>
           <div className="flex items-center border border-border rounded-md overflow-hidden">
-            <span className="px-3 py-2 bg-muted border-r border-border">
+            <span className="px-3 py-2 bg-background border-r border-border">
               <Filter size={16} className="text-text-primary" />
             </span>
             <select

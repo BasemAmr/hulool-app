@@ -44,7 +44,7 @@ const TaskDetailsModal = () => {
           {task.requirements && task.requirements.length > 0 ? (
             <ul className="text-sm space-y-1">
               {task.requirements.map(req => (
-                <li key={req.id || req.temp_id} className={req.is_provided ? 'text-status-success-text' : 'text-muted-foreground'}>
+                <li key={req.id || req.temp_id} className={req.is_provided ? 'text-status-success-text' : 'text-text-secondary'}>
                   {req.is_provided ? '✓' : '○'} {req.requirement_text}
                 </li>
               ))}

@@ -186,7 +186,7 @@ const SettingsPage: React.FC = () => {
                       </div>
                     </div>
                   ) : (
-                    <div className="flex flex-col items-center justify-center h-40 bg-muted rounded-md">
+                    <div className="flex flex-col items-center justify-center h-40 bg-background rounded-md border border-border">
                       <ImageIcon size={32} className="text-text-primary mb-2" />
                       <p className="text-sm text-text-primary">لا توجد صورة خلفية</p>
                     </div>

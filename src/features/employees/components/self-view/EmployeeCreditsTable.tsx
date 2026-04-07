@@ -33,7 +33,7 @@ const EmployeeCreditsTable: React.FC<EmployeeCreditsTableProps> = ({
   if (!credits.length) {
     return (
       <div className="text-center p-5 text-text-primary">
-        <FileText size={48} className="mb-3 opacity-50" />
+        <FileText size={48} className="mb-3 text-text-secondary" />
         <p className="mb-0">لا توجد ائتمانات للعملاء</p>
       </div>
     );
@@ -69,7 +69,7 @@ const EmployeeCreditsTable: React.FC<EmployeeCreditsTableProps> = ({
             return (
               <tr
                 key={credit.id}
-                className={`hover:bg-muted/50 transition-colors ${isFullyAllocated ? 'bg-status-success-bg/50' : ''}`}
+                className={`hover:bg-background transition-colors ${isFullyAllocated ? 'bg-status-success-bg/50' : ''}`}
               >
                 <td className="text-center py-3 px-2">
                   <span className="font-medium">{credit.client_name}</span>

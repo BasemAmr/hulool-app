@@ -19,8 +19,8 @@ import { useModalStore } from '@/shared/stores/modalStore';
 import WhatsAppIcon from '@/shared/ui/icons/WhatsAppIcon';
 import { sendPaymentReminder, formatPhoneForWhatsApp } from '@/shared/utils/whatsappUtils';
 
-const neutralActionButtonClass = 'inline-flex items-center justify-center rounded p-1.5 text-gray-400 hover:text-gray-700 cursor-pointer transition-colors duration-150';
-const neutralTextActionButtonClass = 'inline-flex items-center gap-1 rounded px-3 py-1.5 text-gray-400 hover:text-gray-700 cursor-pointer transition-colors duration-150';
+const neutralActionButtonClass = 'inline-flex items-center justify-center rounded p-1.5 text-text-secondary hover:text-text-primary cursor-pointer transition-colors duration-150';
+const neutralTextActionButtonClass = 'inline-flex items-center gap-1 rounded px-3 py-1.5 text-text-secondary hover:text-text-primary cursor-pointer transition-colors duration-150';
 
 // ================================
 // TYPE DEFINITIONS
@@ -109,7 +109,7 @@ const PhoneCell = React.memo(({ rowData, columnData, active }: CellProps<ClientR
   };
 
   if (!phone) {
-    return <span className="hulool-cell-content" style={{ justifyContent: 'center', color: '#9ca3af', fontWeight: active ? 700 : 400 }}>—</span>;
+    return <span className="hulool-cell-content" style={{ justifyContent: 'center', color: 'var(--token-text-secondary)', fontWeight: active ? 700 : 500 }}>—</span>;
   }
 
   return (
@@ -121,7 +121,7 @@ const PhoneCell = React.memo(({ rowData, columnData, active }: CellProps<ClientR
       >
         <WhatsAppIcon size={14} />
       </button>
-      <span style={{ color: '#000000' }}>{phone}</span>
+      <span style={{ color: 'var(--token-text-primary)' }}>{phone}</span>
     </div>
   );
 });
@@ -132,7 +132,7 @@ const TotalDebitCell = React.memo(({ rowData, active }: CellProps<ClientReceivab
   const amount = Number(rowData.total_amount) || 0;
   
   return (
-    <span className="hulool-cell-content" style={{ justifyContent: 'center', color: '#000000', fontWeight: active ? 700 : 500 }}>
+    <span className="hulool-cell-content" style={{ justifyContent: 'center', color: 'var(--token-text-primary)', fontWeight: active ? 700 : 500 }}>
       {formatCurrency(amount)}
     </span>
   );

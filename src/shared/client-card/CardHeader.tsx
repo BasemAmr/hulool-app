@@ -30,7 +30,7 @@ const CardHeader = ({
   };
 
   return (
-    <div className={`border-0 py-2 rounded-none ${isUrgent ? 'bg-status-danger-bg border-b border-status-danger-border' : 'bg-bg-surface-muted border-b border-border-default'}`}>
+    <div className={`border-0 py-2 rounded-none ${isUrgent ? 'bg-status-danger-bg border-b border-status-danger-border' : 'bg-background border-b border-border-default'}`}>
       <div className="flex justify-between items-center px-2">
         {/* Left: WhatsApp with phone number */}
         <div className="flex items-center gap-2">
@@ -57,7 +57,7 @@ const CardHeader = ({
           )}
           <button
             onClick={openGoogleDrive}
-            className="p-1.5 rounded hover:bg-border-default/30 transition-all duration-200 cursor-pointer border-0 bg-transparent disabled:opacity-50 disabled:cursor-not-allowed"
+            className="p-1.5 rounded hover:bg-background transition-all duration-200 cursor-pointer border border-border-default bg-transparent disabled:opacity-50 disabled:cursor-not-allowed"
             title="Google Drive"
             disabled={!client.google_drive_link}
           >

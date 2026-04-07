@@ -130,10 +130,10 @@ const InvoicesHubPage = () => {
       return <Badge className="bg-status-success-bg text-status-success-text">مدفوعة</Badge>;
     }
     if (isPartial) {
-      return <Badge className="bg-yellow-100 text-status-warning-text">جزئية</Badge>;
+      return <Badge className="bg-status-warning-bg text-status-warning-text">جزئية</Badge>;
     }
     if (status === 'cancelled') {
-      return <Badge className="bg-bg-surface-muted text-gray-700">ملغاة</Badge>;
+      return <Badge className="bg-background border border-border text-text-primary">ملغاة</Badge>;
     }
     if (status === 'overdue') {
       return <Badge className="bg-status-danger-bg text-status-danger-text">متأخرة</Badge>;
@@ -173,7 +173,7 @@ const InvoicesHubPage = () => {
         </h1>
 
         {/* Aging Stats Inline */}
-        <div className="bg-white/80 backdrop-blur px-4 py-2 rounded-full border shadow-sm flex items-center gap-4 text-xs overflow-x-auto max-w-full">
+        <div className="rounded-full border border-border bg-card/80 px-4 py-2 text-xs shadow-sm backdrop-blur flex items-center gap-4 overflow-x-auto max-w-full">
           <div className="flex items-center gap-1 whitespace-nowrap">
             <CheckCircle size={14} className="text-status-success-text" />
             <span className="text-text-secondary">حالية:</span>
@@ -182,16 +182,16 @@ const InvoicesHubPage = () => {
             </span>
             <span className="text-text-muted">({isAgingLoading ? '-' : agingData?.current?.count || 0})</span>
           </div>
-          <div className="w-px h-3 bg-gray-300" />
+          <div className="w-px h-3 bg-border-default" />
           <div className="flex items-center gap-1 whitespace-nowrap">
-            <Clock size={14} className="text-yellow-500" />
+            <Clock size={14} className="text-yellow-700" />
             <span className="text-text-secondary">30 يوم:</span>
             <span className="font-bold text-status-warning-text">
               {isAgingLoading ? '...' : new Intl.NumberFormat('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(agingData?.['30_days']?.amount || 0)}
             </span>
             <span className="text-text-muted">({isAgingLoading ? '-' : agingData?.['30_days']?.count || 0})</span>
           </div>
-          <div className="w-px h-3 bg-gray-300" />
+          <div className="w-px h-3 bg-border-default" />
           <div className="flex items-center gap-1 whitespace-nowrap">
             <AlertCircle size={14} className="text-orange-500" />
             <span className="text-text-secondary">60 يوم:</span>
@@ -200,7 +200,7 @@ const InvoicesHubPage = () => {
             </span>
             <span className="text-text-muted">({isAgingLoading ? '-' : agingData?.['60_days']?.count || 0})</span>
           </div>
-          <div className="w-px h-3 bg-gray-300" />
+          <div className="w-px h-3 bg-border-default" />
           <div className="flex items-center gap-1 whitespace-nowrap">
             <AlertCircle size={14} className="text-status-danger-text" />
             <span className="text-text-secondary">+90:</span>
@@ -218,7 +218,7 @@ const InvoicesHubPage = () => {
       </div>
 
       {/* Filter Bar */}
-      <div className="flex flex-wrap items-center gap-3 bg-white p-3 rounded-lg border shadow-sm mb-4 flex-shrink-0">
+      <div className="flex flex-wrap items-center gap-3 rounded-lg border border-border bg-card p-3 shadow-sm mb-4 flex-shrink-0">
         {/* Search Input */}
         <div className="relative flex-1 min-w-[200px] max-w-[300px]">
           <div className="absolute right-3 top-1/2 -translate-y-1/2 text-text-muted pointer-events-none">
@@ -270,7 +270,7 @@ const InvoicesHubPage = () => {
         <div className="inline-flex rounded-md shadow-sm border border-input bg-background">
           <button
             onClick={() => setViewMode('table')}
-            className={`p-2 transition-colors ${viewMode === 'table' ? 'bg-primary text-white' : 'hover:bg-muted text-text-primary/70'}`}
+            className={`p-2 transition-colors ${viewMode === 'table' ? 'bg-primary text-primary-foreground' : 'hover:bg-background text-text-primary'}`}
             title="عرض جدول"
           >
             <LayoutList size={18} />
@@ -278,7 +278,7 @@ const InvoicesHubPage = () => {
           <div className="w-px bg-border" />
           <button
             onClick={() => setViewMode('kanban')}
-            className={`p-2 transition-colors ${viewMode === 'kanban' ? 'bg-primary text-white' : 'hover:bg-muted text-text-primary/70'}`}
+            className={`p-2 transition-colors ${viewMode === 'kanban' ? 'bg-primary text-primary-foreground' : 'hover:bg-background text-text-primary'}`}
             title="عرض كانبان"
           >
             <LayoutGrid size={18} />
@@ -295,7 +295,7 @@ const InvoicesHubPage = () => {
           />
         ) : (
           /* Table View */
-          <div className="bg-white rounded-lg border shadow-sm h-full flex flex-col">
+          <div className="rounded-lg border border-border bg-card shadow-sm h-full flex flex-col">
             <div className="flex-1 overflow-auto">
               {isInvoicesLoading && allInvoices.length === 0 ? (
                 <div className="flex justify-center items-center h-full">
@@ -303,8 +303,8 @@ const InvoicesHubPage = () => {
                 </div>
               ) : allInvoices.length === 0 ? (
                 <div className="text-center py-20">
-                  <FileText size={48} className="text-gray-200 mx-auto mb-4" />
-                  <h3 className="text-lg font-medium text-gray-900">لا توجد فواتير</h3>
+                  <FileText size={48} className="text-text-secondary mx-auto mb-4" />
+                  <h3 className="text-lg font-medium text-text-primary">لا توجد فواتير</h3>
                   <p className="text-text-muted mt-1">جرب تغيير شروط البحث أو الفلترة</p>
                   {(search || clientIdFilter || statusFilter) && (
                     <Button
@@ -318,7 +318,7 @@ const InvoicesHubPage = () => {
                 </div>
               ) : (
                 <Table className="border-collapse border border-border-strong">
-                  <TableHeader className="bg-muted/50 sticky top-0 z-10 shadow-sm">
+                  <TableHeader className="bg-background sticky top-0 z-10 shadow-sm">
                     <TableRow>
                       <TableHead className="text-start w-[80px] border border-border-strong px-3 py-2">#</TableHead>
                       <TableHead className="text-start border border-border-strong px-3 py-2">العميل</TableHead>
@@ -334,10 +334,10 @@ const InvoicesHubPage = () => {
                   </TableHeader>
                   <TableBody>
                     {allInvoices.map((invoice) => (
-                      <TableRow key={invoice.id} className="hover:bg-muted/20 group">
+                      <TableRow key={invoice.id} className="hover:bg-background group">
                         <TableCell className="font-mono text-xs border border-border-strong px-3 py-2">{invoice.id}</TableCell>
                         <TableCell className="border border-border-strong px-3 py-2">
-                          <span className="font-medium text-sm text-gray-900">
+                          <span className="font-medium text-sm text-text-primary">
                             {invoice.client?.name || `عميل #${invoice.client_id}`}
                           </span>
                         </TableCell>

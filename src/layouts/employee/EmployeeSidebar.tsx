@@ -105,7 +105,7 @@ const EmployeeSidebar = () => {
         )}
 
         {/* Header with Logo and Notifications */}
-        <div className="px-3 py-3 border-b border-border bg-muted/30 flex items-center gap-2 min-h-[60px]">
+        <div className="px-3 py-3 border-b border-border bg-background flex items-center gap-2 min-h-[60px]">
           <div className="flex items-center justify-between w-full">
             <Logo compact />
             {!isCollapsed && (
@@ -124,7 +124,7 @@ const EmployeeSidebar = () => {
                 key={item.path}
                 to={item.path}
                 className={({ isActive }) =>
-                  `flex items-center gap-2 px-2 py-1.5 mx-1 text-foreground text-xs font-normal no-underline rounded-lg transition-all duration-200 relative overflow-hidden hover:bg-accent hover:text-accent-foreground hover:-translate-x-1 hover:font-bold ${
+                  `flex items-center gap-2 px-2 py-1.5 mx-1 text-foreground text-xs font-medium no-underline rounded-lg transition-all duration-200 relative overflow-hidden hover:bg-accent hover:text-accent-foreground hover:-translate-x-1 hover:font-bold ${
                     isActive ? 'bg-primary text-primary-foreground font-bold shadow-md before:content-[""] before:absolute before:top-0 before:right-0 before:w-1 before:h-full before:bg-primary-foreground before:rounded-l-sm' : ''
                   }`
                 }
@@ -145,7 +145,7 @@ const EmployeeSidebar = () => {
               <button
                 key={index}
                 onClick={action.action}
-                className="w-full border-none bg-transparent text-right flex items-center gap-2 px-2 py-1.5 mx-1 text-foreground text-xs font-normal rounded-lg transition-all duration-200 hover:bg-accent hover:text-accent-foreground hover:-translate-x-1 focus:outline-none focus:bg-accent"
+                className="w-full border-none bg-transparent text-right flex items-center gap-2 px-2 py-1.5 mx-1 text-foreground text-xs font-medium rounded-lg transition-all duration-200 hover:bg-accent hover:text-accent-foreground hover:-translate-x-1 focus:outline-none focus:bg-accent"
               >
                 <span className="w-4 h-4 flex items-center justify-center text-sm transition-all duration-200 flex-shrink-0">
                   <action.icon size={16} />
@@ -160,7 +160,7 @@ const EmployeeSidebar = () => {
             <input
               type="text"
               placeholder="البحث في العملاء..."
-              className="w-full px-2 pr-8 py-1.5 bg-muted/30 border border-border rounded-lg text-xs font-normal outline-none transition-all duration-200 cursor-pointer placeholder:text-right hover:bg-muted/50 hover:border-muted-foreground/40 focus:bg-muted/50 focus:border-primary focus:ring-2 focus:ring-primary/25"
+              className="w-full px-2 pr-8 py-1.5 bg-background border border-border rounded-lg text-xs font-medium outline-none transition-all duration-200 cursor-pointer placeholder:text-right hover:bg-background hover:border-muted-foreground/40 focus:bg-background focus:border-primary focus:ring-2 focus:ring-primary/25"
               onFocus={handleSearchFocus}
               readOnly
             />
@@ -169,8 +169,8 @@ const EmployeeSidebar = () => {
         </nav>
 
         {/* User Section */}
-        <div className="p-2 border-t border-border bg-muted/30">
-          <div className="flex items-center gap-2 p-1.5 bg-muted/50 rounded-lg transition-all duration-200 hover:bg-muted">
+        <div className="p-2 border-t border-border bg-background">
+          <div className="flex items-center gap-2 p-1.5 bg-background rounded-lg transition-all duration-200 hover:bg-background">
             <div 
               className="w-9 h-9 rounded-full flex items-center justify-center font-semibold text-base flex-shrink-0 shadow-sm border-2 border-white/20 bg-primary text-primary-foreground"
             >

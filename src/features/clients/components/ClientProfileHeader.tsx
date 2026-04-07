@@ -151,7 +151,7 @@ const ClientProfileHeader = ({
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <button
-                    className="px-2 py-1 text-xs border border-gray-400 text-text-secondary rounded-md hover:bg-bg-surface-muted transition-colors disabled:opacity-50"
+                    className="px-2 py-1 text-xs border border-border-strong text-text-secondary rounded-md hover:bg-bg-surface-muted transition-colors disabled:opacity-50"
                     disabled={isExporting}
                   >
                     <Download size={14} className="me-1" />

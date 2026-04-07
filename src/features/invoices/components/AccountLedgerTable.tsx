@@ -36,8 +36,8 @@ import HuloolDataGrid from '@/shared/grid/HuloolDataGrid';
 import type { HuloolGridColumn } from '@/shared/grid/HuloolDataGrid';
 import type { CellProps } from 'react-datasheet-grid';
 
-const neutralActionButtonClass = 'inline-flex items-center justify-center rounded p-1.5 text-gray-400 hover:text-gray-700 cursor-pointer transition-colors duration-150';
-const destructiveActionButtonClass = 'inline-flex items-center justify-center rounded p-1.5 text-gray-400 hover:text-red-600 cursor-pointer transition-colors duration-150';
+const neutralActionButtonClass = 'inline-flex items-center justify-center rounded p-1.5 text-text-secondary hover:text-text-primary cursor-pointer transition-colors duration-150';
+const destructiveActionButtonClass = 'inline-flex items-center justify-center rounded p-1.5 text-text-secondary hover:text-text-danger cursor-pointer transition-colors duration-150';
 
 interface AccountLedgerTableProps {
   client: Client;
@@ -110,7 +110,7 @@ const TransactionIconCell = React.memo(({ rowData }: CellProps<FinancialTransact
       case 'INVOICE_REVERSED':
         return <ArrowUpRight size={16} className="text-orange-500" />;
       default:
-        return <FileText size={16} className="text-text-muted" />;
+        return <FileText size={16} className="text-text-primary" />;
     }
   };
 
@@ -125,7 +125,7 @@ TransactionIconCell.displayName = 'TransactionIconCell';
 // Description Cell
 const DescriptionCell = React.memo(({ rowData, active }: CellProps<FinancialTransaction>) => {
   return (
-    <span className="hulool-cell-content" style={{ fontWeight: active ? 700 : 500, color: '#000000' }}>
+    <span className="hulool-cell-content" style={{ fontWeight: active ? 700 : 500, color: 'var(--token-text-primary)' }}>
       {rowData.description}
     </span>
   );
@@ -136,7 +136,7 @@ DescriptionCell.displayName = 'DescriptionCell';
 const DebitCell = React.memo(({ rowData, columnData, active }: CellProps<FinancialTransaction, { hideAmounts: boolean }>) => {
   const amount = getDebitAmount(rowData);
   return (
-    <span className="hulool-cell-content" style={{ justifyContent: 'center', color: 'var(--token-text-primary)', fontWeight: active ? 700 : 400 }}>
+    <span className="hulool-cell-content" style={{ justifyContent: 'center', color: 'var(--token-text-primary)', fontWeight: active ? 700 : 500 }}>
       {columnData?.hideAmounts ? '***' : (amount > 0 ? formatCurrency(amount) : '—')}
     </span>
   );
@@ -147,7 +147,7 @@ DebitCell.displayName = 'DebitCell';
 const CreditCell = React.memo(({ rowData, columnData, active }: CellProps<FinancialTransaction, { hideAmounts: boolean }>) => {
   const amount = getCreditAmount(rowData);
   return (
-    <span className="hulool-cell-content" style={{ justifyContent: 'center', color: 'var(--token-text-primary)', fontWeight: active ? 700 : 400 }}>
+    <span className="hulool-cell-content" style={{ justifyContent: 'center', color: 'var(--token-text-primary)', fontWeight: active ? 700 : 500 }}>
       {columnData?.hideAmounts ? '***' : (amount > 0 ? formatCurrency(amount) : '—')}
     </span>
   );
@@ -168,7 +168,7 @@ BalanceCell.displayName = 'BalanceCell';
 // Date Cell
 const DateCell = React.memo(({ rowData, active }: CellProps<FinancialTransaction>) => {
   return (
-    <span className="hulool-cell-content" style={{ justifyContent: 'center', fontSize: '0.875rem', color: '#000000', fontWeight: active ? 700 : 400 }}>
+    <span className="hulool-cell-content" style={{ justifyContent: 'center', fontSize: '0.875rem', color: 'var(--token-text-primary)', fontWeight: active ? 700 : 500 }}>
       {formatDate(rowData.transaction_date || rowData.created_at)}
     </span>
   );
@@ -579,7 +579,7 @@ const AccountLedgerTable: React.FC<AccountLedgerTableProps> = ({
             </div>
             <div className="flex flex-col items-center p-3 bg-bg-surface-muted rounded-lg">
               <span className="text-sm text-text-muted mb-1">عدد المعاملات</span>
-              <span className="text-sm font-medium text-gray-700">
+              <span className="text-sm font-medium text-text-secondary">
                 {historyData.transactions?.length || 0}
               </span>
             </div>

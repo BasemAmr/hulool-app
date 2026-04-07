@@ -91,23 +91,23 @@ const AssignTaskModal = () => {
     >
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
         {/* Task Information */}
-        <div className="p-4 rounded-lg bg-muted border border-border space-y-3">
+        <div className="p-4 rounded-lg bg-background border border-border space-y-3">
           <h6 className="font-semibold text-text-primary">معلومات المهمة</h6>
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
-              <span className="text-muted-foreground text-xs block">العميل:</span>
+              <span className="text-text-secondary text-xs block">العميل:</span>
               <div className="font-medium text-text-primary">{task.client?.name || 'لا يوجد عميل'}</div>
             </div>
             <div className="space-y-2">
-              <span className="text-muted-foreground text-xs block">نوع المهمة:</span>
+              <span className="text-text-secondary text-xs block">نوع المهمة:</span>
               <div className="font-medium text-text-primary">{t(`type.${task.type}`)}</div>
             </div>
             <div className="space-y-2">
-              <span className="text-muted-foreground text-xs block">الخدمة المقدمة:</span>
+              <span className="text-text-secondary text-xs block">الخدمة المقدمة:</span>
               <div className="font-medium text-text-primary">{task.task_name || t(`type.${task.type}`)}</div>
             </div>
             <div className="space-y-2">
-              <span className="text-muted-foreground text-xs block">المكلف الحالي:</span>
+              <span className="text-text-secondary text-xs block">المكلف الحالي:</span>
               <div className="font-medium text-primary">{getCurrentAssignedEmployeeName()}</div>
             </div>
           </div>
@@ -140,7 +140,7 @@ const AssignTaskModal = () => {
             )}
           />
           {isLoadingEmployees && (
-            <small className="text-muted-foreground text-xs">جاري تحميل قائمة الموظفين...</small>
+            <small className="text-text-secondary text-xs">جاري تحميل قائمة الموظفين...</small>
           )}
         </div>
 

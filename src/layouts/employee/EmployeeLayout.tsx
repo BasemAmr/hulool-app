@@ -28,13 +28,13 @@ const EmployeePageWrapper = () => {
   }, [location.pathname]);
 
   return (
-    <div className="rtl flex flex-col h-screen overflow-hidden bg-bg-surface-muted" data-page-type={pageType}>
+    <div className="rtl flex flex-col h-screen overflow-hidden bg-bg-surface" data-page-type={pageType}>
       <EmployeeNavbar />
       <main
-        className="flex-1 overflow-y-auto h-full bg-bg-surface-muted"
+        className="flex-1 overflow-y-auto h-full bg-bg-surface"
         style={{
           scrollbarWidth: 'thin',
-          scrollbarColor: 'hsl(var(--muted-foreground)) hsl(var(--secondary))'
+          scrollbarColor: 'var(--token-border-strong) var(--token-bg-surface)'
         }}
       >
         <div className="p-6 min-h-full" dir="rtl">

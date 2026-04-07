@@ -39,7 +39,7 @@ const TaskRestoreValidationWrapper: React.FC<TaskRestoreValidationWrapperProps> 
     if (validateRestore.isPending) {
         return (
             <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
-                <div className="bg-white p-6 rounded-lg shadow-xl flex flex-col items-center">
+                <div className="bg-card p-6 rounded-lg shadow-xl flex flex-col items-center border border-border">
                     <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-primary-600 mb-4"></div>
                     <p className="text-text-secondary">جاري التحقق من إمكانية استعادة المهمة...</p>
                 </div>

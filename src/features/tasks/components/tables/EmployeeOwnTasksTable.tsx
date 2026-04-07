@@ -23,8 +23,8 @@ import {
 } from 'lucide-react';
 import { useCancelTask, useDeferTask, useMarkTaskUrgent, useRemoveTaskUrgent } from '@/features/tasks/api/taskQueries';
 
-const neutralActionButtonClass = 'inline-flex items-center justify-center rounded p-1.5 text-gray-400 hover:text-gray-700 cursor-pointer transition-colors duration-150';
-const destructiveActionButtonClass = 'inline-flex items-center justify-center rounded p-1.5 text-gray-400 hover:text-red-600 cursor-pointer transition-colors duration-150';
+const neutralActionButtonClass = 'inline-flex items-center justify-center rounded p-1.5 text-text-secondary hover:text-text-primary cursor-pointer transition-colors duration-150';
+const destructiveActionButtonClass = 'inline-flex items-center justify-center rounded p-1.5 text-text-secondary hover:text-text-danger cursor-pointer transition-colors duration-150';
 
 interface EmployeeOwnTasksTableProps {
   searchTerm?: string;
@@ -232,13 +232,13 @@ const EmployeeOwnTasksTable: React.FC<EmployeeOwnTasksTableProps> = ({
     <div className="rounded-lg border bg-card shadow-sm overflow-hidden">
       <div className="overflow-x-auto">
         <table className="w-full border-collapse">
-          <thead className="bg-bg-surface-muted/80">
+          <thead className="bg-background">
             <tr>
               {['اسم المهمة', 'الملاحظات', 'العميل', 'النوع', 'الحالة', 'تاريخ البداية', 'تاريخ الانتهاء', 'الإجراءات'].map((header, idx) => (
                 <th key={idx} style={{
                   ...CELL_STYLE,
                   fontWeight: 'bold',
-                  color: '#4b5563',
+                  color: 'var(--token-text-primary)',
                   textAlign: header === 'الإجراءات' ? 'center' : 'start'
                 }}>
                   {header}
@@ -254,7 +254,7 @@ const EmployeeOwnTasksTable: React.FC<EmployeeOwnTasksTableProps> = ({
               return (
                 <tr
                   key={task.id}
-                  className="hover:bg-muted/50 transition-colors"
+                  className="hover:bg-background transition-colors"
                   style={{
                     backgroundColor: isHighlighted ? 'rgba(255, 193, 7, 0.1)' : rowStyle.backgroundColor,
                   }}

@@ -34,7 +34,7 @@ const ClientHeaderDropdown = ({
       <DropdownMenuTrigger asChild>
         <button
           className={cn(
-            "p-1.5 rounded hover:bg-white/20",
+            "p-1.5 rounded hover:bg-background/20",
             "transition-all duration-200 cursor-pointer",
             "border-0 bg-transparent",
             "focus:outline-none focus:ring-2 focus:ring-white/20"

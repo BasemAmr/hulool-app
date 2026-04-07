@@ -67,9 +67,9 @@ const ModalFooter = ({ step, isEditMode, isLoading, onBack, onClose }: ModalFoot
       
       <style>{`
         .modal-footer-compact {
-          border-top: 1px solid #e9ecef;
+          border-top: 1px solid var(--token-border-default);
           padding: 0.75rem 1rem;
-          background-color: #f8f9fa;
+          background-color: var(--token-bg-surface);
           border-radius: 0 0 0.375rem 0.375rem;
         }
         

@@ -114,7 +114,7 @@ const EditExpectedCommissionModal: React.FC<EditExpectedCommissionModalProps> = 
 
       <form onSubmit={handleSubmit} className="space-y-4">
         <div className="space-y-2">
-          <label htmlFor="expected_amount" className="block text-sm font-medium text-gray-700">
+          <label htmlFor="expected_amount" className="block text-sm font-medium text-text-secondary">
             المبلغ المتوقع (ر.س)
           </label>
           <div className="relative">

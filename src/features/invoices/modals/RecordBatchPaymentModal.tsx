@@ -102,7 +102,7 @@ const RecordBatchPaymentModal = () => {
               <div key={a.invoice.id} className="summary-row">
                 <div className="flex-1">
                   <span className="text-sm font-medium">#{a.invoice.id}</span>
-                  <span className="text-xs text-muted-foreground mr-2">
+                  <span className="text-xs text-text-secondary mr-2">
                     {a.invoice.description || 'بدون وصف'}
                   </span>
                 </div>

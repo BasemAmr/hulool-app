@@ -44,7 +44,7 @@ const formatCurrency = (amount: number) => {
 // Date Cell
 const DateCell = React.memo(({ rowData }: CellProps<ClientCredit>) => {
   return (
-    <div style={{ color: '#000000' }}>
+    <div style={{ color: 'var(--token-text-primary)' }}>
       {formatDate(rowData.received_at)}
     </div>
   );
@@ -54,7 +54,7 @@ DateCell.displayName = 'DateCell';
 // Description Cell
 const DescriptionCell = React.memo(({ rowData }: CellProps<ClientCredit>) => {
   return (
-    <div style={{ color: '#000000' }}>
+    <div style={{ color: 'var(--token-text-primary)' }}>
       {rowData.description}
     </div>
   );

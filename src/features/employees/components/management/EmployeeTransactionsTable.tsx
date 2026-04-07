@@ -165,7 +165,7 @@ const EmployeeTransactionsTable: React.FC<EmployeeTransactionsTableProps> = ({
       'EMPLOYEE_BORROW': { label: 'سلفة', className: 'bg-blue-100 text-blue-800' },
     };
 
-    const config = typeMap[type] || { label: type, className: 'bg-bg-surface-muted text-gray-800' };
+    const config = typeMap[type] || { label: type, className: 'bg-background text-text-primary' };
     return (
       <span className={`inline-flex items-center px-2 py-0.5 text-xs font-medium rounded ${config.className}`}>
         {config.label}
@@ -184,7 +184,7 @@ const EmployeeTransactionsTable: React.FC<EmployeeTransactionsTableProps> = ({
         <button
           className={`px-4 py-2 font-medium text-sm border-b-2 transition-colors ${activeTab === 'confirmed'
             ? 'border-primary text-primary'
-            : 'border-transparent text-text-muted hover:text-gray-700'
+            : 'border-transparent text-text-muted hover:text-text-primary'
             }`}
           onClick={() => setActiveTab('confirmed')}
         >
@@ -199,7 +199,7 @@ const EmployeeTransactionsTable: React.FC<EmployeeTransactionsTableProps> = ({
         <button
           className={`px-4 py-2 font-medium text-sm border-b-2 transition-colors ${activeTab === 'pending'
             ? 'border-primary text-primary'
-            : 'border-transparent text-text-muted hover:text-gray-700'
+            : 'border-transparent text-text-muted hover:text-text-primary'
             }`}
           onClick={() => setActiveTab('pending')}
         >
@@ -307,7 +307,7 @@ const EmployeeTransactionsTable: React.FC<EmployeeTransactionsTableProps> = ({
 
           {confirmedTransactions.length === 0 && (
             <div className="p-8 text-center text-text-muted">
-              <CheckCircle size={48} className="mx-auto mb-4 text-gray-300" />
+              <CheckCircle size={48} className="mx-auto mb-4 text-border-default" />
               <p>لا توجد معاملات مؤكدة حتى الآن</p>
             </div>
           )}
@@ -354,8 +354,8 @@ const EmployeeTransactionsTable: React.FC<EmployeeTransactionsTableProps> = ({
                     <TableCell className="border border-border-strong">
                       <span className={`inline-flex items-center px-2 py-0.5 text-xs font-medium rounded ${invoiceStatus === 'paid' ? 'bg-status-success-bg text-status-success-text' :
                         invoiceStatus === 'partially_paid' ? 'bg-blue-100 text-blue-800' :
-                          invoiceStatus === 'pending' ? 'bg-yellow-100 text-status-warning-text' :
-                            'bg-bg-surface-muted text-gray-800'
+                          invoiceStatus === 'pending' ? 'bg-status-warning-bg text-status-warning-text' :
+                            'bg-background text-text-primary'
                         }`}>
                         {invoiceStatus === 'paid' ? 'مدفوع' :
                           invoiceStatus === 'partially_paid' ? 'مدفوع جزئياً' :
@@ -366,7 +366,7 @@ const EmployeeTransactionsTable: React.FC<EmployeeTransactionsTableProps> = ({
                     <TableCell className="border border-border-strong">
                       <div className="w-24">
                         <div className="flex items-center gap-2">
-                          <div className="flex-1 bg-gray-200 rounded-full h-2">
+                          <div className="flex-1 bg-border-default rounded-full h-2">
                             <div
                               className={`h-2 rounded-full ${progress >= 100 ? 'bg-status-success-bg0' :
                                 progress > 50 ? 'bg-status-info-bg0' :
@@ -396,7 +396,7 @@ const EmployeeTransactionsTable: React.FC<EmployeeTransactionsTableProps> = ({
 
           {pendingCommissions.length === 0 && (
             <div className="p-8 text-center text-text-muted">
-              <Clock size={48} className="mx-auto mb-4 text-gray-300" />
+              <Clock size={48} className="mx-auto mb-4 text-border-default" />
               <p>لا توجد عمولات معلقة</p>
               <p className="text-sm mt-1">ستظهر هنا العمولات في انتظار دفع الفاتورة</p>
             </div>

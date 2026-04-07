@@ -391,9 +391,9 @@ const ManualTransactionModal = ({
               {/* Payout/Repayment Preview */}
               <div className="flex items-center gap-3">
                 {/* Account */}
-                <div className={`flex-1 p-4 bg-white rounded-lg border-2 shadow-sm ${transactionMode === 'payout'
-                  ? (accountType === 'employee' ? 'border-red-300' : 'border-green-300')
-                  : (accountType === 'employee' ? 'border-green-300' : 'border-red-300')
+                <div className={`flex-1 rounded-lg border-2 bg-card p-4 shadow-sm ${transactionMode === 'payout'
+                  ? (accountType === 'employee' ? 'border-status-danger-border' : 'border-status-success-border')
+                  : (accountType === 'employee' ? 'border-status-success-border' : 'border-status-danger-border')
                   }`}>
                   <div className="flex items-center gap-2 mb-3">
                     {getTypeIcon(selectedAccount.type)}
@@ -401,11 +401,11 @@ const ManualTransactionModal = ({
                   </div>
                   <div className="space-y-2">
                     <div className="flex justify-between items-center">
-                      <span className="text-sm font-medium text-gray-700">Current Balance:</span>
+                      <span className="text-sm font-medium text-text-secondary">Current Balance:</span>
                       <span className="text-base font-bold text-text-primary">{formatCurrency(balances.accountCurrent)} SAR</span>
                     </div>
                     <div className="flex justify-between items-center pt-2 border-t-2 border-border-default">
-                      <span className="text-sm font-medium text-gray-700">New Balance:</span>
+                      <span className="text-sm font-medium text-text-secondary">New Balance:</span>
                       <span className={`text-lg font-black ${balances.accountNew > balances.accountCurrent ? 'text-status-success-text' : 'text-status-danger-text'
                         }`}>
                         {formatCurrency(balances.accountNew)} SAR
@@ -426,9 +426,9 @@ const ManualTransactionModal = ({
                 <ArrowRight size={24} className="text-status-info-text flex-shrink-0 font-bold" />
 
                 {/* Company */}
-                <div className={`flex-1 p-4 bg-white rounded-lg border-2 shadow-sm ${transactionMode === 'payout'
-                  ? (accountType === 'employee' ? 'border-green-300' : 'border-red-300')
-                  : (accountType === 'employee' ? 'border-red-300' : 'border-green-300')
+                <div className={`flex-1 rounded-lg border-2 bg-card p-4 shadow-sm ${transactionMode === 'payout'
+                  ? (accountType === 'employee' ? 'border-status-success-border' : 'border-status-danger-border')
+                  : (accountType === 'employee' ? 'border-status-danger-border' : 'border-status-success-border')
                   }`}>
                   <div className="flex items-center gap-2 mb-3">
                     {getTypeIcon('company')}
@@ -436,11 +436,11 @@ const ManualTransactionModal = ({
                   </div>
                   <div className="space-y-2">
                     <div className="flex justify-between items-center">
-                      <span className="text-sm font-medium text-gray-700">Current Balance:</span>
+                      <span className="text-sm font-medium text-text-secondary">Current Balance:</span>
                       <span className="text-base font-bold text-text-primary">{formatCurrency(balances.companyCurrent)} SAR</span>
                     </div>
                     <div className="flex justify-between items-center pt-2 border-t-2 border-border-default">
-                      <span className="text-sm font-medium text-gray-700">New Balance:</span>
+                      <span className="text-sm font-medium text-text-secondary">New Balance:</span>
                       <span className={`text-lg font-black ${balances.companyNew > balances.companyCurrent ? 'text-status-success-text' : 'text-status-danger-text'
                         }`}>
                         {formatCurrency(balances.companyNew)} SAR

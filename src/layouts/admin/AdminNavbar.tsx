@@ -3,6 +3,7 @@ import { useAuthStore } from '@/features/auth/store/authStore';
 import { useTranslation } from 'react-i18next';
 import Logo from '@/shared/ui/primitives/Logo';
 import NotificationBell from '@/layouts/admin/NotificationBell';
+import ThemeToggleButton from '@/shared/ui/primitives/ThemeToggleButton';
 import { 
   Banknote, LayoutDashboard, LogOut, NotebookText, Users, Settings, 
   Building, Calculator, Home, Briefcase, Plus, Receipt, 
@@ -95,7 +96,7 @@ const Navbar = () => {
                 `flex items-center gap-2 px-3 py-2 text-sm font-bold rounded-md transition-colors whitespace-nowrap ${
                   isActive 
                     ? 'bg-primary/10 text-primary' 
-                    : 'text-muted-foreground hover:bg-accent hover:text-accent-foreground'
+                    : 'text-text-secondary hover:bg-accent hover:text-accent-foreground'
                 }`
               }
             >
@@ -106,10 +107,10 @@ const Navbar = () => {
 
           {/* Employees Dropdown */}
           <DropdownMenu>
-            <DropdownMenuTrigger className={`flex items-center gap-2 px-3 py-2 text-sm font-bold rounded-md transition-colors outline-none ${isEmployeesActive ? 'bg-primary/10 text-primary' : 'text-muted-foreground hover:bg-accent hover:text-accent-foreground'}`}>
+            <DropdownMenuTrigger className={`flex items-center gap-2 px-3 py-2 text-sm font-bold rounded-md transition-colors outline-none ${isEmployeesActive ? 'bg-primary/10 text-primary' : 'text-text-secondary hover:bg-accent hover:text-accent-foreground'}`}>
               <UserCog size={16} />
               <span>الموظفين</span>
-              <ChevronDown size={14} className="opacity-50" />
+              <ChevronDown size={14} className="text-text-secondary" />
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-56 text-right max-h-96 overflow-y-auto">
               <DropdownMenuLabel className="text-right">إدارة الموظفين</DropdownMenuLabel>
@@ -121,12 +122,12 @@ const Navbar = () => {
               </DropdownMenuItem>
               <DropdownMenuSeparator />
               {employeesLoading ? (
-                <div className="flex items-center justify-center py-4 gap-2 text-muted-foreground">
+                <div className="flex items-center justify-center py-4 gap-2 text-text-secondary">
                   <Loader size={16} className="animate-spin" />
                   <span className="text-sm">جاري التحميل...</span>
                 </div>
               ) : employees.length === 0 ? (
-                <div className="py-4 text-center text-sm text-muted-foreground">
+                <div className="py-4 text-center text-sm text-text-secondary">
                   لا توجد موظفين
                 </div>
               ) : (
@@ -147,10 +148,10 @@ const Navbar = () => {
             </DropdownMenuContent>
           </DropdownMenu>
           <DropdownMenu>
-            <DropdownMenuTrigger className={`flex items-center gap-2 px-3 py-2 text-sm font-bold rounded-md transition-colors outline-none ${isFinancialActive ? 'bg-primary/10 text-primary' : 'text-muted-foreground hover:bg-accent hover:text-accent-foreground'}`}>
+            <DropdownMenuTrigger className={`flex items-center gap-2 px-3 py-2 text-sm font-bold rounded-md transition-colors outline-none ${isFinancialActive ? 'bg-primary/10 text-primary' : 'text-text-secondary hover:bg-accent hover:text-accent-foreground'}`}>
               <Wallet size={16} />
               <span>المركز المالي</span>
-              <ChevronDown size={14} className="opacity-50" />
+              <ChevronDown size={14} className="text-text-secondary" />
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-48 text-right">
               {financialCenterItems.map((item) => (
@@ -166,10 +167,10 @@ const Navbar = () => {
 
           {/* Tasks Dropdown */}
           <DropdownMenu>
-            <DropdownMenuTrigger className={`flex items-center gap-2 px-3 py-2 text-sm font-bold rounded-md transition-colors outline-none ${isTasksActive ? 'bg-primary/10 text-primary' : 'text-muted-foreground hover:bg-accent hover:text-accent-foreground'}`}>
+            <DropdownMenuTrigger className={`flex items-center gap-2 px-3 py-2 text-sm font-bold rounded-md transition-colors outline-none ${isTasksActive ? 'bg-primary/10 text-primary' : 'text-text-secondary hover:bg-accent hover:text-accent-foreground'}`}>
               <NotebookText size={16} />
               <span>المهام</span>
-              <ChevronDown size={14} className="opacity-50" />
+              <ChevronDown size={14} className="text-text-secondary" />
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-48 text-right">
               {taskNavigationItems.map((item) => (
@@ -189,7 +190,7 @@ const Navbar = () => {
           {/* Search */}
           <div className="relative hidden sm:block w-64 ml-2">
             <div 
-              className="flex items-center w-full px-3 py-1.5 bg-muted/50 border border-input rounded-md text-sm text-muted-foreground cursor-pointer hover:bg-muted transition-colors"
+              className="flex items-center w-full px-3 py-1.5 bg-background border border-input rounded-md text-sm text-text-secondary cursor-pointer hover:bg-background transition-colors"
               onClick={handleSearchFocus}
             >
               <Search size={16} className="ml-2" />
@@ -238,6 +239,7 @@ const Navbar = () => {
           </DropdownMenu>
 
           {/* Notifications */}
+          <ThemeToggleButton />
           <NotificationBell />
 
           {/* User Profile */}
@@ -246,7 +248,7 @@ const Navbar = () => {
               <div className="flex items-center gap-2 hover:bg-accent rounded-full p-1 pr-2 transition-colors border border-transparent hover:border-border">
                 <div className="text-right hidden md:block">
                   <div className="text-sm font-bold leading-none">{user?.display_name || 'مستخدم'}</div>
-                  <div className="text-xs text-muted-foreground mt-1">محامي</div>
+                  <div className="text-xs text-text-secondary mt-1">محامي</div>
                 </div>
                 <div className="w-8 h-8 rounded-full bg-primary/20 text-primary flex items-center justify-center font-semibold border border-primary/10">
                   {user?.display_name?.charAt(0).toUpperCase() || 'م'}

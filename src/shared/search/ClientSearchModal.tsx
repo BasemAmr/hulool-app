@@ -50,11 +50,11 @@ const ClientSearchModal = () => {
       className="max-w-2xl"
     >
       {/* Search Input */}
-      <div className="p-4 bg-bg-surface-muted border-b border-border-default">
+      <div className="p-4 bg-background border-b border-border-default">
         <div className="relative">
           <Search 
             size={18} 
-            className="absolute top-1/2 -translate-y-1/2 right-3 text-text-muted pointer-events-none"
+            className="absolute top-1/2 -translate-y-1/2 right-3 text-text-secondary pointer-events-none"
           />
           <input
             id="client-search-input"
@@ -74,7 +74,7 @@ const ClientSearchModal = () => {
           <div className="flex justify-center items-center h-full py-12 animate-in fade-in duration-300">
             <div className="text-center">
               <div className="w-8 h-8 border-4 border-border-default border-t-blue-500 rounded-full animate-spin mx-auto" />
-              <p className="text-text-muted mt-3 mb-0">جاري البحث...</p>
+              <p className="text-text-secondary mt-3 mb-0">جاري البحث...</p>
             </div>
           </div>
         )}
@@ -82,9 +82,9 @@ const ClientSearchModal = () => {
         {/* No Results */}
         {!isLoading && !clients?.length && debouncedSearchTerm && (
           <div className="flex flex-col justify-center items-center h-full py-12 animate-in fade-in duration-300">
-            <User size={48} className="text-text-muted mb-3" />
-            <h6 className="text-gray-700 mb-2 font-semibold">لا توجد نتائج</h6>
-            <p className="text-text-muted text-sm mb-3">لم يتم العثور على عملاء بهذا البحث</p>
+            <User size={48} className="text-text-secondary mb-3" />
+            <h6 className="text-text-primary mb-2 font-semibold">لا توجد نتائج</h6>
+            <p className="text-text-secondary text-sm mb-3">لم يتم العثور على عملاء بهذا البحث</p>
             <button 
               className="flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-lg transition-all duration-200"
               style={{
@@ -102,9 +102,9 @@ const ClientSearchModal = () => {
         {/* Initial State */}
         {!isLoading && !debouncedSearchTerm && (
           <div className="flex flex-col justify-center items-center h-full py-12 animate-in fade-in duration-300">
-            <Search size={48} className="text-text-muted mb-3" />
-            <h6 className="text-gray-700 mb-2 font-semibold">ابدأ البحث</h6>
-            <p className="text-text-muted text-sm text-center">
+            <Search size={48} className="text-text-secondary mb-3" />
+            <h6 className="text-text-primary mb-2 font-semibold">ابدأ البحث</h6>
+            <p className="text-text-secondary text-sm text-center">
               اكتب اسم العميل أو رقم الهاتف للبحث السريع
             </p>
           </div>
@@ -137,15 +137,13 @@ const ClientSearchModal = () => {
                     <div className="flex-grow">
                       <div className="flex items-center mb-1">
                         <User size={14} className="mr-2" style={{ color: 'hsl(var(--primary))' }} />
-                        <span 
-                          className="font-semibold text-gray-900"
-                        >
+                        <span className="font-semibold text-text-primary">
                           {client.name}
                         </span>
                       </div>
                       <div className="flex items-center">
-                        <Phone size={14} className="text-text-muted mr-2" />
-                        <span className="text-text-muted text-sm">
+                        <Phone size={14} className="text-text-secondary mr-2" />
+                        <span className="text-text-secondary text-sm">
                           {client.phone}
                         </span>
                       </div>
@@ -162,7 +160,7 @@ const ClientSearchModal = () => {
                       <MessageSquare size={16} />
                     </button>
                     
-                    <div className="text-text-muted">
+                    <div className="text-text-secondary">
                       <FileText size={16} />
                     </div>
                   </div>
@@ -176,10 +174,10 @@ const ClientSearchModal = () => {
       {/* Footer */}
       {clients && clients.length > 0 && (
         <div 
-          className="flex items-center gap-1 py-2 px-4 bg-bg-surface-muted border-t border-border-default"
+          className="flex items-center gap-1 py-2 px-4 bg-background border-t border-border-default"
         >
-          <Clock size={14} className="text-text-muted" />
-          <small className="text-text-muted">
+          <Clock size={14} className="text-text-secondary" />
+          <small className="text-text-secondary">
             {clients.length} نتيجة للبحث
           </small>
         </div>

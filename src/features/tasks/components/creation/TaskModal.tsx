@@ -685,22 +685,20 @@ const TaskModal = () => {
 
                 {/* Progress Bar for Subtasks (if exists) */}
                 {hasSubtasks() && (
-                  <div
-                    className="mb-3 p-3 rounded-lg bg-gradient-to-r from-gray-100 to-gray-200 border border-border-strong"
-                  >
+                  <div className="mb-3 rounded-lg border border-border-strong bg-gradient-to-r from-background to-card p-3">
                     <div className="grid grid-cols-2 gap-4">
                       <div>
                         <div className="font-semibold mb-2 flex items-center gap-2">
                           <Layers size={16} className="text-status-info-text" />
                           تقدم إنجاز المهام الفرعية
                         </div>
-                        <div className="w-full h-2 bg-gray-300 rounded-full mb-2 overflow-hidden">
+                        <div className="mb-2 h-2 w-full overflow-hidden rounded-full bg-border-default">
                           <div
-                            className="h-full bg-green-600 transition-all duration-300"
+                            className="h-full bg-status-success-text transition-all duration-300"
                             style={{ width: `${calculateProgress().percentage}%` }}
                           ></div>
                         </div>
-                        <small className="text-muted-foreground text-xs">
+                        <small className="text-text-secondary text-xs">
                           {calculateProgress().completed} من {calculateProgress().total} مهام مكتملة
                         </small>
                       </div>
@@ -720,30 +718,25 @@ const TaskModal = () => {
                 <div className="mb-4">
                   <div className="flex justify-between items-center mb-2">
                     <label className="font-semibold text-text-primary text-sm mb-0">
-                      <span
-                        className="px-2 py-1 rounded bg-blue-600 text-white text-xs"
-                      >
+                      <span className="rounded bg-primary px-2 py-1 text-xs text-primary-foreground">
                         إضافة مهمة فرعية
                       </span>
                     </label>
                   </div>
 
                   {/* Subtasks Header */}
-                  <div
-                    className="grid grid-cols-12 py-2 font-semibold text-center text-white bg-blue-600 rounded-t"
-                  >
+                  <div className="grid grid-cols-12 rounded-t bg-primary py-2 text-center font-semibold text-primary-foreground">
                     <div className="col-span-6">البيان</div>
                     <div className="col-span-3">المبلغ</div>
                     <div className="col-span-3">الإجراءات</div>
                   </div>
 
                   {/* Subtasks List */}
-                  <div className="border border-blue-600 border-t-0 rounded-b">
+                  <div className="rounded-b border border-primary border-t-0">
                     {localSubtasks?.map((subtask, index) => (
                       <div
                         key={index}
-                        className={`grid grid-cols-12 py-2 items-center ${index % 2 === 0 ? 'bg-bg-surface-muted' : 'bg-white'}`}
-                        style={{ borderBottom: index === localSubtasks?.length - 1 ? 'none' : '1px solid #e9ecef' }}
+                        className={`grid grid-cols-12 items-center border-b border-border-default py-2 ${index % 2 === 0 ? 'bg-background' : 'bg-card'} last:border-b-0`}
                       >
                         <div className="col-span-6 px-2">
                           <input
@@ -766,7 +759,7 @@ const TaskModal = () => {
                           <div className="flex justify-center gap-1">
                             <button
                               type="button"
-                              className={`px-2 py-1 rounded text-sm ${subtask.is_completed ? 'bg-green-600 text-white' : 'border border-status-success-border text-status-success-text'}`}
+                              className={`rounded px-2 py-1 text-sm ${subtask.is_completed ? 'border border-status-success-border bg-status-success-bg text-status-success-text' : 'border border-status-success-border text-status-success-text'}`}
                               onClick={() => handleSubtaskChange(index, 'is_completed', !subtask.is_completed)}
                               title={subtask.is_completed ? 'مكتملة' : 'غير مكتملة'}
                             >
@@ -786,12 +779,7 @@ const TaskModal = () => {
                     ))}
 
                     {/* Add New Subtask Row */}
-                    <div
-                      className="py-2 text-center bg-bg-surface-muted"
-                      style={{
-                        borderTop: localSubtasks?.length > 0 ? '1px solid #e9ecef' : 'none'
-                      }}
-                    >
+                    <div className={`py-2 text-center bg-card ${localSubtasks?.length > 0 ? 'border-t border-border-default' : ''}`}>
                       <button
                         type="button"
                         className="px-3 py-1.5 rounded text-sm border border-primary text-primary hover:bg-primary/10"
@@ -804,9 +792,7 @@ const TaskModal = () => {
 
                     {/* Total Row */}
                     {localSubtasks?.length > 0 && (
-                      <div
-                        className="grid grid-cols-12 py-2 font-semibold text-center text-white bg-blue-600"
-                      >
+                      <div className="grid grid-cols-12 bg-primary py-2 text-center font-semibold text-primary-foreground">
                         <div className="col-span-6">الإجمالي</div>
                         <div className="col-span-3">{calculateTotal()}</div>
                         <div className="col-span-3">-</div>
@@ -888,7 +874,7 @@ const TaskModal = () => {
                         </div>
 
                         {localRequirements.length === 0 ? (
-                          <div className="text-muted-foreground text-center py-3">
+                          <div className="text-text-secondary text-center py-3">
                             <p className="mb-0 text-sm">لا توجد متطلبات</p>
                           </div>
                         ) : (

@@ -222,7 +222,7 @@ const EmployeeDashboardClientCard = ({ data, onWidthCalculated }: EmployeeDashbo
     return (
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <button className="p-1 border-0 text-text-primary hover:bg-black/10 rounded transition-colors" style={{ background: 'none' }}>
+          <button className="p-1 border-0 text-text-primary hover:bg-background/20 rounded transition-colors" style={{ background: 'none' }}>
             <MoreVertical size={14} />
           </button>
         </DropdownMenuTrigger>
@@ -252,13 +252,13 @@ const EmployeeDashboardClientCard = ({ data, onWidthCalculated }: EmployeeDashbo
       onMouseLeave={() => setIsHovered(false)}
     >
       {/* Header */}
-      <div className={`px-4 py-2 border-b ${isClientUrgent ? 'bg-status-danger-bg border-status-danger-border' : 'bg-bg-surface-muted border-border-default'}`}>
+      <div className={`px-4 py-2 border-b ${isClientUrgent ? 'bg-status-danger-bg border-status-danger-border' : 'bg-background border-border-default'}`}>
         <div className="flex justify-between items-center">
           {/* Left: WhatsApp with phone number */}
           <div className="flex items-center gap-2">
             <button
               onClick={openWhatsApp}
-              className="p-1 border-0 hover:bg-white/20 rounded transition-colors"
+              className="rounded border-0 p-1 transition-colors hover:bg-background/20"
               title="واتساب"
             >
               <img src={WhatsAppIcon} alt="WhatsApp" width="16" height="16" />
@@ -282,7 +282,7 @@ const EmployeeDashboardClientCard = ({ data, onWidthCalculated }: EmployeeDashbo
             )}
             <button
               onClick={openGoogleDrive}
-              className="p-1 text-text-primary border-0 hover:bg-white/20 rounded transition-colors"
+              className="rounded border-0 p-1 text-text-primary transition-colors hover:bg-background/20"
               title="Google Drive"
               disabled={!client.google_drive_link}
             >
@@ -304,7 +304,7 @@ const EmployeeDashboardClientCard = ({ data, onWidthCalculated }: EmployeeDashbo
         <div className="w-full overflow-hidden relative">
           <table className="w-full text-sm mb-0">
             <thead className="sticky top-0 z-[2]">
-              <tr className="bg-bg-surface-muted">
+              <tr className="bg-background">
                 <th className="text-[0.8em] px-2 py-1.5 border-0 text-text-secondary font-semibold">المهمة</th>
                 <th className="text-[0.8em] px-2 py-1.5 border-0 text-text-secondary font-semibold">تاريخ</th>
                 <th className="text-[0.8em] px-2 py-1.5 border-0 text-text-secondary font-semibold">اليوم</th>

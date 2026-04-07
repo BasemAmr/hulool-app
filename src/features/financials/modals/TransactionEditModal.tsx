@@ -109,7 +109,7 @@ const TransactionEditModal: React.FC<TransactionEditModalProps> = ({
       <div className="space-y-4 dir-rtl" dir="rtl">
         <div className="grid grid-cols-2 gap-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700">مدين</label>
+            <label className="block text-sm font-medium text-text-secondary">مدين</label>
             <input
               type="number"
               name="debit"
@@ -120,7 +120,7 @@ const TransactionEditModal: React.FC<TransactionEditModalProps> = ({
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700">دائن</label>
+            <label className="block text-sm font-medium text-text-secondary">دائن</label>
             <input
               type="number"
               name="credit"
@@ -133,7 +133,7 @@ const TransactionEditModal: React.FC<TransactionEditModalProps> = ({
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700">الوصف</label>
+          <label className="block text-sm font-medium text-text-secondary">الوصف</label>
           <input
             type="text"
             name="description"
@@ -144,7 +144,7 @@ const TransactionEditModal: React.FC<TransactionEditModalProps> = ({
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700">التاريخ</label>
+          <label className="block text-sm font-medium text-text-secondary">التاريخ</label>
           <input
             type="date"
             name="transaction_date"
@@ -155,7 +155,7 @@ const TransactionEditModal: React.FC<TransactionEditModalProps> = ({
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700">سبب التعديل <span className="text-status-danger-text">*</span></label>
+          <label className="block text-sm font-medium text-text-secondary">سبب التعديل <span className="text-status-danger-text">*</span></label>
           <textarea
             name="reason"
             value={formData.reason}

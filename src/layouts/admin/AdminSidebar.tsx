@@ -139,7 +139,7 @@ const Sidebar = () => {
         {/* Collapse Toggle Button - only show when not collapsed */}
         {!isCollapsed && (
           <button 
-            className="absolute top-1/2 -left-3 -translate-y-1/2 w-6 h-6 bg-bg-surface-muted hover:bg-bg-surface-hover border border-border-default rounded-full flex items-center justify-center cursor-pointer z-10 transition-all duration-200 text-text-secondary hover:scale-110"
+            className="absolute top-1/2 -left-3 -translate-y-1/2 w-6 h-6 bg-background hover:bg-bg-surface-hover border border-border-default rounded-full flex items-center justify-center cursor-pointer z-10 transition-all duration-200 text-text-secondary hover:scale-110"
             onClick={toggleCollapsed}
             title={isCollapsed ? 'توسيع الشريط الجانبي' : 'تصغير الشريط الجانبي'}
           >
@@ -148,7 +148,7 @@ const Sidebar = () => {
         )}
 
         {/* Header with Logo and Notifications */}
-        <div className="px-3 py-3 border-b border-border bg-muted/30 flex items-center gap-2 min-h-[60px]">
+        <div className="px-3 py-3 border-b border-border bg-background flex items-center gap-2 min-h-[60px]">
             <div className="flex items-center justify-between w-full">
               <Logo />
               {!isCollapsed && (
@@ -166,7 +166,7 @@ const Sidebar = () => {
               key={item.path}
               to={item.path}
               className={({ isActive }) =>
-                `flex items-center gap-2 px-2 py-1.5 mx-1 text-foreground text-xs font-normal no-underline rounded-lg transition-all duration-200 relative overflow-hidden hover:bg-accent hover:text-accent-foreground hover:-translate-x-1 hover:font-bold ${
+                `flex items-center gap-2 px-2 py-1.5 mx-1 text-foreground text-xs font-medium no-underline rounded-lg transition-all duration-200 relative overflow-hidden hover:bg-accent hover:text-accent-foreground hover:-translate-x-1 hover:font-bold ${
                   isActive ? 'bg-primary text-primary-foreground font-bold shadow-md before:content-[""] before:absolute before:top-0 before:right-0 before:w-1 before:h-full before:bg-primary-foreground before:rounded-l-sm' : ''
                 }`
               }
@@ -192,7 +192,7 @@ const Sidebar = () => {
             <>
               <button
                 onClick={handleAddTask}
-                className="w-full border-none bg-transparent text-right flex items-center gap-2 px-2 py-1.5 mx-1 text-foreground text-xs font-normal rounded-lg transition-all duration-200 hover:bg-accent hover:text-accent-foreground hover:-translate-x-1 focus:outline-none focus:bg-accent"
+                className="w-full border-none bg-transparent text-right flex items-center gap-2 px-2 py-1.5 mx-1 text-foreground text-xs font-medium rounded-lg transition-all duration-200 hover:bg-accent hover:text-accent-foreground hover:-translate-x-1 focus:outline-none focus:bg-accent"
               >
                 <span className="w-4 h-4 flex items-center justify-center text-sm transition-all duration-200 flex-shrink-0">
                   <Plus size={16} />
@@ -201,7 +201,7 @@ const Sidebar = () => {
               </button>
               <button
                 onClick={handleAddInvoice}
-                className="w-full border-none bg-transparent text-right flex items-center gap-2 px-2 py-1.5 mx-1 text-foreground text-xs font-normal rounded-lg transition-all duration-200 hover:bg-accent hover:text-accent-foreground hover:-translate-x-1 focus:outline-none focus:bg-accent"
+                className="w-full border-none bg-transparent text-right flex items-center gap-2 px-2 py-1.5 mx-1 text-foreground text-xs font-medium rounded-lg transition-all duration-200 hover:bg-accent hover:text-accent-foreground hover:-translate-x-1 focus:outline-none focus:bg-accent"
               >
                 <span className="w-4 h-4 flex items-center justify-center text-sm transition-all duration-200 flex-shrink-0">
                   <Receipt size={16} />
@@ -210,7 +210,7 @@ const Sidebar = () => {
               </button>
               <button
                 onClick={() => openModal('recordCreditModal', {})}
-                className="w-full border-none bg-transparent text-right flex items-center gap-2 px-2 py-1.5 mx-1 text-foreground text-xs font-normal rounded-lg transition-all duration-200 hover:bg-accent hover:text-accent-foreground hover:-translate-x-1 focus:outline-none focus:bg-accent"
+                className="w-full border-none bg-transparent text-right flex items-center gap-2 px-2 py-1.5 mx-1 text-foreground text-xs font-medium rounded-lg transition-all duration-200 hover:bg-accent hover:text-accent-foreground hover:-translate-x-1 focus:outline-none focus:bg-accent"
               >
                 <span className="w-4 h-4 flex items-center justify-center text-sm transition-all duration-200 flex-shrink-0">
                   <CreditCard size={16} />
@@ -219,7 +219,7 @@ const Sidebar = () => {
               </button>
               <button
                 onClick={() => openModal('urgentAlert', {})}
-                className="w-full border-none bg-transparent text-right flex items-center gap-2 px-2 py-1.5 mx-1 text-foreground text-xs font-normal rounded-lg transition-all duration-200 hover:bg-accent hover:text-accent-foreground hover:-translate-x-1 focus:outline-none focus:bg-accent"
+                className="w-full border-none bg-transparent text-right flex items-center gap-2 px-2 py-1.5 mx-1 text-foreground text-xs font-medium rounded-lg transition-all duration-200 hover:bg-accent hover:text-accent-foreground hover:-translate-x-1 focus:outline-none focus:bg-accent"
               >
                 <span className="w-4 h-4 flex items-center justify-center text-sm transition-all duration-200 flex-shrink-0">
                   <AlertTriangle size={16} />
@@ -237,7 +237,7 @@ const Sidebar = () => {
               key={item.path}
               to={item.path}
               className={({ isActive }) =>
-                `flex items-center gap-2 px-2 py-1.5 mx-1 text-foreground text-xs font-normal no-underline rounded-lg transition-all duration-200 relative overflow-hidden hover:bg-accent hover:text-accent-foreground hover:-translate-x-1 hover:font-bold ${
+                `flex items-center gap-2 px-2 py-1.5 mx-1 text-foreground text-xs font-medium no-underline rounded-lg transition-all duration-200 relative overflow-hidden hover:bg-accent hover:text-accent-foreground hover:-translate-x-1 hover:font-bold ${
                   isActive ? 'bg-primary text-primary-foreground font-bold shadow-md before:content-[""] before:absolute before:top-0 before:right-0 before:w-1 before:h-full before:bg-primary-foreground before:rounded-l-sm' : ''
                 }`
               }
@@ -258,7 +258,7 @@ const Sidebar = () => {
               key={item.path}
               to={item.path}
               className={() => 
-                `flex items-center gap-2 px-2 py-1.5 mx-1 text-foreground text-xs font-normal no-underline rounded-lg transition-all duration-200 relative overflow-hidden hover:bg-accent hover:text-accent-foreground hover:-translate-x-1 hover:font-bold ${
+                `flex items-center gap-2 px-2 py-1.5 mx-1 text-foreground text-xs font-medium no-underline rounded-lg transition-all duration-200 relative overflow-hidden hover:bg-accent hover:text-accent-foreground hover:-translate-x-1 hover:font-bold ${
                   isActiveTaskRoute(item.path) ? 'bg-primary text-primary-foreground font-bold shadow-md before:content-[""] before:absolute before:top-0 before:right-0 before:w-1 before:h-full before:bg-primary-foreground before:rounded-l-sm' : ''
                 }`
               }
@@ -276,7 +276,7 @@ const Sidebar = () => {
           <input
             type="text"
             placeholder={t('globalSearch.placeholder') || 'البحث السريع...'}
-            className="w-full px-2 pr-8 py-1.5 bg-muted/30 border border-border rounded-lg text-xs font-normal outline-none transition-all duration-200 cursor-pointer placeholder:text-right text-foreground hover:bg-muted/50 hover:border-primary/30 focus:bg-muted focus:border-primary focus:ring-2 focus:ring-primary/20"
+            className="w-full px-2 pr-8 py-1.5 bg-background border border-border rounded-lg text-xs font-medium outline-none transition-all duration-200 cursor-pointer placeholder:text-right text-foreground hover:bg-background hover:border-primary/30 focus:bg-background focus:border-primary focus:ring-2 focus:ring-primary/20"
             onFocus={handleSearchFocus}
             readOnly // To prevent typing directly, just for triggering modal
           />
@@ -285,8 +285,8 @@ const Sidebar = () => {
       </nav>
 
       {/* User Section */}
-      <div className="p-2 border-t border-border bg-muted/30">
-        <div className="flex items-center gap-2 p-1.5 bg-muted/50 rounded-lg transition-all duration-200 hover:bg-muted/70">
+      <div className="p-2 border-t border-border bg-background">
+        <div className="flex items-center gap-2 p-1.5 bg-background rounded-lg transition-all duration-200 hover:bg-background">
           <div 
             className="w-9 h-9 rounded-full bg-primary text-primary-foreground flex items-center justify-center font-semibold text-base flex-shrink-0 shadow-sm border-2 border-primary/20"
           >
@@ -294,7 +294,7 @@ const Sidebar = () => {
           </div>
           <div className="flex-1 text-right overflow-hidden">
             <div className="text-foreground text-sm font-medium whitespace-nowrap overflow-hidden text-ellipsis mb-0.5">{user?.display_name || 'مستخدم'}</div>
-            <div className="text-text-muted text-xs font-normal">محامي</div>
+            <div className="text-text-primary text-xs font-medium">محامي</div>
           </div>
           <button
             onClick={handleLogout}

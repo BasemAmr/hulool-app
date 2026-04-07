@@ -116,7 +116,7 @@ const RecentTasksPanel = ({ tasks }: RecentTasksPanelProps) => {
 
   return (
     <div
-      className="rounded-lg border border-gray-200 bg-white shadow-sm h-full"
+      className="rounded-lg border border-border bg-card shadow-sm h-full"
       style={{
         overflow: 'visible',
         position: 'relative',
@@ -126,9 +126,9 @@ const RecentTasksPanel = ({ tasks }: RecentTasksPanelProps) => {
       }}
     >
       {/* Header — single left-border accent, white background */}
-      <div className="px-4 py-3 border-b border-gray-200 border-l-4 border-l-primary bg-white flex-shrink-0">
+      <div className="px-4 py-3 border-b border-border border-l-4 border-l-primary bg-background flex-shrink-0">
         <div className="flex justify-center items-center">
-          <h6 className="mb-0 font-semibold text-gray-900 text-sm">
+          <h6 className="mb-0 font-semibold text-text-primary text-sm">
             المهام قيد التنفيذ
           </h6>
         </div>
@@ -152,7 +152,7 @@ const RecentTasksPanel = ({ tasks }: RecentTasksPanelProps) => {
       </div>
 
       {/* Footer */}
-      <div className="px-4 py-2 bg-bg-surface-muted border-t border-border-default text-center flex-shrink-0">
+      <div className="px-4 py-2 bg-background border-t border-border-default text-center flex-shrink-0">
         <button
           onClick={() => navigate('/employee/tasks')}
           className="text-text-secondary p-0 flex items-center justify-center gap-1 w-full hover:text-text-primary transition-colors text-sm"

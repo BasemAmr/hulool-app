@@ -87,12 +87,12 @@ const ClientSearchCompact = ({ onSelect, onCreate, label, disabled }: ClientSear
             <button
               key={client.id}
               type="button"
-              className="w-full flex items-center px-4 py-3 border-b border-gray-100 last:border-b-0 bg-white hover:bg-muted transition-colors duration-150 text-right"
+              className="w-full flex items-center px-4 py-3 border-b border-border last:border-b-0 bg-background hover:bg-background transition-colors duration-150 text-right"
               onClick={() => handleSelect(client)}
             >
               <User size={18} className="mr-2" style={{ color: 'hsl(var(--primary))' }} />
-              <span className="text-gray-900">{client.name}</span>
-              <span className="mr-auto text-text-muted text-sm">{client.phone}</span>
+              <span className="text-text-primary">{client.name}</span>
+              <span className="mr-auto text-text-secondary text-sm">{client.phone}</span>
             </button>
           ))}
         </div>
@@ -112,7 +112,7 @@ const ClientSearchCompact = ({ onSelect, onCreate, label, disabled }: ClientSear
         </div>
       )}
       {showCreate && (
-        <div className="border border-border-default rounded-lg p-3 mb-2 bg-bg-surface-muted">
+        <div className="border border-border-default rounded-lg p-3 mb-2 bg-background">
           <Input
             label="اسم العميل"
             value={newClientName}
@@ -140,7 +140,7 @@ const ClientSearchCompact = ({ onSelect, onCreate, label, disabled }: ClientSear
             className="mb-2"
           />
           <div className="mb-2">
-            <label className="block text-sm font-medium text-gray-700 mb-1 text-right">ملاحظات</label>
+            <label className="block text-sm font-medium text-text-primary mb-1 text-right">ملاحظات</label>
             <textarea 
               className="base-input w-full resize-y"
               value={newClientNotes}

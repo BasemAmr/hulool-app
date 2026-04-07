@@ -115,7 +115,7 @@ const DESTRUCTIVE_TYPES = new Set<ActionType>(['delete', 'cancel', 'reject']);
  */
 const NEUTRAL_CLASS =
   'inline-flex items-center justify-center rounded p-1.5 ' +
-  'text-gray-400 hover:text-gray-700 ' +
+  'text-text-secondary hover:text-text-primary ' +
   'transition-colors duration-150 ' +
   'disabled:opacity-40 disabled:cursor-not-allowed';
 
@@ -124,7 +124,7 @@ const NEUTRAL_CLASS =
  */
 const DESTRUCTIVE_CLASS =
   'inline-flex items-center justify-center rounded p-1.5 ' +
-  'text-gray-400 hover:text-red-600 ' +
+  'text-text-secondary hover:text-text-danger ' +
   'transition-colors duration-150 ' +
   'disabled:opacity-40 disabled:cursor-not-allowed';
 

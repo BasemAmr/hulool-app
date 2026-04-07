@@ -138,7 +138,7 @@ const MessageList: React.FC<MessageListProps> = ({
       {hasNextPage && (
         <div className="text-center p-3 border-b border-border">
           <button
-            className="px-4 py-2 text-sm border border-border rounded-md hover:bg-muted transition-colors disabled:opacity-50"
+            className="px-4 py-2 text-sm border border-border rounded-md hover:bg-background transition-colors disabled:opacity-50"
             onClick={onLoadMore}
             disabled={isFetchingNextPage}
           >
@@ -182,7 +182,7 @@ const MessageItem = React.forwardRef<HTMLDivElement, MessageItemProps>(({ messag
   if (isSystemMessage) {
     return (
       <div ref={ref} className="text-center mb-2">
-        <div className="inline-block bg-muted rounded px-2 py-1">
+        <div className="inline-block bg-background rounded px-2 py-1">
           <div className="flex items-center">
             <Bot size={12} className="text-text-primary mr-1" />
             <small className="text-text-primary">{message.message_content}</small>
@@ -203,7 +203,7 @@ const MessageItem = React.forwardRef<HTMLDivElement, MessageItemProps>(({ messag
 
       {/* Message Content */}
       <div className="flex-1 min-w-0">
-        <div className="bg-muted rounded p-2">
+        <div className="bg-background rounded p-2">
           <div className="flex items-center justify-between mb-1">
             <small className="font-medium text-text-primary mb-0">
               {message.employee_name}

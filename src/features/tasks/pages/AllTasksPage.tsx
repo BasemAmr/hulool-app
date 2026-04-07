@@ -297,7 +297,7 @@ const AllTasksPage = () => {
       </header>
 
       <div className="rounded-lg border border-border bg-card shadow-sm">
-        <div className="bg-white py-2 px-4 border-b border-border">
+        <div className="bg-background py-2 px-4 border-b border-border">
           <TaskFilter
             search={search}
             status={status}

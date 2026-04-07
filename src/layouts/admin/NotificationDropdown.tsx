@@ -70,7 +70,7 @@ const NotificationItem: React.FC<NotificationItemProps> = ({
     <div
       dir="rtl"
       className={`relative flex items-start gap-3 px-3 py-2.5 border-b border-border/30 cursor-pointer transition-colors ${
-        !notification.is_read ? 'bg-primary/5' : 'bg-transparent hover:bg-muted/50'
+        !notification.is_read ? 'bg-primary/5' : 'bg-transparent hover:bg-background'
       }`}
       onClick={handleClick}
     >
@@ -86,7 +86,7 @@ const NotificationItem: React.FC<NotificationItemProps> = ({
         </p>
 
         {/* Time */}
-        <span className="text-xs text-muted-foreground mt-1 block text-right">
+        <span className="text-xs text-text-secondary mt-1 block text-right">
           {getTimeAgo(notification.created_at)}
         </span>
       </div>
@@ -102,7 +102,7 @@ const NotificationItem: React.FC<NotificationItemProps> = ({
           {isMarkingAsRead ? (
             <div className="w-3 h-3 border-2 border-primary border-t-transparent rounded-full animate-spin" />
           ) : (
-            <Check size={12} className="text-muted-foreground" />
+            <Check size={12} className="text-text-secondary" />
           )}
         </button>
       )}
@@ -185,7 +185,7 @@ const NotificationDropdown: React.FC<NotificationDropdownProps> = ({
 
       {/* Tabs */}
       <Tabs defaultValue={firstActiveTab} className="w-full">
-        <TabsList className="w-full h-auto p-1 bg-muted/50 rounded-none border-b border-border/30 flex justify-start gap-0.5 overflow-x-auto">
+        <TabsList className="w-full h-auto p-1 bg-background rounded-none border-b border-border/30 flex justify-start gap-0.5 overflow-x-auto">
           {TAB_CONFIG.map(({ key }) => {
             const groupData = groups[key];
             const unreadCount = groupData?.unread_count || 0;
@@ -217,11 +217,11 @@ const NotificationDropdown: React.FC<NotificationDropdownProps> = ({
             <TabsContent key={key} value={key} className="mt-0">
               {/* Group mark as read button */}
               {unreadCount > 0 && (
-                <div className="px-3 py-1.5 border-b border-border/30 bg-muted/30">
+                <div className="px-3 py-1.5 border-b border-border/30 bg-background">
                   <button
                     onClick={() => handleMarkGroupAsRead(key)}
                     disabled={markGroupMutation.isPending}
-                    className="text-xs text-muted-foreground hover:text-foreground transition-colors disabled:opacity-50 flex items-center gap-1"
+                    className="text-xs text-text-secondary hover:text-foreground transition-colors disabled:opacity-50 flex items-center gap-1"
                   >
                     <Check size={12} />
                     <span>قراءة الكل في هذه المجموعة</span>
@@ -232,7 +232,7 @@ const NotificationDropdown: React.FC<NotificationDropdownProps> = ({
               {/* Notifications list */}
               <div className="max-h-[280px] overflow-y-auto">
                 {notifications.length === 0 ? (
-                  <div className="flex flex-col items-center justify-center py-8 text-muted-foreground gap-2">
+                  <div className="flex flex-col items-center justify-center py-8 text-text-secondary gap-2">
                     <Inbox size={24} />
                     <span className="text-sm">لا توجد إشعارات</span>
                   </div>

@@ -71,7 +71,7 @@ const Toast = ({ id, type, title, message, duration = 5000, onClose }: ToastProp
         </div>
         <button
           type="button"
-          className="text-text-muted hover:text-text-secondary transition-colors flex-shrink-0 rounded-md hover:bg-bg-surface-muted p-1"
+          className="text-text-secondary hover:text-text-primary transition-colors flex-shrink-0 rounded-md hover:bg-background p-1"
           onClick={() => onClose(id)}
           aria-label="Close"
         >

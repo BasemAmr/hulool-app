@@ -351,7 +351,7 @@ const DashboardPage = () => {
                         <div className="mb-3">
                             <i className="fas fa-clipboard-list fa-3x text-text-muted"></i>
                         </div>
-                        <p className="text-muted-foreground mb-0">
+                        <p className="text-text-secondary mb-0">
                             {t('common.noResults')}
                         </p>
                     </div>

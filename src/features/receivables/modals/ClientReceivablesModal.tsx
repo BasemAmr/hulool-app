@@ -150,7 +150,7 @@ const ClientReceivablesTable: React.FC<ClientReceivablesTableProps> = ({
                         <td colSpan={8} className="p-0">
                           <div style={{ backgroundColor: '#f8f9fa', padding: '1rem' }}>
                             <div className="small text-muted mb-2 fw-medium">تفاصيل المدفوعات:</div>
-                            <table className="table table-sm bg-white mb-0">
+                            <table className="table table-sm bg-card mb-0">
                               <thead>
                                 <tr>
                                   <th className="text-center">المبلغ</th>

@@ -20,13 +20,13 @@ const PageWrapper = () => {
   }, [location.pathname]);
 
   return (
-    <div className="flex flex-col h-screen overflow-hidden bg-bg-surface-muted rtl" data-page={pageType}>
+    <div className="flex flex-col h-screen overflow-hidden bg-bg-surface rtl" data-page={pageType}>
       <Navbar />
        <main 
-        className="flex-1 overflow-y-auto bg-bg-surface-muted ltr"
+        className="flex-1 overflow-y-auto bg-bg-surface ltr"
         style={{ 
           scrollbarWidth: 'thin',
-          scrollbarColor: 'hsl(var(--muted-foreground)) hsl(var(--secondary))'
+          scrollbarColor: 'var(--token-border-strong) var(--token-bg-surface)'
         }}
       >
         <div className="[direction:rtl] p-6 min-h-full w-full">

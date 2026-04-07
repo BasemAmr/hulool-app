@@ -261,7 +261,7 @@ const TaskSubtasksModal = () => {
                     }}
                   ></div>
                 </div>
-                <small className="text-muted-foreground text-sm mt-2 block">
+                <small className="text-text-secondary text-sm mt-2 block">
                   {progress.completed} من {progress.total} مهام مكتملة ({progress.percentage}%)
                 </small>
               </div>
@@ -270,7 +270,7 @@ const TaskSubtasksModal = () => {
                   <DollarSign size={20} className="text-status-warning-text" />
                   {calculateTotal().toLocaleString()} ريال
                 </div>
-                <small className="text-muted-foreground text-sm">المجموع الإجمالي</small>
+                <small className="text-text-secondary text-sm">المجموع الإجمالي</small>
                 {hasSubtasks() && (
                   <div className="mt-2">
                     <span className="inline-block bg-blue-100 text-blue-900 text-xs px-2 py-1 rounded">
@@ -279,7 +279,7 @@ const TaskSubtasksModal = () => {
                   </div>
                 )}
                 {shouldDisableAmount() && (
-                  <small className="text-muted-foreground text-xs mt-1 block">
+                  <small className="text-text-secondary text-xs mt-1 block">
                     المبلغ محسوب تلقائياً من المهام الفرعية ({localSubtasks.length} مهمة)
                   </small>
                 )}
@@ -298,7 +298,7 @@ const TaskSubtasksModal = () => {
           <Layers size={18} className="text-status-info-text flex-shrink-0 mt-1" />
           <div>
             <div className="font-semibold mb-1">إدارة المهام الفرعية</div>
-            <small className="text-muted-foreground text-sm">
+            <small className="text-text-secondary text-sm">
               يمكنك تتبع وإدارة المهام الفرعية، وتحديد حالة الإنجاز لكل مهمة. اضغط على "تحرير المهمة" للوصول للتحرير الكامل.
             </small>
           </div>
@@ -311,7 +311,7 @@ const TaskSubtasksModal = () => {
               key={index} 
               className="rounded-lg border border-border-default p-4 transition-all duration-200 hover:shadow-md"
               style={{ 
-                backgroundColor: subtask.is_completed ? '#f8f9fa' : 'white'
+                backgroundColor: subtask.is_completed ? 'var(--token-bg-surface-hover)' : 'var(--token-bg-surface)'
               }}
             >
               <div className="grid grid-cols-6 gap-4 items-start">
@@ -367,10 +367,10 @@ const TaskSubtasksModal = () => {
                 <div className="flex justify-center">
                   {subtask.description.trim() && subtask.amount > 0 && (
                     <span 
-                      className={`inline-flex items-center gap-1 text-xs px-2 py-1 rounded ${
+                      className={`inline-flex items-center gap-1 rounded px-2 py-1 text-xs ${
                         subtask.is_completed 
-                          ? 'bg-status-success-bg text-green-900' 
-                          : 'bg-yellow-100 text-yellow-900'
+                          ? 'border border-status-success-border bg-status-success-bg text-status-success-text' 
+                          : 'border border-status-warning-border bg-status-warning-bg text-status-warning-text'
                       }`}
                     >
                       {subtask.is_completed ? (

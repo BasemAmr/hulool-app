@@ -39,7 +39,7 @@ const TaskRestoreModal: React.FC<TaskRestoreModalProps> = ({
         <div className="bg-status-info-bg border-l-4 border-blue-400 p-4">
           <div className="flex">
             <div className="flex-shrink-0">
-              <span className="text-blue-400 text-xl">ℹ️</span>
+              <span className="text-blue-700 text-xl">ℹ️</span>
             </div>
             <div className="ml-3">
               <h3 className="text-sm font-medium text-blue-800">Restore Confirmation</h3>

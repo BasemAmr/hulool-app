@@ -147,18 +147,18 @@ const EmployeeManagementPage = () => {
                     <span className="text-text-primary">{user.email}</span>
                   </TableCell>
                   <TableCell>
-                    <span className="px-2.5 py-1 rounded-full bg-bg-surface-muted0 text-white text-xs">
+                    <span className="px-2.5 py-1 rounded-full bg-background border border-border text-text-primary text-xs">
                       {user.roles?.[0] || 'subscriber'}
                     </span>
                   </TableCell>
                   <TableCell className="text-center">
                     {isEmployee(user) ? (
-                      <span className="px-2.5 py-1 rounded-full bg-green-600 text-white text-xs inline-flex items-center gap-1">
+                      <span className="inline-flex items-center gap-1 rounded-full border border-status-success-border bg-status-success-bg px-2.5 py-1 text-xs text-status-success-text">
                         <Briefcase size={12} />
                         Employee
                       </span>
                     ) : (
-                      <span className="px-2.5 py-1 rounded-full bg-gray-200 text-text-primary text-xs">User</span>
+                      <span className="px-2.5 py-1 rounded-full bg-status-neutral-bg text-status-neutral-text text-xs">User</span>
                     )}
                   </TableCell>
                   <TableCell className="text-center">

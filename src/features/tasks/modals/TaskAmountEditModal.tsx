@@ -111,7 +111,7 @@ const TaskAmountEditModal: React.FC<TaskAmountEditModalProps> = ({
       <div className="space-y-4 dir-rtl" dir="rtl">
         {/* Total Amount */}
         <div>
-          <label className="block text-sm font-medium text-gray-700">
+          <label className="block text-sm font-medium text-text-secondary">
             المبلغ الإجمالي
           </label>
           <input
@@ -129,7 +129,7 @@ const TaskAmountEditModal: React.FC<TaskAmountEditModalProps> = ({
 
         {/* Prepaid Amount */}
         <div>
-          <label className="block text-sm font-medium text-gray-700">
+          <label className="block text-sm font-medium text-text-secondary">
             المبلغ المدفوع مسبقاً
           </label>
           <input
@@ -187,7 +187,7 @@ const TaskAmountEditModal: React.FC<TaskAmountEditModalProps> = ({
 
         {/* Reason */}
         <div>
-          <label className="block text-sm font-medium text-gray-700">
+          <label className="block text-sm font-medium text-text-secondary">
             سبب التعديل (اختياري)
           </label>
           <textarea

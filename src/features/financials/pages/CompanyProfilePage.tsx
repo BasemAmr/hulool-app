@@ -188,7 +188,7 @@ const CompanyProfilePage = () => {
           className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
             activeMode === 'all'
               ? 'bg-primary text-white'
-              : 'bg-bg-surface-muted text-gray-700 hover:bg-gray-200'
+              : 'bg-background text-text-primary hover:bg-gray-200'
           }`}
         >
           جميع المعاملات ({data?.transactions?.length || 0})
@@ -197,8 +197,8 @@ const CompanyProfilePage = () => {
           onClick={() => setActiveMode('debits')}
           className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
             activeMode === 'debits'
-              ? 'bg-green-600 text-white'
-              : 'bg-bg-surface-muted text-gray-700 hover:bg-gray-200'
+              ? 'bg-status-success-bg text-status-success-text'
+              : 'bg-background text-text-primary hover:bg-gray-200'
           }`}
         >
           مدين ({data?.transactions?.filter((t: any) => (t.debit || 0) > 0).length || 0})
@@ -207,8 +207,8 @@ const CompanyProfilePage = () => {
           onClick={() => setActiveMode('credits')}
           className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
             activeMode === 'credits'
-              ? 'bg-blue-600 text-white'
-              : 'bg-bg-surface-muted text-gray-700 hover:bg-gray-200'
+              ? 'bg-primary text-primary-foreground'
+              : 'bg-background text-text-primary hover:bg-gray-200'
           }`}
         >
           دائن ({data?.transactions?.filter((t: any) => (t.credit || 0) > 0).length || 0})

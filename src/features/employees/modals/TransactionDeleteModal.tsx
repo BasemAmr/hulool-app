@@ -60,7 +60,7 @@ const TransactionDeleteModal: React.FC<TransactionDeleteModalProps> = ({
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700">سبب الحذف (اختياري)</label>
+          <label className="block text-sm font-medium text-text-secondary">سبب الحذف (اختياري)</label>
           <textarea
             value={reason}
             onChange={(e) => setReason(e.target.value)}
