@@ -54,7 +54,7 @@ const PaidReceivablesPage = () => {
     <div>
       <header className="flex justify-between items-center mb-3">
         <h1 style={{ 
-          background: 'linear-gradient(135deg, #22c55e 0%, #16a34a 100%)',
+          background: 'linear-gradient(135deg, var(--primitive-green-600) 0%, var(--primitive-green-700) 100%)',
           WebkitBackgroundClip: 'text',
           WebkitTextFillColor: 'transparent',
           backgroundClip: 'text',

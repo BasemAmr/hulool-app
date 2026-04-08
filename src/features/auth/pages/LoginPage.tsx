@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useAuthStore } from '@/features/auth/store/authStore';
 import { loginWithShortPassword } from '@/features/auth/api/authQueries';
-import { useRequestPasswordReset, useConfirmPasswordReset } from '@/features/employees/api/userQueries';
+import { useRequestPasswordReset, useResetPasswordForgot } from '@/features/employees/api/userQueries';
 
 const LoginPage = () => {
   const [username, setUsername] = useState('');
@@ -25,7 +25,7 @@ const LoginPage = () => {
   const loginAction = useAuthStore((state) => state.login);
   const status = useAuthStore((state) => state.status);
   const requestResetMutation = useRequestPasswordReset();
-  const confirmResetMutation = useConfirmPasswordReset();
+  const resetPasswordMutation = useResetPasswordForgot();
 
   // Redirect if already authenticated
   useEffect(() => {
@@ -112,9 +112,9 @@ const LoginPage = () => {
     }
 
     try {
-      await confirmResetMutation.mutateAsync({
+      await resetPasswordMutation.mutateAsync({
         token: resetToken!,
-        new_password: newPassword
+        new_password: newPassword,
       });
 
       setResetSuccess(true);
@@ -251,7 +251,7 @@ const LoginPage = () => {
                             placeholder="كلمة المرور الجديدة (4 أحرف على الأقل)"
                             value={newPassword}
                             onChange={(e) => setNewPassword(e.target.value)}
-                            disabled={confirmResetMutation.isPending}
+                            disabled={resetPasswordMutation.isPending}
                           />
                         </div>
                         <div className="mb-2">
@@ -261,15 +261,15 @@ const LoginPage = () => {
                             placeholder="تأكيد كلمة المرور"
                             value={confirmPassword}
                             onChange={(e) => setConfirmPassword(e.target.value)}
-                            disabled={confirmResetMutation.isPending}
+                            disabled={resetPasswordMutation.isPending}
                           />
                         </div>
                         <button
                           type="submit"
                           className="px-4 py-2 bg-action-primary text-primary-foreground rounded-lg text-sm font-semibold w-full hover:bg-primary/90 transition-colors disabled:opacity-50"
-                          disabled={confirmResetMutation.isPending}
+                          disabled={resetPasswordMutation.isPending}
                         >
-                          {confirmResetMutation.isPending ? 'جاري التحديث...' : 'تعيين كلمة المرور'}
+                          {resetPasswordMutation.isPending ? 'جاري التحديث...' : 'تعيين كلمة المرور'}
                         </button>
                       </form>
                     </>

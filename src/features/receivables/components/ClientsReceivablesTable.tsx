@@ -84,7 +84,7 @@ const ClientNameCell = React.memo(({ rowData, columnData, active }: CellProps<Cl
       className="hulool-cell-content"
       style={{ 
         fontWeight: active ? 800 : 600,
-        color: 'var(--color-primary, #3b82f6)',
+        color: 'var(--color-primary)',
         cursor: 'pointer',
       }}
       onClick={handleClick}
@@ -216,9 +216,9 @@ const ActionsCell = React.memo(({ rowData, columnData }: CellProps<ClientReceiva
         style={{
           padding: '4px 8px',
           borderRadius: '6px',
-          border: '1px solid var(--color-primary, #3b82f6)',
+          border: '1px solid var(--color-primary)',
           backgroundColor: 'transparent',
-          color: 'var(--color-primary, #3b82f6)',
+          color: 'var(--color-primary)',
           cursor: 'pointer',
           display: 'flex',
           alignItems: 'center',

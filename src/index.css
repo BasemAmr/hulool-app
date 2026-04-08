@@ -45,6 +45,9 @@
   --primitive-blue-50: #eff6ff;
   --primitive-blue-200: #bfdbfe;
   --primitive-blue-700: #1d4ed8;
+
+  /* Third-party brand (SVG icons only) */
+  --color-whatsapp: #25d366;
 }
 
 /* ============================================================
@@ -111,6 +114,22 @@
   --token-status-neutral-bg:     var(--primitive-gray-100);
   --token-status-neutral-text:   var(--primitive-gray-600);
   --token-status-neutral-border: var(--primitive-gray-200);
+
+  /* Primary gradient (replaces legacy gold headers / clip-text) */
+  --gradient-primary: linear-gradient(
+    135deg,
+    var(--primitive-brand-600) 0%,
+    var(--primitive-brand-700) 100%
+  );
+
+  /* Elevation (theme-aware shadows) */
+  --token-shadow-sm: 0 1px 2px color-mix(in srgb, var(--primitive-gray-900) 6%, transparent);
+  --token-shadow-md: 0 4px 12px color-mix(in srgb, var(--primitive-gray-900) 10%, transparent);
+  --token-shadow-lg: 0 -4px 12px color-mix(in srgb, var(--primitive-gray-900) 8%, transparent);
+  --token-shadow-xl: 0 -8px 24px color-mix(in srgb, var(--primitive-gray-900) 12%, transparent);
+  --token-shadow-float: 0 14px 28px color-mix(in srgb, var(--primitive-gray-900) 22%,
+      transparent),
+    0 10px 10px color-mix(in srgb, var(--primitive-gray-900) 18%, transparent);
 }
 
 .dark,
@@ -170,6 +189,19 @@ html[data-theme='dark'] {
   --token-status-neutral-bg:     #1e293b;
   --token-status-neutral-text:   #cbd5e1;
   --token-status-neutral-border: #334155;
+
+  --gradient-primary: linear-gradient(
+    135deg,
+    var(--primitive-brand-500) 0%,
+    var(--primitive-brand-600) 100%
+  );
+
+  --token-shadow-sm: 0 1px 2px color-mix(in srgb, #000 18%, transparent);
+  --token-shadow-md: 0 4px 12px color-mix(in srgb, #000 28%, transparent);
+  --token-shadow-lg: 0 -4px 12px color-mix(in srgb, #000 32%, transparent);
+  --token-shadow-xl: 0 -8px 24px color-mix(in srgb, #000 38%, transparent);
+  --token-shadow-float: 0 14px 28px color-mix(in srgb, #000 45%, transparent),
+    0 10px 10px color-mix(in srgb, #000 38%, transparent);
 }
 
 /* ============================================================

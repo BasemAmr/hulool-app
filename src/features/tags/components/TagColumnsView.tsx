@@ -8,7 +8,7 @@ const TagColumnsView = ({ tagCollections, isLoading = false }: TagColumnsViewPro
                 {[1, 2, 3, 4].map(i => (
                     <TagColumn 
                         key={i} 
-                        tagCollection={{ tag: { id: i, name: '', color: '#ccc', is_system: false, created_at: '', updated_at: '' }, tasks: [] }} 
+                        tagCollection={{ tag: { id: i, name: '', color: '#94a3b8', is_system: false, created_at: '', updated_at: '' }, tasks: [] }} 
                         isLoading={true} 
                     />
                 ))}

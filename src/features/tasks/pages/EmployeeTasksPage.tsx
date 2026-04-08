@@ -30,13 +30,13 @@ const EmployeeTasksPage = () => {
   const getTypeRowStyle = (type: string) => {
     switch (type) {
       case 'Government':
-        return { backgroundColor: 'rgba(74, 162, 255, 0.01)' }; // bright blue - increased opacity
+        return { backgroundColor: 'color-mix(in srgb, var(--primitive-brand-500) 8%, var(--token-bg-page))' };
       case 'RealEstate':
-        return { backgroundColor: 'rgba(90, 175, 110, 0.1)' }; // bright green - increased opacity
+        return { backgroundColor: 'color-mix(in srgb, var(--primitive-green-600) 10%, var(--token-bg-page))' };
       case 'Accounting':
-        return { backgroundColor: 'rgba(248, 220, 61, 0.1)' }; // bright yellow - increased opacity
+        return { backgroundColor: 'color-mix(in srgb, var(--primitive-amber-600) 10%, var(--token-bg-page))' };
       default:
-        return { backgroundColor: 'rgba(206, 208, 209, 0.1)' }; // bright grey - increased opacity
+        return { backgroundColor: 'color-mix(in srgb, var(--primitive-gray-500) 10%, var(--token-bg-page))' };
     }
   };
 
@@ -44,15 +44,35 @@ const EmployeeTasksPage = () => {
   const getStatusBadgeStyle = (status: string) => {
     switch (status) {
       case 'New':
-        return { backgroundColor: 'rgba(255, 215, 0, 0.2)', color: '#B8860B', border: '1px dashed rgba(255, 215, 0, 0.3)' }; // bright faint gold
+        return {
+          backgroundColor: 'color-mix(in srgb, var(--primitive-brand-500) 18%, var(--token-bg-page))',
+          color: 'var(--token-text-brand)',
+          border: '1px dashed color-mix(in srgb, var(--primitive-brand-500) 35%, var(--token-border-default))',
+        };
       case 'In Progress':
-        return { backgroundColor: 'rgba(23, 162, 184, 0.2)', color: '#17A2B8', border: '1px dashed rgba(23, 162, 184, 0.3)' }; // bright faint blue
+        return {
+          backgroundColor: 'color-mix(in srgb, var(--primitive-brand-500) 18%, var(--token-bg-page))',
+          color: 'var(--token-text-brand)',
+          border: '1px dashed color-mix(in srgb, var(--primitive-brand-500) 35%, var(--token-border-default))',
+        };
       case 'Deferred':
-        return { backgroundColor: 'rgba(220, 53, 69, 0.2)', color: '#DC3545', border: '1px dashed rgba(220, 53, 69, 0.3)' }; // bright faint red
+        return {
+          backgroundColor: 'color-mix(in srgb, var(--primitive-red-600) 18%, var(--token-bg-page))',
+          color: 'var(--token-status-danger-text)',
+          border: '1px dashed color-mix(in srgb, var(--primitive-red-600) 35%, var(--token-border-default))',
+        };
       case 'Completed':
-        return { backgroundColor: 'rgba(40, 167, 69, 0.2)', color: '#28A745', border: '1px dashed rgba(40, 167, 69, 0.3)' }; // bright faint green
+        return {
+          backgroundColor: 'color-mix(in srgb, var(--primitive-green-600) 18%, var(--token-bg-page))',
+          color: 'var(--token-status-success-text)',
+          border: '1px dashed color-mix(in srgb, var(--primitive-green-600) 35%, var(--token-border-default))',
+        };
       default:
-        return { backgroundColor: 'rgba(108, 117, 125, 0.2)', color: '#6C757D', border: '1px dashed rgba(108, 117, 125, 0.3)' };
+        return {
+          backgroundColor: 'color-mix(in srgb, var(--primitive-gray-600) 16%, var(--token-bg-page))',
+          color: 'var(--token-text-primary)',
+          border: '1px dashed color-mix(in srgb, var(--primitive-gray-600) 30%, var(--token-border-default))',
+        };
     }
   };
 

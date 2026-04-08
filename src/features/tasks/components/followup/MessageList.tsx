@@ -56,7 +56,7 @@ const MessageList: React.FC<MessageListProps> = ({
             });
             
             // Add highlight animation
-            messageElement.style.backgroundColor = 'rgba(255, 193, 7, 0.3)';
+            messageElement.style.backgroundColor = 'color-mix(in srgb, var(--primitive-amber-600) 28%, var(--token-bg-page))';
             messageElement.style.transition = 'background-color 0.5s ease';
             
             // Remove highlight after 3 seconds

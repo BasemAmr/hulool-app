@@ -88,8 +88,8 @@ const ClientSearchModal = () => {
             <button 
               className="flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-lg transition-all duration-200"
               style={{
-                color: 'hsl(var(--primary-foreground))',
-                background: 'linear-gradient(135deg, hsl(var(--primary)) 0%, hsl(var(--primary) / 0.9) 100%)'
+                color: 'var(--token-action-primary-text)',
+                background: 'var(--gradient-primary)'
               }}
               onClick={handleAddNewClient}
             >
@@ -127,7 +127,7 @@ const ClientSearchModal = () => {
                     <div 
                       className="w-11 h-11 rounded-full flex items-center justify-center mr-3 text-white text-lg font-semibold shadow-sm border-2 border-white/90 transition-all duration-200 hover:scale-105 hover:shadow-md"
                       style={{
-                        background: 'linear-gradient(135deg, hsl(var(--primary)) 0%, hsl(var(--primary) / 0.8) 100%)'
+                        background: 'var(--gradient-primary)'
                       }}
                     >
                       {client.name.charAt(0).toUpperCase()}
@@ -136,7 +136,7 @@ const ClientSearchModal = () => {
                     {/* Client Info */}
                     <div className="flex-grow">
                       <div className="flex items-center mb-1">
-                        <User size={14} className="mr-2" style={{ color: 'hsl(var(--primary))' }} />
+                        <User size={14} className="mr-2" style={{ color: 'var(--token-text-brand)' }} />
                         <span className="font-semibold text-text-primary">
                           {client.name}
                         </span>

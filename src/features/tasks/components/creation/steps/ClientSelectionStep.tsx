@@ -71,9 +71,9 @@ const ClientSelectionStep = ({ control, errors, watch, client, onClientSelected 
         
         .selected-type-display {
           padding: 0.75rem;
-          background-color: #f8f9fa;
+          background-color: var(--token-bg-surface-muted);
           border-radius: 0.375rem;
-          border: 1px solid #e9ecef;
+          border: 1px solid var(--token-border-default);
         }
         
         .preselected-client {
@@ -82,17 +82,17 @@ const ClientSelectionStep = ({ control, errors, watch, client, onClientSelected 
         
         .client-card {
           padding: 1rem;
-          border: 2px solid #e9ecef;
+          border: 2px solid var(--token-border-default);
           border-radius: 0.5rem;
-          background: white;
+          background: var(--token-bg-surface);
           display: flex;
           justify-content: space-between;
           align-items: center;
         }
         
         .client-card.selected {
-          border-color: #28a745;
-          background-color: #f8fff9;
+          border-color: var(--token-status-success-border);
+          background-color: var(--token-status-success-bg);
         }
         
         .client-info {
@@ -102,12 +102,12 @@ const ClientSelectionStep = ({ control, errors, watch, client, onClientSelected 
         .client-name {
           font-weight: 600;
           font-size: 1rem;
-          color: #495057;
+          color: var(--token-text-primary);
         }
         
         .client-phone {
           font-size: 0.875rem;
-          color: #6c757d;
+          color: var(--token-text-primary);
           margin-top: 0.25rem;
         }
         

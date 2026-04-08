@@ -53,10 +53,10 @@ const TagsSection = ({ control, availableTags }: TagsSectionProps) => {
       
       <style>{`
         .tags-section {
-          border: 1px solid #e9ecef;
+          border: 1px solid var(--token-border-default);
           border-radius: 0.375rem;
           padding: 0.75rem;
-          background-color: #f8f9fa;
+          background-color: var(--token-bg-surface-muted);
         }
         
         .tags-container {
@@ -76,8 +76,8 @@ const TagsSection = ({ control, availableTags }: TagsSectionProps) => {
           display: flex;
           align-items: center;
           padding: 0.375rem 0.5rem;
-          background: white;
-          border: 1px solid #dee2e6;
+          background: var(--token-bg-surface);
+          border: 1px solid var(--token-border-default);
           border-radius: 0.25rem;
           cursor: pointer;
           transition: all 0.2s ease;
@@ -85,8 +85,8 @@ const TagsSection = ({ control, availableTags }: TagsSectionProps) => {
         }
         
         .tag-checkbox:hover {
-          border-color: #007bff;
-          box-shadow: 0 1px 3px rgba(0,123,255,0.15);
+          border-color: var(--token-border-focus);
+          box-shadow: 0 1px 3px color-mix(in srgb, var(--token-border-focus) 15%, transparent);
         }
         
         .tag-checkbox input[type="checkbox"] {
@@ -103,19 +103,19 @@ const TagsSection = ({ control, availableTags }: TagsSectionProps) => {
         .checkmark {
           width: 16px;
           height: 16px;
-          border: 2px solid #dee2e6;
+          border: 2px solid var(--token-border-strong);
           border-radius: 3px;
           transition: all 0.2s ease;
         }
         
         .tag-checkbox input:checked ~ .checkmark {
-          background-color: #007bff;
-          border-color: #007bff;
+          background-color: var(--token-action-primary-bg);
+          border-color: var(--token-action-primary-bg);
         }
         
         .tag-checkbox input:checked ~ .checkmark:after {
           content: "✓";
-          color: white;
+          color: var(--token-action-primary-text);
           font-size: 11px;
           display: flex;
           align-items: center;
@@ -124,14 +124,14 @@ const TagsSection = ({ control, availableTags }: TagsSectionProps) => {
         }
         
         .tag-checkbox input:checked {
-          background-color: #e7f3ff;
-          border-color: #007bff;
+          background-color: var(--token-status-info-bg);
+          border-color: var(--token-border-focus);
         }
         
         .no-tags {
           text-align: center;
           padding: 1rem;
-          color: #6c757d;
+          color: var(--token-text-primary);
         }
       `}</style>
     </div>

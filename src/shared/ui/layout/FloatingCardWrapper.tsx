@@ -32,7 +32,7 @@ export const FloatingCardWrapper: React.FC<FloatingCardWrapperProps> = ({
           transform: isHovered ? `scale(${hoverScale})  ` : 'scale(1) translateX(0)',
           transformOrigin: 'center center',
           transition: 'all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94)',
-          boxShadow: isHovered ? '0 14px 28px rgba(0,0,0,0.25), 0 10px 10px rgba(0,0,0,0.22)' : 'none',
+          boxShadow: isHovered ? 'var(--token-shadow-float)' : 'none',
           willChange: 'transform, box-shadow',
           backfaceVisibility: 'hidden',
           overflow: 'visible',

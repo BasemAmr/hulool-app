@@ -223,7 +223,7 @@ const EmployeeOwnTasksTable: React.FC<EmployeeOwnTasksTableProps> = ({
   const CELL_STYLE: React.CSSProperties = {
     padding: '8px',
     fontSize: 'var(--font-size-sm)',
-    border: '1px solid #e5e7eb', // Bordered grid style
+    border: '1px solid var(--token-border-default)', // Bordered grid style
     verticalAlign: 'middle',
     backgroundColor: 'inherit' // Inherit from row
   };
@@ -256,7 +256,7 @@ const EmployeeOwnTasksTable: React.FC<EmployeeOwnTasksTableProps> = ({
                   key={task.id}
                   className="hover:bg-background transition-colors"
                   style={{
-                    backgroundColor: isHighlighted ? 'rgba(255, 193, 7, 0.1)' : rowStyle.backgroundColor,
+                    backgroundColor: isHighlighted ? 'color-mix(in srgb, var(--primitive-amber-600) 12%, var(--token-bg-page))' : rowStyle.backgroundColor,
                   }}
                 >
                   <td style={{ ...CELL_STYLE, fontWeight: 600 }}>

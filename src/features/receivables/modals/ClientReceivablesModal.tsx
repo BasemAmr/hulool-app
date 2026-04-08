@@ -148,7 +148,7 @@ const ClientReceivablesTable: React.FC<ClientReceivablesTableProps> = ({
                     {expandedRows.has(item.id) && item.payments && item.payments.length > 0 && (
                       <tr className="payment-details-row">
                         <td colSpan={8} className="p-0">
-                          <div style={{ backgroundColor: '#f8f9fa', padding: '1rem' }}>
+                          <div style={{ backgroundColor: 'var(--token-bg-surface-muted)', padding: '1rem' }}>
                             <div className="small text-muted mb-2 fw-medium">تفاصيل المدفوعات:</div>
                             <table className="table table-sm bg-card mb-0">
                               <thead>
@@ -233,7 +233,7 @@ const ClientReceivablesTable: React.FC<ClientReceivablesTableProps> = ({
       </div>
 
       <style>{`
-        .receivable-row:hover { background-color: #f8f9fa ; }
+        .receivable-row:hover { background-color: var(--token-bg-surface-hover) ; }
         .cursor-pointer { cursor: pointer; }
       `}</style>
     </div>

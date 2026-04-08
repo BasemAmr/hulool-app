@@ -232,7 +232,7 @@ const RegionSelect: React.FC<RegionSelectProps> = ({
             <button
               type="button"
               className="w-full px-3 py-2 text-right flex items-center gap-2 hover:bg-accent transition-colors duration-150"
-              style={{ color: 'hsl(var(--primary))' }}
+              style={{ color: 'var(--token-text-brand)' }}
               onClick={handleStartCreating}
             >
               <i className="fas fa-plus"></i>
@@ -257,7 +257,7 @@ const RegionSelect: React.FC<RegionSelectProps> = ({
                   type="button"
                   className="flex-1 px-3 py-1.5 text-sm font-medium rounded-md text-primary-foreground transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
                   style={{
-                    background: 'linear-gradient(135deg, hsl(var(--primary)) 0%, hsl(var(--primary) / 0.9) 100%)'
+                    background: 'var(--gradient-primary)'
                   }}
                   onClick={() => handleCreateRegion(onControllerChange)}
                   disabled={!newRegionName.trim() || createRegionMutation.isPending}

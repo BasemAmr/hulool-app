@@ -66,34 +66,34 @@ const TaskTypeStep = ({ control, errors, onTypeSelected }: TaskTypeStepProps) =>
         
         .type-card {
           padding: 1.5rem 1rem;
-          border: 2px solid #e9ecef;
+          border: 2px solid var(--token-border-default);
           border-radius: 0.5rem;
           text-align: center;
           cursor: pointer;
           transition: all 0.2s ease;
-          background: white;
+          background: var(--token-bg-surface);
         }
         
         .type-card:hover {
-          border-color: #007bff;
-          box-shadow: 0 2px 8px rgba(0,123,255,0.15);
+          border-color: var(--token-border-focus);
+          box-shadow: 0 2px 8px color-mix(in srgb, var(--token-border-focus) 18%, transparent);
           transform: translateY(-2px);
         }
         
         .type-card.selected {
-          border-color: #007bff;
-          background-color: #e7f3ff;
-          color: #007bff;
+          border-color: var(--token-border-focus);
+          background-color: var(--token-status-info-bg);
+          color: var(--token-text-brand);
         }
         
         .type-icon {
           font-size: 2rem;
           margin-bottom: 0.5rem;
-          color: #6c757d;
+          color: var(--token-text-primary);
         }
         
         .type-card.selected .type-icon {
-          color: #007bff;
+          color: var(--token-text-brand);
         }
         
         .type-label {

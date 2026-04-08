@@ -268,7 +268,7 @@ const AllTasksPage = () => {
       <header className="flex justify-between items-center mb-1 py-1">
         <div className="flex items-center gap-2">
           <h5 className="mb-0" style={{
-            background: 'linear-gradient(135deg, #d4af37 0%, #b8941f 100%)',
+            background: 'var(--gradient-primary)',
             WebkitBackgroundClip: 'text',
             WebkitTextFillColor: 'transparent',
             backgroundClip: 'text',

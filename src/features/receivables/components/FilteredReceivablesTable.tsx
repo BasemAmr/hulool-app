@@ -127,7 +127,7 @@ const FilteredReceivablesTable: React.FC<FilteredReceivablesTableProps> = ({
       
       <Table>
         <TableHeader className={isSticky ? 'is-sticky' : ''}>
-          <TableRow style={{ backgroundColor: filterType === 'paid' ? '#22c55e' : '#dc2626', color: 'white' }}>
+          <TableRow style={{ backgroundColor: filterType === 'paid' ? 'var(--primitive-green-600)' : 'var(--primitive-red-600)', color: 'var(--primitive-white)' }}>
             <TableHead className="text-center text-white font-bold" style={{ width: '5%' }}></TableHead>
             <TableHead className="text-center text-white font-bold" style={{ width: '8%' }}>‏العميل</TableHead>
             <TableHead className="text-center text-white font-bold" style={{ width: '7%' }}>‏رقم الهاتف</TableHead>
@@ -285,7 +285,7 @@ const FilteredReceivablesTable: React.FC<FilteredReceivablesTableProps> = ({
           })}
         </TableBody>
         <TableHeader>
-          <TableRow style={{ backgroundColor: filterType === 'paid' ? '#22c55e' : '#dc2626', color: 'white' }}>
+          <TableRow style={{ backgroundColor: filterType === 'paid' ? 'var(--primitive-green-600)' : 'var(--primitive-red-600)', color: 'var(--primitive-white)' }}>
             <TableCell colSpan={4} className="text-right text-white font-bold">الإجمالي</TableCell>
             <TableCell className="text-center text-white font-bold">
               {formatCurrency(totals.totalDebit)}

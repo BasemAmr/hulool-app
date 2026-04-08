@@ -247,7 +247,7 @@ const TaskSubtasksModal = () => {
                   <div 
                     className="w-3 h-3 rounded-full"
                     style={{
-                      backgroundColor: progress.percentage === 100 ? '#28a745' : progress.percentage > 0 ? '#ffc107' : '#6c757d'
+                      backgroundColor: progress.percentage === 100 ? 'var(--primitive-green-600)' : progress.percentage > 0 ? 'var(--primitive-amber-600)' : 'var(--primitive-gray-500)'
                     }}
                   ></div>
                   تقدم إنجاز المهام الفرعية
@@ -257,7 +257,7 @@ const TaskSubtasksModal = () => {
                     className="h-full transition-all duration-300 ease-out"
                     style={{ 
                       width: `${progress.percentage}%`,
-                      backgroundColor: progress.percentage === 100 ? '#28a745' : progress.percentage > 0 ? '#ffc107' : '#6c757d'
+                      backgroundColor: progress.percentage === 100 ? 'var(--primitive-green-600)' : progress.percentage > 0 ? 'var(--primitive-amber-600)' : 'var(--primitive-gray-500)'
                     }}
                   ></div>
                 </div>
@@ -412,7 +412,6 @@ const TaskSubtasksModal = () => {
             variant="outline-primary"
             onClick={addSubtask}
             className="flex items-center gap-2"
-            style={{ borderColor: '#d4af37', color: '#d4af37' }}
           >
             <Plus size={18} />
             إضافة مهمة فرعية جديدة
@@ -429,7 +428,6 @@ const TaskSubtasksModal = () => {
             variant="primary" 
             onClick={handleSave}
             disabled={updateTaskMutation.isPending}
-            style={{ backgroundColor: '#d4af37', borderColor: '#d4af37' }}
           >
             <Save size={16} />
             {updateTaskMutation.isPending ? 'جارٍ الحفظ...' : 'حفظ التغييرات'}

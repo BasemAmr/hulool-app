@@ -55,8 +55,8 @@ const TaskHistoryModal = ({ isOpen, onClose, clientName, clientId }: TaskHistory
         <div className="modal-dialog modal-lg modal-dialog-centered">
           <div className="modal-content border-0 shadow-lg">
             <div className="modal-header" style={{ 
-              background: 'var(--gradient-gold)', 
-              color: 'var(--color-white)' 
+              background: 'var(--gradient-primary)', 
+              color: 'var(--token-action-primary-text)' 
             }}>
               <div className="d-flex align-items-center">
                 <History size={20} className="me-2" />

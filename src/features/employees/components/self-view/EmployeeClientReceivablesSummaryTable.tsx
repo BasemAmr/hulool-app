@@ -29,7 +29,7 @@ import {
   X
 } from 'lucide-react';
 import WhatsAppIcon from '@/assets/images/whats.svg';
-import GoogleDriveIcon from '@/assets/images/googe_drive.svg';
+import GoogleDriveIcon from '@/shared/ui/icons/GoogleDriveIcon';
 import type { ClientWithTasksAndStats } from '@/features/dashboard/api/dashboardQueries';
 import { useRef, useEffect, useState } from 'react';
 
@@ -282,11 +282,12 @@ const EmployeeDashboardClientCard = ({ data, onWidthCalculated }: EmployeeDashbo
             )}
             <button
               onClick={openGoogleDrive}
-              className="rounded border-0 p-1 text-text-primary transition-colors hover:bg-background/20"
+              className="rounded border-0 p-1 text-text-primary transition-colors hover:bg-background/20 hover:text-text-brand"
               title="Google Drive"
               disabled={!client.google_drive_link}
+              type="button"
             >
-              <img src={GoogleDriveIcon} alt="Google Drive" width="16" height="16" />
+              <GoogleDriveIcon size={16} className="text-current" />
             </button>
           </div>
 

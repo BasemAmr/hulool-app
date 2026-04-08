@@ -54,7 +54,7 @@ const OverdueReceivablesPage = () => {
     <div>
       <header className="flex justify-between items-center mb-3">
         <h1 style={{ 
-          background: 'linear-gradient(135deg, #f55a3f 0%, #dc2626 100%)',
+          background: 'linear-gradient(135deg, var(--primitive-red-600) 0%, var(--primitive-red-700) 100%)',
           WebkitBackgroundClip: 'text',
           WebkitTextFillColor: 'transparent',
           backgroundClip: 'text',

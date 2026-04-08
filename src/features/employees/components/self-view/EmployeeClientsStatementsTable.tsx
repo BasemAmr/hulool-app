@@ -52,7 +52,7 @@ const ClientNameCell = React.memo(({ rowData }: CellProps<EmployeeReceivableDash
       <div style={{ fontWeight: 600, color: 'var(--token-text-primary)' }}>
         {rowData.client_name}
       </div>
-      <div style={{ fontSize: '0.875rem', color: '#666666' }}>
+      <div style={{ fontSize: '0.875rem', color: 'var(--token-text-primary)' }}>
         {rowData.client_phone}
       </div>
     </div>
@@ -68,7 +68,7 @@ const DescriptionCell = React.memo(({ rowData }: CellProps<EmployeeReceivableDas
         {rowData.description || rowData.task_name || '—'}
       </div>
       {rowData.task_name && (
-        <div style={{ fontSize: '0.875rem', color: '#666666' }}>
+        <div style={{ fontSize: '0.875rem', color: 'var(--token-text-primary)' }}>
           مهمة: {rowData.task_name}
         </div>
       )}
@@ -267,7 +267,7 @@ const ActionsCell = React.memo(({ rowData, columnData }: CellProps<EmployeeRecei
               alignItems: 'center',
               gap: '2px',
               padding: '4px 8px',
-              backgroundColor: '#25D366',
+              backgroundColor: 'var(--color-whatsapp)',
               color: 'white',
               border: 'none',
               borderRadius: '4px',

@@ -35,8 +35,8 @@ const WhatsAppIcon = ({ size = 16, className = "" }: WhatsAppIconProps) => (
         y2="28" 
         gradientUnits="userSpaceOnUse"
       >
-        <stop stopColor="#5BD066" />
-        <stop offset="1" stopColor="#27B43E" />
+        <stop stopColor="color-mix(in srgb, var(--color-whatsapp) 72%, white)" />
+        <stop offset="1" stopColor="var(--color-whatsapp)" />
       </linearGradient>
     </defs>
   </svg>

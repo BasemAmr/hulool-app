@@ -66,7 +66,7 @@ const AmountCell = React.memo(({ rowData }: CellProps<ClientCredit>) => {
   return (
     <div style={{ display: 'flex', alignItems: 'center' }}>
       <SaudiRiyalIcon size={16} className="me-1 text-status-success-text" />
-      <span style={{ color: '#16a34a', fontWeight: 700 }}>
+      <span style={{ color: 'var(--token-status-success-text)', fontWeight: 700 }}>
         {formatCurrency(Number(rowData.amount))}
       </span>
     </div>
@@ -79,7 +79,7 @@ const AllocatedCell = React.memo(({ rowData }: CellProps<ClientCredit>) => {
   return (
     <div style={{ display: 'flex', alignItems: 'center' }}>
       <SaudiRiyalIcon size={16} className="me-1 text-status-info-text" />
-      <span style={{ color: '#3b82f6' }}>
+      <span style={{ color: 'var(--token-status-info-text)' }}>
         {formatCurrency(Number(rowData.allocated_amount))}
       </span>
     </div>

@@ -115,8 +115,8 @@ const AmountDetailsModal = () => {
               onClick={handleCopyAll}
               className="flex items-center gap-1"
               style={{ 
-                borderColor: '#d4af37', 
-                color: copiedAll ? '#28a745' : '#d4af37'
+                borderColor: 'var(--token-border-focus)', 
+                color: copiedAll ? 'var(--token-status-success-text)' : 'var(--token-text-brand)'
               }}
             >
               {copiedAll ? <Check size={16} /> : <Copy size={16} />}
@@ -143,8 +143,8 @@ const AmountDetailsModal = () => {
                   onClick={() => handleCopyItem(index, `${detail.description}: ${detail.amount} ريال`)}
                   className="ml-2 flex items-center gap-1"
                   style={{ 
-                    borderColor: copiedItems.has(index) ? '#28a745' : '#6c757d',
-                    color: copiedItems.has(index) ? '#28a745' : '#6c757d',
+                    borderColor: copiedItems.has(index) ? 'var(--token-status-success-border)' : 'var(--token-border-strong)',
+                    color: copiedItems.has(index) ? 'var(--token-status-success-text)' : 'var(--token-text-primary)',
                     minWidth: '80px'
                   }}
                 >
@@ -168,7 +168,7 @@ const AmountDetailsModal = () => {
           <div 
             className="p-4 rounded-lg text-white"
             style={{ 
-              background: 'linear-gradient(135deg, #d4af37 0%, #b8941f 100%)'
+              background: 'var(--gradient-primary)'
             }}
           >
             <div className="flex justify-between items-start">

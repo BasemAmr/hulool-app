@@ -12,9 +12,9 @@ const customStyles = `
   .react-datepicker__input-container input {
     width: 100%;
     padding: 0.5rem;
-    border: 1px solid #d1d5db;
+    border: 1px solid var(--token-border-strong);
     border-radius: 0.375rem;
-    box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+    box-shadow: var(--token-shadow-sm);
     font-family: 'Segoe UI', Roboto, Helvetica Neue, Arial, sans-serif !important;
     direction: rtl !important;
     text-align: right;

@@ -178,20 +178,24 @@ DateCell.displayName = 'DateCell';
 // Type Badge Cell
 const TypeBadgeCell = React.memo(({ rowData }: CellProps<FinancialTransaction>) => {
   const badges: Record<string, { bg: string; text: string; label: string }> = {
-    'INVOICE_CREATED': { bg: '#fee2e2', text: '#b91c1c', label: 'فاتورة' },
-    'INVOICE_GENERATED': { bg: '#fee2e2', text: '#b91c1c', label: 'فاتورة' },
-    'PAYMENT_RECEIVED': { bg: '#dcfce7', text: '#15803d', label: 'دفعة' },
-    'CREDIT_APPLIED': { bg: '#dbeafe', text: '#1d4ed8', label: 'تخصيص رصيد' },
-    'CREDIT_RECEIVED': { bg: '#dbeafe', text: '#1d4ed8', label: 'رصيد مستلم' },
-    'CREDIT_ALLOCATED': { bg: '#dbeafe', text: '#1d4ed8', label: 'تخصيص رصيد' },
-    'ADJUSTMENT': { bg: '#fef9c3', text: '#a16207', label: 'تعديل' },
-    'REVERSAL': { bg: '#ffedd5', text: '#c2410c', label: 'عكس' },
-    'INVOICE_REVERSED': { bg: '#ffedd5', text: '#c2410c', label: 'فاتورة ملغاة' },
-    'PAYOUT': { bg: '#fee2e2', text: '#b91c1c', label: 'سند صرف' },
-    'REPAYMENT': { bg: '#dcfce7', text: '#15803d', label: 'سند قبض' },
+    'INVOICE_CREATED': { bg: 'var(--token-status-danger-bg)', text: 'var(--token-status-danger-text)', label: 'فاتورة' },
+    'INVOICE_GENERATED': { bg: 'var(--token-status-danger-bg)', text: 'var(--token-status-danger-text)', label: 'فاتورة' },
+    'PAYMENT_RECEIVED': { bg: 'var(--token-status-success-bg)', text: 'var(--token-status-success-text)', label: 'دفعة' },
+    'CREDIT_APPLIED': { bg: 'var(--token-status-info-bg)', text: 'var(--token-status-info-text)', label: 'تخصيص رصيد' },
+    'CREDIT_RECEIVED': { bg: 'var(--token-status-info-bg)', text: 'var(--token-status-info-text)', label: 'رصيد مستلم' },
+    'CREDIT_ALLOCATED': { bg: 'var(--token-status-info-bg)', text: 'var(--token-status-info-text)', label: 'تخصيص رصيد' },
+    'ADJUSTMENT': { bg: 'var(--token-status-warning-bg)', text: 'var(--token-status-warning-text)', label: 'تعديل' },
+    'REVERSAL': { bg: 'var(--token-status-warning-bg)', text: 'var(--token-text-warning)', label: 'عكس' },
+    'INVOICE_REVERSED': { bg: 'var(--token-status-warning-bg)', text: 'var(--token-text-warning)', label: 'فاتورة ملغاة' },
+    'PAYOUT': { bg: 'var(--token-status-danger-bg)', text: 'var(--token-status-danger-text)', label: 'سند صرف' },
+    'REPAYMENT': { bg: 'var(--token-status-success-bg)', text: 'var(--token-status-success-text)', label: 'سند قبض' },
   };
 
-  const badge = badges[rowData.transaction_type] || { bg: '#f3f4f6', text: '#4b5563', label: rowData.transaction_type };
+  const badge = badges[rowData.transaction_type] || {
+    bg: 'var(--token-status-neutral-bg)',
+    text: 'var(--token-text-primary)',
+    label: rowData.transaction_type,
+  };
 
   return (
     <span className="hulool-cell-content" style={{ justifyContent: 'center' }}>
@@ -528,7 +532,7 @@ const AccountLedgerTable: React.FC<AccountLedgerTableProps> = ({
       <style>{`
         /* Highlighted transaction row - use outline for reliable border */
         .hulool-data-grid .dsg-row.transaction-row-highlighted {
-          outline: 3px solid #3b82f6 !important;
+          outline: 3px solid var(--token-border-focus) !important;
           outline-offset: -2px;
           z-index: 10;
           position: relative;
@@ -536,7 +540,7 @@ const AccountLedgerTable: React.FC<AccountLedgerTableProps> = ({
         
         /* Highlighted cells get background color */
         .hulool-data-grid .dsg-row.transaction-row-highlighted .dsg-cell {
-          background-color: rgba(191, 219, 254, 0.7) !important;
+          background-color: color-mix(in srgb, var(--token-border-focus) 22%, var(--token-bg-surface)) !important;
         }
         
         /* Add pulsing animation to row */
@@ -546,12 +550,12 @@ const AccountLedgerTable: React.FC<AccountLedgerTableProps> = ({
         
         @keyframes highlightPulse {
           0%, 100% {
-            outline-color: #3b82f6;
-            box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.2);
+            outline-color: var(--token-border-focus);
+            box-shadow: 0 0 0 4px color-mix(in srgb, var(--token-border-focus) 28%, transparent);
           }
           50% {
-            outline-color: #60a5fa;
-            box-shadow: 0 0 0 8px rgba(59, 130, 246, 0.3);
+            outline-color: var(--token-text-brand);
+            box-shadow: 0 0 0 8px color-mix(in srgb, var(--token-border-focus) 35%, transparent);
           }
         }
       `}</style>

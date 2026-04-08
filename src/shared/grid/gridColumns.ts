@@ -199,16 +199,16 @@ export function statusColumn<T>(
   return badgeColumn<T>(key, title, {
     formatter: (value) => statusMap[value] || value,
     badgeColors: {
-      New: '#eab308',
-      Deferred: '#ef4444',
-      Completed: '#22c55e',
-      Cancelled: '#6b7280',
-      'Pending Review': '#f97316',
-      pending: '#eab308',
-      paid: '#22c55e',
-      overdue: '#ef4444',
-      partially_paid: '#f97316',
-      draft: '#6b7280',
+      New: 'var(--token-status-warning-bg)',
+      Deferred: 'var(--token-status-danger-bg)',
+      Completed: 'var(--token-status-success-bg)',
+      Cancelled: 'var(--token-status-neutral-bg)',
+      'Pending Review': 'var(--token-status-info-bg)',
+      pending: 'var(--token-status-warning-bg)',
+      paid: 'var(--token-status-success-bg)',
+      overdue: 'var(--token-status-danger-bg)',
+      partially_paid: 'var(--token-status-warning-bg)',
+      draft: 'var(--token-status-neutral-bg)',
     },
     ...options,
   });
@@ -232,10 +232,10 @@ export function typeColumn<T>(
   return badgeColumn<T>(key, title, {
     formatter: (value) => typeMap[value] || value,
     badgeColors: {
-      Government: '#3b82f6',
-      RealEstate: '#22c55e',
-      Accounting: '#eab308',
-      Other: '#6b7280',
+      Government: 'var(--token-status-info-bg)',
+      RealEstate: 'var(--token-status-success-bg)',
+      Accounting: 'var(--token-status-warning-bg)',
+      Other: 'var(--token-status-neutral-bg)',
     },
     ...options,
   });
@@ -412,8 +412,8 @@ export function getTransactionColumns<T extends { client_name?: string; task_nam
     badgeColumn<T>('direction', 'النوع', {
       formatter: (val) => val === 'CREDIT' ? 'دائن' : 'مدين',
       badgeColors: {
-        CREDIT: '#22c55e',
-        DEBIT: '#ef4444',
+        CREDIT: 'var(--token-status-success-bg)',
+        DEBIT: 'var(--token-status-danger-bg)',
       },
     }),
   ];

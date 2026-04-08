@@ -16,7 +16,7 @@ const ClientHistoryIcons = ({ onViewTaskHistory, onViewPaymentHistory, disabled 
     <div className="flex gap-2 items-center">
       <button
         type="button"
-        className="border border-status-warning-border text-status-warning-text hover:bg-status-warning-bg rounded-full p-2 transition-colors"
+        className="rounded-full border border-primary/40 p-2 text-primary transition-colors hover:bg-primary/10"
         onClick={onViewTaskHistory}
         title={t('tasks.taskHistory')}
         style={{ 
@@ -28,7 +28,7 @@ const ClientHistoryIcons = ({ onViewTaskHistory, onViewPaymentHistory, disabled 
       </button>
       <button
         type="button"
-        className="border border-status-warning-border text-status-warning-text hover:bg-status-warning-bg rounded-full p-2 transition-colors"
+        className="rounded-full border border-primary/40 p-2 text-primary transition-colors hover:bg-primary/10"
         onClick={onViewPaymentHistory}
         title={t('tasks.paymentHistory')}
         style={{ 

@@ -10,7 +10,16 @@ import { TOAST_MESSAGES } from '@/shared/constants/toastMessages';
 
 import BaseModal from '@/shared/ui/layout/BaseModal';
 import Button from '@/shared/ui/primitives/Button';
+import {
+  ShadcnSelect as Select,
+  ShadcnSelectContent as SelectContent,
+  ShadcnSelectItem as SelectItem,
+  ShadcnSelectTrigger as SelectTrigger,
+  ShadcnSelectValue as SelectValue,
+} from '@/shared/ui/shadcn/select';
 import { UserPlus, X } from 'lucide-react';
+
+const SELECT_NONE_ASSIGNEE = '__assignee_none__';
 
 interface AssignTaskModalProps {
   task: Task;
@@ -123,20 +132,31 @@ const AssignTaskModal = () => {
             name="assigned_to_id"
             control={control}
             render={({ field }) => (
-              <select
-                {...field}
-                className="w-full px-3 py-2 border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-primary disabled:bg-muted text-text-primary"
-                value={field.value || ''}
-                onChange={(e) => field.onChange(e.target.value === '' ? null : Number(e.target.value))}
+              <Select
+                value={field.value == null ? SELECT_NONE_ASSIGNEE : String(field.value)}
+                onValueChange={(v) =>
+                  field.onChange(v === SELECT_NONE_ASSIGNEE ? null : Number(v))
+                }
                 disabled={isLoadingEmployees || isSubmitting}
               >
-                <option value="">غير مكلف</option>
-                {employees.map((employee) => (
-                  <option key={employee.user_id} value={employee.user_id}>
-                    {employee.display_name}
-                  </option>
-                ))}
-              </select>
+                <SelectTrigger className="h-10 w-full border-border bg-background px-3 text-text-primary focus:ring-2 focus:ring-ring disabled:opacity-50">
+                  <SelectValue placeholder="غير مكلف" />
+                </SelectTrigger>
+                <SelectContent position="popper" className="z-[400] max-h-64">
+                  <SelectItem value={SELECT_NONE_ASSIGNEE} className="text-text-primary">
+                    غير مكلف
+                  </SelectItem>
+                  {employees.map((employee) => (
+                    <SelectItem
+                      key={employee.user_id}
+                      value={String(employee.user_id)}
+                      className="text-text-primary"
+                    >
+                      {employee.display_name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             )}
           />
           {isLoadingEmployees && (

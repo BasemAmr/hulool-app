@@ -228,14 +228,14 @@ const ReceivablePaymentModal = () => {
       {isRequired && (
         <style>{`
           .form-control[readonly] {
-            background-color: #f8f9fa;
-            border-color: #6c757d;
-            color: #495057;
+            background-color: var(--token-bg-surface-muted);
+            border-color: var(--token-border-strong);
+            color: var(--token-text-primary);
             cursor: not-allowed;
           }
           
           .alert-warning {
-            border-left: 4px solid #ffc107;
+            border-left: 4px solid var(--token-status-warning-border);
           }
         `}</style>
       )}

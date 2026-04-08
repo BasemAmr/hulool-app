@@ -33,11 +33,9 @@ const CollapsibleTaskStatusCards: React.FC<CollapsibleTaskStatusCardsProps> = ({
         zIndex: isCollapsed ? 999 : 10000,
         transition: 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
         transform: isCollapsed ? 'translateY(calc(100% - 18px))' : 'translateY(0)',
-        backgroundColor: 'white',
-        borderTop: '1px solid #e5e7eb',
-        boxShadow: isCollapsed
-          ? '0 -4px 12px rgba(0, 0, 0, 0.06)'
-          : '0 -8px 24px rgba(0, 0, 0, 0.10)',
+        backgroundColor: 'var(--token-bg-surface)',
+        borderTop: '1px solid var(--token-border-default)',
+        boxShadow: isCollapsed ? 'var(--token-shadow-lg)' : 'var(--token-shadow-xl)',
         padding: isCollapsed ? '0' : '0.25rem 1rem',
         borderRadius: isCollapsed ? '24px 24px 0 0' : '0',
         overflow: isCollapsed ? 'visible' : 'hidden'
@@ -53,15 +51,15 @@ const CollapsibleTaskStatusCards: React.FC<CollapsibleTaskStatusCardsProps> = ({
           width: '48px',
           height: '48px',
           borderRadius: isCollapsed ? '24px 24px 0 0' : '0 0 24px 24px',
-          backgroundColor: 'white',
-          border: '1px solid #e5e7eb',
+          backgroundColor: 'var(--token-bg-surface)',
+          border: '1px solid var(--token-border-default)',
           color: 'var(--token-text-primary)',
           cursor: 'pointer',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
           transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-          boxShadow: '0 -4px 12px rgba(0, 0, 0, 0.06)',
+          boxShadow: 'var(--token-shadow-lg)',
           zIndex: 1001,
           padding: 0,
           outline: 'none'
@@ -97,7 +95,7 @@ const CollapsibleTaskStatusCards: React.FC<CollapsibleTaskStatusCardsProps> = ({
             alignItems: 'center',
             justifyContent: 'center',
             fontSize: '12px',
-            color: 'var(--token-text-muted)',
+            color: 'var(--token-text-secondary)',
             fontWeight: 500,
             cursor: 'pointer',
             userSelect: 'none'

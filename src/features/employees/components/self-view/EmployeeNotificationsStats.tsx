@@ -32,7 +32,7 @@ const EmployeeNotificationsStats: React.FC<EmployeeNotificationsStatsProps> = ({
       unread: taskNotifications.filter(n => !n.is_read).length,
       icon: CheckCircle,
       color: 'primary',
-      bgColor: 'rgba(13, 110, 253, 0.1)'
+      bgColor: 'color-mix(in srgb, var(--primitive-brand-600) 10%, var(--token-bg-page))'
     },
     {
       title: 'إشعارات الرسائل',
@@ -40,7 +40,7 @@ const EmployeeNotificationsStats: React.FC<EmployeeNotificationsStatsProps> = ({
       unread: messageNotifications.filter(n => !n.is_read).length,
       icon: MessageSquare,
       color: 'blue-500',
-      bgColor: 'rgba(13, 202, 240, 0.1)'
+      bgColor: 'color-mix(in srgb, var(--primitive-brand-500) 10%, var(--token-bg-page))'
     },
     {
       title: 'إشعارات مالية',
@@ -48,7 +48,7 @@ const EmployeeNotificationsStats: React.FC<EmployeeNotificationsStatsProps> = ({
       unread: financialNotifications.filter(n => !n.is_read).length,
       icon: DollarSign,
       color: 'green-600',
-      bgColor: 'rgba(25, 135, 84, 0.1)'
+      bgColor: 'color-mix(in srgb, var(--primitive-green-600) 10%, var(--token-bg-page))'
     },
     {
       title: 'غير المقروءة',
@@ -56,7 +56,7 @@ const EmployeeNotificationsStats: React.FC<EmployeeNotificationsStatsProps> = ({
       unread: unreadNotifications.length,
       icon: Bell,
       color: 'yellow-600',
-      bgColor: 'rgba(255, 193, 7, 0.1)'
+      bgColor: 'color-mix(in srgb, var(--primitive-amber-600) 12%, var(--token-bg-page))'
     }
   ];
 

@@ -48,6 +48,13 @@ import { TOAST_MESSAGES } from '@/shared/constants/toastMessages';
 
 import { NumberInput } from '@/shared/ui/primitives/NumberInput';
 import { DateInput } from '@/shared/ui/primitives/DateInput';
+import {
+  ShadcnSelect as Select,
+  ShadcnSelectContent as SelectContent,
+  ShadcnSelectItem as SelectItem,
+  ShadcnSelectTrigger as SelectTrigger,
+  ShadcnSelectValue as SelectValue,
+} from '@/shared/ui/shadcn/select';
 
 // Import step components
 import TaskTypeStep from './steps/TaskTypeStep';
@@ -59,6 +66,10 @@ interface TaskModalProps {
   taskToEdit?: Task;
   client?: Client;
 }
+
+/** Radix Select requires non-empty string item values */
+const SELECT_EMPTY_TASK_TYPE = '__task_type_unset__';
+const SELECT_NONE_ASSIGNEE = '__assignee_none__';
 
 const TaskModal = () => {
   const { t } = useTranslation();
@@ -574,15 +585,28 @@ const TaskModal = () => {
                       control={control}
                       rules={{ required: true }}
                       render={({ field }) => (
-                        <select
-                          {...field}
-                          className={`w-full px-3 py-1.5 border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-primary ${errors.type ? 'border-destructive bg-destructive/5' : 'border-border'}`}
+                        <Select
+                          value={field.value ? String(field.value) : SELECT_EMPTY_TASK_TYPE}
+                          onValueChange={(v) =>
+                            field.onChange(v === SELECT_EMPTY_TASK_TYPE ? ('' as TaskType) : (v as TaskType))
+                          }
                         >
-                          <option value="">{t('tasks.formTypeLabel')}</option>
-                          {taskTypes.map((type) => (
-                            <option key={type} value={type}>{t(`type.${type}`)}</option>
-                          ))}
-                        </select>
+                          <SelectTrigger
+                            className={`h-9 w-full px-3 text-text-primary focus:ring-2 focus:ring-ring ${errors.type ? 'border-destructive bg-destructive/5' : 'border-border bg-background'}`}
+                          >
+                            <SelectValue placeholder={t('tasks.formTypeLabel')} />
+                          </SelectTrigger>
+                          <SelectContent position="popper" className="z-[400] max-h-64">
+                            <SelectItem value={SELECT_EMPTY_TASK_TYPE} className="text-text-primary">
+                              {t('tasks.formTypeLabel')}
+                            </SelectItem>
+                            {taskTypes.map((type) => (
+                              <SelectItem key={type} value={type} className="text-text-primary">
+                                {t(`type.${type}`)}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
                       )}
                     />
                     {errors.type && <div className="text-destructive text-xs mt-1">مطلوب</div>}
@@ -632,19 +656,30 @@ const TaskModal = () => {
                         name="assigned_to_id"
                         control={control}
                         render={({ field }) => (
-                          <select
-                            {...field}
-                            className="w-full px-3 py-1.5 border border-border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-primary"
-                            value={field.value || ''}
-                            onChange={(e) => field.onChange(e.target.value === '' ? null : Number(e.target.value))}
+                          <Select
+                            value={field.value == null ? SELECT_NONE_ASSIGNEE : String(field.value)}
+                            onValueChange={(v) =>
+                              field.onChange(v === SELECT_NONE_ASSIGNEE ? null : Number(v))
+                            }
                           >
-                            <option value="">غير مكلف</option>
-                            {employees.map((employee) => (
-                              <option key={employee.user_id} value={employee.user_id}>
-                                {employee.display_name}
-                              </option>
-                            ))}
-                          </select>
+                            <SelectTrigger className="h-9 w-full border-border bg-background px-3 text-text-primary focus:ring-2 focus:ring-ring">
+                              <SelectValue placeholder="غير مكلف" />
+                            </SelectTrigger>
+                            <SelectContent position="popper" className="z-[400] max-h-64">
+                              <SelectItem value={SELECT_NONE_ASSIGNEE} className="text-text-primary">
+                                غير مكلف
+                              </SelectItem>
+                              {employees.map((employee) => (
+                                <SelectItem
+                                  key={employee.user_id}
+                                  value={String(employee.user_id)}
+                                  className="text-text-primary"
+                                >
+                                  {employee.display_name}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
                         )}
                       />
                     </div>

@@ -56,7 +56,7 @@ const TagManagementModal = () => {
     if (!isActive) return null;
 
     return (
-        <div className="modal show d-block" style={{ backgroundColor: 'rgba(0,0,0,0.5)' }}>
+        <div className="modal show d-block" style={{ backgroundColor: 'color-mix(in srgb, var(--primitive-gray-900) 55%, transparent)' }}>
             <div className="modal-dialog modal-lg modal-dialog-centered" onClick={(e) => e.stopPropagation()}>
                 <div className="modal-content">
                     <div className="modal-header">
@@ -110,8 +110,8 @@ const TagManagementModal = () => {
                                                         className="badge" 
                                                         style={{ 
                                                             backgroundColor: tag.color, 
-                                                            color: '#fff',
-                                                            textShadow: '1px 1px 2px rgba(0,0,0,0.3)'
+                                                            color: 'var(--primitive-white)',
+                                                            textShadow: '1px 1px 2px color-mix(in srgb, var(--primitive-gray-900) 35%, transparent)'
                                                         }}
                                                     >
                                                         {tag.name}
@@ -126,7 +126,7 @@ const TagManagementModal = () => {
                                                                 height: '20px',
                                                                 backgroundColor: tag.color,
                                                                 borderRadius: '4px',
-                                                                border: '1px solid #dee2e6'
+                                                                border: '1px solid var(--token-border-default)'
                                                             }}
                                                         ></div>
                                                         <span className="font-monospace">{tag.color}</span>

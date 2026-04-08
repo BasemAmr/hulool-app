@@ -146,7 +146,7 @@ const UserManagement: React.FC = () => {
           onClick={() => setShowCreateForm(!showCreateForm)}
           className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-primary-foreground rounded-md transition-all duration-200"
           style={{
-            background: 'linear-gradient(135deg, hsl(var(--primary)) 0%, hsl(var(--primary) / 0.9) 100%)'
+            background: 'var(--gradient-primary)'
           }}
         >
           <UserPlus size={16} />
@@ -213,7 +213,7 @@ const UserManagement: React.FC = () => {
                 disabled={createUserMutation.isPending}
                 className="px-6 py-3 text-sm font-medium text-primary-foreground rounded-md transition-all duration-200 disabled:opacity-60 disabled:cursor-not-allowed"
                 style={{
-                  background: 'linear-gradient(135deg, hsl(var(--primary)) 0%, hsl(var(--primary) / 0.9) 100%)'
+                  background: 'var(--gradient-primary)'
                 }}
               >
                 {createUserMutation.isPending ? 
@@ -241,7 +241,7 @@ const UserManagement: React.FC = () => {
               <p className="m-0 mb-3 text-text-primary text-sm">{user.email}</p>
               <div className="flex gap-2 flex-wrap">
                 {user.roles.map(role => (
-                  <span key={role} className="px-3 py-1 bg-primary/10 rounded text-xs font-medium capitalize" style={{ color: 'hsl(var(--primary))' }}>{role}</span>
+                  <span key={role} className="px-3 py-1 bg-primary/10 rounded text-xs font-medium capitalize" style={{ color: 'var(--token-text-brand)' }}>{role}</span>
                 ))}
               </div>
             </div>
@@ -292,7 +292,7 @@ const UserManagement: React.FC = () => {
                 <button 
                   className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-primary-foreground rounded-md transition-all duration-200 disabled:opacity-60 disabled:cursor-not-allowed"
                   style={{
-                    background: 'linear-gradient(135deg, hsl(var(--primary)) 0%, hsl(var(--primary) / 0.9) 100%)'
+                    background: 'var(--gradient-primary)'
                   }}
                   onClick={() => handleMakeEmployee(user.id)}
                   disabled={createEmployeeMutation.isPending}

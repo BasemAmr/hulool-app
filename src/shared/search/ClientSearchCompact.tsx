@@ -90,7 +90,7 @@ const ClientSearchCompact = ({ onSelect, onCreate, label, disabled }: ClientSear
               className="w-full flex items-center px-4 py-3 border-b border-border last:border-b-0 bg-background hover:bg-background transition-colors duration-150 text-right"
               onClick={() => handleSelect(client)}
             >
-              <User size={18} className="mr-2" style={{ color: 'hsl(var(--primary))' }} />
+              <User size={18} className="mr-2" style={{ color: 'var(--token-text-brand)' }} />
               <span className="text-text-primary">{client.name}</span>
               <span className="mr-auto text-text-secondary text-sm">{client.phone}</span>
             </button>

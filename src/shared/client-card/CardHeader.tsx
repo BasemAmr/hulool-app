@@ -3,7 +3,7 @@
 import { Link } from 'react-router-dom';
 import { AlertTriangle } from 'lucide-react';
 import WhatsAppIcon from '@/assets/images/whats.svg';
-import GoogleDriveIcon from '@/assets/images/googe_drive.svg';
+import GoogleDriveIcon from '@/shared/ui/icons/GoogleDriveIcon';
 import ClientHeaderDropdown from './ClientHeaderDropdown';
 import type { CardHeaderProps } from './types';
 
@@ -57,11 +57,12 @@ const CardHeader = ({
           )}
           <button
             onClick={openGoogleDrive}
-            className="p-1.5 rounded hover:bg-background transition-all duration-200 cursor-pointer border border-border-default bg-transparent disabled:opacity-50 disabled:cursor-not-allowed"
+            className="p-1.5 rounded border border-border-default bg-transparent text-text-primary transition-all duration-200 hover:bg-background hover:text-text-brand disabled:cursor-not-allowed disabled:opacity-50"
             title="Google Drive"
             disabled={!client.google_drive_link}
+            type="button"
           >
-            <img src={GoogleDriveIcon} alt="Google Drive" width="18" height="18" />
+            <GoogleDriveIcon size={18} className="text-current" />
           </button>
         </div>
 

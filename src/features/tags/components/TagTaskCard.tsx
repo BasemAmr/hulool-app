@@ -45,10 +45,10 @@ const TagTaskCard = ({ task, index = 0 }: TagTaskCardProps) => {
     const isUrgent = task.tags?.some(tag => tag.name === 'قصوى' && tag.is_system);
     
     // Alternating background colors - more subtle
-    const backgroundColor = index % 2 === 0 ? '#f8fafc' : '#ffffff';
+    const backgroundColor = index % 2 === 0 ? 'var(--primitive-gray-50)' : 'var(--token-bg-surface)';
     
     // Professional color scheme
-    const borderColor = isUrgent ? '#f87171' : '#e2e8f0';
+    const borderColor = isUrgent ? 'var(--token-status-danger-border)' : 'var(--token-border-default)';
     const borderWidth = isUrgent ? '2px' : '1px';
 
     // Safety check - if client data is missing, return null or loading state
@@ -70,19 +70,19 @@ const TagTaskCard = ({ task, index = 0 }: TagTaskCardProps) => {
             }}
         >
             {/* Header - Client Info */}
-            <div className="task-header p-2 border-b" style={{ borderColor: '#e5e7eb' }}>
+            <div className="task-header p-2 border-b" style={{ borderColor: 'var(--token-border-default)' }}>
                 <div className="flex justify-between items-center">
                     <div className="client-info flex-1">
                         <h6 className="client-name mb-1 font-semibold" style={{ 
                             fontSize: '14px',
-                            color: '#374151'
+                            color: 'var(--token-text-primary)'
                         }}>
                             {task.client.name}
                         </h6>
                         <div className="flex items-center gap-2">
                             <span style={{ 
                                 fontSize: '11px',
-                                color: '#6b7280'
+                                color: 'var(--token-text-primary)'
                             }}>
                                 {task.client.phone}
                             </span>
@@ -94,9 +94,9 @@ const TagTaskCard = ({ task, index = 0 }: TagTaskCardProps) => {
                             className="p-1 rounded hover:bg-status-info-bg transition-colors"
                             style={{ 
                                 fontSize: '10px',
-                                backgroundColor: '#f0f9ff',
-                                color: '#3b82f6',
-                                border: '1px solid #e0f2fe'
+                                backgroundColor: 'var(--token-status-info-bg)',
+                                color: 'var(--token-status-info-text)',
+                                border: '1px solid var(--token-status-info-border)'
                             }}
                             title="ملف العميل"
                         >
@@ -110,9 +110,9 @@ const TagTaskCard = ({ task, index = 0 }: TagTaskCardProps) => {
                                 className="p-1 rounded hover:bg-status-success-bg transition-colors"
                                 style={{ 
                                     fontSize: '10px',
-                                    backgroundColor: '#f0f9ff',
-                                    color: '#25D366',
-                                    border: '1px solid #e0f2fe'
+                                    backgroundColor: 'var(--token-status-info-bg)',
+                                    color: 'var(--color-whatsapp)',
+                                    border: '1px solid var(--token-status-info-border)'
                                 }}
                                 title="واتساب"
                             >
@@ -124,23 +124,23 @@ const TagTaskCard = ({ task, index = 0 }: TagTaskCardProps) => {
             </div>
 
             {/* Body - Task Details */}
-            <div className="task-body p-2 border-b" style={{ borderColor: '#e5e7eb' }}>
+            <div className="task-body p-2 border-b" style={{ borderColor: 'var(--token-border-default)' }}>
                 <h6 className="task-title mb-1 font-medium" style={{ 
                     fontSize: '13px',
-                    color: '#374151'
+                    color: 'var(--token-text-primary)'
                 }}>
                     {task.task_name || t(`type.${task.type}`)}
                 </h6>
                 <div className="task-meta flex items-center gap-2 mb-1">
                     <span style={{ 
                         fontSize: '11px',
-                        color: '#6b7280'
+                        color: 'var(--token-text-primary)'
                     }}>
                         {formatDate(task.start_date)}
                     </span>
                     <span style={{ 
                         fontSize: '11px',
-                        color: '#6b7280'
+                        color: 'var(--token-text-primary)'
                     }}>
                         {task.amount} ر.س
                     </span>
@@ -152,11 +152,11 @@ const TagTaskCard = ({ task, index = 0 }: TagTaskCardProps) => {
                 </div>
                 {task.notes && (
                     <p className="task-notes mb-0 p-1 rounded" style={{ 
-                        backgroundColor: '#f9fafb',
-                        border: '1px solid #f3f4f6',
+                        backgroundColor: 'var(--token-bg-surface-muted)',
+                        border: '1px solid var(--token-border-default)',
                         fontSize: '11px',
                         lineHeight: '1.3',
-                        color: '#4b5563'
+                        color: 'var(--token-text-primary)'
                     }}>
                         {task.notes}
                     </p>
@@ -172,9 +172,9 @@ const TagTaskCard = ({ task, index = 0 }: TagTaskCardProps) => {
                         style={{ 
                             fontSize: '11px', 
                             padding: '6px 8px',
-                            backgroundColor: '#f0fdf7',
-                            color: '#22c55e',
-                            border: '1px solid #d1fae5'
+                            backgroundColor: 'var(--token-status-success-bg)',
+                            color: 'var(--token-status-success-text)',
+                            border: '1px solid var(--token-status-success-border)'
                         }}
                         title="إكمال المهمة"
                     >
@@ -187,9 +187,9 @@ const TagTaskCard = ({ task, index = 0 }: TagTaskCardProps) => {
                         style={{ 
                             fontSize: '11px', 
                             padding: '6px 8px',
-                            backgroundColor: '#fafafa',
-                            color: '#71717a',
-                            border: '1px solid #e4e4e7'
+                            backgroundColor: 'var(--token-status-neutral-bg)',
+                            color: 'var(--token-status-neutral-text)',
+                            border: '1px solid var(--token-status-neutral-border)'
                         }}
                         title="تأجيل المهمة"
                     >
@@ -202,9 +202,9 @@ const TagTaskCard = ({ task, index = 0 }: TagTaskCardProps) => {
                         style={{ 
                             fontSize: '11px',
                             padding: '6px 8px',
-                            backgroundColor: '#fffbeb',
-                            color: '#f59e0b',
-                            border: '1px solid #fde68a'
+                            backgroundColor: 'var(--token-status-warning-bg)',
+                            color: 'var(--token-status-warning-text)',
+                            border: '1px solid var(--token-status-warning-border)'
                         }}
                         title="المتطلبات"
                     >

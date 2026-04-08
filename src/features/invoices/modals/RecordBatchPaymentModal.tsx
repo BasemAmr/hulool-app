@@ -247,29 +247,29 @@ const RecordBatchPaymentModal = () => {
 
         <style>{`
           .invoice-summary {
-            background-color: #f8f9fa;
+            background-color: var(--token-bg-surface-muted);
             border-radius: 0.5rem;
             padding: 1rem;
-            border: 1px solid #e9ecef;
+            border: 1px solid var(--token-border-default);
           }
           .summary-row {
             display: flex;
             justify-content: space-between;
             align-items: center;
             padding: 0.5rem 0;
-            border-bottom: 1px solid #e9ecef;
+            border-bottom: 1px solid var(--token-border-default);
           }
           .summary-row:last-child {
             border-bottom: none;
           }
           .summary-row.highlight {
-            background-color: #e7f3ff;
+            background-color: var(--token-status-info-bg);
             margin: 0.5rem -1rem -1rem -1rem;
             padding: 0.75rem 1rem;
             border-radius: 0 0 0.5rem 0.5rem;
           }
           .summary-label {
-            color: #6c757d;
+            color: var(--token-text-primary);
             font-size: 0.875rem;
           }
           .summary-value {
@@ -291,19 +291,19 @@ const RecordBatchPaymentModal = () => {
             align-items: center;
             justify-content: center;
             padding: 1rem 0.5rem;
-            border: 2px solid #e9ecef;
+            border: 2px solid var(--token-border-default);
             border-radius: 0.5rem;
             cursor: pointer;
             transition: all 0.2s ease;
-            background: white;
+            background: var(--token-bg-surface);
           }
           .payment-method-card:hover {
             border-color: var(--color-primary);
-            box-shadow: 0 2px 8px rgba(0,123,255,0.15);
+            box-shadow: 0 2px 8px color-mix(in srgb, var(--token-border-focus) 18%, transparent);
           }
           .payment-method-card.selected {
             border-color: var(--color-primary);
-            background-color: var(--color-primary-light, #e7f3ff);
+            background-color: var(--token-status-info-bg);
           }
           .method-label {
             font-size: 0.9rem;
@@ -311,9 +311,9 @@ const RecordBatchPaymentModal = () => {
             text-align: center;
           }
           .modal-footer-compact {
-            border-top: 1px solid #e9ecef;
+            border-top: 1px solid var(--token-border-default);
             padding: 0.75rem 1rem;
-            background-color: #f8f9fa;
+            background-color: var(--token-bg-surface-muted);
             border-radius: 0 0 0.375rem 0.375rem;
           }
           .footer-content {

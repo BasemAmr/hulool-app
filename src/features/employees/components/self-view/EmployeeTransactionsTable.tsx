@@ -58,7 +58,7 @@ const ClientTaskCell = React.memo(({ rowData }: CellProps<EmployeeTransaction>) 
         </div>
       )}
       {!rowData.client_name && !rowData.task_name && (
-        <span style={{ fontSize: '0.8em', color: '#6b7280' }}>
+        <span style={{ fontSize: '0.8em', color: 'var(--token-text-primary)' }}>
           معاملة عامة
         </span>
       )}
@@ -74,7 +74,7 @@ const TaskAmountCell = React.memo(({ rowData }: CellProps<EmployeeTransaction>) 
       {rowData.task_amount ? (
         <>{formatCurrency(parseFloat(rowData.task_amount))} ر.س</>
       ) : (
-        <span style={{ color: '#6b7280' }}>—</span>
+        <span style={{ color: 'var(--token-text-primary)' }}>—</span>
       )}
     </div>
   );
@@ -87,7 +87,7 @@ const CreditCell = React.memo(({ rowData }: CellProps<EmployeeTransaction>) => {
   
   if (isPending) {
     return (
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px', color: '#d97706', fontWeight: 500 }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px', color: 'var(--token-status-warning-text)', fontWeight: 500 }}>
         <Clock size={14} />
         قيد الانتظار
       </div>
@@ -99,7 +99,7 @@ const CreditCell = React.memo(({ rowData }: CellProps<EmployeeTransaction>) => {
       {rowData.direction === 'CREDIT' && rowData.amount ? (
         <>{formatCurrency(parseFloat(rowData.amount))} ر.س</>
       ) : (
-        <span style={{ color: '#6b7280' }}>—</span>
+        <span style={{ color: 'var(--token-text-primary)' }}>—</span>
       )}
     </div>
   );
@@ -113,7 +113,7 @@ const DebitCell = React.memo(({ rowData }: CellProps<EmployeeTransaction>) => {
       {rowData.direction === 'DEBIT' && rowData.amount ? (
         <>{formatCurrency(parseFloat(rowData.amount))} ر.س</>
       ) : (
-        <span style={{ color: '#6b7280' }}>—</span>
+        <span style={{ color: 'var(--token-text-primary)' }}>—</span>
       )}
     </div>
   );
@@ -127,7 +127,7 @@ const BalanceCell = React.memo(({ rowData }: CellProps<EmployeeTransaction>) => 
       {rowData.balance ? (
         <>{formatCurrency(parseFloat(rowData.balance))} ر.س</>
       ) : (
-        <span style={{ color: '#6b7280' }}>—</span>
+        <span style={{ color: 'var(--token-text-primary)' }}>—</span>
       )}
     </div>
   );
@@ -157,8 +157,8 @@ const StatusCell = React.memo(({ rowData }: CellProps<EmployeeTransaction>) => {
           padding: '2px 8px',
           fontSize: '0.75rem',
           fontWeight: 500,
-          backgroundColor: 'rgb(254 243 199)',
-          color: 'rgb(146 64 14)',
+          backgroundColor: 'var(--token-status-warning-bg)',
+          color: 'var(--token-status-warning-text)',
           borderRadius: '4px',
         }}>
           قيد الانتظار
@@ -176,8 +176,8 @@ const StatusCell = React.memo(({ rowData }: CellProps<EmployeeTransaction>) => {
           padding: '2px 8px',
           fontSize: '0.75rem',
           fontWeight: 500,
-          backgroundColor: 'rgb(220 252 231)',
-          color: 'rgb(22 101 52)',
+          backgroundColor: 'var(--token-status-success-bg)',
+          color: 'var(--token-status-success-text)',
           borderRadius: '4px',
         }}>
           عمولة
@@ -194,8 +194,8 @@ const StatusCell = React.memo(({ rowData }: CellProps<EmployeeTransaction>) => {
         padding: '2px 8px',
         fontSize: '0.75rem',
         fontWeight: 500,
-        backgroundColor: 'rgb(254 226 226)',
-        color: 'rgb(153 27 27)',
+        backgroundColor: 'var(--token-status-danger-bg)',
+        color: 'var(--token-status-danger-text)',
         borderRadius: '4px',
       }}>
         صرف
@@ -221,16 +221,16 @@ NotesCell.displayName = 'NotesCell';
 
 const TRANSACTION_COLORS = {
   CREDIT: {
-    base: 'rgba(40, 167, 69, 0.08)',
-    alternate: 'rgba(40, 167, 69, 0.15)',
+    base: 'color-mix(in srgb, var(--primitive-green-600) 9%, var(--token-bg-page))',
+    alternate: 'color-mix(in srgb, var(--primitive-green-600) 16%, var(--token-bg-page))',
   },
   DEBIT: {
-    base: 'rgba(220, 53, 69, 0.08)',
-    alternate: 'rgba(220, 53, 69, 0.15)',
+    base: 'color-mix(in srgb, var(--primitive-red-600) 9%, var(--token-bg-page))',
+    alternate: 'color-mix(in srgb, var(--primitive-red-600) 16%, var(--token-bg-page))',
   },
   PENDING: {
-    base: 'rgba(245, 158, 11, 0.08)',
-    alternate: 'rgba(245, 158, 11, 0.15)',
+    base: 'color-mix(in srgb, var(--primitive-amber-600) 9%, var(--token-bg-page))',
+    alternate: 'color-mix(in srgb, var(--primitive-amber-600) 16%, var(--token-bg-page))',
   },
 };
 

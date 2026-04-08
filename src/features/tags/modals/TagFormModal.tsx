@@ -18,7 +18,7 @@ const TagFormModal = () => {
     
     const [formData, setFormData] = useState({
         name: '',
-        color: '#d4af37'
+        color: '#2563eb'
     });
     
     const isActive = isOpen && modalType === 'tagForm';
@@ -56,7 +56,7 @@ const TagFormModal = () => {
             } else {
                 setFormData({
                     name: '',
-                    color: '#d4af37'
+                    color: '#2563eb'
                 });
             }
         }
@@ -143,7 +143,7 @@ const TagFormModal = () => {
                             className="flex-1 px-3 py-2 border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-primary font-mono text-sm"
                             value={formData.color}
                             onChange={(e) => handleInputChange('color', e.target.value)}
-                            placeholder="#d4af37"
+                            placeholder="#2563eb"
                             pattern="^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$"
                             disabled={isLoading}
                         />
@@ -157,7 +157,7 @@ const TagFormModal = () => {
                             className="px-3 py-1 rounded-full text-white text-sm font-semibold"
                             style={{ 
                                 backgroundColor: formData.color, 
-                                textShadow: '1px 1px 2px rgba(0,0,0,0.3)'
+                                textShadow: '1px 1px 2px color-mix(in srgb, var(--primitive-gray-900) 35%, transparent)'
                             }}
                         >
                             {formData.name || 'اسم العلامة'}

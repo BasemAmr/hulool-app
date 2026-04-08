@@ -121,16 +121,14 @@ const requestPasswordReset = async ({ username }: { username: string }) => {
 /**
  * NEW: Confirm password reset with token
  */
-const confirmPasswordReset = async ({ token, new_password }: { token: string; new_password: string }) => {
-  const { data } = await apiClient.post('/auth/confirm-password-reset', { token, new_password });
+const confirmPasswordReset = async ({ token }: { token: string }) => {
+  const { data } = await apiClient.post('/auth/confirm-password-reset', { token });
   return data;
 };
 
-/**
- * NEW: Forgot password - reset password without authentication
- */
-const resetPasswordForgot = async ({ username, new_password }: { username: string; new_password: string }) => {
-  const { data } = await apiClient.post(`/auth/reset-password`, { username, new_password });
+/** Apply new password using email reset token */
+const resetPasswordForgot = async ({ token, new_password }: { token: string; new_password: string }) => {
+  const { data } = await apiClient.post(`/auth/reset-password`, { token, new_password });
   return data;
 };
 
