@@ -120,7 +120,7 @@ const SortableAdminEmployeeClientCard = ({
       {/* Drag Handle */}
       <div
         {...listeners}
-        className="cursor-grab px-2 py-1 bg-gray-200 border-b border-black/10 text-[10px] text-text-secondary text-center select-none"
+        className="cursor-grab px-2 py-1 bg-background text-text-primary border-b border-black/10 text-[10px]  text-center select-none hover:bg-bg-surface-hover"
       >
         ⋮⋮ اسحب لإعادة الترتيب
       </div>

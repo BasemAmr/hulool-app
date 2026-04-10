@@ -19,6 +19,7 @@ const LoginPage = () => {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [resetError, setResetError] = useState<string | null>(null);
   const [resetSuccess, setResetSuccess] = useState(false);
+  const [resetRequestUsername, setResetRequestUsername] = useState('');
 
   const navigate = useNavigate();
   const { t } = useTranslation();
@@ -83,17 +84,19 @@ const LoginPage = () => {
     e.preventDefault();
     setResetError(null);
 
-    if (!username) {
+    const id = resetRequestUsername.trim() || username.trim();
+    if (!id) {
       setResetError('الرجاء إدخال اسم المستخدم أو البريد الإلكتروني');
       return;
     }
 
     try {
-      await requestResetMutation.mutateAsync({ username });
+      await requestResetMutation.mutateAsync({ username: id });
       setResetSuccess(true);
       setResetError(null);
     } catch (err: any) {
-      setResetError(err.response?.data?.message || 'فشل إرسال البريد الإلكتروني');
+      const msg = err?.response?.data?.message ?? err?.response?.data?.code;
+      setResetError(typeof msg === 'string' ? msg : 'فشل إرسال البريد الإلكتروني');
     }
   };
 
@@ -129,7 +132,8 @@ const LoginPage = () => {
         window.history.replaceState({}, '', '/login');
       }, 2000);
     } catch (err: any) {
-      setResetError(err.response?.data?.message || 'رابط غير صالح أو منتهي الصلاحية');
+      const msg = err?.response?.data?.message ?? err?.response?.data?.code;
+      setResetError(typeof msg === 'string' ? msg : 'رابط غير صالح أو منتهي الصلاحية');
     }
   };
 
@@ -217,6 +221,16 @@ const LoginPage = () => {
                       )}
 
                       <form onSubmit={handleRequestReset}>
+                        <label className="block text-xs font-medium text-foreground mb-1">اسم المستخدم أو البريد</label>
+                        <input
+                          type="text"
+                          className="base-input text-sm py-1.5 mb-3 w-full"
+                          value={resetRequestUsername}
+                          onChange={(e) => setResetRequestUsername(e.target.value)}
+                          placeholder="أدخل نفس القيمة المسجّلة في النظام"
+                          autoComplete="username"
+                          disabled={requestResetMutation.isPending}
+                        />
                         <button
                           type="submit"
                           className="px-4 py-2 bg-primary text-white rounded-lg text-sm font-semibold w-full hover:bg-primary/90 transition-colors disabled:opacity-50"

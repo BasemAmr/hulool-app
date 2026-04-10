@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import apiClient from '@/api/client';
+import apiClient, { publicApiClient } from '@/api/client';
 import type {
   User,
   CreateUserRequest,
@@ -114,7 +114,7 @@ const updateMyProfile = async ({ username, display_name }: { username?: string; 
  * NEW: Request password reset email
  */
 const requestPasswordReset = async ({ username }: { username: string }) => {
-  const { data } = await apiClient.post('/auth/request-password-reset', { username });
+  const { data } = await publicApiClient.post('/auth/request-password-reset', { username });
   return data;
 };
 
@@ -122,13 +122,13 @@ const requestPasswordReset = async ({ username }: { username: string }) => {
  * NEW: Confirm password reset with token
  */
 const confirmPasswordReset = async ({ token }: { token: string }) => {
-  const { data } = await apiClient.post('/auth/confirm-password-reset', { token });
+  const { data } = await publicApiClient.post('/auth/confirm-password-reset', { token });
   return data;
 };
 
 /** Apply new password using email reset token */
 const resetPasswordForgot = async ({ token, new_password }: { token: string; new_password: string }) => {
-  const { data } = await apiClient.post(`/auth/reset-password`, { token, new_password });
+  const { data } = await publicApiClient.post(`/auth/reset-password`, { token, new_password });
   return data;
 };
 

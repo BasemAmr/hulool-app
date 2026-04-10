@@ -45,7 +45,7 @@ const getStatusVariant = (status: string) => {
 
 const TaskRow = ({
   task,
-  index: _index,
+  index: rowIndex,
   role,
   context,
   actions,
@@ -63,19 +63,20 @@ const TaskRow = ({
     : (task.task_name || t(`type.${task.type}`));
 
   const showStatus = context === 'admin-employee-filter' || context === 'admin-employee-profile';
+  const isEvenRow = rowIndex % 2 === 0;
 
   return (
     <tr
       ref={rowRef}
       className={cn(
-        "task-row transition-colors duration-150 border-b border-border-default last:border-b-0",
-        isUrgent ? "bg-status-danger-bg/40" : "bg-bg-surface even:bg-bg-surface-hover"
+        "client-card-row task-row transition-colors duration-150 border-b border-border-default last:border-b-0",
+        isUrgent ? "client-card-row--urgent" : isEvenRow ? "client-card-row--even" : ""
       )}
       data-task-id={task.id}
       style={isEmployeeTask ? { border: '2px solid var(--token-border-strong)' } : undefined}
     >
       {/* Task Name */}
-      <td className="text-[0.82em] px-2 py-2 text-text-primary border-0 font-bold">
+      <td className="text-[0.82em] px-2 py-2 text-text-primary border-0 font-bold dark:text-white">
         <div className="flex items-center gap-1">
           <span className="truncate max-w-[180px] inline-block">
             {taskDisplayName}
@@ -87,12 +88,12 @@ const TaskRow = ({
       </td>
 
       {/* Date */}
-      <td className="text-[0.77em] px-2 py-2 text-text-secondary border-0 font-medium">
+      <td className="client-card-secondary text-[0.77em] px-2 py-2 border-0 font-medium">
         {formatShortDate(task.start_date)}
       </td>
 
       {/* Days Elapsed */}
-      <td className="text-[0.77em] px-2 py-2 text-text-secondary border-0 font-medium">
+      <td className="client-card-secondary text-[0.77em] px-2 py-2 border-0 font-medium">
         {formatDaysElapsed(task.start_date)}
       </td>
 
@@ -123,18 +124,18 @@ const TaskRow = ({
         <div className="flex gap-1.5 justify-start items-center min-w-fit">
           {actions.onOpenFollowUp && (
             <button
-              className="p-1.5 rounded border border-border-default bg-bg-surface hover:bg-bg-surface-hover transition-colors duration-150 cursor-pointer"
+              className="client-card-action-button client-card-action-button--ghost p-1.5 rounded transition-colors duration-150 cursor-pointer"
               onClick={() => actions.onOpenFollowUp?.(task)}
               title="التعليقات"
             >
-              <MessageSquare size={12} className="text-text-secondary" />
+              <MessageSquare size={12} className="text-text-secondary dark:text-white" />
             </button>
           )}
 
           {actions.onViewSubtasks && (
             <button
               onClick={() => actions.onViewSubtasks?.(task)}
-              className="p-1.5 rounded border border-status-info-border bg-status-info-bg text-status-info-text hover:bg-status-info-border transition-colors duration-150 cursor-pointer"
+              className="client-card-action-button client-card-action-button--info p-1.5 rounded transition-colors duration-150 cursor-pointer"
               title="المهام الفرعية"
             >
               <Eye size={12} />

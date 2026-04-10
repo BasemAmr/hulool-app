@@ -7,6 +7,11 @@ const apiClient = axios.create({
   baseURL,
 });
 
+/** No auth headers — use for public /auth/* flows so a stored admin session does not affect reset/login. */
+export const publicApiClient = axios.create({
+  baseURL,
+});
+
 let isRefreshingNonce = false;
 let failedQueue: Array<{ resolve: (value?: any) => void; reject: (reason?: any) => void }> = [];
 

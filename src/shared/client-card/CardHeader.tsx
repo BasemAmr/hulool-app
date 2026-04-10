@@ -2,7 +2,7 @@
 
 import { Link } from 'react-router-dom';
 import { AlertTriangle } from 'lucide-react';
-import WhatsAppIcon from '@/assets/images/whats.svg';
+import WhatsAppIcon from '@/shared/ui/icons/WhatsAppIcon';
 import GoogleDriveIcon from '@/shared/ui/icons/GoogleDriveIcon';
 import ClientHeaderDropdown from './ClientHeaderDropdown';
 import type { CardHeaderProps } from './types';
@@ -30,25 +30,25 @@ const CardHeader = ({
   };
 
   return (
-    <div className={`border-0 py-2 rounded-none ${isUrgent ? 'bg-status-danger-bg border-b border-status-danger-border' : 'bg-background border-b border-border-default'}`}>
+    <div className={`client-card-header border-0 py-2 rounded-none ${isUrgent ? 'bg-status-danger-bg border-b border-status-danger-border' : 'bg-background border-b border-border-default dark:bg-white/[0.04] dark:border-white/10'}`}>
       <div className="flex justify-between items-center px-2">
         {/* Left: WhatsApp with phone number */}
         <div className="flex items-center gap-2">
           <button
             onClick={openWhatsApp}
-            className="p-1.5 rounded hover:bg-border-default/30 transition-all duration-200 cursor-pointer border-0 bg-transparent"
+            className="client-card-action-button client-card-header-action-button rounded transition-all duration-200 cursor-pointer"
             title="واتساب"
           >
-            <img src={WhatsAppIcon} alt="WhatsApp" width="18" height="18" />
+            <WhatsAppIcon size={16} />
           </button>
-          <span className="text-sm text-text-secondary">{client.phone || ''}</span>
+          <span className="client-card-secondary text-sm">{client.phone || ''}</span>
         </div>
 
         {/* Center: Client name with Google Drive */}
         <div className="flex items-center justify-center gap-2">
           <Link
             to={clientLink}
-            className="no-underline font-bold text-text-primary text-[0.95em] hover:text-text-brand transition-colors"
+            className="no-underline font-bold text-text-primary text-[0.95em] hover:text-text-brand transition-colors dark:text-white"
           >
             {client.name}
           </Link>
@@ -57,12 +57,12 @@ const CardHeader = ({
           )}
           <button
             onClick={openGoogleDrive}
-            className="p-1.5 rounded border border-border-default bg-transparent text-text-primary transition-all duration-200 hover:bg-background hover:text-text-brand disabled:cursor-not-allowed disabled:opacity-50"
+            className="client-card-action-button client-card-header-action-button rounded transition-all duration-200 text-text-primary disabled:cursor-not-allowed disabled:opacity-50"
             title="Google Drive"
             disabled={!client.google_drive_link}
             type="button"
           >
-            <GoogleDriveIcon size={18} className="text-current" />
+            <GoogleDriveIcon size={16} className="text-current" />
           </button>
         </div>
 

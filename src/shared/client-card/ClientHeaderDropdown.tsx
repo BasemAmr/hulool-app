@@ -28,15 +28,15 @@ const ClientHeaderDropdown = ({
   // Determine which actions to show based on role and context
   const showAddInvoice = role === 'admin' && context !== 'admin-employee-profile';
   const showRecordCredit = role === 'admin' && context !== 'admin-employee-profile';
+  const menuItemClassName = 'client-card-dropdown-item cursor-pointer gap-2 justify-end';
   
   return (
     <DropdownMenu modal={false}>
       <DropdownMenuTrigger asChild>
         <button
           className={cn(
-            "p-1.5 rounded hover:bg-background/20",
+            "client-card-action-button client-card-header-action-button rounded",
             "transition-all duration-200 cursor-pointer",
-            "border-0 bg-transparent",
             "focus:outline-none focus:ring-2 focus:ring-white/20"
           )}
         >
@@ -45,14 +45,14 @@ const ClientHeaderDropdown = ({
       </DropdownMenuTrigger>
       <DropdownMenuContent 
         align="end" 
-        className="min-w-[140px] text-[0.85em]"
+        className="client-card-dropdown-panel min-w-[140px] text-[0.85em]"
         style={{ direction: 'rtl' }}
         sideOffset={5}
       >
         {onAddTask && (
           <DropdownMenuItem 
             onClick={onAddTask} 
-            className="cursor-pointer gap-2 justify-end"
+            className={menuItemClassName}
           >
             <span>إضافة مهمة</span>
             <Receipt size={14} />
@@ -62,7 +62,7 @@ const ClientHeaderDropdown = ({
         {showAddInvoice && onAddInvoice && (
           <DropdownMenuItem 
             onClick={onAddInvoice} 
-            className="cursor-pointer gap-2 justify-end"
+            className={menuItemClassName}
           >
             <span>إضافة فاتورة</span>
             <Receipt size={14} />
@@ -72,7 +72,7 @@ const ClientHeaderDropdown = ({
         {showRecordCredit && onRecordCredit && (
           <DropdownMenuItem 
             onClick={onRecordCredit} 
-            className="cursor-pointer gap-2 justify-end"
+            className={menuItemClassName}
           >
             <span>إضافة دفعة</span>
             <Receipt size={14} />

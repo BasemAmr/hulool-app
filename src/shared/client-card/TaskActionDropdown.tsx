@@ -34,14 +34,14 @@ const TaskActionDropdown = ({
 }: ActionDropdownProps) => {
   const available = getAvailableActions(task, role, context, isEmployeeTask);
   const isUrgent = task.tags?.some(tag => tag.name === 'قصوى');
+  const menuItemClassName = 'client-card-dropdown-item cursor-pointer gap-2 justify-end';
 
   return (
     <DropdownMenu modal={false}>
       <DropdownMenuTrigger asChild>
         <button
           className={cn(
-            "p-1.5 rounded border border-border-strong bg-card",
-            "hover:bg-background hover:border-border-strong",
+            "client-card-action-button client-card-action-button--menu p-1.5 rounded",
             "transition-all duration-200 cursor-pointer",
             "focus:outline-none focus:ring-2 focus:ring-primary/20"
           )}
@@ -51,7 +51,7 @@ const TaskActionDropdown = ({
       </DropdownMenuTrigger>
       <DropdownMenuContent 
         align="end" 
-        className="min-w-[160px] text-[0.85em]"
+        className="client-card-dropdown-panel min-w-[160px] text-[0.85em]"
         style={{ direction: 'rtl' }}
         sideOffset={5}
       >
@@ -59,7 +59,7 @@ const TaskActionDropdown = ({
         {available.canRestore && actions.onRestore && (
           <DropdownMenuItem 
             onClick={() => actions.onRestore?.(task)} 
-            className="cursor-pointer gap-2 justify-end"
+            className={menuItemClassName}
           >
             <span>استعادة إلى جديد</span>
             <RotateCcw size={14} />
@@ -69,7 +69,7 @@ const TaskActionDropdown = ({
         {available.canComplete && actions.onComplete && (
           <DropdownMenuItem
             onClick={() => actions.onComplete?.(task)}
-            className="cursor-pointer gap-2 justify-end"
+            className={menuItemClassName}
             disabled={isEmployeeTask && role === 'admin'}
           >
             <span>{getCompleteButtonLabel(isEmployeeTask, role, context)}</span>
@@ -81,7 +81,7 @@ const TaskActionDropdown = ({
         {available.canSubmitForReview && actions.onSubmitForReview && (
           <DropdownMenuItem 
             onClick={() => actions.onSubmitForReview?.(task)} 
-            className="cursor-pointer gap-2 justify-end"
+            className={menuItemClassName}
           >
             <span>إرسال للمراجعة</span>
             <Upload size={14} />
@@ -92,7 +92,7 @@ const TaskActionDropdown = ({
         {available.canDefer && actions.onDefer && (
           <DropdownMenuItem 
             onClick={() => actions.onDefer?.(task)} 
-            className="cursor-pointer gap-2 justify-end"
+            className={menuItemClassName}
           >
             <span>تأجيل</span>
             <Pause size={14} />
@@ -102,7 +102,7 @@ const TaskActionDropdown = ({
         {available.canResume && actions.onResume && (
           <DropdownMenuItem 
             onClick={() => actions.onResume?.(task)} 
-            className="cursor-pointer gap-2 justify-end"
+            className={menuItemClassName}
           >
             <span>استئناف</span>
             <Play size={14} />
@@ -113,7 +113,7 @@ const TaskActionDropdown = ({
         {available.canCancel && actions.onCancel && (
           <DropdownMenuItem 
             onClick={() => actions.onCancel?.(task)} 
-            className="cursor-pointer gap-2 justify-end text-destructive hover:text-destructive"
+            className={cn(menuItemClassName, 'text-destructive hover:text-destructive')}
           >
             <span>إلغاء المهمة</span>
             <X size={14} />
@@ -126,7 +126,7 @@ const TaskActionDropdown = ({
         {available.canToggleUrgent && actions.onToggleUrgent && (
           <DropdownMenuItem 
             onClick={() => actions.onToggleUrgent?.(task)} 
-            className="cursor-pointer gap-2 justify-end"
+            className={menuItemClassName}
           >
             <span>{isUrgent ? 'إلغاء العاجل' : 'تعليم عاجل'}</span>
             <AlertTriangle size={14} />
@@ -139,7 +139,7 @@ const TaskActionDropdown = ({
         {available.showRequirements && actions.onShowRequirements && (
           <DropdownMenuItem 
             onClick={() => actions.onShowRequirements?.(task)} 
-            className="cursor-pointer gap-2 justify-end"
+            className={menuItemClassName}
           >
             <span>المتطلبات</span>
             <ListChecks size={14} />
@@ -150,7 +150,7 @@ const TaskActionDropdown = ({
         {available.showFollowUp && actions.onOpenFollowUp && (
           <DropdownMenuItem 
             onClick={() => actions.onOpenFollowUp?.(task)} 
-            className="cursor-pointer gap-2 justify-end"
+            className={menuItemClassName}
           >
             <span>التعليقات</span>
             <MessageSquare size={14} />
@@ -161,7 +161,7 @@ const TaskActionDropdown = ({
         {available.showSubtasks && actions.onViewSubtasks && (
           <DropdownMenuItem 
             onClick={() => actions.onViewSubtasks?.(task)} 
-            className="cursor-pointer gap-2 justify-end"
+            className={menuItemClassName}
           >
             <span>المهام الفرعية</span>
             <Eye size={14} />
@@ -174,7 +174,7 @@ const TaskActionDropdown = ({
             <DropdownMenuSeparator className="bg-border/50" />
             <DropdownMenuItem 
               onClick={() => actions.onAssign?.(task)} 
-              className="cursor-pointer gap-2 justify-end"
+              className={menuItemClassName}
             >
               <span>{getAssignButtonLabel(task)}</span>
               <UserPlus size={14} />

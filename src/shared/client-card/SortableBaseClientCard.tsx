@@ -69,7 +69,7 @@ const SortableBaseClientCard = ({
         <div
           {...listeners}
           className={cn(
-            "cursor-grab p-1.5 border-b border-border-default text-xs text-center",
+            "client-card-drag-handle cursor-grab p-1.5 border-b border-border-default text-xs text-center",
             "bg-background text-text-primary",
             "hover:bg-bg-surface-hover active:cursor-grabbing",
             "select-none"

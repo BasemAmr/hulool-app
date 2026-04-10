@@ -1,4 +1,4 @@
-import apiClient from '@/api/client';
+import apiClient, { publicApiClient } from '@/api/client';
 import type{ ApiResponse, NonceData, User } from '@/api/types';
 
 /**
@@ -6,7 +6,7 @@ import type{ ApiResponse, NonceData, User } from '@/api/types';
  * This is a NEW function for the custom authentication flow.
  */
 export const loginWithShortPassword = async (username: string, password: string): Promise<{ app_password: string; user: User }> => {
-  const { data } = await apiClient.post<ApiResponse<{ app_password: string; user: User }>>(
+  const { data } = await publicApiClient.post<ApiResponse<{ app_password: string; user: User }>>(
     '/auth/token',
     { username, password }
   );

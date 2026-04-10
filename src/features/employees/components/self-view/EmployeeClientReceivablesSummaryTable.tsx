@@ -28,7 +28,7 @@ import {
   Play,
   X
 } from 'lucide-react';
-import WhatsAppIcon from '@/assets/images/whats.svg';
+import WhatsAppIcon from '@/shared/ui/icons/WhatsAppIcon';
 import GoogleDriveIcon from '@/shared/ui/icons/GoogleDriveIcon';
 import type { ClientWithTasksAndStats } from '@/features/dashboard/api/dashboardQueries';
 import { useRef, useEffect, useState } from 'react';
@@ -222,8 +222,8 @@ const EmployeeDashboardClientCard = ({ data, onWidthCalculated }: EmployeeDashbo
     return (
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <button className="p-1 border-0 text-text-primary hover:bg-background/20 rounded transition-colors" style={{ background: 'none' }}>
-            <MoreVertical size={14} />
+          <button className="client-card-action-button client-card-header-action-button rounded transition-colors text-text-primary">
+            <MoreVertical size={16} />
           </button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end" className="text-right" style={{ fontSize: '0.85em', direction: 'rtl' }}>
@@ -258,10 +258,10 @@ const EmployeeDashboardClientCard = ({ data, onWidthCalculated }: EmployeeDashbo
           <div className="flex items-center gap-2">
             <button
               onClick={openWhatsApp}
-              className="rounded border-0 p-1 transition-colors hover:bg-background/20"
+              className="client-card-action-button client-card-header-action-button rounded transition-colors"
               title="واتساب"
             >
-              <img src={WhatsAppIcon} alt="WhatsApp" width="16" height="16" />
+              <WhatsAppIcon size={16} />
             </button>
             <span style={{ fontSize: '0.85em' }}>
               {client.phone || ''}
@@ -282,7 +282,7 @@ const EmployeeDashboardClientCard = ({ data, onWidthCalculated }: EmployeeDashbo
             )}
             <button
               onClick={openGoogleDrive}
-              className="rounded border-0 p-1 text-text-primary transition-colors hover:bg-background/20 hover:text-text-brand"
+              className="client-card-action-button client-card-header-action-button rounded text-text-primary transition-colors hover:text-text-brand"
               title="Google Drive"
               disabled={!client.google_drive_link}
               type="button"
