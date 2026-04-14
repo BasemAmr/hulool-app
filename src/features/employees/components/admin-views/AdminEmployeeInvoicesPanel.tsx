@@ -1,7 +1,7 @@
 // Admin view of employee invoices panel - Excel-style bordered table
 import React from 'react';
-import { useQuery } from '@tanstack/react-query';
-import { CreditCard, MoreHorizontal } from 'lucide-react';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { CreditCard, RotateCcw } from 'lucide-react';
 import apiClient from '@/api/client';
 import { useModalStore } from '@/shared/stores/modalStore';
 import WhatsAppIcon from '@/shared/ui/icons/WhatsAppIcon';
@@ -28,10 +28,16 @@ interface Invoice {
   paid_amount: number;
   remaining_amount: number;
   status: string;
+  task?: {
+    id: number;
+    task_name?: string;
+    status?: string;
+  };
 }
 
 const AdminEmployeeInvoicesPanel: React.FC<AdminEmployeeInvoicesPanelProps> = ({ employeeId }) => {
   const { openModal } = useModalStore();
+  const queryClient = useQueryClient();
 
   // Fetch invoices for this employee using admin endpoint
   const { data: invoicesData, isLoading } = useQuery({
@@ -50,6 +56,19 @@ const AdminEmployeeInvoicesPanel: React.FC<AdminEmployeeInvoicesPanelProps> = ({
   });
 
   const invoices: Invoice[] = invoicesData?.invoices || [];
+
+  const restoreTaskMutation = useMutation({
+    mutationFn: async (taskId: number) => {
+      const response = await apiClient.put(`/tasks/${taskId}/status`, {
+        status: 'New'
+      });
+      return response.data;
+    },
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ['admin', 'employee', employeeId, 'invoices'] });
+      await queryClient.invalidateQueries({ queryKey: ['admin', 'employee', employeeId, 'tasks'] });
+    },
+  });
 
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('en-US', {
@@ -79,6 +98,12 @@ const AdminEmployeeInvoicesPanel: React.FC<AdminEmployeeInvoicesPanelProps> = ({
       const formattedAmount = formatCurrency(remainingAmount);
       sendPaymentReminder(phone, clientName, formattedAmount);
     }
+  };
+
+  const handleRestoreToNew = (invoice: Invoice) => {
+    const taskId = invoice.task?.id || invoice.task_id;
+    if (!taskId) return;
+    restoreTaskMutation.mutate(taskId);
   };
 
   if (isLoading) {
@@ -127,6 +152,7 @@ const AdminEmployeeInvoicesPanel: React.FC<AdminEmployeeInvoicesPanelProps> = ({
                   const bgColor = index % 2 === 0 ? 'bg-bg-surface' : 'bg-bg-surface-hover';
                   const clientName = invoice.client?.name || invoice.client_name || 'غير معروف';
                   const remaining = invoice.remaining_amount || (invoice.amount - invoice.paid_amount);
+                  const isRestorable = invoice.task?.status && invoice.task.status !== 'New';
                   
                   return (
                     <tr key={invoice.id}>
@@ -154,6 +180,16 @@ const AdminEmployeeInvoicesPanel: React.FC<AdminEmployeeInvoicesPanelProps> = ({
                           >
                             <CreditCard size={14} />
                           </button>
+                          {invoice.task_id && isRestorable && (
+                            <button
+                              onClick={() => handleRestoreToNew(invoice)}
+                              disabled={restoreTaskMutation.isPending}
+                              className="p-1 text-status-warning-text hover:bg-status-warning-bg rounded transition-colors disabled:opacity-50 disabled:pointer-events-none"
+                              title="استعادة إلى جديد"
+                            >
+                              <RotateCcw size={14} />
+                            </button>
+                          )}
                           {(invoice.client?.phone || invoice.client_phone) && (
                             <button
                               onClick={() => handleWhatsAppReminder(invoice)}
