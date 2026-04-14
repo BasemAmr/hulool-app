@@ -152,7 +152,7 @@ const AdminEmployeeInvoicesPanel: React.FC<AdminEmployeeInvoicesPanelProps> = ({
                   const bgColor = index % 2 === 0 ? 'bg-bg-surface' : 'bg-bg-surface-hover';
                   const clientName = invoice.client?.name || invoice.client_name || 'غير معروف';
                   const remaining = invoice.remaining_amount || (invoice.amount - invoice.paid_amount);
-                  const isRestorable = invoice.task?.status && invoice.task.status !== 'New';
+                  
                   
                   return (
                     <tr key={invoice.id}>
@@ -180,7 +180,7 @@ const AdminEmployeeInvoicesPanel: React.FC<AdminEmployeeInvoicesPanelProps> = ({
                           >
                             <CreditCard size={14} />
                           </button>
-                          {invoice.task_id && isRestorable && (
+                          {invoice.task_id && (
                             <button
                               onClick={() => handleRestoreToNew(invoice)}
                               disabled={restoreTaskMutation.isPending}
