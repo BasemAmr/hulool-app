@@ -98,7 +98,7 @@ export const CashBoxDetailsPage = () => {
     {
       id: 'type',
       title: 'النوع',
-      key: 'transaction_type',
+      key: 'type',
       type: 'badge',
       badgeColors: {
         CASHBOX_RECEIPT: 'var(--token-status-success-bg)',
@@ -160,21 +160,22 @@ export const CashBoxDetailsPage = () => {
   return (
     <div className="p-6 space-y-6 text-right" dir="rtl">
       {/* Header Info Card */}
-      <div className="flex justify-between items-center bg-white p-6 rounded-lg shadow border border-gray-100">
+      {/* Header Info Card */}
+      <div className="flex justify-between items-center bg-bg-surface p-6 rounded-lg shadow border border-border-default">
         <div>
-          <h2 className="text-2xl font-bold flex items-center gap-2">
+          <h2 className="text-2xl font-bold flex items-center gap-2 text-text-primary">
             {box.name}
             {isClosed && (
-              <span className="text-xs px-2.5 py-0.5 rounded-full bg-gray-100 text-gray-800">
+              <span className="text-xs px-2.5 py-0.5 rounded-full bg-status-neutral-bg text-status-neutral-text border border-status-neutral-border">
                 مغلق
               </span>
             )}
           </h2>
-          <p className="text-gray-500 mt-1">الموظف المسؤول: {box.employee_name || '—'}</p>
+          <p className="text-text-secondary mt-1">الموظف المسؤول: {box.employee_name || '—'}</p>
         </div>
         <div className="text-left">
-          <p className="text-gray-500 text-sm">الرصيد الحالي</p>
-          <p className="text-3xl font-extrabold text-blue-600 mt-1">
+          <p className="text-text-secondary text-sm">الرصيد الحالي</p>
+          <p className="text-3xl font-extrabold text-text-brand mt-1">
             {Number(box.balance || 0).toLocaleString()} ريال
           </p>
         </div>
