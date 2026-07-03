@@ -15,7 +15,7 @@ import { formatDistanceToNow } from 'date-fns';
 import { ar } from 'date-fns/locale';
 import { Link } from 'react-router-dom';
 
-interface JournalEntryDetailsModalProps {}
+interface JournalEntryDetailsModalProps { }
 
 const JournalEntryDetailsModal: React.FC<JournalEntryDetailsModalProps> = () => {
   const { closeModal, props } = useModalStore();
@@ -28,7 +28,7 @@ const JournalEntryDetailsModal: React.FC<JournalEntryDetailsModalProps> = () => 
       // Get the original transaction
       const response = await apiClient.get(`/accounts/${accountType}/${accountId}/history`);
       const allTransactions = response.data.transactions;
-      
+
       const originalTxn = allTransactions.find((t: any) => t.id === transactionId);
       if (!originalTxn) {
         throw new Error('Transaction not found');
@@ -38,12 +38,12 @@ const JournalEntryDetailsModal: React.FC<JournalEntryDetailsModalProps> = () => 
       let relatedTxn = null;
       if (originalTxn.related_transaction_id) {
         relatedTxn = allTransactions.find((t: any) => t.id === originalTxn.related_transaction_id);
-        
+
         // If not in current page, fetch it specifically
         if (!relatedTxn) {
           const relatedId = originalTxn.related_transaction_id;
           // Try to find which account it belongs to by checking all account types
-          for (const type of ['client', 'employee', 'company']) {
+          for (const type of ['client', 'employee', 'company', 'cashbox']) {
             try {
               const searchResponse = await apiClient.get(`/accounts/transactions`, {
                 params: {
@@ -52,7 +52,7 @@ const JournalEntryDetailsModal: React.FC<JournalEntryDetailsModalProps> = () => 
                   per_page: 1000,
                 },
               });
-              
+
               const found = searchResponse.data.transactions?.find((t: any) => t.id === relatedId);
               if (found) {
                 relatedTxn = found;
@@ -292,13 +292,12 @@ const JournalEntryDetailsModal: React.FC<JournalEntryDetailsModalProps> = () => 
                       </td>
                       <td className="px-3 py-2 border border-border-strong text-start">
                         <span
-                          className={`font-semibold ${
-                            parseFloat(data.original.balance || data.original.balance_after) < 0
+                          className={`font-semibold ${parseFloat(data.original.balance || data.original.balance_after) < 0
                               ? 'text-status-danger-text'
                               : parseFloat(data.original.balance || data.original.balance_after) > 0
-                              ? 'text-status-success-text'
-                              : 'text-text-secondary'
-                          }`}
+                                ? 'text-status-success-text'
+                                : 'text-text-secondary'
+                            }`}
                         >
                           {formatCurrency(data.original.balance || data.original.balance_after)}
                         </span>
@@ -347,13 +346,12 @@ const JournalEntryDetailsModal: React.FC<JournalEntryDetailsModalProps> = () => 
                       </td>
                       <td className="px-3 py-2 border border-border-strong text-start">
                         <span
-                          className={`font-semibold ${
-                            parseFloat(data.related.balance || data.related.balance_after) < 0
+                          className={`font-semibold ${parseFloat(data.related.balance || data.related.balance_after) < 0
                               ? 'text-status-danger-text'
                               : parseFloat(data.related.balance || data.related.balance_after) > 0
-                              ? 'text-status-success-text'
-                              : 'text-text-secondary'
-                          }`}
+                                ? 'text-status-success-text'
+                                : 'text-text-secondary'
+                            }`}
                         >
                           {formatCurrency(data.related.balance || data.related.balance_after)}
                         </span>

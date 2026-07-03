@@ -77,6 +77,10 @@ import EmployeeForm from '@/features/employees/forms/EmployeeForm';
 import EmployeeCredentialsModal from '@/features/employees/modals/EmployeeCredentialsModal';
 import EmployeeDeletionPreviewModal from '@/features/employees/modals/EmployeeDeletionPreviewModal';
 
+// CASH BOX MODALS
+import { CreateCashBoxModal } from '@/features/financials/modals/CreateCashBoxModal';
+import { RecordVoucherModal } from '@/features/financials/modals/RecordVoucherModal';
+
 // Separate component for client receivables to avoid re-renders
 const ClientReceivablesFetcher = ({ client }: { client?: any }) => {
   const { data: receivablesData, isLoading } = useGetClientReceivables(client?.id || 0);
@@ -471,6 +475,37 @@ const ModalManager = () => {
             onClose={closeModal}
             employee={props.employee}
             onConfirmDelete={props.onConfirmDelete}
+          />
+        );
+
+      case 'cashBoxForm':
+        return (
+          <CreateCashBoxModal
+            key="cashBoxForm"
+            isOpen={isOpen}
+            onClose={closeModal}
+          />
+        );
+
+      case 'recordVoucher':
+        return (
+          <RecordVoucherModal
+            key="recordVoucher"
+            isOpen={isOpen}
+            onClose={closeModal}
+            boxId={props.boxId}
+            defaultType={props.defaultType}
+          />
+        );
+
+      case 'voucherEdit':
+        return (
+          <RecordVoucherModal
+            key="voucherEdit"
+            isOpen={isOpen}
+            onClose={closeModal}
+            boxId={props.boxId}
+            voucherToEdit={props.voucher}
           />
         );
 

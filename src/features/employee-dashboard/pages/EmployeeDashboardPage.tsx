@@ -8,6 +8,7 @@ import RecentTransactionsPanel from '../components/RecentTransactionsPanel';
 import { useModalStore } from '@/shared/stores/modalStore';
 import { Spinner } from '@/shared/ui/shadcn/spinner';
 import { Alert, AlertDescription, AlertTitle } from '@/shared/ui/shadcn/alert';
+import { CustodyWidget } from '../components/CustodyWidget';
 
 /**
  * EmployeeDashboardPage - Main dashboard for employee users
@@ -62,7 +63,8 @@ const EmployeeDashboardPage = () => {
         }}
       >
         {/* Recent Tasks Panel - 1 fraction */}
-        <div className="mb-2" style={{ height: '100%', overflow: 'visible', position: 'relative', zIndex: 10 }}>
+        <div className="mb-2 flex flex-col gap-2" style={{ height: '100%', overflow: 'visible', position: 'relative', zIndex: 10 }}>
+          <CustodyWidget />
           {ledgerData && (
             <RecentTasksPanel tasks={ledgerData.recent_tasks || []} />
           )}

@@ -30,6 +30,9 @@ import EmployeeClientProfilePage from '@/features/employees/pages/employee/Emplo
 import EmployeeNotificationsPage from '@/features/employees/pages/employee/EmployeeNotificationsPage';
 import EmployeeClientReceivablesPage from '@/features/employees/pages/employee/EmployeeClientReceivablesPage';
 import EmployeeSettingsPage from '@/features/employees/pages/employee/EmployeeSettingsPage';
+import { CashBoxDetailsPage } from '@/features/financials/pages/CashBoxDetailsPage';
+import { CashBoxesListPage } from '@/features/financials/pages/CashBoxesListPage';
+
 
 const routes: RouteObject[] = [
   { path: '/login', element: <LoginPage /> },
@@ -44,10 +47,12 @@ const routes: RouteObject[] = [
       },
       {
         path: 'clients', element: <AdminRoute />,
-        children: [{ element: <AdminLayout />, children: [
-          { index: true, element: <AllClientsPage /> },
-          { path: ':id', element: <ClientProfilePage /> },
-        ] }],
+        children: [{
+          element: <AdminLayout />, children: [
+            { index: true, element: <AllClientsPage /> },
+            { path: ':id', element: <ClientProfilePage /> },
+          ]
+        }],
       },
       {
         path: 'tasks', element: <AdminRoute />,
@@ -59,10 +64,12 @@ const routes: RouteObject[] = [
       },
       {
         path: 'employees', element: <AdminRoute />,
-        children: [{ element: <AdminLayout />, children: [
-          { index: true, element: <EmployeeManagementPage /> },
-          { path: ':id/:mode?', element: <EmployeeProfilePage /> },
-        ] }],
+        children: [{
+          element: <AdminLayout />, children: [
+            { index: true, element: <EmployeeManagementPage /> },
+            { path: ':id/:mode?', element: <EmployeeProfilePage /> },
+          ]
+        }],
       },
       {
         path: 'company', element: <AdminRoute />,
@@ -74,34 +81,43 @@ const routes: RouteObject[] = [
       },
       {
         path: 'receivables', element: <AdminRoute />,
-        children: [{ element: <AdminLayout />, children: [
-          { index: true, element: <ReceivablesPage /> },
-          { path: 'paid', element: <PaidReceivablesPage /> },
-          { path: 'overdue', element: <OverdueReceivablesPage /> },
-        ] }],
+        children: [{
+          element: <AdminLayout />, children: [
+            { index: true, element: <ReceivablesPage /> },
+            { path: 'paid', element: <PaidReceivablesPage /> },
+            { path: 'overdue', element: <OverdueReceivablesPage /> },
+          ]
+        }],
       },
       {
         path: 'financial-center', element: <AdminRoute />,
-        children: [{ element: <AdminLayout />, children: [
-          { index: true, element: <Navigate to="accounts" replace /> },
-          { path: 'accounts', element: <AccountsOverviewPage /> },
-          { path: 'pending', element: <PendingCommissionsPage /> },
-          { path: 'invoices', element: <InvoicesHubPage /> },
-        ] }],
+        children: [{
+          element: <AdminLayout />, children: [
+            { index: true, element: <Navigate to="accounts" replace /> },
+            { path: 'accounts', element: <AccountsOverviewPage /> },
+            { path: 'pending', element: <PendingCommissionsPage /> },
+            { path: 'invoices', element: <InvoicesHubPage /> },
+            { path: "cash-boxes", element: <CashBoxesListPage /> },
+            { path: "cash-boxes/:id", element: <CashBoxDetailsPage /> }
+          ]
+        }],
       },
       {
         path: 'employee', element: <EmployeeRoute />,
-        children: [{ element: <EmployeeLayout />, children: [
-          { index: true, element: <Navigate to="dashboard" replace /> },
-          { path: 'dashboard', element: <EmployeeDashboardPage /> },
-          { path: 'tasks', element: <EmployeeTasksPage /> },
-          { path: 'clients', element: <EmployeeClientsPage /> },
-          { path: 'clients/:id', element: <EmployeeClientProfilePage /> },
-          { path: 'receivables', element: <EmployeeClientReceivablesPage /> },
-          { path: 'financials', element: <EmployeeFinancialsPage /> },
-          { path: 'settings', element: <EmployeeSettingsPage /> },
-          { path: 'notifications', element: <EmployeeNotificationsPage /> },
-        ] }],
+        children: [{
+          element: <EmployeeLayout />, children: [
+            { index: true, element: <Navigate to="dashboard" replace /> },
+            { path: 'dashboard', element: <EmployeeDashboardPage /> },
+            { path: 'tasks', element: <EmployeeTasksPage /> },
+            { path: 'clients', element: <EmployeeClientsPage /> },
+            { path: 'clients/:id', element: <EmployeeClientProfilePage /> },
+            { path: 'receivables', element: <EmployeeClientReceivablesPage /> },
+            { path: 'financials', element: <EmployeeFinancialsPage /> },
+            { path: 'cash-box/:id', element: <CashBoxDetailsPage /> },
+            { path: 'settings', element: <EmployeeSettingsPage /> },
+            { path: 'notifications', element: <EmployeeNotificationsPage /> },
+          ]
+        }],
       },
     ],
   },

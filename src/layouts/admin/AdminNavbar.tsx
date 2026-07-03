@@ -54,7 +54,8 @@ const Navbar = () => {
   const financialCenterItems = [
     { path: '/financial-center/accounts', icon: Wallet, label: 'نظرة عامة' },
     { path: '/financial-center/pending', icon: CheckSquare, label: 'الموافقات' },
-    { path: '/financial-center/invoices', icon: FileText, label: 'الفواتير' }
+    { path: '/financial-center/invoices', icon: FileText, label: 'الفواتير' },
+    { path: '/financial-center/cash-boxes', icon: Banknote, label: 'صناديق العهدة' }
   ];
 
   const taskNavigationItems = [
@@ -223,11 +224,20 @@ const Navbar = () => {
               </DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem onClick={() => openModal('manualTransaction', { direction: 'repayment' })} className="cursor-pointer flex flex-row-reverse justify-end gap-2 text-status-success-text font-bold">
-                <span>اضافة سند قبض</span>
+                <span>اضافة سند قبض عام</span>
                 <TrendingUp size={16} className="text-status-success-text" />
               </DropdownMenuItem>
               <DropdownMenuItem onClick={() => openModal('manualTransaction', { direction: 'payout' })} className="cursor-pointer flex flex-row-reverse justify-end gap-2 text-status-danger-text font-bold">
-                <span>اضافة سند صرف</span>
+                <span>اضافة سند صرف عام</span>
+                <TrendingDown size={16} className="text-status-danger-text" />
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onClick={() => openModal('recordVoucher', { defaultType: 'receipt' })} className="cursor-pointer flex flex-row-reverse justify-end gap-2 text-status-success-text font-bold">
+                <span>قبض صندوق (سريع)</span>
+                <TrendingUp size={16} className="text-status-success-text" />
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => openModal('recordVoucher', { defaultType: 'payment' })} className="cursor-pointer flex flex-row-reverse justify-end gap-2 text-status-danger-text font-bold">
+                <span>صرف صندوق (سريع)</span>
                 <TrendingDown size={16} className="text-status-danger-text" />
               </DropdownMenuItem>
               <DropdownMenuSeparator />

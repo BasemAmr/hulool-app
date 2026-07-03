@@ -7,8 +7,9 @@ import {
     Home, ClipboardList, Users, DollarSign, LogOut,
     Search, ChevronDown, FileText,
     TrendingUp, TrendingDown, Receipt, UserPlus,
-    Settings
+    Settings, Wallet
 } from 'lucide-react';
+import { useGetCashBoxes } from '@/features/financials/api/cashBoxQueries';
 import { useModalStore } from '@/shared/stores/modalStore';
 import {
     DropdownMenu,
@@ -38,6 +39,8 @@ const EmployeeNavbar = () => {
         navigate('/login', { replace: true });
     };
 
+    const { data: cashBoxes } = useGetCashBoxes();
+
     // Employee navigation items
     const employeeNavigationItems = [
         { path: '/employee/dashboard', icon: Home, label: 'لوحة التحكم' },
@@ -46,6 +49,14 @@ const EmployeeNavbar = () => {
         { path: '/employee/receivables', icon: FileText, label: 'مستحقات العملاء' },
         { path: '/employee/financials', icon: DollarSign, label: 'الماليات' },
     ];
+
+    if (cashBoxes && cashBoxes.length > 0) {
+        employeeNavigationItems.push({
+            path: `/employee/cash-box/${cashBoxes[0].id}`,
+            icon: Wallet,
+            label: 'عهدتي'
+        });
+    }
 
     return (
         <nav className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60" dir="rtl">

@@ -16,6 +16,7 @@ import ClientSearchCombobox from '@/shared/search/ClientSearchCombobox';
 import { NumberInput } from '@/shared/ui/primitives/NumberInput';
 import { DateInput } from '@/shared/ui/primitives/DateInput';
 import { useCreateManualTransaction, useGetAccountsByType } from '@/features/financials/api/financialCenterQueries';
+import { useGetCashBoxes } from '@/features/financials/api/cashBoxQueries';
 import { useToast } from '@/shared/hooks/useToast';
 import { ArrowRight, AlertCircle, User, Building, Briefcase, TrendingUp, TrendingDown, ArrowLeftRight } from 'lucide-react';
 import type {
@@ -47,6 +48,18 @@ const ManualTransactionModal = ({
   const { data: employeesData } = useGetAccountsByType('employee', {}, isOpen);
   const { data: clientsData } = useGetAccountsByType('client', {}, isOpen);
   const { data: companyData } = useGetAccountsByType('company', {}, isOpen);
+  const { data: cashBoxesData } = useGetCashBoxes();
+
+  const cashBoxesMapped = cashBoxesData?.map(cb => ({
+    id: cb.id,
+    name: cb.name,
+    type: 'cashbox' as AccountType,
+    balance: cb.balance,
+    email: null,
+    last_activity: null,
+    pending_count: 0,
+    pending_amount: 0,
+  }));
 
   // Direction selector state (if not preselected)
   const [direction, setDirection] = useState<'payout' | 'repayment'>(initialDirection || 'payout');
@@ -88,6 +101,7 @@ const ManualTransactionModal = ({
     if (type === 'employee') return employeesData?.accounts || [];
     if (type === 'client') return clientsData?.accounts || [];
     if (type === 'company') return companyData?.accounts || [];
+    if (type === 'cashbox') return cashBoxesMapped || [];
     return [];
   };
 
@@ -96,6 +110,7 @@ const ManualTransactionModal = ({
     ...(employeesData?.accounts || []),
     ...(clientsData?.accounts || []),
     ...(companyData?.accounts || []),
+    ...(cashBoxesMapped || []),
   ];
 
   // Get selected accounts for preview
@@ -292,11 +307,12 @@ const ManualTransactionModal = ({
             >
               <option value="employee">موظف</option>
               <option value="client">عميل</option>
+              <option value="cashbox">صندوق عهدة</option>
             </select>
           </div>
           <div>
             <label className="block text-sm font-medium text-text-primary mb-1">
-              اختر {accountType === 'employee' ? 'الموظف' : 'العميل'}
+              اختر {accountType === 'employee' ? 'الموظف' : accountType === 'cashbox' ? 'الصندوق' : 'العميل'}
             </label>
             {accountType === 'client' ? (
               <ClientSearchCombobox

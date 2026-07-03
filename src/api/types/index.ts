@@ -27,6 +27,52 @@ export interface TaskPaginatedData {
   pagination: Pagination;
 }
 
+// ========================================
+// CASH BOX TYPES
+// ========================================
+
+export interface CashBox {
+  id: number;
+  name: string;
+  employee_id: number;
+  employee_name?: string;
+  balance: number;
+  status: 'active' | 'closed';
+  created_at: string;
+  closed_at: string | null;
+}
+
+export interface CashBoxCategory {
+  id: number;
+  name: string;
+}
+
+export interface CashBoxVoucher {
+  id: number;
+  account_id: number;
+  account_type: 'cashbox';
+  transaction_type: 'CASHBOX_RECEIPT' | 'CASHBOX_PAYMENT';
+  transaction_date: string;
+  description: string;
+  debit: number;
+  credit: number;
+  balance: number;
+  related_transaction_id: number;
+  related_object_type: string;
+  related_object_id: number;
+  created_by: number;
+  metadata?: string;
+}
+
+export interface CashBoxVoucherPayload {
+  type: 'receipt' | 'payment';
+  amount: number;
+  category: string;
+  description: string;
+  target_account_type: 'company' | 'employee' | 'client';
+  target_account_id: number;
+}
+
 // Authentication Data Structures
 export interface User {
   id: number;
@@ -1136,7 +1182,7 @@ export interface InvoicePaginatedData {
 /**
  * Account types in the ledger system
  */
-export type AccountType = 'client' | 'employee' | 'company';
+export type AccountType = 'client' | 'employee' | 'company' | 'cashbox';
 
 /**
  * Transaction types in the ledger
@@ -1695,3 +1741,4 @@ export interface EmployeeCredentials {
   password: string;
   app_password: string;
 }
+

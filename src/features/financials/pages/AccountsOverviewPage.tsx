@@ -9,7 +9,7 @@
  * - Quick action buttons for creating transactions
  */
 
-import { useEffect, useState } from 'react';
+import React, { useEffect, useState, Fragment } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { applyPageBackground } from '@/shared/utils/backgroundUtils';
 import { useGetUnifiedAccounts } from '@/features/financials/api/financialCenterQueries';
@@ -20,7 +20,7 @@ import Button from '@/shared/ui/primitives/Button';
 import { Spinner } from '@/shared/ui/shadcn/spinner';
 import { Alert, AlertDescription, AlertTitle } from '@/shared/ui/shadcn/alert';
 import SaudiRiyalIcon from '@/shared/ui/icons/SaudiRiyalIcon';
-import { Search, X, Plus, Users, Building, Briefcase, Clock, ChevronRight, AlertCircle } from 'lucide-react';
+import { Search, X, Plus, Users, Building, Briefcase, Clock, ChevronRight, AlertCircle, Wallet } from 'lucide-react';
 import { useDebounce } from '@/shared/hooks/useDebounce';
 import type { UnifiedAccount, AccountType } from '@/api/types';
 import { formatDistanceToNow } from 'date-fns';
@@ -58,6 +58,8 @@ const AccountsOverviewPage = () => {
         return <Briefcase size={16} className="text-status-success-text" />;
       case 'company':
         return <Building size={16} className="text-purple-500" />;
+      case 'cashbox':
+        return <Wallet size={16} className="text-teal-500" />;
       default:
         return null;
     }
@@ -72,6 +74,8 @@ const AccountsOverviewPage = () => {
         return 'عميل';
       case 'company':
         return 'شركة';
+      case 'cashbox':
+        return 'صندوق عهدة';
       default:
         return type;
     }
@@ -105,6 +109,10 @@ const AccountsOverviewPage = () => {
 
   // Handle account click
   const handleAccountClick = (account: UnifiedAccount) => {
+    if (account.type === 'cashbox') {
+      navigate(`/financial-center/cash-boxes/${account.id}`);
+      return;
+    }
     setSelectedAccount(selectedAccount?.id === account.id && selectedAccount?.type === account.type ? undefined : account);
   };
 
@@ -117,6 +125,7 @@ const AccountsOverviewPage = () => {
     { value: 'employee', label: 'الموظفين' },
     { value: 'client', label: 'العملاء' },
     { value: 'company', label: 'الشركة' },
+    { value: 'cashbox', label: 'صناديق العهدة' },
   ];
 
   if (error) {
@@ -259,9 +268,8 @@ const AccountsOverviewPage = () => {
               </TableHeader>
               <TableBody>
                 {data.accounts.map((account) => (
-                  <>
+                  <React.Fragment key={`${account.type}-${account.id}`}>
                     <TableRow 
-                      key={`${account.type}-${account.id}`}
                       className="cursor-pointer hover:bg-background"
                       onClick={() => handleAccountClick(account)}
                     >
@@ -378,7 +386,7 @@ const AccountsOverviewPage = () => {
                         </TableCell>
                       </TableRow>
                     )}
-                  </>
+                  </React.Fragment>
                 ))}
               </TableBody>
             </Table>
