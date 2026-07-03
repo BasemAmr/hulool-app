@@ -63,6 +63,7 @@ export const CashBoxDetailsPage = () => {
   const { isAdmin } = useAuthStore();
   const toast = useToast();
   const closeMutation = useCloseCashBox();
+  const [isExporting, setIsExporting] = useState(false);
 
   if (isLoadingBox || isLoadingVouchers) {
     return <div className="p-6 text-center">جاري التحميل...</div>;
@@ -73,7 +74,6 @@ export const CashBoxDetailsPage = () => {
   }
 
   const isClosed = box.status === 'closed';
-  const [isExporting, setIsExporting] = useState(false);
 
   const handleExportExcel = async () => {
     try {
