@@ -15,6 +15,7 @@ const ActionsCell = React.memo(({ rowData }: CellProps<CashBoxVoucher, any>) => 
   const openModal = useModalStore((state) => state.openModal);
   const toast = useToast();
   const voidMutation = useVoidVoucher();
+  const { isAdmin } = useAuthStore(); // Add this line
 
   const handleEdit = () => {
     openModal('voucherEdit', { boxId: rowData.account_id, voucher: rowData });
@@ -32,6 +33,11 @@ const ActionsCell = React.memo(({ rowData }: CellProps<CashBoxVoucher, any>) => 
       }
     });
   };
+
+  // Only show actions for admin users
+  if (!isAdmin()) {
+    return null; // Return nothing for non-admin users
+  }
 
   return (
     <div className="flex gap-2">
@@ -52,7 +58,7 @@ export const CashBoxDetailsPage = () => {
 
   const { data: box, isLoading: isLoadingBox } = useGetCashBox(boxId);
   const { data: vouchers, isLoading: isLoadingVouchers } = useGetCashBoxVouchers(boxId);
-  
+
   const openModal = useModalStore((state) => state.openModal);
   const { isAdmin } = useAuthStore();
   const toast = useToast();
@@ -181,23 +187,23 @@ export const CashBoxDetailsPage = () => {
       {/* Control Buttons */}
       <div className="flex justify-between items-center">
         <div className="flex gap-2">
-          <Button 
+          <Button
             disabled={isClosed}
             onClick={() => openModal('recordVoucher', { boxId, defaultType: 'receipt' })}
           >
             تسجيل سند قبض
           </Button>
-          <Button 
-            variant="outline-danger" 
+          <Button
+            variant="outline-danger"
             disabled={isClosed}
             onClick={() => openModal('recordVoucher', { boxId, defaultType: 'payment' })}
           >
             تسجيل سند صرف
           </Button>
         </div>
-        
+
         {isAdmin() && !isClosed && (
-          <Button 
+          <Button
             variant="outline-primary"
             onClick={handleCloseBox}
             isLoading={closeMutation.isPending}
