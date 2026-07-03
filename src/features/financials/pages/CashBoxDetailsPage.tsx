@@ -91,7 +91,7 @@ export const CashBoxDetailsPage = () => {
     {
       id: 'date',
       title: 'التاريخ',
-      key: 'transaction_date',
+      key: 'date',
       type: 'date',
       grow: 1
     },
@@ -110,12 +110,8 @@ export const CashBoxDetailsPage = () => {
     {
       id: 'category',
       title: 'التصنيف',
-      key: 'description',
+      key: 'category',
       type: 'text',
-      formatter: (val: string) => {
-        const match = val?.match(/^\[(.*?)\]/);
-        return match ? match[1] : '—';
-      },
       grow: 1
     },
     {

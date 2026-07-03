@@ -52,7 +52,8 @@ export interface CashBoxVoucher {
   account_id: number;
   account_type: 'cashbox';
   transaction_type: 'CASHBOX_RECEIPT' | 'CASHBOX_PAYMENT';
-  transaction_date: string;
+  date: string;
+  category: string;
   description: string;
   debit: number;
   credit: number;
@@ -1741,4 +1742,4 @@ export interface EmployeeCredentials {
   password: string;
   app_password: string;
 }
-
+
