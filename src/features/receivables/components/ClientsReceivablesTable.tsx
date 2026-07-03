@@ -80,9 +80,9 @@ const ClientNameCell = React.memo(({ rowData, columnData, active }: CellProps<Cl
   };
 
   return (
-    <span 
+    <span
       className="hulool-cell-content"
-      style={{ 
+      style={{
         fontWeight: active ? 800 : 600,
         color: 'var(--color-primary)',
         cursor: 'pointer',
@@ -130,7 +130,7 @@ PhoneCell.displayName = 'PhoneCell';
 // Total Debit Cell - Black currency
 const TotalDebitCell = React.memo(({ rowData, active }: CellProps<ClientReceivablesSummary>) => {
   const amount = Number(rowData.total_amount) || 0;
-  
+
   return (
     <span className="hulool-cell-content" style={{ justifyContent: 'center', color: 'var(--token-text-primary)', fontWeight: active ? 700 : 500 }}>
       {formatCurrency(amount)}
@@ -142,7 +142,7 @@ TotalDebitCell.displayName = 'TotalDebitCell';
 // Total Credit Cell - Green currency
 const TotalCreditCell = React.memo(({ rowData, active }: CellProps<ClientReceivablesSummary>) => {
   const amount = Number(rowData.paid_amount) || 0;
-  
+
   return (
     <span className="hulool-cell-content" style={{ justifyContent: 'center', color: 'var(--token-text-primary)', fontWeight: active ? 700 : 500 }}>
       {formatCurrency(amount)}
@@ -154,7 +154,7 @@ TotalCreditCell.displayName = 'TotalCreditCell';
 // Remaining Amount Cell - Red currency
 const RemainingCell = React.memo(({ rowData, active }: CellProps<ClientReceivablesSummary>) => {
   const amount = Math.max(0, Number(rowData.remaining_amount) || 0);
-  
+
   return (
     <span className="hulool-cell-content" style={{ justifyContent: 'center', fontWeight: active ? 800 : 700, color: 'var(--token-text-primary)' }}>
       {formatCurrency(amount)}
@@ -196,11 +196,11 @@ const ActionsCell = React.memo(({ rowData, columnData }: CellProps<ClientReceiva
   };
 
   return (
-    <div 
-      style={{ 
-        display: 'flex', 
-        gap: '4px', 
-        justifyContent: 'center', 
+    <div
+      style={{
+        display: 'flex',
+        gap: '4px',
+        justifyContent: 'center',
         alignItems: 'center',
         height: '100%',
         pointerEvents: 'auto',
@@ -263,11 +263,11 @@ ActionsCell.displayName = 'ActionsCell';
 // MAIN COMPONENT
 // ================================
 
-const ClientsReceivablesTable: React.FC<ClientsReceivablesTableProps> = ({ 
-  clients, 
-  isLoading, 
-  totals, 
-  isTotalsLoading 
+const ClientsReceivablesTable: React.FC<ClientsReceivablesTableProps> = ({
+  clients,
+  isLoading,
+  totals,
+  isTotalsLoading
 }) => {
   const navigate = useNavigate();
   const openModal = useModalStore((state) => state.openModal);
@@ -304,7 +304,7 @@ const ClientsReceivablesTable: React.FC<ClientsReceivablesTableProps> = ({
   };
 
   // Filter clients with debt
-  const filteredClients = useMemo(() => 
+  const filteredClients = useMemo(() =>
     clients.filter(client => (Number(client.remaining_amount) || 0) > 0),
     [clients]
   );
@@ -347,6 +347,9 @@ const ClientsReceivablesTable: React.FC<ClientsReceivablesTableProps> = ({
       type: 'custom',
       component: TotalDebitCell,
       grow: 1,
+      cellClassName: ({ rowData }) => {
+        return 'client-debit-cell';
+      }
     },
     {
       id: 'paid_amount',
@@ -355,6 +358,9 @@ const ClientsReceivablesTable: React.FC<ClientsReceivablesTableProps> = ({
       type: 'custom',
       component: TotalCreditCell,
       grow: 1,
+      cellClassName: ({ rowData }) => {
+        return 'client-credit-cell';
+      }
     },
     {
       id: 'remaining_amount',
@@ -370,9 +376,9 @@ const ClientsReceivablesTable: React.FC<ClientsReceivablesTableProps> = ({
       title: 'الإجراءات',
       type: 'custom',
       component: ActionsCell as React.ComponentType<CellProps<ClientReceivablesSummary>>,
-      columnData: { 
-        openModal, 
-        onPaymentReminder: handlePaymentReminder, 
+      columnData: {
+        openModal,
+        onPaymentReminder: handlePaymentReminder,
         onPayment: handlePayment,
         onViewLedger: handleViewLedger
       },

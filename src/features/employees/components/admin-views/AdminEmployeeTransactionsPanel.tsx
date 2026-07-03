@@ -31,6 +31,8 @@ interface MonthlyTransaction {
   description: string;
   from_account: string;
   to_account: string;
+  debit: number;
+  credit: number;
   amount: number;
   running_balance: number;
   direction: 'income' | 'expense' | null;
@@ -449,15 +451,13 @@ const AdminEmployeeTransactionsPanel: React.FC<AdminEmployeeTransactionsPanelPro
                   <td className="px-1.5 py-1.5 border border-border-default text-start font-bold text-base" style={{ width: '280px', minWidth: '280px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                     {opening_balance.description}
                   </td>
-                  <td className="text-base px-1.5 py-1.5 border border-border-default text-center font-bold">
-                    <span className="text-status-success-text">
-                      {opening_balance.total_debit > 0 ? formatCurrency(opening_balance.total_debit) : '-'}
-                    </span>
+                  <td className={`text-base px-1.5 py-1 border border-border-default text-center font-bold ${opening_balance.total_debit > 0 ? 'employee-debit-cell' : ''
+                    }`}>
+                    {opening_balance.total_debit > 0 ? formatCurrency(opening_balance.total_debit) : '-'}
                   </td>
-                  <td className="text-base px-1.5 py-1.5 border border-border-default text-center font-bold">
-                    <span className="text-status-danger-text">
-                      {opening_balance.total_credit > 0 ? formatCurrency(opening_balance.total_credit) : '-'}
-                    </span>
+                  <td className={`text-base px-1.5 py-1 border border-border-default text-center font-bold ${opening_balance.total_credit > 0 ? 'employee-credit-cell' : ''
+                    }`}>
+                    {opening_balance.total_credit > 0 ? formatCurrency(opening_balance.total_credit) : '-'}
                   </td>
                   <td className="text-base px-1.5 py-1.5 border border-border-default text-center font-bold">
                     <span className={opening_balance.balance >= 0 ? 'text-status-success-text' : 'text-status-danger-text'}>
@@ -488,15 +488,11 @@ const AdminEmployeeTransactionsPanel: React.FC<AdminEmployeeTransactionsPanelPro
                       <td className="px-1.5 py-1 border border-border-default text-start font-bold text-base" style={{ width: '280px', minWidth: '280px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                         {transaction.description}
                       </td>
-                      <td className="text-base px-1.5 py-1 border border-border-default text-center font-bold">
-                        <span className="text-status-success-text">
-                          {transaction.direction === 'income' ? formatCurrency(transaction.amount) : '-'}
-                        </span>
+                      <td className={`text-base px-1.5 py-1 border border-border-default text-center font-bold employee-debit-cell`}>
+                        {transaction.debit > 0 ? formatCurrency(transaction.debit) : '-'}
                       </td>
-                      <td className="text-base px-1.5 py-1 border border-border-default text-center font-bold">
-                        <span className="text-status-danger-text">
-                          {transaction.direction === 'expense' ? formatCurrency(transaction.amount) : '-'}
-                        </span>
+                      <td className={`text-base px-1.5 py-1 border border-border-default text-center font-bold employee-credit-cell`}>
+                        {transaction.credit > 0 ? formatCurrency(transaction.credit) : '-'}
                       </td>
                       <td className="text-base px-1.5 py-1 border border-border-default text-center font-semibold">
                         <span className={transaction.running_balance >= 0 ? 'text-status-success-text' : 'text-status-danger-text'}>
@@ -530,15 +526,11 @@ const AdminEmployeeTransactionsPanel: React.FC<AdminEmployeeTransactionsPanelPro
                   <td className="px-1.5 py-1.5 border border-border-default text-center font-bold text-base" style={{ width: '280px', minWidth: '280px' }}>
                     الإجماليات
                   </td>
-                  <td className="text-base px-1.5 py-1.5 border border-border-default text-center font-bold">
-                    <span className="text-status-success-text">
-                      {formatCurrency(summary.total_to_date_income)}
-                    </span>
+                  <td className={`text-base px-1.5 py-1.5 border border-border-default text-center font-bold employee-debit-cell`}>
+                    {formatCurrency(summary.total_to_date_income)}
                   </td>
-                  <td className="text-base px-1.5 py-1.5 border border-border-default text-center font-bold">
-                    <span className="text-status-danger-text">
-                      {formatCurrency(summary.total_to_date_expenses)}
-                    </span>
+                  <td className={`text-base px-1.5 py-1.5 border border-border-default text-center font-bold employee-credit-cell`}>
+                    {formatCurrency(summary.total_to_date_expenses)}
                   </td>
                   <td className="text-base px-1.5 py-1.5 border border-border-default text-center font-bold">
                     <span className={summary.balance_due >= 0 ? 'text-status-success-text' : 'text-status-danger-text'}>

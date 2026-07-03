@@ -17,9 +17,11 @@ interface MonthlyTransaction {
   description: string;
   from_account: string;
   to_account: string;
+  debit: number;
+  credit: number;
   amount: number;
   running_balance: number;
-  direction: 'income' | 'expense';
+  direction: 'income' | 'expense' | null;
   transaction_type: string;
   reference_type?: string;
   reference_id?: string | null;
@@ -51,10 +53,10 @@ interface RecentTransactionsPanelProps {
   onYearChange?: (year: number) => void;
 }
 
-const RecentTransactionsPanel: React.FC<RecentTransactionsPanelProps> = ({ 
-  ledgerData, 
-  onMonthChange, 
-  onYearChange 
+const RecentTransactionsPanel: React.FC<RecentTransactionsPanelProps> = ({
+  ledgerData,
+  onMonthChange,
+  onYearChange
 }) => {
   const [visibleTransactions, setVisibleTransactions] = useState(20);
   const [isAutoLoading, setIsAutoLoading] = useState(false);
@@ -108,7 +110,7 @@ const RecentTransactionsPanel: React.FC<RecentTransactionsPanelProps> = ({
 
     const debounceTimer = setTimeout(checkAndLoadMore, 300);
     container.addEventListener('scroll', checkAndLoadMore);
-    
+
     // Initial check on mount
     setTimeout(checkAndLoadMore, 100);
 
@@ -171,7 +173,7 @@ const RecentTransactionsPanel: React.FC<RecentTransactionsPanelProps> = ({
     <div className="rounded-lg border border-border bg-card shadow-sm h-full flex flex-col">
       {/* Header — single left-border accent, white background */}
       <div className="px-4 py-3 border-b border-border border-l-4 border-l-primary bg-background flex-shrink-0">
-          <div className="flex justify-between items-center">
+        <div className="flex justify-between items-center">
           <div className="flex items-center gap-2">
             <h6 className="mb-0 font-semibold text-text-primary text-sm">
               كشف حساب
@@ -237,15 +239,11 @@ const RecentTransactionsPanel: React.FC<RecentTransactionsPanelProps> = ({
                   <td className="px-2 py-2 border border-border-strong text-start font-bold text-base text-text-primary">
                     {opening_balance.description}
                   </td>
-                  <td className="px-2 py-2 border border-border-strong text-center font-bold text-base">
-                    <span className="text-status-success-text">
-                      {opening_balance.total_debit > 0 ? formatCurrency(opening_balance.total_debit) : '-'}
-                    </span>
+                  <td className="px-2 py-2 border border-border-strong text-center font-bold text-base employee-debit-cell">
+                    {opening_balance.total_debit > 0 ? formatCurrency(opening_balance.total_debit) : '-'}
                   </td>
-                  <td className="px-2 py-2 border border-border-strong text-center font-bold text-base">
-                    <span className="text-status-danger-text">
-                      {opening_balance.total_credit > 0 ? formatCurrency(opening_balance.total_credit) : '-'}
-                    </span>
+                  <td className="px-2 py-2 border border-border-strong text-center font-bold text-base employee-credit-cell">
+                    {opening_balance.total_credit > 0 ? formatCurrency(opening_balance.total_credit) : '-'}
                   </td>
                   <td className="px-2 py-2 border border-border-strong text-center font-bold text-base">
                     <span className={opening_balance.balance >= 0 ? 'text-status-success-text' : 'text-status-danger-text'}>
@@ -274,23 +272,21 @@ const RecentTransactionsPanel: React.FC<RecentTransactionsPanelProps> = ({
                       <td className="px-2 py-1.5 border border-border-default text-start text-sm text-text-secondary">
                         {transaction.description}
                       </td>
-                      {/* Debit (income): only green when it IS income */}
-                      <td className="px-2 py-1.5 border border-border-default text-center font-semibold text-sm">
-                        {transaction.direction === 'income' ? (
-                          <span className="text-status-success-text">{formatCurrency(transaction.amount)}</span>
+                      {/* Debit: money flowing to employee (debit > 0) */}
+                      <td className="px-2 py-1.5 border border-border-default text-center font-semibold text-sm employee-debit-cell">
+                        {transaction.debit > 0 ? (
+                          <> {formatCurrency(transaction.debit)}</>
                         ) : (
-                          <span className="text-text-primary">-</span>
+                          <>-</>
                         )}
                       </td>
-                      {/* Credit (expense): only red when it IS expense */}
-                      <td className="px-2 py-1.5 border border-border-default text-center font-semibold text-sm">
-                        <span className={transaction.direction === 'expense' ? 'text-status-danger-text' : 'text-text-primary'}>
-                          {transaction.direction === 'expense' ? (
-                            formatCurrency(transaction.amount)
-                          ) : (
-                            <span className="text-text-primary">-</span>
-                          )}
-                        </span>
+                      {/* Credit: money flowing from employee (credit > 0) */}
+                      <td className="px-2 py-1.5 border border-border-default text-center font-semibold text-sm employee-credit-cell">
+                        {transaction.credit > 0 ? (
+                          <>{formatCurrency(transaction.credit)}</>
+                        ) : (
+                          <>-</>
+                        )}
                       </td>
                       {/* Running balance: color only when negative (deficit) */}
                       <td className="px-2 py-1.5 border border-border-default text-center font-semibold text-sm">
@@ -316,11 +312,11 @@ const RecentTransactionsPanel: React.FC<RecentTransactionsPanelProps> = ({
                 <tr className="bg-background border-t-2 border-border-strong">
                   <td className="px-2 py-2 border border-border-default text-center font-semibold text-sm text-text-primary" style={{ width: `${maxClientWidth + 40}px`, minWidth: `${maxClientWidth + 40}px` }}>-</td>
                   <td className="px-2 py-2 border border-border-default text-center font-semibold text-sm text-text-primary">الإجماليات</td>
-                  <td className="px-2 py-2 border border-border-default text-center font-semibold text-sm">
-                    <span className="text-status-success-text">{formatCurrency(summary.total_to_date_income)}</span>
+                  <td className="px-2 py-2 border border-border-default text-center font-semibold text-sm employee-debit-cell">
+                    {formatCurrency(summary.total_to_date_income)}
                   </td>
-                  <td className="px-2 py-2 border border-border-default text-center font-semibold text-sm">
-                    <span className="text-status-danger-text">{formatCurrency(summary.total_to_date_expenses)}</span>
+                  <td className="px-2 py-2 border border-border-default text-center font-semibold text-sm employee-credit-cell">
+                    {formatCurrency(summary.total_to_date_expenses)}
                   </td>
                   <td className="px-2 py-2 border border-border-default text-center font-semibold text-sm">
                     <span className={summary.balance_due < 0 ? 'text-status-danger-text' : 'text-text-primary'}>

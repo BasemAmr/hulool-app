@@ -1,13 +1,16 @@
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useGetCashBoxes } from '../api/cashBoxQueries';
+import { useGetCashBoxes, getCashBoxesExport } from '../api/cashBoxQueries';
 import HuloolDataGrid from '@/shared/grid/HuloolDataGrid';
 import type { HuloolGridColumn } from '@/shared/grid/HuloolDataGrid';
 import type { CellProps } from 'react-datasheet-grid';
 import Button from '@/shared/ui/primitives/Button';
-import { Plus } from 'lucide-react';
+import { Plus, FileSpreadsheet } from 'lucide-react';
 import type { CashBox } from '@/api/types';
-import React from 'react'; // Ensure React is imported for React.memo
 import { useModalStore } from '@/shared/stores/modalStore';
+import { useAuthStore } from '@/features/auth/store/authStore';
+import { useToast } from '@/shared/hooks/useToast';
+import { TOAST_MESSAGES } from '@/shared/constants/toastMessages';
 
 // Custom Cell for Actions
 const ActionsCell = React.memo(({ rowData }: CellProps<CashBox, any>) => {
@@ -24,9 +27,30 @@ const ActionsCell = React.memo(({ rowData }: CellProps<CashBox, any>) => {
 });
 ActionsCell.displayName = 'ActionsCell';
 
+import { exportService } from '@/services/export/ExportService';
+
 export const CashBoxesListPage = () => {
   const { data: boxes, isLoading } = useGetCashBoxes();
   const openModal = useModalStore((state) => state.openModal);
+  const { isAdmin } = useAuthStore();
+  const toast = useToast();
+  const [isExporting, setIsExporting] = useState(false);
+
+  const handleExportAll = async () => {
+    try {
+      setIsExporting(true);
+      const data = await getCashBoxesExport();
+      await exportService.exportCashBox({
+        title: 'تقرير كشف حركة جميع صناديق العهدة',
+        items: data || [],
+      });
+      toast.success(TOAST_MESSAGES.EXPORT_SUCCESS || 'تم التصدير بنجاح');
+    } catch (err: any) {
+      toast.error(TOAST_MESSAGES.EXPORT_FAILED || 'فشل التصدير', err.message || '');
+    } finally {
+      setIsExporting(false);
+    }
+  };
 
   const columns: HuloolGridColumn<CashBox>[] = [
     {
@@ -73,10 +97,22 @@ export const CashBoxesListPage = () => {
     <div className="p-6 space-y-6">
       <div className="flex justify-between items-center">
         <h1 className="text-2xl font-bold">صناديق العهدة</h1>
-        <Button onClick={() => openModal('cashBoxForm', {})}>
-          <Plus className="h-4 w-4 ml-2" />
-          إنشاء صندوق جديد
-        </Button>
+        <div className="flex gap-2">
+          {isAdmin() && (
+            <Button
+              variant="outline-primary"
+              onClick={handleExportAll}
+              isLoading={isExporting}
+            >
+              <FileSpreadsheet className="h-4 w-4 ml-2" />
+              تصدير الكل لـ Excel
+            </Button>
+          )}
+          <Button onClick={() => openModal('cashBoxForm', {})}>
+            <Plus className="h-4 w-4 ml-2" />
+            إنشاء صندوق جديد
+          </Button>
+        </div>
       </div>
 
       <div className="bg-white rounded-lg shadow">

@@ -7,6 +7,8 @@ import type { Client } from '@/api/types';
 import { Search } from 'lucide-react';
 import { useInView } from 'react-intersection-observer';
 
+import { useDebounce } from '@/shared/hooks/useDebounce';
+
 /**
  * EmployeeClientsPage - Clients accessible to current employee
  * 
@@ -20,6 +22,7 @@ import { useInView } from 'react-intersection-observer';
  */
 const EmployeeClientsPage = () => {
   const [searchTerm, setSearchTerm] = useState('');
+  const debouncedSearchTerm = useDebounce(searchTerm, 300);
   const { openModal } = useModalStore();
 
   useEffect(() => {
@@ -35,7 +38,7 @@ const EmployeeClientsPage = () => {
     hasNextPage,
     isFetchingNextPage,
   } = useGetEmployeeClientsInfinite({
-    search: searchTerm,
+    search: debouncedSearchTerm,
     per_page: 20,
   });
 

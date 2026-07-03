@@ -48,6 +48,8 @@ export interface HuloolGridColumn<T = any> {
   hidden?: boolean;
   /** Additional data passed to cell component */
   columnData?: any;
+  /** Cell-level CSS class name, determined from row data */
+  cellClassName?: (props: { rowData: T; rowIndex: number }) => string;
 }
 
 export interface HuloolGridProps<T extends Record<string, any>> {
@@ -473,6 +475,7 @@ function HuloolDataGrid<T extends Record<string, any>>({
           badgeColors: col.badgeColors,
           ...(col.columnData || {}),
         },
+        cellClassName: col.cellClassName,
         // Use fixed width if specified, otherwise use minWidth of 100
         basis: col.width || 0,
         minWidth: col.width || 100,

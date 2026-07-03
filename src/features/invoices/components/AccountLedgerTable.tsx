@@ -450,6 +450,9 @@ const AccountLedgerTable: React.FC<AccountLedgerTableProps> = ({
       component: DebitCell,
       columnData: { hideAmounts },
       grow: 1,
+      cellClassName: ({ rowData }) => {
+        return 'client-debit-cell';
+      }
     },
     {
       id: 'credit',
@@ -459,6 +462,9 @@ const AccountLedgerTable: React.FC<AccountLedgerTableProps> = ({
       component: CreditCell,
       columnData: { hideAmounts },
       grow: 1,
+      cellClassName: ({ rowData }) => {
+        return 'client-credit-cell';
+      }
     },
     {
       id: 'balance',

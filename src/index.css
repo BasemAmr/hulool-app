@@ -56,71 +56,71 @@
    ============================================================ */
 :root {
   /* --- Backgrounds --- */
-  --token-bg-page:           var(--primitive-white);
-  --token-bg-surface:        var(--primitive-white);
-  --token-bg-surface-hover:  var(--primitive-white); /* border-only separation preferred */
-  --token-bg-surface-muted:  var(--primitive-white); /* use border-strong for hierarchy */
+  --token-bg-page: var(--primitive-white);
+  --token-bg-surface: var(--primitive-white);
+  --token-bg-surface-hover: var(--primitive-white);
+  /* border-only separation preferred */
+  --token-bg-surface-muted: var(--primitive-white);
+  /* use border-strong for hierarchy */
 
   /* --- Text --- */
-  --token-text-primary:   var(--primitive-gray-900);
+  --token-text-primary: var(--primitive-gray-900);
   --token-text-secondary: var(--primitive-gray-900);
-  --token-text-muted:     var(--primitive-gray-900);
-  --token-text-disabled:  var(--primitive-gray-500);
-  --token-text-inverse:   var(--primitive-white);
-  --token-text-brand:     var(--primitive-brand-600);
-  --token-text-danger:    var(--primitive-red-700);
-  --token-text-success:   var(--primitive-green-700);
-  --token-text-warning:   var(--primitive-amber-700);
+  --token-text-muted: var(--primitive-gray-900);
+  --token-text-disabled: var(--primitive-gray-500);
+  --token-text-inverse: var(--primitive-white);
+  --token-text-brand: var(--primitive-brand-600);
+  --token-text-danger: var(--primitive-red-700);
+  --token-text-success: var(--primitive-green-700);
+  --token-text-warning: var(--primitive-amber-700);
 
   /* --- Borders --- */
   --token-border-default: var(--primitive-gray-200);
-  --token-border-strong:  var(--primitive-gray-300);
-  --token-border-focus:   var(--primitive-brand-500);
-  --token-border-danger:  var(--primitive-red-200);
+  --token-border-strong: var(--primitive-gray-300);
+  --token-border-focus: var(--primitive-brand-500);
+  --token-border-danger: var(--primitive-red-200);
 
   /* --- Interactive / Buttons --- */
-  --token-action-primary-bg:        var(--primitive-brand-600);
-  --token-action-primary-text:      var(--primitive-white);
-  --token-action-primary-hover:     var(--primitive-brand-700);
+  --token-action-primary-bg: var(--primitive-brand-600);
+  --token-action-primary-text: var(--primitive-white);
+  --token-action-primary-hover: var(--primitive-brand-700);
 
-  --token-action-secondary-bg:      var(--primitive-white);
-  --token-action-secondary-text:    var(--primitive-gray-800);
-  --token-action-secondary-border:  var(--primitive-gray-300);
-  --token-action-secondary-hover:   var(--primitive-gray-50);
+  --token-action-secondary-bg: var(--primitive-white);
+  --token-action-secondary-text: var(--primitive-gray-800);
+  --token-action-secondary-border: var(--primitive-gray-300);
+  --token-action-secondary-hover: var(--primitive-gray-50);
 
-  --token-action-danger-bg:         var(--primitive-red-600);
-  --token-action-danger-text:       var(--primitive-white);
-  --token-action-danger-hover:      var(--primitive-red-700);
+  --token-action-danger-bg: var(--primitive-red-600);
+  --token-action-danger-text: var(--primitive-white);
+  --token-action-danger-hover: var(--primitive-red-700);
 
-  --token-action-ghost-hover:       var(--primitive-gray-100);
+  --token-action-ghost-hover: var(--primitive-gray-100);
 
   /* --- Status — soft pastel backgrounds only --- */
-  --token-status-success-bg:     var(--primitive-green-50);
-  --token-status-success-text:   var(--primitive-green-700);
+  --token-status-success-bg: var(--primitive-green-50);
+  --token-status-success-text: var(--primitive-green-700);
   --token-status-success-border: var(--primitive-green-200);
 
-  --token-status-warning-bg:     var(--primitive-amber-50);
-  --token-status-warning-text:   var(--primitive-amber-700);
+  --token-status-warning-bg: var(--primitive-amber-50);
+  --token-status-warning-text: var(--primitive-amber-700);
   --token-status-warning-border: var(--primitive-amber-200);
 
-  --token-status-danger-bg:     var(--primitive-red-50);
-  --token-status-danger-text:   var(--primitive-red-700);
+  --token-status-danger-bg: var(--primitive-red-50);
+  --token-status-danger-text: var(--primitive-red-700);
   --token-status-danger-border: var(--primitive-red-200);
 
-  --token-status-info-bg:     var(--primitive-blue-50);
-  --token-status-info-text:   var(--primitive-blue-700);
+  --token-status-info-bg: var(--primitive-blue-50);
+  --token-status-info-text: var(--primitive-blue-700);
   --token-status-info-border: var(--primitive-blue-200);
 
-  --token-status-neutral-bg:     var(--primitive-gray-100);
-  --token-status-neutral-text:   var(--primitive-gray-600);
+  --token-status-neutral-bg: var(--primitive-gray-100);
+  --token-status-neutral-text: var(--primitive-gray-600);
   --token-status-neutral-border: var(--primitive-gray-200);
 
   /* Primary gradient (replaces legacy gold headers / clip-text) */
-  --gradient-primary: linear-gradient(
-    135deg,
-    var(--primitive-brand-600) 0%,
-    var(--primitive-brand-700) 100%
-  );
+  --gradient-primary: linear-gradient(135deg,
+      var(--primitive-brand-600) 0%,
+      var(--primitive-brand-700) 100%);
 
   /* Elevation (theme-aware shadows) */
   --token-shadow-sm: 0 1px 2px color-mix(in srgb, var(--primitive-gray-900) 6%, transparent);
@@ -135,66 +135,64 @@
 .dark,
 html.dark,
 html[data-theme='dark'] {
-  --token-bg-page:           #0f172a;
-  --token-bg-surface:        #111827;
-  --token-bg-surface-hover:  #1e293b;
-  --token-bg-surface-muted:  #1e293b;
+  --token-bg-page: #0f172a;
+  --token-bg-surface: #111827;
+  --token-bg-surface-hover: #1e293b;
+  --token-bg-surface-muted: #1e293b;
 
-  --token-text-primary:   #f8fafc;
+  --token-text-primary: #f8fafc;
   --token-text-secondary: #cbd5e1;
-  --token-text-muted:     #94a3b8;
-  --token-text-disabled:  #64748b;
-  --token-text-inverse:   #0f172a;
-  --token-text-brand:     #93c5fd;
-  --token-text-danger:    #fca5a5;
-  --token-text-success:   #bbf7d0;
-  --token-text-warning:   #fde68a;
+  --token-text-muted: #94a3b8;
+  --token-text-disabled: #64748b;
+  --token-text-inverse: #0f172a;
+  --token-text-brand: #93c5fd;
+  --token-text-danger: #fca5a5;
+  --token-text-success: #bbf7d0;
+  --token-text-warning: #fde68a;
 
   --token-border-default: #334155;
-  --token-border-strong:  #475569;
-  --token-border-focus:   #60a5fa;
-  --token-border-danger:  #7f1d1d;
+  --token-border-strong: #475569;
+  --token-border-focus: #60a5fa;
+  --token-border-danger: #7f1d1d;
 
-  --token-action-primary-bg:        var(--primitive-brand-500);
-  --token-action-primary-text:      var(--primitive-white);
-  --token-action-primary-hover:     var(--primitive-brand-600);
+  --token-action-primary-bg: var(--primitive-brand-500);
+  --token-action-primary-text: var(--primitive-white);
+  --token-action-primary-hover: var(--primitive-brand-600);
 
-  --token-action-secondary-bg:      #111827;
-  --token-action-secondary-text:    #f8fafc;
-  --token-action-secondary-border:  #334155;
-  --token-action-secondary-hover:   #1e293b;
+  --token-action-secondary-bg: #111827;
+  --token-action-secondary-text: #f8fafc;
+  --token-action-secondary-border: #334155;
+  --token-action-secondary-hover: #1e293b;
 
-  --token-action-danger-bg:         var(--primitive-red-600);
-  --token-action-danger-text:       var(--primitive-white);
-  --token-action-danger-hover:      var(--primitive-red-700);
+  --token-action-danger-bg: var(--primitive-red-600);
+  --token-action-danger-text: var(--primitive-white);
+  --token-action-danger-hover: var(--primitive-red-700);
 
-  --token-action-ghost-hover:       #1e293b;
+  --token-action-ghost-hover: #1e293b;
 
-  --token-status-success-bg:     color-mix(in srgb, var(--primitive-green-700) 18%, var(--token-bg-page));
-  --token-status-success-text:   #bbf7d0;
+  --token-status-success-bg: color-mix(in srgb, var(--primitive-green-700) 18%, var(--token-bg-page));
+  --token-status-success-text: #bbf7d0;
   --token-status-success-border: color-mix(in srgb, var(--primitive-green-700) 30%, var(--token-bg-page));
 
-  --token-status-warning-bg:     color-mix(in srgb, var(--primitive-amber-700) 18%, var(--token-bg-page));
-  --token-status-warning-text:   #fde68a;
+  --token-status-warning-bg: color-mix(in srgb, var(--primitive-amber-700) 18%, var(--token-bg-page));
+  --token-status-warning-text: #fde68a;
   --token-status-warning-border: color-mix(in srgb, var(--primitive-amber-700) 30%, var(--token-bg-page));
 
-  --token-status-danger-bg:     color-mix(in srgb, var(--primitive-red-700) 18%, var(--token-bg-page));
-  --token-status-danger-text:   #fca5a5;
+  --token-status-danger-bg: color-mix(in srgb, var(--primitive-red-700) 18%, var(--token-bg-page));
+  --token-status-danger-text: #fca5a5;
   --token-status-danger-border: color-mix(in srgb, var(--primitive-red-700) 30%, var(--token-bg-page));
 
-  --token-status-info-bg:     color-mix(in srgb, var(--primitive-blue-700) 18%, var(--token-bg-page));
-  --token-status-info-text:   #bfdbfe;
+  --token-status-info-bg: color-mix(in srgb, var(--primitive-blue-700) 18%, var(--token-bg-page));
+  --token-status-info-text: #bfdbfe;
   --token-status-info-border: color-mix(in srgb, var(--primitive-blue-700) 30%, var(--token-bg-page));
 
-  --token-status-neutral-bg:     #1e293b;
-  --token-status-neutral-text:   #cbd5e1;
+  --token-status-neutral-bg: #1e293b;
+  --token-status-neutral-text: #cbd5e1;
   --token-status-neutral-border: #334155;
 
-  --gradient-primary: linear-gradient(
-    135deg,
-    var(--primitive-brand-500) 0%,
-    var(--primitive-brand-600) 100%
-  );
+  --gradient-primary: linear-gradient(135deg,
+      var(--primitive-brand-500) 0%,
+      var(--primitive-brand-600) 100%);
 
   --token-shadow-sm: 0 1px 2px color-mix(in srgb, #000 18%, transparent);
   --token-shadow-md: 0 4px 12px color-mix(in srgb, #000 28%, transparent);
@@ -211,73 +209,73 @@ html[data-theme='dark'] {
    ============================================================ */
 @theme {
   /* Shadcn-compat tokens (keep for Radix/shadcn components) */
-  --color-background:             var(--token-bg-page);
-  --color-foreground:             var(--token-text-primary);
-  --color-card:                   var(--token-bg-surface);
-  --color-card-foreground:        var(--token-text-primary);
-  --color-popover:                var(--token-bg-surface);
-  --color-popover-foreground:     var(--token-text-primary);
-  --color-primary:                var(--token-action-primary-bg);
-  --color-primary-foreground:     var(--token-action-primary-text);
-  --color-secondary:              var(--token-bg-surface-muted);
-  --color-secondary-foreground:   var(--token-text-primary);
-  --color-muted:                  var(--token-bg-surface-muted);
-  --color-muted-foreground:       var(--token-text-secondary);
-  --color-accent:                 var(--token-bg-surface-muted);
-  --color-accent-foreground:      var(--token-text-primary);
-  --color-destructive:            var(--token-action-danger-bg);
+  --color-background: var(--token-bg-page);
+  --color-foreground: var(--token-text-primary);
+  --color-card: var(--token-bg-surface);
+  --color-card-foreground: var(--token-text-primary);
+  --color-popover: var(--token-bg-surface);
+  --color-popover-foreground: var(--token-text-primary);
+  --color-primary: var(--token-action-primary-bg);
+  --color-primary-foreground: var(--token-action-primary-text);
+  --color-secondary: var(--token-bg-surface-muted);
+  --color-secondary-foreground: var(--token-text-primary);
+  --color-muted: var(--token-bg-surface-muted);
+  --color-muted-foreground: var(--token-text-secondary);
+  --color-accent: var(--token-bg-surface-muted);
+  --color-accent-foreground: var(--token-text-primary);
+  --color-destructive: var(--token-action-danger-bg);
   --color-destructive-foreground: var(--token-action-danger-text);
-  --color-border:                 var(--token-border-default);
-  --color-input:                  var(--token-border-default);
-  --color-ring:                   var(--token-border-focus);
+  --color-border: var(--token-border-default);
+  --color-input: var(--token-border-default);
+  --color-ring: var(--token-border-focus);
 
   /* Semantic background utilities */
-  --color-bg-page:         var(--token-bg-page);
-  --color-bg-surface:      var(--token-bg-surface);
+  --color-bg-page: var(--token-bg-page);
+  --color-bg-surface: var(--token-bg-surface);
   --color-bg-surface-hover: var(--token-bg-surface-hover);
   --color-bg-surface-muted: var(--token-bg-surface-muted);
 
   /* Semantic text utilities */
-  --color-text-primary:   var(--token-text-primary);
+  --color-text-primary: var(--token-text-primary);
   --color-text-secondary: var(--token-text-secondary);
-  --color-text-muted:     var(--token-text-muted);
-  --color-text-inverse:   var(--token-text-inverse);
-  --color-text-brand:     var(--token-text-brand);
-  --color-text-danger:    var(--token-text-danger);
-  --color-text-success:   var(--token-text-success);
-  --color-text-warning:   var(--token-text-warning);
+  --color-text-muted: var(--token-text-muted);
+  --color-text-inverse: var(--token-text-inverse);
+  --color-text-brand: var(--token-text-brand);
+  --color-text-danger: var(--token-text-danger);
+  --color-text-success: var(--token-text-success);
+  --color-text-warning: var(--token-text-warning);
 
   /* Semantic border utilities */
   --color-border-default: var(--token-border-default);
-  --color-border-strong:  var(--token-border-strong);
-  --color-border-focus:   var(--token-border-focus);
-  --color-border-danger:  var(--token-border-danger);
+  --color-border-strong: var(--token-border-strong);
+  --color-border-focus: var(--token-border-focus);
+  --color-border-danger: var(--token-border-danger);
 
   /* Action utilities */
-  --color-action-primary:   var(--token-action-primary-bg);
+  --color-action-primary: var(--token-action-primary-bg);
   --color-action-secondary: var(--token-action-secondary-bg);
-  --color-action-danger:    var(--token-action-danger-bg);
-  --color-action-ghost:     transparent;
+  --color-action-danger: var(--token-action-danger-bg);
+  --color-action-ghost: transparent;
 
   /* Status utilities */
-  --color-status-success-bg:     var(--token-status-success-bg);
-  --color-status-success-text:   var(--token-status-success-text);
+  --color-status-success-bg: var(--token-status-success-bg);
+  --color-status-success-text: var(--token-status-success-text);
   --color-status-success-border: var(--token-status-success-border);
 
-  --color-status-warning-bg:     var(--token-status-warning-bg);
-  --color-status-warning-text:   var(--token-status-warning-text);
+  --color-status-warning-bg: var(--token-status-warning-bg);
+  --color-status-warning-text: var(--token-status-warning-text);
   --color-status-warning-border: var(--token-status-warning-border);
 
-  --color-status-danger-bg:     var(--token-status-danger-bg);
-  --color-status-danger-text:   var(--token-status-danger-text);
+  --color-status-danger-bg: var(--token-status-danger-bg);
+  --color-status-danger-text: var(--token-status-danger-text);
   --color-status-danger-border: var(--token-status-danger-border);
 
-  --color-status-info-bg:     var(--token-status-info-bg);
-  --color-status-info-text:   var(--token-status-info-text);
+  --color-status-info-bg: var(--token-status-info-bg);
+  --color-status-info-text: var(--token-status-info-text);
   --color-status-info-border: var(--token-status-info-border);
 
-  --color-status-neutral-bg:     var(--token-status-neutral-bg);
-  --color-status-neutral-text:   var(--token-status-neutral-text);
+  --color-status-neutral-bg: var(--token-status-neutral-bg);
+  --color-status-neutral-text: var(--token-status-neutral-text);
   --color-status-neutral-border: var(--token-status-neutral-border);
 }
 
@@ -341,47 +339,47 @@ input.base-input,
 select.base-input,
 textarea.base-input,
 .base-input {
-  width: 100% ;
-  padding: 0.625rem 0.875rem ;
-  border: 1px solid var(--color-border) ;
-  border-radius: 0.5rem ;
-  background-color: var(--color-background) ;
-  color: var(--color-foreground) ;
-  outline: none ;
-  font-size: 0.875rem ;
-  transition: all 0.2s ease-in-out ;
+  width: 100%;
+  padding: 0.625rem 0.875rem;
+  border: 1px solid var(--color-border);
+  border-radius: 0.5rem;
+  background-color: var(--color-background);
+  color: var(--color-foreground);
+  outline: none;
+  font-size: 0.875rem;
+  transition: all 0.2s ease-in-out;
 }
 
 input.base-input:focus,
 select.base-input:focus,
 textarea.base-input:focus,
 .base-input:focus {
-  border-color: var(--color-primary) ;
-  box-shadow: 0 0 0 3px color-mix(in srgb, var(--token-border-focus) 15%, transparent) ;
-  outline: none ;
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--token-border-focus) 15%, transparent);
+  outline: none;
 }
 
 input.base-input:hover:not(:focus):not(:disabled),
 select.base-input:hover:not(:focus):not(:disabled),
 textarea.base-input:hover:not(:focus):not(:disabled),
 .base-input:hover:not(:focus):not(:disabled) {
-  border-color: var(--token-border-strong) ;
+  border-color: var(--token-border-strong);
 }
 
 input.base-input:disabled,
 select.base-input:disabled,
 textarea.base-input:disabled,
 .base-input:disabled {
-  cursor: not-allowed ;
-  opacity: 0.5 ;
-  background-color: var(--color-muted) ;
+  cursor: not-allowed;
+  opacity: 0.5;
+  background-color: var(--color-muted);
 }
 
 input.base-input::placeholder,
 select.base-input::placeholder,
 textarea.base-input::placeholder,
 .base-input::placeholder {
-  color: var(--token-text-disabled) ;
+  color: var(--token-text-disabled);
 }
 
 
@@ -393,7 +391,7 @@ textarea.base-input::placeholder,
   select.base-input:hover:not(:focus):not(:disabled),
   textarea.base-input:hover:not(:focus):not(:disabled),
   .base-input:hover:not(:focus):not(:disabled) {
-    border-color: var(--token-border-strong) ;
+    border-color: var(--token-border-strong);
   }
 
 }
@@ -423,12 +421,13 @@ html[dir="rtl"],
 
 /* Fix annoying borders in tables and lists */
 @layer utilities {
+
   /* Remove default table borders */
   .no-border-table td,
   .no-border-table th {
     border: none !important;
   }
-  
+
   /* Subtle separator for menus and lists */
   .subtle-separator {
     border-color: var(--token-border-default) !important;
@@ -436,7 +435,7 @@ html[dir="rtl"],
 }
 
 /* Fix dropdown separator - make it more subtle */
-[data-radix-collection-item] + [role="separator"],
+[data-radix-collection-item]+[role="separator"],
 .dropdown-separator {
   background-color: var(--token-border-default);
   margin: 0.25rem 0;
@@ -454,15 +453,15 @@ html[dir="rtl"],
   border: none;
 }
 
-.notification-menu > *,
-.menu-list > *,
-.dropdown-list > * {
+.notification-menu>*,
+.menu-list>*,
+.dropdown-list>* {
   border-bottom: 1px solid var(--token-border-default);
 }
 
-.notification-menu > *:last-child,
-.menu-list > *:last-child,
-.dropdown-list > *:last-child {
+.notification-menu>*:last-child,
+.menu-list>*:last-child,
+.dropdown-list>*:last-child {
   border-bottom: none;
 }
 
@@ -675,155 +674,211 @@ html[data-theme='dark'] .client-card-table th {
 }
 
 :root {
-  font-size: 75%; /* Scales everything using rem units */
+  font-size: 75%;
+  /* Scales everything using rem units */
 }
 
 .task-modal-compact {
-            width: 90vw;
-            max-width: 900px;
-            margin: auto;
-          }
+  width: 90vw;
+  max-width: 900px;
+  margin: auto;
+}
 
-          
-          .step-content {
-            padding: 0.75rem 0;
-          }
-          
-          .main-form {
-            padding-bottom: 1rem;
-          }
-          
-          .form-grid {
-            display: grid;
-            grid-template-columns: 1fr 2fr;
-            gap: 1rem;
-            margin-bottom: 1rem;
-          }
-          
-          .form-row {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 1rem;
-            margin-bottom: 1rem;
-          }
-          
-          .form-group-compact {
-            margin-bottom: 0.75rem;
-          }
-          
-          .form-group-half {
-            min-width: 0;
-          }
-          
-          .form-label-compact {
-            font-size: 0.875rem;
-            font-weight: 500;
-            margin-bottom: 0.25rem;
-            display: block;
-            color: var(--token-text-secondary);
-          }
-          
-          .form-control-sm {
-            font-size: 0.875rem;
-            padding: 0.375rem 0.5rem;
-          }
-          
-          .form-select-sm {
-            font-size: 0.875rem;
-            padding: 0.375rem 0.5rem;
-          }
-          
-          .invalid-feedback-compact {
-            font-size: 0.75rem;
-            color: var(--token-status-danger-text);
-            margin-top: 0.125rem;
-          }
-          
-          .client-section {
-            position: relative;
-          }
-          
-          .client-input-wrapper {
-            position: relative;
-          }
-          
-          .client-icons {
-            margin-bottom: 0.25rem;
-          }
-          
-          .requirements-section {
-            border: 1px solid var(--token-border-default);
-            border-radius: 0.375rem;
-            padding: 0.75rem;
-            background-color: var(--token-bg-surface-muted);
-          }
-          
-          .requirements-list-compact {
-            max-height: 120px;
-            overflow-y: auto;
-          }
-          
-          .requirement-item-compact {
-            padding: 0.5rem;
-            margin-bottom: 0.5rem;
-            background: var(--token-bg-surface);
-            border-radius: 0.25rem;
-            border: 1px solid var(--token-border-default);
-          }
-          
-          .requirement-item-compact:last-child {
-            margin-bottom: 0;
-          }
-          
-          .empty-requirements {
-            text-align: center;
-            padding: 1rem;
-            color: var(--token-text-secondary);
-          }
-          
-          .btn-xs {
-            padding: 0.25rem 0.5rem;
-            font-size: 0.75rem;
-            line-height: 1.2;
-          }
-          
-          .form-check-sm {
-            margin-bottom: 0;
-          }
-          
-          .form-check-input-sm {
-            width: 1rem;
-            height: 1rem;
-          }
-          
-          .fade-in {
-            animation: fadeIn 0.3s ease-in-out;
-          }
-          
-          @keyframes fadeIn {
-            from { 
-              opacity: 0; 
-              transform: translateY(10px); 
-            }
-            to { 
-              opacity: 1; 
-              transform: translateY(0); 
-            }
-          }
-          
-          /* Responsive adjustments */
-          @media (max-width: 768px) {
-            .task-modal-compact {
-              width: 95vw;
-            }
-            
-            .form-grid {
-              grid-template-columns: 1fr;
-              gap: 0.75rem;
-            }
-            
-            .form-row {
-              grid-template-columns: 1fr;
-              gap: 0.75rem;
-            }
-          }
+
+.step-content {
+  padding: 0.75rem 0;
+}
+
+.main-form {
+  padding-bottom: 1rem;
+}
+
+.form-grid {
+  display: grid;
+  grid-template-columns: 1fr 2fr;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.form-group-compact {
+  margin-bottom: 0.75rem;
+}
+
+.form-group-half {
+  min-width: 0;
+}
+
+.form-label-compact {
+  font-size: 0.875rem;
+  font-weight: 500;
+  margin-bottom: 0.25rem;
+  display: block;
+  color: var(--token-text-secondary);
+}
+
+.form-control-sm {
+  font-size: 0.875rem;
+  padding: 0.375rem 0.5rem;
+}
+
+.form-select-sm {
+  font-size: 0.875rem;
+  padding: 0.375rem 0.5rem;
+}
+
+.invalid-feedback-compact {
+  font-size: 0.75rem;
+  color: var(--token-status-danger-text);
+  margin-top: 0.125rem;
+}
+
+.client-section {
+  position: relative;
+}
+
+.client-input-wrapper {
+  position: relative;
+}
+
+.client-icons {
+  margin-bottom: 0.25rem;
+}
+
+.requirements-section {
+  border: 1px solid var(--token-border-default);
+  border-radius: 0.375rem;
+  padding: 0.75rem;
+  background-color: var(--token-bg-surface-muted);
+}
+
+.requirements-list-compact {
+  max-height: 120px;
+  overflow-y: auto;
+}
+
+.requirement-item-compact {
+  padding: 0.5rem;
+  margin-bottom: 0.5rem;
+  background: var(--token-bg-surface);
+  border-radius: 0.25rem;
+  border: 1px solid var(--token-border-default);
+}
+
+.requirement-item-compact:last-child {
+  margin-bottom: 0;
+}
+
+.empty-requirements {
+  text-align: center;
+  padding: 1rem;
+  color: var(--token-text-secondary);
+}
+
+.btn-xs {
+  padding: 0.25rem 0.5rem;
+  font-size: 0.75rem;
+  line-height: 1.2;
+}
+
+.form-check-sm {
+  margin-bottom: 0;
+}
+
+.form-check-input-sm {
+  width: 1rem;
+  height: 1rem;
+}
+
+.fade-in {
+  animation: fadeIn 0.3s ease-in-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .task-modal-compact {
+    width: 95vw;
+  }
+
+  .form-grid {
+    grid-template-columns: 1fr;
+    gap: 0.75rem;
+  }
+
+  .form-row {
+    grid-template-columns: 1fr;
+    gap: 0.75rem;
+  }
+}
+
+
+
+/* Cashbox cells styles */
+/* Cash box debit cell = green background */
+.cashbox-debit-cell {
+  background-color: var(--token-status-success-bg) !important;
+  color: var(--token-status-success-text) !important;
+  font-weight: 600;
+}
+
+/* Cash box credit cell = red background */
+.cashbox-credit-cell {
+  background-color: var(--token-status-danger-bg) !important;
+  color: var(--token-status-danger-text) !important;
+  font-weight: 600;
+}
+
+/* Optional: remove the default alternating row background on coloured cells
+     so the full‑cell colour is uniform */
+.hulool-data-grid .dsg-row.cashbox-debit-cell,
+.hulool-data-grid .dsg-row.cashbox-credit-cell {
+  background-color: inherit !important;
+}
+
+/* Force currency/debit/credit spans to inherit the cell’s text colour */
+.hulool-currency,
+.hulool-debit,
+.hulool-credit,
+.hulool-due,
+.hulool-cell-content {
+  color: inherit !important;
+}
+
+.client-debit-cell {
+  background-color: var(--token-status-danger-bg) !important;
+  color: var(--token-status-danger-text) !important;
+}
+
+.client-credit-cell {
+  background-color: var(--token-status-success-bg) !important;
+  color: var(--token-status-success-text) !important;
+}
+
+/* Employee tables: full-cell backgrounds */
+.employee-debit-cell {
+  background-color: var(--token-status-danger-bg) !important;
+  color: var(--token-status-danger-text) !important;
+}
+
+.employee-credit-cell {
+  background-color: var(--token-status-success-bg) !important;
+  color: var(--token-status-success-text) !important;
+}

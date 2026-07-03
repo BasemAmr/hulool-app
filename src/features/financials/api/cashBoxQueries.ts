@@ -41,7 +41,7 @@ export const useGetCashBoxVouchers = (id: number) => {
       const response = await apiClient.get<ApiResponse<CashBoxVoucher[]>>(`/cash-boxes/${id}/vouchers`);
       return response.data.data;
     },
-    staleTime: 10 * 1000, // 10 seconds
+    staleTime: 10 * 1000,
     enabled: !!id,
   });
 };
@@ -153,4 +153,26 @@ export const useCloseCashBox = () => {
       invalidateFinancials(queryClient);
     },
   });
+};
+
+/**
+ * Fetch all cash boxes export data (Admin only)
+ */
+export const getCashBoxesExport = async (startDate?: string, endDate?: string) => {
+  const params: any = {};
+  if (startDate) params.start_date = startDate;
+  if (endDate) params.end_date = endDate;
+  const response = await apiClient.get<ApiResponse<any[]>>('/cash-boxes/export', { params });
+  return response.data.data;
+};
+
+/**
+ * Fetch single cash box export data
+ */
+export const getSingleCashBoxExport = async (id: number, startDate?: string, endDate?: string) => {
+  const params: any = {};
+  if (startDate) params.start_date = startDate;
+  if (endDate) params.end_date = endDate;
+  const response = await apiClient.get<ApiResponse<any[]>>(`/cash-boxes/${id}/export`, { params });
+  return response.data.data;
 };

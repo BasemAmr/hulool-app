@@ -209,3 +209,27 @@ export interface ExportOptions {
   filterStatus?: string[];
   customFilename?: string;
 }
+
+export interface CashBoxExportItem {
+  id: number;
+  date: string;
+  type: string;
+  type_label: string;
+  description: string;
+  category: string;
+  debit: number;
+  credit: number;
+  balance: number;
+  cashbox_name: string;
+  employee_name: string;
+}
+
+export interface CashBoxExportReportData {
+  title: string;
+  items: CashBoxExportItem[];
+  period?: {
+    from?: string;
+    to?: string;
+  };
+}
+

@@ -8,6 +8,7 @@ import { generateClientStatementExcel } from './ClientStatementGenerator';
 import { generateClientTasksExcel } from './ClientTasksGenerator';
 import { generateClientCreditsExcel } from './ClientCreditsGenerator';
 import { generateEmployeeStatementExcel } from './EmployeeStatementGenerator';
+import { generateCashBoxExcel } from './CashBoxExcelGenerator';
 import type {
   AllClientsReportData,
   AllTasksReportData,
@@ -16,6 +17,7 @@ import type {
   ClientTasksReportData,
   ClientCreditsReportData,
   EmployeeStatementReportData,
+  CashBoxExportReportData,
   ExportOptions
 } from './exportTypes';
 
@@ -235,6 +237,31 @@ class ExportService {
     } catch (error) {
       console.error('Error exporting comprehensive client report:', error);
       throw new Error('فشل في تصدير التقرير الشامل للعميل');
+    }
+  }
+
+  /**
+   * Export cash box transactions
+   */
+  public async exportCashBox(
+    data: CashBoxExportReportData,
+    options?: ExportOptions
+  ): Promise<void> {
+    try {
+      const workbook = new ExcelJS.Workbook();
+
+      workbook.creator = 'نظام إدارة الأعمال';
+      workbook.lastModifiedBy = 'نظام إدارة الأعمال';
+      workbook.created = new Date();
+      workbook.modified = new Date();
+
+      generateCashBoxExcel(workbook, data, options);
+
+      const filename = options?.customFilename || data.title.replace(/\s+/g, '_');
+      await saveWorkbook(workbook, filename);
+    } catch (error) {
+      console.error('Error exporting cash box:', error);
+      throw new Error('فشل في تصدير تقرير الصندوق');
     }
   }
 }

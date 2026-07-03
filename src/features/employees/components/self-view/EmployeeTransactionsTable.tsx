@@ -31,10 +31,10 @@ interface EmployeeTransactionsTableProps {
 // ================================
 
 const isPendingTransaction = (transaction: EmployeeTransaction): boolean => {
-  return transaction.is_pending || 
-    (transaction.direction === 'CREDIT' && 
-      (parseFloat(transaction.amount) === 0 || 
-       transaction.transaction_name?.startsWith('Pending:')));
+  return transaction.is_pending ||
+    (transaction.direction === 'CREDIT' &&
+      (parseFloat(transaction.amount) === 0 ||
+        transaction.transaction_name?.startsWith('Pending:')));
 };
 
 // ================================
@@ -84,7 +84,7 @@ TaskAmountCell.displayName = 'TaskAmountCell';
 // Credit (Received) Cell
 const CreditCell = React.memo(({ rowData }: CellProps<EmployeeTransaction>) => {
   const isPending = isPendingTransaction(rowData);
-  
+
   if (isPending) {
     return (
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px', color: 'var(--token-status-warning-text)', fontWeight: 500 }}>
@@ -93,13 +93,13 @@ const CreditCell = React.memo(({ rowData }: CellProps<EmployeeTransaction>) => {
       </div>
     );
   }
-  
+
   return (
-    <div style={{ textAlign: 'center', fontWeight: 700, color: 'var(--token-text-primary)' }}>
+    <div style={{ textAlign: 'center', fontWeight: 700 }}>
       {rowData.direction === 'CREDIT' && rowData.amount ? (
         <>{formatCurrency(parseFloat(rowData.amount))} ر.س</>
       ) : (
-        <span style={{ color: 'var(--token-text-primary)' }}>—</span>
+        <span >—</span>
       )}
     </div>
   );
@@ -109,11 +109,11 @@ CreditCell.displayName = 'CreditCell';
 // Debit (Paid Out) Cell
 const DebitCell = React.memo(({ rowData }: CellProps<EmployeeTransaction>) => {
   return (
-    <div style={{ textAlign: 'center', fontWeight: 700, color: 'var(--token-text-primary)' }}>
+    <div style={{ textAlign: 'center', fontWeight: 700 }}>
       {rowData.direction === 'DEBIT' && rowData.amount ? (
         <>{formatCurrency(parseFloat(rowData.amount))} ر.س</>
       ) : (
-        <span style={{ color: 'var(--token-text-primary)' }}>—</span>
+        <span >—</span>
       )}
     </div>
   );
@@ -147,7 +147,7 @@ DateCell.displayName = 'DateCell';
 // Status Cell
 const StatusCell = React.memo(({ rowData }: CellProps<EmployeeTransaction>) => {
   const isPending = isPendingTransaction(rowData);
-  
+
   if (isPending) {
     return (
       <div style={{ display: 'flex', justifyContent: 'center' }}>
@@ -166,7 +166,7 @@ const StatusCell = React.memo(({ rowData }: CellProps<EmployeeTransaction>) => {
       </div>
     );
   }
-  
+
   if (rowData.direction === 'CREDIT') {
     return (
       <div style={{ display: 'flex', justifyContent: 'center' }}>
@@ -185,7 +185,7 @@ const StatusCell = React.memo(({ rowData }: CellProps<EmployeeTransaction>) => {
       </div>
     );
   }
-  
+
   return (
     <div style={{ display: 'flex', justifyContent: 'center' }}>
       <span style={{
@@ -291,6 +291,9 @@ const EmployeeTransactionsTable: React.FC<EmployeeTransactionsTableProps> = ({
       type: 'custom',
       component: CreditCell,
       grow: 0,
+      cellClassName: () => {
+        return 'client-credit-cell';
+      }
     },
     {
       id: 'debit',
@@ -299,6 +302,9 @@ const EmployeeTransactionsTable: React.FC<EmployeeTransactionsTableProps> = ({
       type: 'custom',
       component: DebitCell,
       grow: 0,
+      cellClassName: () => {
+        return 'client-debit-cell';
+      }
     },
     {
       id: 'balance',

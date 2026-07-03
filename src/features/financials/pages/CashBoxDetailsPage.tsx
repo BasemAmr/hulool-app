@@ -1,6 +1,6 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useParams } from 'react-router-dom';
-import { useGetCashBox, useGetCashBoxVouchers, useCloseCashBox, useVoidVoucher } from '../api/cashBoxQueries';
+import { useGetCashBox, useGetCashBoxVouchers, useCloseCashBox, useVoidVoucher, getSingleCashBoxExport } from '../api/cashBoxQueries';
 import HuloolDataGrid from '@/shared/grid/HuloolDataGrid';
 import type { HuloolGridColumn } from '@/shared/grid/HuloolDataGrid';
 import type { CellProps } from 'react-datasheet-grid';
@@ -9,6 +9,11 @@ import { useModalStore } from '@/shared/stores/modalStore';
 import { useAuthStore } from '@/features/auth/store/authStore';
 import { useToast } from '@/shared/hooks/useToast';
 import type { CashBoxVoucher } from '@/api/types';
+import { formatCurrency } from '@/shared/utils';
+import { exportService } from '@/services/export/ExportService';
+import { FileSpreadsheet } from 'lucide-react';
+import { TOAST_MESSAGES } from '@/shared/constants/toastMessages';
+
 
 // Custom Cell for Row Actions (Edit/Void)
 const ActionsCell = React.memo(({ rowData }: CellProps<CashBoxVoucher, any>) => {
@@ -33,11 +38,6 @@ const ActionsCell = React.memo(({ rowData }: CellProps<CashBoxVoucher, any>) => 
       }
     });
   };
-
-  // Only show actions for admin users
-  if (!isAdmin()) {
-    return null; // Return nothing for non-admin users
-  }
 
   return (
     <div className="flex gap-2">
@@ -73,6 +73,23 @@ export const CashBoxDetailsPage = () => {
   }
 
   const isClosed = box.status === 'closed';
+  const [isExporting, setIsExporting] = useState(false);
+
+  const handleExportExcel = async () => {
+    try {
+      setIsExporting(true);
+      const data = await getSingleCashBoxExport(boxId);
+      await exportService.exportCashBox({
+        title: `كشف حركة صندوق العهدة - ${box.name}`,
+        items: data || [],
+      });
+      toast.success(TOAST_MESSAGES.EXPORT_SUCCESS || 'تم التصدير بنجاح');
+    } catch (err: any) {
+      toast.error(TOAST_MESSAGES.EXPORT_FAILED || 'فشل التصدير', err.message || '');
+    } finally {
+      setIsExporting(false);
+    }
+  };
 
   const handleCloseBox = () => {
     openModal('confirmDelete', {
@@ -130,14 +147,22 @@ export const CashBoxDetailsPage = () => {
       title: 'مدين (قبض)',
       key: 'debit',
       type: 'currency',
-      grow: 1
+      cellClassName: ({ rowData }) => {
+        if ((rowData.debit ?? 0) > 0) return 'cashbox-debit-cell';
+        return '';
+      },
+      grow: 1,
     },
     {
       id: 'credit',
       title: 'دائن (صرف)',
       key: 'credit',
       type: 'currency',
-      grow: 1
+      cellClassName: ({ rowData }) => {
+        if ((rowData.credit ?? 0) > 0) return 'cashbox-credit-cell';
+        return '';
+      },
+      grow: 1,
     },
     {
       id: 'balance',
@@ -146,7 +171,7 @@ export const CashBoxDetailsPage = () => {
       type: 'currency',
       grow: 1
     },
-    ...(!isClosed ? [{
+    ...(!isClosed && isAdmin() ? [{
       id: 'actions',
       title: 'إجراءات',
       key: 'id',
@@ -197,6 +222,14 @@ export const CashBoxDetailsPage = () => {
           >
             تسجيل سند صرف
           </Button>
+          <Button
+            variant="outline-secondary"
+            onClick={handleExportExcel}
+            isLoading={isExporting}
+          >
+            <FileSpreadsheet className="h-4 w-4 ml-2" />
+            تصدير كشف الصندوق
+          </Button>
         </div>
 
         {isAdmin() && !isClosed && (
@@ -219,6 +252,8 @@ export const CashBoxDetailsPage = () => {
           isLoading={isLoadingVouchers}
         />
       </div>
+
     </div>
+
   );
 };

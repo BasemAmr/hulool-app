@@ -9,6 +9,8 @@ export interface MonthlyTransaction {
   description: string;
   from_account: string;
   to_account: string;
+  debit: number;
+  credit: number;
   amount: number;
   running_balance: number;
   direction: 'income' | 'expense' | null;

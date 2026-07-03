@@ -265,8 +265,9 @@ const EmployeeTransactionsTable: React.FC<EmployeeTransactionsTableProps> = ({
                         <span className="text-text-muted">—</span>
                       )}
                     </TableCell>
-                    <TableCell className="text-right border border-border-strong">
-                      <div className={`font-medium ${isPositive ? 'text-status-success-text' : 'text-status-danger-text'}`}>
+                    <TableCell className={`text-right border border-border-strong ${debit > 0 ? 'employee-debit-cell' : credit > 0 ? 'employee-credit-cell' : ''
+                      }`}>
+                      <div className="font-medium">
                         {isPositive ? '+' : '-'}{formatCurrency(amount)} <span className="text-xs">ر.س</span>
                       </div>
                     </TableCell>
