@@ -328,7 +328,9 @@ const AdminEmployeeTransactionsPanel: React.FC<AdminEmployeeTransactionsPanelPro
   const summary = ledgerData?.summary || {
     balance_due: 0,
     total_to_date_income: 0,
-    total_to_date_expenses: 0
+    total_to_date_expenses: 0,
+    total_to_date_debit: 0,
+    total_to_date_credit: 0
   };
   const opening_balance = ledgerData?.opening_balance || {
     total_debit: 0,

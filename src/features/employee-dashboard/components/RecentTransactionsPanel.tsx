@@ -68,7 +68,7 @@ const RecentTransactionsPanel: React.FC<RecentTransactionsPanelProps> = ({
   const clientCellsRef = useRef<Map<number, HTMLTableCellElement>>(new Map());
   const loadingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
-  const { transactions = [], summary = { total_to_date_income: 0, total_to_date_expenses: 0, balance_due: 0 }, opening_balance = { description: 'الرصيد الافتتاحي', total_debit: 0, total_credit: 0, balance: 0 }, period } = ledgerData || {};
+  const { transactions = [], summary = { total_to_date_income: 0, total_to_date_expenses: 0, total_to_date_debit: 0, total_to_date_credit: 0, balance_due: 0 }, opening_balance = { description: 'الرصيد الافتتاحي', total_debit: 0, total_credit: 0, balance: 0 }, period } = ledgerData || {};
 
   // Reset visible count when ledger data changes
   useEffect(() => {
