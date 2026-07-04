@@ -57,6 +57,8 @@ interface MonthlySummary {
   closing_balance: number;
   total_to_date_income: number;
   total_to_date_expenses: number;
+  total_to_date_debit?: number;
+  total_to_date_credit?: number;
   balance_due: number;
 }
 
@@ -527,10 +529,10 @@ const AdminEmployeeTransactionsPanel: React.FC<AdminEmployeeTransactionsPanelPro
                     الإجماليات
                   </td>
                   <td className={`text-base px-1.5 py-1.5 border border-border-default text-center font-bold employee-debit-cell`}>
-                    {formatCurrency(summary.total_to_date_income)}
+                    {formatCurrency(summary.total_to_date_debit ?? 0)}
                   </td>
                   <td className={`text-base px-1.5 py-1.5 border border-border-default text-center font-bold employee-credit-cell`}>
-                    {formatCurrency(summary.total_to_date_expenses)}
+                    {formatCurrency(summary.total_to_date_credit ?? 0)}
                   </td>
                   <td className="text-base px-1.5 py-1.5 border border-border-default text-center font-bold">
                     <span className={summary.balance_due >= 0 ? 'text-status-success-text' : 'text-status-danger-text'}>

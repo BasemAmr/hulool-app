@@ -41,6 +41,8 @@ export interface MonthlySummary {
   closing_balance: number;
   total_to_date_income: number;
   total_to_date_expenses: number;
+  total_to_date_debit: number;
+  total_to_date_credit: number;
   balance_due: number;
 }
 

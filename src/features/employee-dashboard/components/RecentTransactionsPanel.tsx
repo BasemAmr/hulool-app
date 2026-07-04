@@ -39,6 +39,8 @@ interface OpeningBalance {
 interface MonthlySummary {
   total_to_date_income: number;
   total_to_date_expenses: number;
+  total_to_date_debit?: number;
+  total_to_date_credit?: number;
   balance_due: number;
 }
 
@@ -313,10 +315,10 @@ const RecentTransactionsPanel: React.FC<RecentTransactionsPanelProps> = ({
                   <td className="px-2 py-2 border border-border-default text-center font-semibold text-sm text-text-primary" style={{ width: `${maxClientWidth + 40}px`, minWidth: `${maxClientWidth + 40}px` }}>-</td>
                   <td className="px-2 py-2 border border-border-default text-center font-semibold text-sm text-text-primary">الإجماليات</td>
                   <td className="px-2 py-2 border border-border-default text-center font-semibold text-sm employee-debit-cell">
-                    {formatCurrency(summary.total_to_date_income)}
+                    {formatCurrency(summary.total_to_date_debit ?? 0)}
                   </td>
                   <td className="px-2 py-2 border border-border-default text-center font-semibold text-sm employee-credit-cell">
-                    {formatCurrency(summary.total_to_date_expenses)}
+                    {formatCurrency(summary.total_to_date_credit ?? 0)}
                   </td>
                   <td className="px-2 py-2 border border-border-default text-center font-semibold text-sm">
                     <span className={summary.balance_due < 0 ? 'text-status-danger-text' : 'text-text-primary'}>
