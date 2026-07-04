@@ -50,6 +50,8 @@ export const RecordVoucherModal: React.FC<RecordVoucherModalProps> = ({
   const recordMutation = useRecordVoucher(selectedBoxId || 0);
   const updateMutation = useUpdateVoucher(selectedBoxId || 0, voucherToEdit?.id || 0);
 
+  const [originalTime, setOriginalTime] = useState('');
+
   // Initialize form states
   useEffect(() => {
     if (isOpen) {
@@ -62,12 +64,15 @@ export const RecordVoucherModal: React.FC<RecordVoucherModalProps> = ({
         
         // Handle date
         const rawDate = voucherToEdit.date || '';
-        setTransactionDate(rawDate ? rawDate.split(' ')[0] : '');
+        const parts = rawDate.split(' ');
+        setTransactionDate(parts[0] || '');
+        setOriginalTime(parts[1] || '');
       } else {
         setType(defaultType);
         setAmount('');
         setDescription('');
         setTransactionDate(new Date().toISOString().split('T')[0]);
+        setOriginalTime('');
         setTargetType('company');
         setTargetId('');
       }
@@ -95,13 +100,24 @@ export const RecordVoucherModal: React.FC<RecordVoucherModalProps> = ({
       }
     }
 
+    let finalDateTime = transactionDate;
+    if (transactionDate) {
+      if (isEdit && originalTime && transactionDate === (voucherToEdit?.date || '').split(' ')[0]) {
+        finalDateTime = `${transactionDate} ${originalTime}`;
+      } else {
+        const now = new Date();
+        const timeStr = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}:${String(now.getSeconds()).padStart(2, '0')}`;
+        finalDateTime = `${transactionDate} ${timeStr}`;
+      }
+    }
+
     const payload = {
       type,
       amount: parseFloat(amount),
       description: description.trim(),
       target_account_type: isEdit ? 'company' : targetType,
       target_account_id: isEdit ? 1 : (targetType === 'company' ? 1 : parseInt(targetId)),
-      transaction_date: transactionDate || undefined,
+      transaction_date: finalDateTime || undefined,
     };
 
     const mutation = isEdit ? updateMutation : recordMutation;
