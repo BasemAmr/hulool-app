@@ -236,7 +236,7 @@ const RecentTransactionsPanel: React.FC<RecentTransactionsPanelProps> = ({
               </thead>
               <tbody>
                 {/* Opening Balance Row */}
-                <tr className="bg-status-success-bg font-bold">
+                <tr className="bg-transparent font-bold">
                   <td className="px-2 py-2 border border-border-strong text-start font-bold text-base text-text-primary" style={{ width: `${maxClientWidth + 40}px`, minWidth: `${maxClientWidth + 40}px` }}>-</td>
                   <td className="px-2 py-2 border border-border-strong text-start font-bold text-base text-text-primary">
                     {opening_balance.description}

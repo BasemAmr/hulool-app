@@ -37,7 +37,7 @@ const ClientProfilePage = () => {
     const openModal = useModalStore((state) => state.openModal);
     const clientId = Number(id);
 
-    const mode = (searchParams.get('mode') || 'general') as 'general' | 'tasks' | 'receivables';
+    const mode = (searchParams.get('mode') || 'receivables') as 'general' | 'tasks' | 'receivables';
     const filter = (searchParams.get('filter') || 'all') as 'all' | 'unpaid' | 'paid';
 
     const { hasViewAllReceivablesPermission, hasViewAmountsPermission } = useReceivablesPermissions();

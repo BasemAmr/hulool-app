@@ -52,6 +52,7 @@ export interface CashBoxVoucher {
   account_id: number;
   account_type: 'cashbox';
   transaction_type: 'CASHBOX_RECEIPT' | 'CASHBOX_PAYMENT';
+  type: 'CASHBOX_RECEIPT' | 'CASHBOX_PAYMENT';
   date: string;
   category: string;
   description: string;

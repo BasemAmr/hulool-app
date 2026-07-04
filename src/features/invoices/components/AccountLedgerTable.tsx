@@ -427,12 +427,27 @@ const AccountLedgerTable: React.FC<AccountLedgerTableProps> = ({
   const columns = useMemo((): HuloolGridColumn<FinancialTransaction>[] => [
     {
       id: 'icon',
-      key: 'transaction_type',
+      key: '',
       title: '',
       type: 'custom',
       component: TransactionIconCell,
-      width: 50,
-      grow: 0,
+      grow: 0.2,
+    },
+    {
+      id: 'date',
+      key: 'transaction_date',
+      title: 'التاريخ',
+      type: 'custom',
+      component: DateCell,
+      grow: 1,
+    },
+    {
+      id: 'type',
+      key: 'transaction_type',
+      title: 'النوع',
+      type: 'custom',
+      component: TypeBadgeCell,
+      grow: 1,
     },
     {
       id: 'description',
@@ -440,7 +455,7 @@ const AccountLedgerTable: React.FC<AccountLedgerTableProps> = ({
       title: 'الوصف',
       type: 'custom',
       component: DescriptionCell,
-      grow: 2,
+      grow: 2.5,
     },
     {
       id: 'debit',
@@ -473,22 +488,6 @@ const AccountLedgerTable: React.FC<AccountLedgerTableProps> = ({
       type: 'custom',
       component: BalanceCell,
       columnData: { hideAmounts },
-      grow: 1,
-    },
-    {
-      id: 'date',
-      key: 'transaction_date',
-      title: 'التاريخ',
-      type: 'custom',
-      component: DateCell,
-      grow: 1,
-    },
-    {
-      id: 'type',
-      key: 'transaction_type',
-      title: 'النوع',
-      type: 'custom',
-      component: TypeBadgeCell,
       grow: 1,
     },
     {

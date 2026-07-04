@@ -116,31 +116,19 @@ export const CashBoxDetailsPage = () => {
       id: 'type',
       title: 'النوع',
       key: 'type',
-      type: 'badge',
-      badgeColors: {
-        CASHBOX_RECEIPT: 'var(--token-status-success-bg)',
-        CASHBOX_PAYMENT: 'var(--token-status-danger-bg)'
+      cellClassName: ({ rowData }) => {
+        if ((rowData.type ?? '') === 'CASHBOX_RECEIPT') return 'cashbox-debit-cell text-center';
+        return 'cashbox-credit-cell text-center';
       },
       formatter: (val: string) => val === 'CASHBOX_RECEIPT' ? 'قبض' : 'صرف',
       grow: 0.8
-    },
-    {
-      id: 'category',
-      title: 'التصنيف',
-      key: 'category',
-      type: 'text',
-      grow: 1
     },
     {
       id: 'description',
       title: 'البيان',
       key: 'description',
       type: 'text',
-      formatter: (val: string) => {
-        const match = val?.match(/^\[.*?\]\s*(.*)$/);
-        return match ? match[1] : val;
-      },
-      grow: 2
+      grow: 2.5
     },
     {
       id: 'debit',

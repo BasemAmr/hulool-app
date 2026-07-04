@@ -59,7 +59,7 @@ const ClientLinkCell = React.memo(({ rowData }: CellProps<Task>) => {
   return (
     <span className="hulool-cell-content" style={{ fontWeight: 600 }}>
       <Link
-        to={`/clients/${rowData.client.id}?mode=tasks`}
+        to={`/clients/${rowData.client.id}?mode=receivables`}
         className="no-underline text-text-primary font-bold hover:text-primary transition-colors"
         onClick={(e) => e.stopPropagation()}
       >

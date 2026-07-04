@@ -450,7 +450,7 @@ const AdminEmployeeTransactionsPanel: React.FC<AdminEmployeeTransactionsPanelPro
               </thead>
               <tbody>
                 {/* Opening Balance Row */}
-                <tr className="bg-status-success-bg font-bold">
+                <tr className="bg-transparent font-bold">
                   <td className="px-1.5 py-1.5 border border-border-default text-start" style={{ width: `${maxClientWidth}px`, minWidth: `${maxClientWidth}px` }}>-</td>
                   <td className="px-1.5 py-1.5 border border-border-default text-start font-bold text-base" style={{ width: '280px', minWidth: '280px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                     {opening_balance.description}
@@ -473,13 +473,13 @@ const AdminEmployeeTransactionsPanel: React.FC<AdminEmployeeTransactionsPanelPro
 
                 {/* Transaction Rows */}
                 {displayedTransactions.map((transaction, index) => {
-                  const bgColor = index % 2 === 0 ? 'bg-status-success-bg' : 'bg-status-success-bg';
+                  const bgColor = index % 2 === 0 ? 'bg-transparent' : 'bg-bg-surface-hover';
 
                   // Determine what to show in client name column (first column)
                   let clientDisplay = transaction.client_name || getTransactionTypeLabel(transaction.transaction_type, transaction.direction);
 
                   return (
-                    <tr key={transaction.id} className={bgColor}>
+                    <tr key={transaction.id} className={`${bgColor} hover:bg-bg-surface-hover transition-colors`}>
                       <td
                         ref={(el) => {
                           if (el) clientCellsRef.current.set(transaction.id, el);

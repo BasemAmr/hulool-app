@@ -16,7 +16,7 @@
  * First column in your definition = rightmost column in the grid.
  */
 
-import React, { useMemo, useCallback } from 'react';
+import React, { useMemo, useCallback, useRef } from 'react';
 import { DataSheetGrid } from 'react-datasheet-grid';
 import type { Column, CellProps, ContextMenuItem } from 'react-datasheet-grid';
 import 'react-datasheet-grid/dist/style.css';
@@ -408,6 +408,8 @@ function HuloolDataGrid<T extends Record<string, any>>({
   minHeight = 400,
   rowClassName,
 }: HuloolGridProps<T>) {
+  // Ref to the grid wrapper for direct DOM manipulation
+  const containerRef = useRef<HTMLDivElement>(null);
 
   // Calculate actual height
   const calculatedHeight = useMemo(() => {
@@ -534,7 +536,7 @@ function HuloolDataGrid<T extends Record<string, any>>({
   }
 
   return (
-    <div className={`hulool-data-grid ${className}`}>
+    <div className={`hulool-data-grid ${className}`} ref={containerRef}>
       <DataSheetGrid<T>
         value={data}
         columns={dsgColumns}
@@ -546,6 +548,23 @@ function HuloolDataGrid<T extends Record<string, any>>({
         disableExpandSelection
         gutterColumn={false}
         contextMenuComponent={CopyOnlyContextMenu}
+        onActiveCellChange={({ cell }) => {
+          const container = containerRef.current;
+          if (!container) return;
+          // Remove active class from all rows
+          container.querySelectorAll('.dsg-row.hulool-row-active').forEach(row => {
+            row.classList.remove('hulool-row-active');
+          });
+          // Add active class to the newly active row
+          if (cell != null && cell.row != null) {
+            // DSG renders rows in order; skip header row (index 0)
+            const rows = container.querySelectorAll('.dsg-row:not(.dsg-row-header)');
+            const targetRow = rows[cell.row];
+            if (targetRow) {
+              targetRow.classList.add('hulool-row-active');
+            }
+          }
+        }}
       />
 
       <style>{`
@@ -658,6 +677,21 @@ function HuloolDataGrid<T extends Record<string, any>>({
         .hulool-cell-active div {
           font-weight: 700 !important;
         }
+        
+        /* ================================
+           ACTIVE ROW BOLD - AUTO-APPLIES TO ALL CELLS IN THE ACTIVE ROW
+           ================================ */
+        
+        .hulool-data-grid .dsg-row.hulool-row-active .dsg-cell,
+        .hulool-data-grid .dsg-row.hulool-row-active .dsg-cell * {
+          font-weight: 700 !important;
+        }
+        .hulool-data-grid .dsg-row.hulool-row-active .hulool-client-name,
+        .hulool-data-grid .dsg-row.hulool-row-active .hulool-due {
+          font-weight: 800 !important;
+        }
+
+
         
         /* ================================
            TEXT TRUNCATION - Auto ellipsis for overflow

@@ -5,7 +5,7 @@ import Button from '@/shared/ui/primitives/Button';
 import ClientSearchCombobox from '@/shared/search/ClientSearchCombobox';
 import { NumberInput } from '@/shared/ui/primitives/NumberInput';
 import { useGetAccountsByType } from '@/features/financials/api/financialCenterQueries';
-import { useRecentCashBoxCategories, useRecordVoucher, useUpdateVoucher, useGetCashBoxes } from '../api/cashBoxQueries';
+import { useRecordVoucher, useUpdateVoucher, useGetCashBoxes } from '../api/cashBoxQueries';
 import { useToast } from '@/shared/hooks/useToast';
 import type { CashBoxVoucher } from '@/api/types';
 
@@ -28,13 +28,12 @@ export const RecordVoucherModal: React.FC<RecordVoucherModalProps> = ({
   
   const [type, setType] = useState<'receipt' | 'payment'>(defaultType);
   const [amount, setAmount] = useState('');
-  const [category, setCategory] = useState('');
   const [description, setDescription] = useState('');
+  const [transactionDate, setTransactionDate] = useState('');
   const [targetType, setTargetType] = useState<'company' | 'employee' | 'client'>('company');
   const [targetId, setTargetId] = useState<string>('');
 
   const toast = useToast();
-  const { data: categories } = useRecentCashBoxCategories();
   const { data: employeesData } = useGetAccountsByType('employee', {}, isOpen);
 
   const [selectedBoxId, setSelectedBoxId] = useState<number | undefined>(boxId);
@@ -59,21 +58,16 @@ export const RecordVoucherModal: React.FC<RecordVoucherModalProps> = ({
         setType(voucherToEdit.transaction_type === 'CASHBOX_RECEIPT' ? 'receipt' : 'payment');
         const amt = voucherToEdit.debit > 0 ? voucherToEdit.debit : voucherToEdit.credit;
         setAmount(String(amt));
+        setDescription(voucherToEdit.description);
         
-        // Parse "[category] description" format
-        const match = voucherToEdit.description.match(/^\[(.*?)\]\s*(.*)$/);
-        if (match) {
-          setCategory(match[1]);
-          setDescription(match[2]);
-        } else {
-          setCategory('');
-          setDescription(voucherToEdit.description);
-        }
+        // Handle date
+        const rawDate = voucherToEdit.date || '';
+        setTransactionDate(rawDate ? rawDate.split(' ')[0] : '');
       } else {
         setType(defaultType);
         setAmount('');
-        setCategory('');
         setDescription('');
+        setTransactionDate(new Date().toISOString().split('T')[0]);
         setTargetType('company');
         setTargetId('');
       }
@@ -83,10 +77,6 @@ export const RecordVoucherModal: React.FC<RecordVoucherModalProps> = ({
   const handleSubmit = () => {
     if (!amount || parseFloat(amount) <= 0) {
       toast.error('خطأ', 'يرجى إدخال مبلغ صالح أكبر من الصفر');
-      return;
-    }
-    if (!category.trim()) {
-      toast.error('خطأ', 'يرجى إدخال أو اختيار التصنيف');
       return;
     }
     if (!description.trim()) {
@@ -108,10 +98,10 @@ export const RecordVoucherModal: React.FC<RecordVoucherModalProps> = ({
     const payload = {
       type,
       amount: parseFloat(amount),
-      category: category.trim(),
       description: description.trim(),
       target_account_type: isEdit ? 'company' : targetType,
       target_account_id: isEdit ? 1 : (targetType === 'company' ? 1 : parseInt(targetId)),
+      transaction_date: transactionDate || undefined,
     };
 
     const mutation = isEdit ? updateMutation : recordMutation;
@@ -174,34 +164,27 @@ export const RecordVoucherModal: React.FC<RecordVoucherModalProps> = ({
           </div>
         )}
 
-        {/* Amount */}
-        <div>
-          <NumberInput
-            name="amount"
-            label="المبلغ"
-            value={amount}
-            onChange={(e) => setAmount(e.target.value)}
-            placeholder="0.00"
-            required
-          />
-        </div>
-
-        {/* Category free-text with datalist */}
-        <div>
-          <label className="block text-sm font-medium mb-1 text-text-primary">التصنيف</label>
-          <input
-            list="cashbox-categories"
-            type="text"
-            className="w-full px-3 py-2 text-sm border border-input rounded-md bg-background text-right"
-            placeholder="اكتب أو اختر تصنيفاً..."
-            value={category}
-            onChange={(e) => setCategory(e.target.value)}
-          />
-          <datalist id="cashbox-categories">
-            {categories?.map((cat) => (
-              <option key={cat} value={cat} />
-            ))}
-          </datalist>
+        {/* Amount & Date row */}
+        <div className="grid grid-cols-2 gap-4">
+          <div>
+            <NumberInput
+              name="amount"
+              label="المبلغ"
+              value={amount}
+              onChange={(e) => setAmount(e.target.value)}
+              placeholder="0.00"
+              required
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium mb-1 text-text-primary">تاريخ السند (اختياري)</label>
+            <input
+              type="date"
+              className="w-full bg-background border border-input rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-primary text-right"
+              value={transactionDate}
+              onChange={(e) => setTransactionDate(e.target.value)}
+            />
+          </div>
         </div>
 
         {/* Description */}

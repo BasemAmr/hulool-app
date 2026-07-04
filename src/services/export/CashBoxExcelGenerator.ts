@@ -47,29 +47,29 @@ export function generateCashBoxExcel(
   // Table headers (Arabic / Right-to-Left context)
   const headerRow = worksheet.getRow(tableStartRow);
   headerRow.values = [
-    'الرصيد',
-    'الدائن (مصروفات)',
-    'المدين (مقبوضات)',
-    'التصنيف',
-    'البيان',
-    'الموظف المسؤول',
+    'التاريخ',
+    'النوع',
     'الصندوق',
-    'التاريخ'
+    'الموظف المسؤول',
+    'البيان',
+    'المدين (مقبوضات)',
+    'الدائن (مصروفات)',
+    'الرصيد'
   ];
   headerRow.eachCell(cell => {
     cell.style = styles.mainHeader;
   });
   headerRow.height = 25;
 
-  // Set column widths (Right-to-Left order since we configured RTL sheet setup in setupWorksheet)
-  worksheet.getColumn(1).width = 15; // Balance
-  worksheet.getColumn(2).width = 15; // Credit
-  worksheet.getColumn(3).width = 15; // Debit
-  worksheet.getColumn(4).width = 15; // Category
-  worksheet.getColumn(5).width = 25; // Description
-  worksheet.getColumn(6).width = 20; // Employee name
-  worksheet.getColumn(7).width = 20; // Cashbox name
-  worksheet.getColumn(8).width = 15; // Date
+  // Set column widths
+  worksheet.getColumn(1).width = 15; // Date
+  worksheet.getColumn(2).width = 12; // Type
+  worksheet.getColumn(3).width = 20; // Cashbox
+  worksheet.getColumn(4).width = 20; // Employee
+  worksheet.getColumn(5).width = 30; // Description
+  worksheet.getColumn(6).width = 15; // Debit
+  worksheet.getColumn(7).width = 15; // Credit
+  worksheet.getColumn(8).width = 15; // Balance
 
   let currentRow = tableStartRow + 1;
 
@@ -86,14 +86,14 @@ export function generateCashBoxExcel(
     totalCredit += item.credit || 0;
 
     row.values = [
-      item.balance,
-      item.credit || '-',
-      item.debit || '-',
-      item.category || '-',
-      item.description,
-      item.employee_name,
+      formatDateForExcel(item.date),
+      item.type_label || (item.debit > 0 ? 'قبض' : 'صرف'),
       item.cashbox_name,
-      formatDateForExcel(item.date)
+      item.employee_name,
+      item.description,
+      item.debit || '-',
+      item.credit || '-',
+      item.balance
     ];
 
     // Apply styles
@@ -101,40 +101,40 @@ export function generateCashBoxExcel(
       const baseStyle = styles.dataCell(isEvenRow);
       cell.style = baseStyle;
 
-      // Balance column
+      // Date column - centered
       if (colNumber === 1) {
-        cell.style = {
-          ...styles.dataCellCenter(isEvenRow),
-          font: { bold: true },
-          numFmt: '#,##0.00'
-        };
-      }
-
-      // Credit column (red text for expense)
-      if (colNumber === 2 && item.credit > 0) {
-        cell.style = {
-          ...styles.dataCellCenter(isEvenRow),
-          font: { bold: true, color: { argb: 'FF9C0006' } },
-          numFmt: '#,##0.00'
-        };
-      } else if (colNumber === 2) {
-        cell.style = styles.dataCellCenter(isEvenRow);
+        cell.style = { ...styles.dataCellCenter(isEvenRow), ...styles.dateFormat };
       }
 
       // Debit column (green text for income)
-      if (colNumber === 3 && item.debit > 0) {
+      if (colNumber === 6 && item.debit > 0) {
         cell.style = {
           ...styles.dataCellCenter(isEvenRow),
           font: { bold: true, color: { argb: 'FF006100' } },
           numFmt: '#,##0.00'
         };
-      } else if (colNumber === 3) {
+      } else if (colNumber === 6) {
         cell.style = styles.dataCellCenter(isEvenRow);
       }
 
-      // Date column - centered
+      // Credit column (red text for expense)
+      if (colNumber === 7 && item.credit > 0) {
+        cell.style = {
+          ...styles.dataCellCenter(isEvenRow),
+          font: { bold: true, color: { argb: 'FF9C0006' } },
+          numFmt: '#,##0.00'
+        };
+      } else if (colNumber === 7) {
+        cell.style = styles.dataCellCenter(isEvenRow);
+      }
+
+      // Balance column
       if (colNumber === 8) {
-        cell.style = { ...styles.dataCellCenter(isEvenRow), ...styles.dateFormat };
+        cell.style = {
+          ...styles.dataCellCenter(isEvenRow),
+          font: { bold: true },
+          numFmt: '#,##0.00'
+        };
       }
     });
 
@@ -149,12 +149,12 @@ export function generateCashBoxExcel(
   const totalsRow = worksheet.getRow(currentRow);
   totalsRow.values = [
     '-',
-    totalCredit,
-    totalDebit,
+    '-',
+    '-',
     '-',
     'الإجماليات',
-    '-',
-    '-',
+    totalDebit,
+    totalCredit,
     '-'
   ];
 
@@ -171,11 +171,11 @@ export function generateCashBoxExcel(
       },
     };
 
-    if (colNumber === 2) {
-      cell.style = { ...cell.style, font: { ...cell.font, color: { argb: 'FF9C0006' } }, numFmt: '#,##0.00' };
-    }
-    if (colNumber === 3) {
+    if (colNumber === 6) {
       cell.style = { ...cell.style, font: { ...cell.font, color: { argb: 'FF006100' } }, numFmt: '#,##0.00' };
+    }
+    if (colNumber === 7) {
+      cell.style = { ...cell.style, font: { ...cell.font, color: { argb: 'FF9C0006' } }, numFmt: '#,##0.00' };
     }
   });
   totalsRow.height = 25;
