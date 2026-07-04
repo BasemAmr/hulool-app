@@ -20,7 +20,13 @@ const ActionsCell = React.memo(({ rowData }: CellProps<CashBoxVoucher, any>) => 
   const openModal = useModalStore((state) => state.openModal);
   const toast = useToast();
   const voidMutation = useVoidVoucher();
-  const { isAdmin } = useAuthStore(); // Add this line
+  const { isAdmin } = useAuthStore();
+  const { data: box } = useGetCashBox(rowData.account_id);
+  const isClosed = box?.status === 'closed';
+
+  const handleView = () => {
+    openModal('voucherDetails', { voucher: rowData });
+  };
 
   const handleEdit = () => {
     openModal('voucherEdit', { boxId: rowData.account_id, voucher: rowData });
@@ -39,14 +45,23 @@ const ActionsCell = React.memo(({ rowData }: CellProps<CashBoxVoucher, any>) => 
     });
   };
 
+  const showEditVoid = !isClosed && isAdmin();
+
   return (
     <div className="flex gap-2">
-      <Button variant="outline-primary" size="sm" onClick={handleEdit}>
-        تعديل
+      <Button variant="outline-primary" size="sm" onClick={handleView}>
+        عرض
       </Button>
-      <Button variant="outline-danger" size="sm" onClick={handleVoid} isLoading={voidMutation.isPending}>
-        إلغاء
-      </Button>
+      {showEditVoid && (
+        <>
+          <Button variant="outline-primary" size="sm" onClick={handleEdit}>
+            تعديل
+          </Button>
+          <Button variant="outline-danger" size="sm" onClick={handleVoid} isLoading={voidMutation.isPending}>
+            إلغاء
+          </Button>
+        </>
+      )}
     </div>
   );
 });
@@ -159,15 +174,15 @@ export const CashBoxDetailsPage = () => {
       type: 'currency',
       grow: 1
     },
-    ...(!isClosed && isAdmin() ? [{
+    {
       id: 'actions',
       title: 'إجراءات',
       key: 'id',
       type: 'custom' as const,
       component: ActionsCell as any,
-      width: 150,
+      width: 220,
       grow: 0
-    }] : [])
+    }
   ];
 
   return (

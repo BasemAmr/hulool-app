@@ -64,6 +64,10 @@ export interface CashBoxVoucher {
   related_object_id: number;
   created_by: number;
   metadata?: string;
+  creator_name?: string;
+  creator_role_label?: string;
+  debit_account_name?: string;
+  credit_account_name?: string;
 }
 
 export interface CashBoxVoucherPayload {

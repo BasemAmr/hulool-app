@@ -80,6 +80,7 @@ import EmployeeDeletionPreviewModal from '@/features/employees/modals/EmployeeDe
 // CASH BOX MODALS
 import { CreateCashBoxModal } from '@/features/financials/modals/CreateCashBoxModal';
 import { RecordVoucherModal } from '@/features/financials/modals/RecordVoucherModal';
+import VoucherDetailsModal from '@/features/financials/modals/VoucherDetailsModal';
 
 // Separate component for client receivables to avoid re-renders
 const ClientReceivablesFetcher = ({ client }: { client?: any }) => {
@@ -507,6 +508,11 @@ const ModalManager = () => {
             boxId={props.boxId}
             voucherToEdit={props.voucher}
           />
+        );
+
+      case 'voucherDetails':
+        return (
+          <VoucherDetailsModal key="voucherDetails" />
         );
 
       default:
