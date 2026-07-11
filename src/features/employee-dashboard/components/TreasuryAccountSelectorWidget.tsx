@@ -81,7 +81,6 @@ export const TreasuryAccountSelectorWidget: React.FC = () => {
               openModal('unifiedTransaction', {
                 defaultToCardType: 'treasury',
                 defaultToAccountId: String(selectedAccount.id),
-                defaultFromCardType: 'client',
                 title: 'سند قبض',
               })
             }
@@ -94,7 +93,6 @@ export const TreasuryAccountSelectorWidget: React.FC = () => {
               openModal('unifiedTransaction', {
                 defaultFromCardType: 'treasury',
                 defaultFromAccountId: String(selectedAccount.id),
-                defaultToCardType: 'client',
                 title: 'سند صرف',
               })
             }
