@@ -152,6 +152,7 @@ export default function AccountPickerCard({
 
   // ---- Pickers ----
   const renderTypeCard = (
+    elementKey: string,
     kind: PickerKind,
     slug: string,
     label: string,
@@ -161,6 +162,7 @@ export default function AccountPickerCard({
     const preset = colorMap[kind];
     return (
       <button
+        key={elementKey}
         type="button"
         onClick={() => {
           if (isActive) {
@@ -191,11 +193,11 @@ export default function AccountPickerCard({
 
   const renderKindSelector = () => (
     <div className="flex flex-wrap gap-1 rounded-lg border border-border-default bg-muted/20 p-1">
-      {renderTypeCard('client', '', 'عميل', <Building2 size={13} />)}
-      {renderTypeCard('employee', '', 'موظف', <User size={13} />)}
-      {renderTypeCard('settlement', '', 'تسوية', <Lock size={13} />)}
+      {renderTypeCard('client', 'client', '', 'عميل', <Building2 size={13} />)}
+      {renderTypeCard('employee', 'employee', '', 'موظف', <User size={13} />)}
+      {renderTypeCard('settlement', 'settlement', '', 'تسوية', <Lock size={13} />)}
       {sections.map((s) =>
-        renderTypeCard('treasury_section', s.slug, s.label, getSectionIcon(s.slug)),
+        renderTypeCard(`section-${s.slug}`, 'treasury_section', s.slug, s.label, getSectionIcon(s.slug)),
       )}
     </div>
   );

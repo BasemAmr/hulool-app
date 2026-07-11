@@ -33,6 +33,7 @@ const Navbar = () => {
   const location = useLocation();
   const openModal = useModalStore((state) => state.openModal);
   const { data: employees = [], isLoading: employeesLoading } = useGetEmployeesForSelection();
+  const canManageEmployeeType = user?.type === 'admin' || user?.type === 'employee_admin' || Boolean(user?.capabilities?.manage_options);
 
   const handleSearchFocus = () => {
     openModal('clientSearch', {});
@@ -152,12 +153,15 @@ const Navbar = () => {
               <span>الموظفين</span>
               <ChevronDown size={14} className="text-text-secondary" />
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-56 text-right max-h-96 overflow-y-auto">
+            <DropdownMenuContent align="end" className="w-56 text-right max-h-[70vh] overflow-y-auto">
               <DropdownMenuLabel className="text-right font-extrabold text-base">
                 إدارة الموظفين
               </DropdownMenuLabel>
               <DropdownMenuSeparator />
-              <DropdownMenuItem onClick={() => openModal('createEmployee', {})} className="cursor-pointer flex flex-row-reverse justify-end gap-3 px-3 py-3">
+              <DropdownMenuItem
+                onClick={() => openModal('createEmployee', { isAdmin: canManageEmployeeType })}
+                className="cursor-pointer flex flex-row-reverse justify-end gap-2 px-3 py-2"
+              >
                 <Plus size={18} />
                 <span className="text-base font-extrabold">إضافة موظف</span>
               </DropdownMenuItem>
@@ -180,12 +184,9 @@ const Navbar = () => {
                   <DropdownMenuItem key={employee.id} asChild>
                     <NavLink 
                       to={`/employees/${employee.id}/dashboard`} 
-                      className="flex font-bold items-center gap-2 w-full cursor-pointer flex-row-reverse justify-end px-3 py-3"
+                      className="flex font-bold items-center gap-2 w-full cursor-pointer flex-row-reverse justify-end px-3 py-2"
                     >
                       <span>{employee.display_name}</span>
-                      <div className="w-5 h-5 rounded-full bg-primary/20 text-primary text-xs flex items-center justify-center flex-shrink-0">
-                        {employee.display_name?.charAt(0).toUpperCase()}
-                      </div>
                     </NavLink>
                   </DropdownMenuItem>
                 ))

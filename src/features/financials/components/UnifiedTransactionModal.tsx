@@ -237,6 +237,7 @@ const UnifiedTransactionModal = () => {
     { num: 2, label: 'Details' },
     { num: 3, label: 'Review' },
   ];
+  const displayDescription = description + autoDescription;
 
   const isStepComplete = (s: Step): boolean => {
     switch (s) {
@@ -390,6 +391,7 @@ const UnifiedTransactionModal = () => {
   const fromKindLabel = getPickerKindLabel(fromPicker);
   const toKindLabel = getPickerKindLabel(toPicker);
 
+
   // ---- Auto-generate description suffix from from/to accounts ----
   useEffect(() => {
     if (fromName && toName && fromPicker.accountId && toPicker.accountId) {
@@ -398,8 +400,6 @@ const UnifiedTransactionModal = () => {
       setAutoDescription('');
     }
   }, [fromName, toName, fromKindLabel, toKindLabel, fromPicker.accountId, toPicker.accountId]);
-
-  const displayDescription = description + autoDescription;
 
   const handleDescriptionChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     const val = e.target.value;
