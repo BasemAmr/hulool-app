@@ -115,28 +115,72 @@ const EmployeeNavbar = () => {
                     </button>
                     {(user?.type === 'admin' || user?.type === 'employee_admin' || user?.can_make_transactions) && (
                         <>
-                            <button
-                                onClick={() => openModal('unifiedTransaction', {
-                                  defaultFromCardType: 'client',
-                                  defaultToCardType: 'treasury',
-                                  lockDirection: true,
-                                  title: 'سند قبض',
-                                })}
-                                className="px-3 py-1.5 text-sm font-bold border border-status-success-border text-status-success-text rounded-md hover:bg-status-success-text hover:text-primary-foreground transition-colors"
-                            >
-                                سند قبض
-                            </button>
-                            <button
-                                onClick={() => openModal('unifiedTransaction', {
-                                  defaultFromCardType: 'treasury',
-                                  defaultToCardType: 'client',
-                                  lockDirection: true,
-                                  title: 'سند صرف',
-                                })}
-                                className="px-3 py-1.5 text-sm font-bold border border-status-danger-border text-status-danger-text rounded-md hover:bg-red-600 hover:text-white transition-colors"
-                            >
-                                سند صرف
-                            </button>
+                            <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                    <button
+                                        className="px-3 py-1.5 text-sm font-bold border border-status-success-border text-status-success-text rounded-md hover:bg-status-success-text hover:text-primary-foreground transition-colors"
+                                    >
+                                        سند قبض
+                                    </button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent align="end" className="text-right">
+                                    <DropdownMenuItem
+                                        className="cursor-pointer flex flex-row-reverse justify-end gap-2 font-bold"
+                                        onClick={() => openModal('unifiedTransaction', {
+                                            defaultFromCardType: 'client',
+                                            defaultToCardType: 'treasury',
+                                            lockDirection: true,
+                                            title: 'سند قبض - عميل',
+                                        })}
+                                    >
+                                        سند قبض عميل
+                                    </DropdownMenuItem>
+                                    <DropdownMenuItem
+                                        className="cursor-pointer flex flex-row-reverse justify-end gap-2 font-bold"
+                                        onClick={() => openModal('unifiedTransaction', {
+                                            defaultFromCardType: 'employee',
+                                            defaultToCardType: 'treasury',
+                                            lockDirection: true,
+                                            title: 'سند قبض - موظف',
+                                        })}
+                                    >
+                                        سند قبض موظف
+                                    </DropdownMenuItem>
+                                </DropdownMenuContent>
+                            </DropdownMenu>
+                            <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                    <button
+                                        className="px-3 py-1.5 text-sm font-bold border border-status-danger-border text-status-danger-text rounded-md hover:bg-red-600 hover:text-white transition-colors"
+                                    >
+                                        سند صرف
+                                    </button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent align="end" className="text-right">
+                                    <DropdownMenuItem
+                                        className="cursor-pointer flex flex-row-reverse justify-end gap-2 font-bold"
+                                        onClick={() => openModal('unifiedTransaction', {
+                                            defaultFromCardType: 'treasury',
+                                            defaultToCardType: 'client',
+                                            lockDirection: true,
+                                            title: 'سند صرف - عميل',
+                                        })}
+                                    >
+                                        سند صرف عميل
+                                    </DropdownMenuItem>
+                                    <DropdownMenuItem
+                                        className="cursor-pointer flex flex-row-reverse justify-end gap-2 font-bold"
+                                        onClick={() => openModal('unifiedTransaction', {
+                                            defaultFromCardType: 'treasury',
+                                            defaultToCardType: 'employee',
+                                            lockDirection: true,
+                                            title: 'سند صرف - موظف',
+                                        })}
+                                    >
+                                        سند صرف موظف
+                                    </DropdownMenuItem>
+                                </DropdownMenuContent>
+                            </DropdownMenu>
                             <DropdownMenu>
                                 <DropdownMenuTrigger asChild>
                                     <button
@@ -152,10 +196,21 @@ const EmployeeNavbar = () => {
                                             defaultFromCardType: 'client',
                                             defaultToCardType: 'settlement',
                                             lockDirection: true,
-                                            title: 'تسوية قبض',
+                                            title: 'تسوية قبض - عميل',
                                         })}
                                     >
-                                        تسوية قبض
+                                        تسوية قبض عميل
+                                    </DropdownMenuItem>
+                                    <DropdownMenuItem
+                                        className="cursor-pointer flex flex-row-reverse justify-end gap-2 text-status-success-text font-bold"
+                                        onClick={() => openModal('unifiedTransaction', {
+                                            defaultFromCardType: 'employee',
+                                            defaultToCardType: 'settlement',
+                                            lockDirection: true,
+                                            title: 'تسوية قبض - موظف',
+                                        })}
+                                    >
+                                        تسوية قبض موظف
                                     </DropdownMenuItem>
                                     <DropdownMenuItem
                                         className="cursor-pointer flex flex-row-reverse justify-end gap-2 text-status-danger-text font-bold"
@@ -163,10 +218,21 @@ const EmployeeNavbar = () => {
                                             defaultFromCardType: 'settlement',
                                             defaultToCardType: 'client',
                                             lockDirection: true,
-                                            title: 'تسوية صرف',
+                                            title: 'تسوية صرف - عميل',
                                         })}
                                     >
-                                        تسوية صرف
+                                        تسوية صرف عميل
+                                    </DropdownMenuItem>
+                                    <DropdownMenuItem
+                                        className="cursor-pointer flex flex-row-reverse justify-end gap-2 text-status-danger-text font-bold"
+                                        onClick={() => openModal('unifiedTransaction', {
+                                            defaultFromCardType: 'settlement',
+                                            defaultToCardType: 'employee',
+                                            lockDirection: true,
+                                            title: 'تسوية صرف - موظف',
+                                        })}
+                                    >
+                                        تسوية صرف موظف
                                     </DropdownMenuItem>
                                 </DropdownMenuContent>
                             </DropdownMenu>

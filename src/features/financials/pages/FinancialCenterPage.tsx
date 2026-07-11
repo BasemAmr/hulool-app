@@ -12,8 +12,8 @@ import { TrendingUp, TrendingDown } from 'lucide-react';
 
 const FinancialCenterPage: React.FC = () => {
   const [searchParams] = useSearchParams();
-  const filterSection = searchParams.get('section');
-  const filterCategory = searchParams.get('category');
+  const filterSection = searchParams.get('section') ?? undefined;
+  const filterCategory = searchParams.get('category') ?? undefined;
 
   const hasFilter = Boolean(filterSection && filterCategory);
   const [activeTab, setActiveTab] = useState<FCActiveTab>(() => hasFilter ? 'treasury' : 'treasury');
