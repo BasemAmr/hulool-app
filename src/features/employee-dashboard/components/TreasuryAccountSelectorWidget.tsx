@@ -21,15 +21,35 @@ export const TreasuryAccountSelectorWidget: React.FC = () => {
     return null;
   }
 
-  // Set default to first account if none selected yet
+  const parseMetadata = (metadata: TreasuryAccountWithPermission['metadata']) => {
+    if (!metadata) return null;
+    if (typeof metadata === 'string') {
+      try {
+        return JSON.parse(metadata) as Record<string, unknown>;
+      } catch {
+        return null;
+      }
+    }
+    if (typeof metadata === 'object') {
+      return metadata as Record<string, unknown>;
+    }
+    return null;
+  };
+
+  const mappedAccountsWithoutSettlement = accounts.filter((account) => {
+    const metadata = parseMetadata(account.metadata);
+    const isSettlementByFlag = metadata?.is_settlement === true || metadata?.is_settlement === 'true';
+    const isSettlementByType = metadata?.type === 'settlement';
+    return !isSettlementByFlag && !isSettlementByType;
+  });
+
+  // Set default to first non-settlement account if none selected yet
   const selectedAccount: TreasuryAccountWithPermission | undefined =
-    accounts.find((a) => String(a.id) === selectedAccountId) || accounts[0];
+    mappedAccountsWithoutSettlement.find((a) => String(a.id) === selectedAccountId) || mappedAccountsWithoutSettlement[0];
 
   if (!selectedAccount) {
     return null;
   }
-
-  const mappedAccountsWithoutSettlement = accounts.filter((account) => !account.metadata?.is_settlement);
 
   const formatBalance = (balance: number) =>
     new Intl.NumberFormat('en-US', {
