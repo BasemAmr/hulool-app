@@ -23,6 +23,7 @@ import {
   PopoverTrigger,
 } from '@/shared/ui/shadcn/popover';
 import { useGetAccountsByType } from '@/features/financials/api/financialCenterQueries';
+import { useGetClient } from '@/features/clients/api/clientQueries';
 import { useDebounce } from '@/shared/hooks/useDebounce';
 
 interface ClientSearchComboboxProps {
@@ -52,11 +53,20 @@ const ClientSearchCombobox = ({
     true // Always fetch to ensure selected client is available
   );
 
+  // Fetch selected client details directly from the clients endpoint if we have a value
+  const { data: selectedClientData } = useGetClient(Number(value));
+
   const clients = clientsData?.accounts || [];
-  const selectedClient = clients.find((c) => String(c.id) === value);
+  const selectedClient = selectedClientData
+    ? {
+        id: selectedClientData.id,
+        name: selectedClientData.name,
+        balance: (selectedClientData as any).balance ?? 0,
+      }
+    : clients.find((c) => String(c.id) === value);
 
   // Keep selected client in list even when searching
-  const displayClients = selectedClient && !clients.find(c => String(c.id) === value)
+  const displayClients = selectedClient && !clients.find((c) => String(c.id) === value)
     ? [selectedClient, ...clients]
     : clients;
 

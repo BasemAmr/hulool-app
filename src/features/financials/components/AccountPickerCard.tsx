@@ -58,11 +58,11 @@ const QUICK_ACTIONS: { kind: PickerKind; label: string; icon: React.ReactNode; c
 
 // Color map for each picker kind
 const colorMap: Record<string, { border: string; text: string; activeBg: string; chipBorder: string; chipBg: string }> = {
-  cashbox: { border: 'border-emerald-400', text: 'text-emerald-700', activeBg: 'bg-emerald-50', chipBorder: 'border-emerald-400', chipBg: 'bg-emerald-50' },
-  bank: { border: 'border-blue-400', text: 'text-blue-700', activeBg: 'bg-blue-50', chipBorder: 'border-blue-400', chipBg: 'bg-blue-50' },
-  client: { border: 'border-violet-400', text: 'text-violet-700', activeBg: 'bg-violet-50', chipBorder: 'border-violet-400', chipBg: 'bg-violet-50' },
-  employee: { border: 'border-amber-400', text: 'text-amber-700', activeBg: 'bg-amber-50', chipBorder: 'border-amber-400', chipBg: 'bg-amber-50' },
-  settlement: { border: 'border-teal-400', text: 'text-teal-700', activeBg: 'bg-teal-50', chipBorder: 'border-teal-400', chipBg: 'bg-teal-50' },
+  cashbox: { border: 'border-status-success-border', text: 'text-status-success-text', activeBg: 'bg-status-success-bg', chipBorder: 'border-status-success-border', chipBg: 'bg-status-success-bg' },
+  bank: { border: 'border-status-info-border', text: 'text-status-info-text', activeBg: 'bg-status-info-bg', chipBorder: 'border-status-info-border', chipBg: 'bg-status-info-bg' },
+  client: { border: 'border-status-warning-border', text: 'text-status-warning-text', activeBg: 'bg-status-warning-bg', chipBorder: 'border-status-warning-border', chipBg: 'bg-status-warning-bg' },
+  employee: { border: 'border-status-danger-border', text: 'text-status-danger-text', activeBg: 'bg-status-danger-bg', chipBorder: 'border-status-danger-border', chipBg: 'bg-status-danger-bg' },
+  settlement: { border: 'border-status-neutral-border', text: 'text-status-neutral-text', activeBg: 'bg-status-neutral-bg', chipBorder: 'border-status-neutral-border', chipBg: 'bg-status-neutral-bg' },
 };
 
 // ========================================
@@ -353,10 +353,11 @@ export default function AccountPickerCard({
           <p className="py-2 text-center text-xs text-text-secondary">جارٍ تحميل حساب التسوية...</p>
         );
       }
+      const colors = colorMap.settlement;
       return (
-        <div className="flex items-center justify-between gap-2 rounded-lg border-2 border-teal-400 bg-teal-50 px-3 py-2">
+        <div className={`flex items-center justify-between gap-2 rounded-lg border-2 ${colors.chipBorder} ${colors.chipBg} px-3 py-2`}>
           <div className="flex min-w-0 items-center gap-2">
-            <Lock size={14} className="shrink-0 text-teal-600" />
+            <Lock size={14} className={`shrink-0 ${colors.text}`} />
             <span className="truncate text-sm font-bold text-text-primary">{settlementAccount.name}</span>
           </div>
           <span className="shrink-0 text-xs font-semibold text-text-secondary">

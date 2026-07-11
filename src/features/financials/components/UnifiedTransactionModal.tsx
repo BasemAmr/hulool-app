@@ -135,6 +135,12 @@ const UnifiedTransactionModal = () => {
       const fId = (props?.defaultFromAccountId as string | undefined) ?? '';
       const tId = (props?.defaultToAccountId as string | undefined) ?? '';
 
+      // If we have a preset treasury type but treasuryData is not loaded yet, wait for it
+      const needsTreasuryData = fType === 'treasury' || tType === 'treasury' || fType === 'settlement' || tType === 'settlement';
+      if (needsTreasuryData && (!treasuryData || treasuryData.length === 0)) {
+        return;
+      }
+
       const fKind = (() => {
         if (fType === 'treasury' && fId && treasuryData?.length) {
           const acc = treasuryData.find((t) => String(t.id) === fId);
@@ -397,24 +403,6 @@ const UnifiedTransactionModal = () => {
           </div>
           <div className="grid grid-cols-2 gap-3">
             <AccountPickerCard
-              label="من"
-              value={fromPicker}
-              onChange={setFromPicker}
-              clients={clients}
-              employees={employees}
-              treasuryData={treasuryData ?? []}
-              categoryMetadata={categoryMetadata ?? []}
-              presetKind={(() => {
-                if (defaultFromCardType === 'treasury' && defaultFromAccountId && treasuryData?.length) {
-                  const acc = treasuryData.find((t) => String(t.id) === defaultFromAccountId);
-                  if (acc?.sub_type === 'cashbox') return 'cashbox' as PickerKind;
-                  if (acc?.sub_type === 'bank') return 'bank' as PickerKind;
-                }
-                return presetToPickerKind(defaultFromCardType);
-              })()}
-              isVisible={isVisible}
-            />
-            <AccountPickerCard
               label="إلى"
               value={toPicker}
               onChange={setToPicker}
@@ -429,6 +417,24 @@ const UnifiedTransactionModal = () => {
                   if (acc?.sub_type === 'bank') return 'bank' as PickerKind;
                 }
                 return presetToPickerKind(defaultToCardType);
+              })()}
+              isVisible={isVisible}
+            />
+            <AccountPickerCard
+              label="من"
+              value={fromPicker}
+              onChange={setFromPicker}
+              clients={clients}
+              employees={employees}
+              treasuryData={treasuryData ?? []}
+              categoryMetadata={categoryMetadata ?? []}
+              presetKind={(() => {
+                if (defaultFromCardType === 'treasury' && defaultFromAccountId && treasuryData?.length) {
+                  const acc = treasuryData.find((t) => String(t.id) === defaultFromAccountId);
+                  if (acc?.sub_type === 'cashbox') return 'cashbox' as PickerKind;
+                  if (acc?.sub_type === 'bank') return 'bank' as PickerKind;
+                }
+                return presetToPickerKind(defaultFromCardType);
               })()}
               isVisible={isVisible}
             />

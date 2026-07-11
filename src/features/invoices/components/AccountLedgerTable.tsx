@@ -26,12 +26,14 @@ import {
   ArrowUpRight,
   FileText,
   Edit3,
-  Trash2
+  Trash2,
+  MessageSquare
 } from 'lucide-react';
 import { formatDate } from '@/shared/utils/dateUtils';
 import { useModalStore } from '@/shared/stores/modalStore';
 import { useGetAccountHistory } from '@/features/financials/api/accountQueries';
 import { useGetPayableInvoices } from '@/features/invoices/api/invoiceQueries';
+import { sendPaymentReminder } from '@/shared/utils/whatsappUtils';
 import HuloolDataGrid from '@/shared/grid/HuloolDataGrid';
 import type { HuloolGridColumn } from '@/shared/grid/HuloolDataGrid';
 import type { CellProps } from 'react-datasheet-grid';
@@ -44,6 +46,7 @@ interface AccountLedgerTableProps {
   filter?: 'all' | 'invoices' | 'payments' | 'credits';
   hideAmounts?: boolean;
   highlightInvoiceId?: number;
+  isEmployeeView?: boolean;
 }
 
 // ================================
@@ -136,7 +139,7 @@ DescriptionCell.displayName = 'DescriptionCell';
 const DebitCell = React.memo(({ rowData, columnData, active }: CellProps<FinancialTransaction, { hideAmounts: boolean }>) => {
   const amount = getDebitAmount(rowData);
   return (
-    <span className="hulool-cell-content" style={{ justifyContent: 'center', color: 'var(--token-text-primary)', fontWeight: active ? 700 : 500 }}>
+    <span className="hulool-cell-content" style={{ justifyContent: 'center', color: 'inherit', fontWeight: active ? 700 : 500 }}>
       {columnData?.hideAmounts ? '***' : (amount > 0 ? formatCurrency(amount) : '—')}
     </span>
   );
@@ -147,7 +150,7 @@ DebitCell.displayName = 'DebitCell';
 const CreditCell = React.memo(({ rowData, columnData, active }: CellProps<FinancialTransaction, { hideAmounts: boolean }>) => {
   const amount = getCreditAmount(rowData);
   return (
-    <span className="hulool-cell-content" style={{ justifyContent: 'center', color: 'var(--token-text-primary)', fontWeight: active ? 700 : 500 }}>
+    <span className="hulool-cell-content" style={{ justifyContent: 'center', color: 'inherit', fontWeight: active ? 700 : 500 }}>
       {columnData?.hideAmounts ? '***' : (amount > 0 ? formatCurrency(amount) : '—')}
     </span>
   );
@@ -222,10 +225,11 @@ interface ActionsColumnData {
   onEditTx: (tx: any) => void;
   onDeleteTx: (tx: any) => void;
   onEditInv: (inv: any) => void;
+  isEmployeeView?: boolean;
 }
 
 const ActionsCell = React.memo(({ rowData, columnData }: CellProps<FinancialTransaction & { is_payable?: boolean }, ActionsColumnData>) => {
-  const { client, payableMap, openModal, onEditTx, onDeleteTx, onEditInv } = columnData || {};
+  const { client, payableMap, openModal, onEditTx, onDeleteTx, onEditInv, isEmployeeView } = columnData || {};
 
   if (!columnData) return null;
 
@@ -285,26 +289,62 @@ const ActionsCell = React.memo(({ rowData, columnData }: CellProps<FinancialTran
       onMouseDown={(e) => e.stopPropagation()}
       onClick={(e) => e.stopPropagation()}
     >
-      {rowData.is_payable && (
-        <button
-          type="button"
-          onClick={handlePayInvoice}
-          title="Pay"
-          className={neutralActionButtonClass}
-        >
-          <CreditCard size={14} />
-        </button>
-      )}
-      <button type="button" onClick={handleEditTx} className={neutralActionButtonClass} title="Edit Transaction">
-        <Edit3 size={14} />
-      </button>
-      <button type="button" onClick={handleDeleteTx} className={destructiveActionButtonClass} title="Delete Transaction">
-        <Trash2 size={14} />
-      </button>
-      {rowData.related_object_type === 'invoice' && (
-        <button type="button" onClick={handleEditInv} className={neutralActionButtonClass} title="Edit Invoice">
-          <FileText size={14} />
-        </button>
+      {isEmployeeView ? (
+        <>
+          {rowData.is_payable && (
+            <button
+              type="button"
+              onClick={handlePayInvoice}
+              title="Pay"
+              className={neutralActionButtonClass}
+            >
+              <CreditCard size={14} />
+            </button>
+          )}
+          {rowData.is_payable && (
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                const relatedId = rowData.related_object_id ?? (rowData as any).related_id;
+                const invoice = payableMap?.get(String(relatedId));
+                if (invoice && client) {
+                  const remaining = Number(invoice.remaining_amount) || 0;
+                  sendPaymentReminder(client.phone || '', client.name, formatCurrency(remaining));
+                }
+              }}
+              title="تذكير واتساب"
+              className={neutralActionButtonClass}
+              style={{ color: 'var(--color-whatsapp)' }}
+            >
+              <MessageSquare size={14} />
+            </button>
+          )}
+        </>
+      ) : (
+        <>
+          {rowData.is_payable && (
+            <button
+              type="button"
+              onClick={handlePayInvoice}
+              title="Pay"
+              className={neutralActionButtonClass}
+            >
+              <CreditCard size={14} />
+            </button>
+          )}
+          <button type="button" onClick={handleEditTx} className={neutralActionButtonClass} title="Edit Transaction">
+            <Edit3 size={14} />
+          </button>
+          <button type="button" onClick={handleDeleteTx} className={destructiveActionButtonClass} title="Delete Transaction">
+            <Trash2 size={14} />
+          </button>
+          {rowData.related_object_type === 'invoice' && (
+            <button type="button" onClick={handleEditInv} className={neutralActionButtonClass} title="Edit Invoice">
+              <FileText size={14} />
+            </button>
+          )}
+        </>
       )}
     </div>
   );
@@ -320,6 +360,7 @@ const AccountLedgerTable: React.FC<AccountLedgerTableProps> = ({
   filter = 'all',
   hideAmounts = false,
   highlightInvoiceId,
+  isEmployeeView = false,
 }) => {
   useTranslation();
   const openModal = useModalStore(state => state.openModal);
@@ -502,12 +543,13 @@ const AccountLedgerTable: React.FC<AccountLedgerTableProps> = ({
         openModal,
         onEditTx: (tx: any) => { setSelectedTransaction(tx); setModalType('editTx'); },
         onDeleteTx: (tx: any) => { setSelectedTransaction(tx); setModalType('deleteTx'); },
-        onEditInv: (inv: any) => { setSelectedInvoice(inv); setModalType('editInv'); }
+        onEditInv: (inv: any) => { setSelectedInvoice(inv); setModalType('editInv'); },
+        isEmployeeView
       },
       width: 120,
       grow: 0,
     },
-  ], [hideAmounts, client, payableMap, openModal]);
+  ], [hideAmounts, client, payableMap, openModal, isEmployeeView]);
 
   // Auto-scroll to highlighted transaction
   useEffect(() => {

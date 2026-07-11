@@ -14,7 +14,7 @@ import { useGetMyReceivablesDashboardInfinite } from '@/features/employees/api/e
 // Import components
 import ClientProfileHeader from '@/features/clients/components/ClientProfileHeader';
 import EmployeeOwnTasksTable from '@/features/tasks/components/tables/EmployeeOwnTasksTable';
-import EmployeeClientsStatementsTable from '../../components/self-view/EmployeeClientsStatementsTable';
+import AccountLedgerTable from '@/features/invoices/components/AccountLedgerTable';
 import ClientCreditsHistoryTable from '@/features/clients/components/ClientCreditsHistoryTable';
 
 // Import types
@@ -216,11 +216,11 @@ const EmployeeClientProfilePage = () => {
                             <h5 className="mb-0 text-lg font-bold text-primary">كشف حساب العميل</h5>
                         </div>
                         <div className="p-0">
-                            <EmployeeClientsStatementsTable
-                                receivables={statementData?.pages?.flatMap(page => page.data.receivables) || []}
-                                isLoading={isLoadingReceivables}
-                                filter={filter}
+                            <AccountLedgerTable
+                                client={client}
+                                filter={filter === 'all' ? 'all' : filter === 'unpaid' ? 'invoices' : 'all'}
                                 hideAmounts={!hasViewAmountsPermission}
+                                isEmployeeView={true}
                             />
                         </div>
                     </div>
