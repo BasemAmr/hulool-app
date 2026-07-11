@@ -30,7 +30,8 @@ import type {
   ClientBalancesPaginatedData,
   BalanceVerification,
   BalanceRecalculation,
-  Pagination
+  Pagination,
+  UpdateTransactionPayload
 } from '@/api/types';
 
 // --- Constants ---
@@ -125,11 +126,23 @@ const fetchAccountHistory = async (
   accountType: AccountType, 
   accountId: number,
   page: number = 1,
-  perPage: number = TRANSACTIONS_PER_PAGE
+  perPage: number = TRANSACTIONS_PER_PAGE,
+  filters?: { 
+    start_date?: string; 
+    end_date?: string; 
+    transaction_type?: string; 
+    search?: string;
+  }
 ): Promise<AccountHistoryPaginatedData> => {
+  const params: Record<string, any> = { page, per_page: perPage };
+  if (filters?.start_date) params.start_date = filters.start_date;
+  if (filters?.end_date) params.end_date = filters.end_date;
+  if (filters?.transaction_type) params.transaction_type = filters.transaction_type;
+  if (filters?.search) params.search = filters.search;
+
   const { data } = await apiClient.get<any>(
     `/accounts/${accountType}/${accountId}/history`,
-    { params: { page, per_page: perPage } }
+    { params }
   );
   
   // Handle different response formats:
@@ -559,11 +572,12 @@ export const useGetAccountHistory = (
   accountType: AccountType, 
   accountId: number, 
   page: number = 1,
+  filters?: { start_date?: string; end_date?: string; transaction_type?: string; search?: string },
   enabled: boolean = true
 ) => {
   return useQuery({
-    queryKey: ['account', accountType, accountId, 'history', page],
-    queryFn: () => fetchAccountHistory(accountType, accountId, page),
+    queryKey: ['account', accountType, accountId, 'history', page, filters],
+    queryFn: () => fetchAccountHistory(accountType, accountId, page, TRANSACTIONS_PER_PAGE, filters),
     enabled: !!accountId && enabled,
     staleTime: 10 * 1000,
   });
@@ -854,4 +868,36 @@ export const accountKeys = {
     [...accountKeys.all, 'payments', 'stats-by-method', dateFrom, dateTo] as const,
   dailyTotals: (dateFrom: string, dateTo: string) => 
     [...accountKeys.all, 'payments', 'daily-totals', dateFrom, dateTo] as const,
+};
+
+// Update a transaction (used for editing)
+export const useUpdateTransaction = () => {
+  const queryClient = useQueryClient();
+  return useMutation<ApiResponse<FinancialTransaction>, Error, { id: number; data: UpdateTransactionPayload }>({
+    mutationFn: async ({ id, data }) => {
+      const { data: responseData } = await apiClient.put<ApiResponse<FinancialTransaction>>(`/transactions/${id}`, data);
+      return responseData;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['account'] });
+      queryClient.invalidateQueries({ queryKey: ['treasury-accounts'] });
+    },
+  });
+};
+
+// Delete a transaction (soft‑delete, removes the pair)
+export const useDeleteTransaction = () => {
+  const queryClient = useQueryClient();
+  return useMutation<ApiResponse<void>, Error, { id: number; reason?: string }>({
+    mutationFn: async ({ id, reason }) => {
+      const { data: responseData } = await apiClient.delete<ApiResponse<void>>(`/transactions/${id}`, {
+        data: { reason: reason || 'Deleted via UI' },
+      });
+      return responseData;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['account'] });
+      queryClient.invalidateQueries({ queryKey: ['treasury-accounts'] });
+    },
+  });
 };

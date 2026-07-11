@@ -1,6 +1,7 @@
 import { useModalStore } from '@/shared/stores/modalStore';
 import BaseModal from '@/shared/ui/layout/BaseModal';
 import ClientForm from '@/features/clients/components/ClientForm';
+import ClientReportModal from '@/features/clients/components/ClientReportModal';
 import TaskModal from '@/features/tasks/components/creation/TaskModal'; // Import TaskModal
 import RequirementsModal from '@/features/tasks/components/details/RequirementsModal'; // Import RequirementsModal
 import ManualReceivableModal from '@/features/receivables/modals/ManualReceivableModal'; // Import ManualReceivableModal
@@ -74,13 +75,23 @@ import { useToast } from '@/shared/hooks/useToast';
 
 // EMPLOYEE ACCOUNT MANAGEMENT MODALS
 import EmployeeForm from '@/features/employees/forms/EmployeeForm';
+import EmployeeReportModal from '@/features/employees/modals/EmployeeReportModal';
 import EmployeeCredentialsModal from '@/features/employees/modals/EmployeeCredentialsModal';
 import EmployeeDeletionPreviewModal from '@/features/employees/modals/EmployeeDeletionPreviewModal';
 
 // CASH BOX MODALS
 import { CreateCashBoxModal } from '@/features/financials/modals/CreateCashBoxModal';
+import UnifiedTransactionModal from '@/features/financials/components/UnifiedTransactionModal';
 import { RecordVoucherModal } from '@/features/financials/modals/RecordVoucherModal';
 import VoucherDetailsModal from '@/features/financials/modals/VoucherDetailsModal';
+
+// TREASURY MODALS
+import TreasuryEditAccountModal from '@/features/financials/modals/TreasuryEditAccountModal';
+import TreasuryPermissionsModal from '@/features/financials/modals/TreasuryPermissionsModal';
+import CategoryManagerModal from '@/features/financials/modals/CategoryManagerModal';
+import { ReassignCashBoxEmployeeModal } from '@/features/financials/modals/ReassignCashBoxEmployeeModal';
+import FCAccountLedgerModal from '@/features/financials/modals/FCAccountLedgerModal';
+import AccountReportModal from '@/features/financials/modals/AccountReportModal';
 
 // Separate component for client receivables to avoid re-renders
 const ClientReceivablesFetcher = ({ client }: { client?: any }) => {
@@ -119,6 +130,15 @@ const ModalManager = () => {
           >
             <ClientForm clientToEdit={props.clientToEdit} onSuccess={closeModal} />
           </BaseModal>
+        );
+
+      case 'clientReport':
+        return (
+          <ClientReportModal
+            key="clientReport"
+            isOpen={isOpen}
+            onClose={closeModal}
+          />
         );
 
       case 'taskForm':
@@ -417,8 +437,18 @@ const ModalManager = () => {
               onSubmit={props.onSubmit}
               isLoading={props.isLoading}
               onCancel={closeModal}
+              isAdmin={props.isAdmin}
             />
           </BaseModal>
+        );
+
+      case 'employeeReport':
+        return (
+          <EmployeeReportModal
+            key="employeeReport"
+            isOpen={isOpen}
+            onClose={closeModal}
+          />
         );
 
       case 'employeeCredentials':
@@ -507,12 +537,54 @@ const ModalManager = () => {
             onClose={closeModal}
             boxId={props.boxId}
             voucherToEdit={props.voucher}
+            isTreasury={props.isTreasury}
           />
         );
 
       case 'voucherDetails':
         return (
           <VoucherDetailsModal key="voucherDetails" />
+        );
+
+      // UNIFIED TRANSACTION MODAL (M5)
+      case 'unifiedTransaction':
+        return (
+          <UnifiedTransactionModal
+            key="unifiedTransaction"
+          />
+        );
+
+      // TREASURY MODALS
+      case 'treasuryEditAccount':
+        return <TreasuryEditAccountModal key="treasuryEditAccount" />;
+
+      case 'treasuryPermissions':
+        return <TreasuryPermissionsModal key="treasuryPermissions" />;
+
+      case 'categoryManager':
+        return <CategoryManagerModal key="categoryManager" />;
+
+      case 'reassignCashBoxEmployee':
+        return (
+          <ReassignCashBoxEmployeeModal
+            key="reassignCashBoxEmployee"
+            isOpen={isOpen}
+            onClose={closeModal}
+            cashBox={props.cashBox}
+            onSuccess={props.onSuccess}
+          />
+        );
+
+      case 'fcAccountLedger':
+        return <FCAccountLedgerModal key="fcAccountLedger" />;
+
+      case 'accountReport':
+        return (
+          <AccountReportModal
+            key="accountReport"
+            isOpen={isOpen}
+            onClose={closeModal}
+          />
         );
 
       default:

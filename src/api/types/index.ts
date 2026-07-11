@@ -87,21 +87,83 @@ export interface User {
   display_name: string;
   employee_id: number | null;
   commission_rate: number | null;
+  type?: 'admin' | 'employee_admin' | 'employee';
+  is_active?: boolean;
   roles: string[];
   capabilities: Record<string, boolean>;
+  pin_set?: boolean;
+  phone?: string;
 }
 
 // Employee Account Management Types
 // These fields match the API response from /users/employees endpoint (account management)
 export interface EmployeeAccount {
   id: number;                    // WordPress user ID
-  username: string;              // WordPress username (user_login)
-  email: string;                 // User email
+  user_id: number;               // Same as id, for convenience
   display_name: string;          // Display name
+  phone: string;                 // Phone number (login identifier)
+  type: 'admin' | 'employee_admin' | 'employee'; // Account type tier
+  email?: string;                // User email (dummy, server-generated)
+  is_active: boolean;            // Account active status
   employee_id: number | null;    // ID in tm_employees table
   commission_rate: number | null; // Commission rate percentage
   created_at: string | null;     // Account creation date
-  roles: string[];               // WordPress roles
+  roles?: string[];              // WordPress roles
+  username?: string;             // WordPress username (legacy, kept optional)
+  pin_set?: boolean;             // Whether PIN has been set
+}
+
+// Recovery Codes & PIN Types
+export interface RecoveryCodesResponse {
+  recovery_codes: string[];
+  message?: string;
+}
+
+export interface RegenerateCodesResponse {
+  codes: string[];
+  employee_id: number;
+  count: number;
+}
+
+export interface AdminResetPasswordPayload {
+  new_password: string;
+}
+
+export interface AdminResetPasswordResponse {
+  recovery_codes: string[];
+  message?: string;
+}
+
+export interface SetupPinPayload {
+  pin: string;
+  current_pin?: string;
+}
+
+export interface SetupPinResponse {
+  success: boolean;
+  pin_set: boolean;
+}
+
+export interface RecoverPasswordPayload {
+  phone: string;
+  recovery_code: string;
+  new_password: string;
+  pin: string;
+}
+
+export interface RecoverPasswordResponse {
+  success: boolean;
+  message: string;
+}
+
+export interface VerifyPhonePayload {
+  phone: string;
+}
+
+export interface VerifyPhoneResponse {
+  success: boolean;
+  employee_name: string;
+  employee_id: number;
 }
 
 // Employee record from tm_employees table (for task assignment, ledger, payouts)
@@ -1188,7 +1250,7 @@ export interface InvoicePaginatedData {
 /**
  * Account types in the ledger system
  */
-export type AccountType = 'client' | 'employee' | 'company' | 'cashbox';
+export type AccountType = 'client' | 'employee' | 'company' | 'cashbox' | 'treasury';
 
 /**
  * Transaction types in the ledger
@@ -1719,10 +1781,10 @@ export interface InvoiceValidationResult {
  * Password is optional - if not provided, backend auto-generates one
  */
 export interface CreateEmployeeAccountRequest {
-  username: string;
   display_name: string;
-  email: string;
-  password?: string; // Optional - auto-generate if not provided
+  phone: string;              // Required - phone number (login identifier)
+  password?: string;          // Optional - auto-generate if not provided
+  type?: 'admin' | 'employee_admin' | 'employee'; // Optional, defaults 'employee'
 }
 
 /**
@@ -1746,5 +1808,185 @@ export interface EmployeeCredentials {
   email: string;
   password: string;
   app_password: string;
+  phone?: string;
+  recovery_codes?: string[];
+}
+
+// ========================================
+// UNIFIED TRANSACTION TYPES
+// ========================================
+
+/**
+ * Payload for creating a unified transaction via POST /transactions/unified.
+ * Accepts any (from_account_type, from_account_id) → (to_account_type, to_account_id)
+ * combination and routes to the correct underlying handler (payout, repayment,
+ * transfer, cross-type, or treasury-to-treasury).
+ */
+export interface CreateUnifiedTransactionPayload {
+  from_account_type: AccountType;
+  from_account_id: number;
+  to_account_type: AccountType;
+  to_account_id: number;
+  amount: number;
+  description: string;
+  effective_date?: string;
+  category?: 'salary' | 'commission' | 'loan' | 'expense' | 'advance_repayment' | 'loan_repayment' | 'other';
+  notes?: string;
+}
+
+/**
+ * Response from the unified transaction endpoint.
+ */
+export interface UnifiedTransactionResponse {
+  success: boolean;
+  data?: {
+    from_transaction_id: number;
+    to_transaction_id: number;
+    from_balance: number;
+    to_balance: number;
+    direction?: string;
+    is_double_entry?: boolean;
+  };
+  message?: string;
+}
+
+// ========================================
+// TREASURY TYPES
+// ========================================
+
+/**
+ * Treasury account entity
+ */
+export interface TreasuryAccount {
+  id: number;
+  name: string;
+  sub_type: string;
+  normal_balance: 'debit' | 'credit';
+  is_active: number;
+  is_system_default: number;
+  metadata: string | null;
+  balance: number;
+  created_at: string;
+  coa_section?: string;      // e.g. 'assets', 'liabilities'
+  account_number?: string;    // e.g. '1-0001'
+}
+
+// ========================================
+// TREASURY PERMISSION TYPES
+// ========================================
+
+/**
+ * Permission record linking an employee to a treasury account
+ */
+export interface TreasuryAccountPermission {
+  id: number;
+  treasury_account_id: number;
+  employee_user_id: number;
+  employee_display_name?: string;
+  can_transact: boolean;
+  can_view: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+/**
+ * Payload for creating or updating a treasury permission
+ */
+export interface SetTreasuryPermissionPayload {
+  employee_user_id: number;
+  can_transact?: boolean;
+  can_view?: boolean;
+}
+
+/**
+ * Treasury account with permission info and balance (for employee's "my permissions" view)
+ */
+export interface TreasuryAccountWithPermission {
+  id: number;
+  name: string;
+  sub_type: string;
+  normal_balance: string;
+  is_active: boolean;
+  is_system_default: boolean;
+  metadata?: Record<string, any> | null;
+  balance: number;
+  can_transact: boolean;
+  can_view: boolean;
+  permission_id?: number;
+  created_at: string;
+  updated_at?: string | null;
+}
+
+// ========================================
+// TREASURY METADATA TYPES
+// ========================================
+
+/**
+ * Metadata field definition for UI rendering
+ */
+export interface TreasuryMetadataField {
+  key: string;
+  label: string;
+  field_type: 'text' | 'number' | 'select' | 'date' | 'boolean';
+  required?: boolean;
+  options?: string[]; // for select type
+  placeholder?: string;
+}
+
+/**
+ * Treasury account with parsed metadata (not raw JSON string)
+ */
+export interface TreasuryAccountWithMetadata {
+  id: number;
+  name: string;
+  sub_type: string;
+  normal_balance: string;
+  is_active: boolean;
+  is_system_default: boolean;
+  metadata?: Record<string, any> | null;
+  balance: number;
+  created_at: string;
+  updated_at?: string | null;
+}
+
+export interface TreasuryCategory {
+  sub_type: string;
+  count: number;
+  total_balance: number;
+}
+
+// ========================================
+// TREASURY CATEGORY METADATA TYPES
+// ========================================
+
+/**
+ * Category metadata entity stored in the database
+ */
+export interface TreasuryCategoryMetadata {
+  slug: string;
+  label: string;
+  sort_order: number;
+  is_active: boolean;
+  coa_section?: string;
+  created_at?: string;
+  updated_at?: string;
+}
+
+// ========================================
+// Treasury Export Types
+// ========================================
+
+export interface TreasuryAccountExportItem {
+  transaction_date: string;
+  transaction_type: string;
+  description: string;
+  debit: number;
+  credit: number;
+  balance: number;
+}
+
+export interface TreasuryAccountExportReportData {
+  title: string;
+  items: TreasuryAccountExportItem[];
 }
 

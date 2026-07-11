@@ -233,3 +233,21 @@ export interface CashBoxExportReportData {
   };
 }
 
+export interface TreasuryAccountExportItem {
+  transaction_date: string;
+  transaction_type: string;
+  description: string;
+  debit: number;
+  credit: number;
+  balance: number;
+}
+
+export interface TreasuryAccountExportReportData {
+  title: string;
+  items: TreasuryAccountExportItem[];
+  period?: {
+    from?: string;
+    to?: string;
+  };
+}
+

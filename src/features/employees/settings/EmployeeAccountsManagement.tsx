@@ -1,22 +1,38 @@
 import { useState } from 'react';
-import { Trash2, Save, X, Eye } from 'lucide-react';
+import { Trash2, Save, X, Key, RotateCcw, Shield } from 'lucide-react';
 import Button from '@/shared/ui/primitives/Button';
 import {
     useEmployeesList,
     useCreateEmployee,
     useUpdateUserProfile,
     useDeleteEmployee,
-    useCurrentUserCapabilities
+    useCurrentUserCapabilities,
+    useAdminResetPassword,
 } from '@/features/employees/api/userQueries';
+import RecoveryCodesModal from '@/features/employees/modals/RecoveryCodesModal';
 import type { CreateEmployeeAccountRequest, EmployeeAccount } from '@/api/types';
 import { useToast } from '@/shared/hooks/useToast';
 import { useModalStore } from '@/shared/stores/modalStore';
 import { useAuthStore } from '@/features/auth/store/authStore';
 
+const TYPE_LABELS: Record<string, string> = {
+    admin: 'مدير',
+    employee_admin: 'مدير موظفين',
+    employee: 'موظف',
+};
+
+const TYPE_STYLES: Record<string, string> = {
+    admin: 'bg-red-100 text-red-700 border-red-200',
+    employee_admin: 'bg-blue-100 text-blue-700 border-blue-200',
+    employee: 'bg-green-100 text-green-700 border-green-200',
+};
+
 const EmployeeAccountsManagement = () => {
-    // Track which employee ID AND which field is being edited
-    const [editingField, setEditingField] = useState<{ id: number; field: 'username' | 'display_name' | 'email' } | null>(null);
+    const [editingField, setEditingField] = useState<{ id: number; field: 'display_name' | 'phone' } | null>(null);
     const [editValue, setEditValue] = useState('');
+
+    // Admin reset password dialog state
+    const [resetPasswordDialog, setResetPasswordDialog] = useState<{ employee: EmployeeAccount; newPassword: string } | null>(null);
 
     const { success, error: showError } = useToast();
     const { data: capabilities } = useCurrentUserCapabilities();
@@ -24,33 +40,32 @@ const EmployeeAccountsManagement = () => {
     const createEmployee = useCreateEmployee();
     const updateUserProfile = useUpdateUserProfile();
     const deleteEmployee = useDeleteEmployee();
+    const adminResetPassword = useAdminResetPassword();
     const { openModal, closeModal } = useModalStore();
     const { user: currentUser, logout } = useAuthStore();
 
-    // Check permissions
-    const hasPermission = capabilities?.tm_manage_users || capabilities?.manage_options;
+    // Permission checks — also accept employee type
+    const hasManageOptions = capabilities?.manage_options || false;
+    const isElevated = currentUser?.type === 'admin' || currentUser?.type === 'employee_admin';
+    const hasTmManageEmployees = hasManageOptions || isElevated || currentUser?.capabilities?.tm_manage_users || false;
 
     const handleCreateEmployee = async (data: CreateEmployeeAccountRequest) => {
         try {
             const credentials = await createEmployee.mutateAsync(data);
-            closeModal(); // Close create modal
-            // Open credentials modal
+            closeModal();
             openModal('employeeCredentials', { credentials });
             success('تم إنشاء الموظف بنجاح');
         } catch (err: any) {
             const errorMessage = err.response?.data?.message || 'فشل في إنشاء الموظف';
             showError(errorMessage);
 
-            // Check for specific errors
-            if (errorMessage.toLowerCase().includes('username')) {
-                showError('اسم المستخدم موجود بالفعل');
-            } else if (errorMessage.toLowerCase().includes('email')) {
-                showError('البريد الإلكتروني موجود بالفعل');
+            if (errorMessage.toLowerCase().includes('phone')) {
+                showError('رقم الجوال موجود بالفعل');
             }
         }
     };
 
-    const startEditing = (id: number, field: 'username' | 'display_name' | 'email', currentValue: string) => {
+    const startEditing = (id: number, field: 'display_name' | 'phone', currentValue: string) => {
         setEditingField({ id, field });
         setEditValue(currentValue);
     };
@@ -63,9 +78,13 @@ const EmployeeAccountsManagement = () => {
     const saveEdit = async () => {
         if (!editingField) return;
 
-        // Check if editing own username - will require re-login
-        const isEditingOwnUsername = editingField.field === 'username' &&
-            currentUser?.id === editingField.id;
+        if (editingField.field === 'phone') {
+            const digits = editValue.replace(/[^0-9]/g, '');
+            if (digits.length < 7 || digits.length > 15) {
+                showError('رقم الهاتف غير صالح. يجب أن يكون 7-15 رقم.');
+                return;
+            }
+        }
 
         try {
             await updateUserProfile.mutateAsync({
@@ -75,18 +94,7 @@ const EmployeeAccountsManagement = () => {
 
             setEditingField(null);
             setEditValue('');
-
-            if (isEditingOwnUsername) {
-                // Username changed - must logout as the auth token is now invalid
-                success('تم تغيير اسم المستخدم بنجاح. يجب إعادة تسجيل الدخول.');
-                // Delay logout to show the success message
-                setTimeout(() => {
-                    logout();
-                    window.location.href = '/login';
-                }, 1500);
-            } else {
-                success('تم تحديث الموظف بنجاح');
-            }
+            success('تم تحديث الموظف بنجاح');
         } catch (err: any) {
             const errorMessage = err.response?.data?.message || 'فشل في تحديث الموظف';
             showError(errorMessage);
@@ -94,7 +102,6 @@ const EmployeeAccountsManagement = () => {
     };
 
     const handleDeleteClick = (employee: EmployeeAccount) => {
-        // Open preview modal instead of direct delete confirmation
         openModal('employeeDeletionPreview', {
             employee,
             onConfirmDelete: async () => {
@@ -104,20 +111,38 @@ const EmployeeAccountsManagement = () => {
         });
     };
 
-    const handleViewCredentials = (employee: EmployeeAccount) => {
-        openModal('employeeCredentials', {
-            credentials: {
-                id: employee.id,
-                username: employee.username,
-                display_name: employee.display_name,
-                email: employee.email,
-                password: '****************', // Hidden for security
-                app_password: '****************' // Hidden for security
-            }
-        });
+    const [recoveryModalEmployee, setRecoveryModalEmployee] = useState<EmployeeAccount | null>(null);
+
+    const handleOpenRecoveryCodes = (employee: EmployeeAccount) => {
+        setRecoveryModalEmployee(employee);
     };
 
-    if (!hasPermission) {
+    const handleAdminResetPassword = async () => {
+        if (!resetPasswordDialog) return;
+
+        try {
+            const result = await adminResetPassword.mutateAsync({
+                userId: resetPasswordDialog.employee.id,
+                password: resetPasswordDialog.newPassword,
+            });
+            setResetPasswordDialog(null);
+            openModal('employeeCredentials', {
+                credentials: {
+                    id: resetPasswordDialog.employee.id,
+                    display_name: resetPasswordDialog.employee.display_name,
+                    password: resetPasswordDialog.newPassword,
+                    app_password: '****************',
+                    recovery_codes: result.recovery_codes,
+                }
+            });
+            success('تم إعادة تعيين كلمة المرور بنجاح');
+        } catch (err: any) {
+            const errorMessage = err.response?.data?.message || 'فشل في إعادة تعيين كلمة المرور';
+            showError(errorMessage);
+        }
+    };
+
+    if (!hasTmManageEmployees) {
         return (
             <div className="p-6 bg-status-warning-bg border border-status-warning-border rounded-lg">
                 <p className="text-status-warning-text font-semibold">
@@ -159,6 +184,7 @@ const EmployeeAccountsManagement = () => {
                     onClick={() => openModal('createEmployee', {
                         onSubmit: handleCreateEmployee,
                         isLoading: createEmployee.isPending,
+                        isAdmin: hasManageOptions,
                     })}
                 >
                     إنشاء موظف جديد
@@ -179,6 +205,7 @@ const EmployeeAccountsManagement = () => {
                         onClick={() => openModal('createEmployee', {
                             onSubmit: handleCreateEmployee,
                             isLoading: createEmployee.isPending,
+                            isAdmin: hasManageOptions,
                         })}
                     >
                         إنشاء موظف جديد
@@ -190,19 +217,16 @@ const EmployeeAccountsManagement = () => {
                         <thead className="bg-background sticky top-0">
                             <tr>
                                 <th className="px-4 py-3 text-right text-sm font-semibold text-foreground border-b border-border">
-                                    اسم المستخدم
+                                    الاسم
                                 </th>
-                                <th className="px-4 py-3 text-right text-sm font-semibold text-foreground border-b border-border">
-                                    الاسم المعروض
+                                <th className="px-4 py-3 text-center text-sm font-semibold text-foreground border-b border-border">
+                                    رقم الجوال
                                 </th>
-                                <th className="px-4 py-3 text-right text-sm font-semibold text-foreground border-b border-border">
-                                    البريد الإلكتروني
+                                <th className="px-4 py-3 text-center text-sm font-semibold text-foreground border-b border-border">
+                                    نوع الحساب
                                 </th>
-                                <th className="px-4 py-3 text-right text-sm font-semibold text-foreground border-b border-border">
-                                    نسبة العمولة
-                                </th>
-                                <th className="px-4 py-3 text-right text-sm font-semibold text-foreground border-b border-border">
-                                    تاريخ الإنشاء
+                                <th className="px-4 py-3 text-center text-sm font-semibold text-foreground border-b border-border">
+                                    الحالة
                                 </th>
                                 <th className="px-4 py-3 text-center text-sm font-semibold text-foreground border-b border-border">
                                     الإجراءات
@@ -212,34 +236,6 @@ const EmployeeAccountsManagement = () => {
                         <tbody>
                             {employees.map((employee) => (
                                 <tr key={employee.id} className="hover:bg-background transition-colors">
-                                    {/* Username - Editable */}
-                                    <td className="px-4 py-3 text-sm border-b border-border">
-                                        {editingField?.id === employee.id && editingField?.field === 'username' ? (
-                                            <div className="flex items-center gap-2">
-                                                <input
-                                                    type="text"
-                                                    value={editValue}
-                                                    onChange={(e) => setEditValue(e.target.value)}
-                                                    className="px-2 py-1 border border-border rounded text-sm flex-1"
-                                                    autoFocus
-                                                />
-                                                <Button variant="outline-success" size="sm" onClick={saveEdit} disabled={updateUserProfile.isPending}>
-                                                    <Save className="h-3 w-3" />
-                                                </Button>
-                                                <Button variant="outline-danger" size="sm" onClick={cancelEditing}>
-                                                    <X className="h-3 w-3" />
-                                                </Button>
-                                            </div>
-                                        ) : (
-                                            <button
-                                                onClick={() => startEditing(employee.id, 'username', employee.username)}
-                                                className="text-primary hover:underline cursor-pointer text-right"
-                                            >
-                                                {employee.username}
-                                            </button>
-                                        )}
-                                    </td>
-
                                     {/* Display Name - Editable */}
                                     <td className="px-4 py-3 text-sm border-b border-border">
                                         {editingField?.id === employee.id && editingField?.field === 'display_name' ? (
@@ -268,16 +264,17 @@ const EmployeeAccountsManagement = () => {
                                         )}
                                     </td>
 
-                                    {/* Email - Editable */}
-                                    <td className="px-4 py-3 text-sm border-b border-border">
-                                        {editingField?.id === employee.id && editingField?.field === 'email' ? (
-                                            <div className="flex items-center gap-2">
+                                    {/* Phone */}
+                                    <td className="px-4 py-3 text-sm border-b border-border text-center">
+                                        {editingField?.id === employee.id && editingField.field === 'phone' ? (
+                                            <div className="flex items-center gap-1 justify-center">
                                                 <input
-                                                    type="email"
+                                                    type="text"
                                                     value={editValue}
                                                     onChange={(e) => setEditValue(e.target.value)}
-                                                    className="px-2 py-1 border border-border rounded text-sm flex-1"
+                                                    className="w-28 px-2 py-1 text-sm border border-border rounded bg-muted/50 text-center"
                                                     autoFocus
+                                                    dir="ltr"
                                                 />
                                                 <Button variant="outline-success" size="sm" onClick={saveEdit} disabled={updateUserProfile.isPending}>
                                                     <Save className="h-3 w-3" />
@@ -288,36 +285,71 @@ const EmployeeAccountsManagement = () => {
                                             </div>
                                         ) : (
                                             <button
-                                                onClick={() => startEditing(employee.id, 'email', employee.email)}
-                                                className="text-primary hover:underline cursor-pointer text-right w-full"
+                                                onClick={() => startEditing(employee.id, 'phone', employee.phone || '')}
+                                                className="text-primary hover:underline cursor-pointer"
+                                                dir="ltr"
                                             >
-                                                {employee.email}
+                                                {employee.phone || 'غير محدد'}
                                             </button>
                                         )}
                                     </td>
 
-                                    {/* Commission Rate */}
-                                    <td className="px-4 py-3 text-sm text-foreground/70 border-b border-border text-right">
-                                        {employee.commission_rate ? `${employee.commission_rate}%` : 'غير محدد'}
+                                    {/* Type Badge */}
+                                    <td className="px-4 py-3 text-sm border-b border-border text-center">
+                                        <span className={`inline-block px-2.5 py-1 rounded-full text-xs font-medium border ${TYPE_STYLES[employee.type] || TYPE_STYLES.employee}`}>
+                                            {TYPE_LABELS[employee.type] || employee.type}
+                                        </span>
                                     </td>
 
-                                    {/* Created Date */}
-                                    <td className="px-4 py-3 text-sm text-foreground/70 border-b border-border text-right">
-                                        {employee.created_at ? new Date(employee.created_at).toLocaleDateString('ar-SA') : 'غير محدد'}
+                                    {/* Active Status */}
+                                    <td className="px-4 py-3 text-sm border-b border-border text-center">
+                                        {employee.is_active ? (
+                                            <span className="inline-flex items-center gap-1 rounded-full border border-status-success-border bg-status-success-bg px-2.5 py-1 text-xs text-status-success-text">
+                                                نشط
+                                            </span>
+                                        ) : (
+                                            <span className="inline-flex items-center gap-1 rounded-full border border-status-danger-border bg-status-danger-bg px-2.5 py-1 text-xs text-status-danger-text">
+                                                غير نشط
+                                            </span>
+                                        )}
                                     </td>
 
                                     {/* Actions */}
                                     <td className="px-4 py-3 text-sm border-b border-border">
                                         <div className="flex items-center justify-center gap-2">
+                                            {/* Edit Button */}
                                             <Button
                                                 variant="outline-secondary"
                                                 size="sm"
-                                                onClick={() => handleViewCredentials(employee)}
-                                                title="عرض بيانات الموظف"
+                                                onClick={() => startEditing(employee.id, 'display_name', employee.display_name)}
+                                                title="تعديل الاسم"
                                             >
-                                                <Eye className="h-4 w-4" />
+                                                <Save className="h-4 w-4" />
                                             </Button>
 
+                                            {/* Recovery Codes Button */}
+                                            <Button
+                                                variant="outline-primary"
+                                                size="sm"
+                                                onClick={() => handleOpenRecoveryCodes(employee)}
+                                                title="رموز الاسترجاع"
+                                            >
+                                                <Key className="h-4 w-4" />
+                                            </Button>
+
+                                            {/* Admin Reset Password Button - only for manage_options */}
+                                            {hasManageOptions && (
+                                                <Button
+                                                    variant="outline-danger"
+                                                    size="sm"
+                                                    onClick={() => setResetPasswordDialog({ employee, newPassword: '' })}
+                                                    title="إعادة تعيين كلمة المرور"
+                                                >
+                                                    <RotateCcw className="h-4 w-4" />
+                                                </Button>
+                                            )}
+
+                                            {/* Delete Button */}
                                             <Button
                                                 variant="outline-danger"
                                                 size="sm"
@@ -332,6 +364,62 @@ const EmployeeAccountsManagement = () => {
                             ))}
                         </tbody>
                     </table>
+                </div>
+            )}
+
+            {/* Recovery Codes Modal */}
+            {recoveryModalEmployee && (
+                <RecoveryCodesModal
+                    employee={recoveryModalEmployee}
+                    isOpen={!!recoveryModalEmployee}
+                    onClose={() => setRecoveryModalEmployee(null)}
+                    isAdmin={hasManageOptions}
+                />
+            )}
+
+            {/* Admin Reset Password Dialog */}
+            {resetPasswordDialog && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+                    <div className="bg-card border border-border rounded-lg p-6 w-full max-w-md mx-4" dir="rtl">
+                        <h3 className="text-lg font-bold text-foreground mb-4">
+                            إعادة تعيين كلمة المرور - {resetPasswordDialog.employee.display_name}
+                        </h3>
+                        <div className="space-y-4">
+                            <div className="space-y-1.5">
+                                <label className="block text-sm font-semibold text-foreground tracking-tight">
+                                    كلمة المرور الجديدة *
+                                </label>
+                                <input
+                                    type="password"
+                                    value={resetPasswordDialog.newPassword}
+                                    onChange={(e) => setResetPasswordDialog(prev => prev ? { ...prev, newPassword: e.target.value } : null)}
+                                    className="base-input w-full"
+                                    placeholder="أدخل كلمة المرور الجديدة"
+                                    autoFocus
+                                />
+                            </div>
+                            <p className="text-xs text-foreground/60">
+                                سيتم إنشاء رموز استرجاع جديدة بعد إعادة تعيين كلمة المرور.
+                            </p>
+                            <div className="flex items-center justify-start gap-3 pt-4 border-t border-border">
+                                <Button
+                                    variant="primary"
+                                    onClick={handleAdminResetPassword}
+                                    isLoading={adminResetPassword.isPending}
+                                    disabled={!resetPasswordDialog.newPassword}
+                                >
+                                    إعادة التعيين
+                                </Button>
+                                <Button
+                                    variant="outline-info"
+                                    onClick={() => setResetPasswordDialog(null)}
+                                    disabled={adminResetPassword.isPending}
+                                >
+                                    إلغاء
+                                </Button>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             )}
         </div>

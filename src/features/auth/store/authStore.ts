@@ -4,16 +4,20 @@ import type { User } from '@/api/types';
 
 export type UserRole = 'admin' | 'employee' | 'both' | null;
 
-// Helper function to compute user role based on capabilities and employee status
+// Helper function to compute user role based on tm_employees.type
+// Falls back to WordPress manage_options capability for users without an explicit type
 const computeUserRole = (user: User | null): UserRole => {
   if (!user) return null;
-  
-  const isAdmin = user.capabilities?.manage_options || false;
-  const isEmployee = user.employee_id != null; // Checks for both null and undefined
-  
-  if (isAdmin && isEmployee) return 'both';
-  if (isAdmin) return 'admin';
-  if (isEmployee) return 'employee';
+
+  if (user.type === 'admin') return 'admin';
+  if (user.type === 'employee_admin') return 'both';
+
+  // 'employee' is the DB default for anyone with a tm_employees record.
+  // It should NOT override actual admin capabilities — always check fallback first.
+  // Fallback for users with manage_options but no explicit admin-type in tm_employees:
+  if (user.capabilities?.manage_options) return 'admin';
+
+  if (user.type === 'employee') return 'employee';
   return null;
 };
 
@@ -71,11 +75,11 @@ export const useAuthStore = create<AuthState & AuthActions>()(
       // Helper methods for role checking
       isEmployee: () => {
         const { user } = get();
-        return user?.employee_id != null; // Use != to check for both null and undefined
+        return user?.type === 'employee' || user?.type === 'employee_admin';
       },
       isAdmin: () => {
         const { user } = get();
-        return user?.capabilities?.manage_options || false;
+        return user?.type === 'admin' || user?.type === 'employee_admin' || !!user?.capabilities?.manage_options;
       },
       getUserRole: () => {
         const { user } = get();

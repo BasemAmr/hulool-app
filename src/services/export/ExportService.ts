@@ -9,6 +9,7 @@ import { generateClientTasksExcel } from './ClientTasksGenerator';
 import { generateClientCreditsExcel } from './ClientCreditsGenerator';
 import { generateEmployeeStatementExcel } from './EmployeeStatementGenerator';
 import { generateCashBoxExcel } from './CashBoxExcelGenerator';
+import { generateTreasuryAccountExcel } from './TreasuryAccountExcelGenerator';
 import type {
   AllClientsReportData,
   AllTasksReportData,
@@ -18,6 +19,7 @@ import type {
   ClientCreditsReportData,
   EmployeeStatementReportData,
   CashBoxExportReportData,
+  TreasuryAccountExportReportData,
   ExportOptions
 } from './exportTypes';
 
@@ -262,6 +264,31 @@ class ExportService {
     } catch (error) {
       console.error('Error exporting cash box:', error);
       throw new Error('فشل في تصدير تقرير الصندوق');
+    }
+  }
+
+  /**
+   * Export treasury account transactions
+   */
+  public async exportTreasuryAccount(
+    data: TreasuryAccountExportReportData,
+    options?: ExportOptions
+  ): Promise<void> {
+    try {
+      const workbook = new ExcelJS.Workbook();
+
+      workbook.creator = 'نظام إدارة الأعمال';
+      workbook.lastModifiedBy = 'نظام إدارة الأعمال';
+      workbook.created = new Date();
+      workbook.modified = new Date();
+
+      generateTreasuryAccountExcel(workbook, data, options);
+
+      const filename = options?.customFilename || data.title.replace(/\s+/g, '_');
+      await saveWorkbook(workbook, filename);
+    } catch (error) {
+      console.error('Error exporting treasury account:', error);
+      throw new Error('فشل في تصدير تقرير الحساب المالي');
     }
   }
 }

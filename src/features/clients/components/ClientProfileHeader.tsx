@@ -1,19 +1,19 @@
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
-// import { useState, useRef, useEffect } from 'react';
-// import { createPortal } from 'react-dom';
+import { useState, useRef, useEffect } from 'react';
 import type { Client } from '@/api/types';
 import Button from '@/shared/ui/primitives/Button';
 import WhatsAppIcon from '@/shared/ui/icons/WhatsAppIcon';
-import { Plus, Download, TrendingUp, TrendingDown } from 'lucide-react'; // For a generic export icon
+import { Plus, Download, TrendingUp, TrendingDown, ChevronDown } from 'lucide-react';
 import { useGetClientCredits } from '@/features/clients/api/clientCreditQueries';
 import SaudiRiyalIcon from '@/shared/ui/icons/SaudiRiyalIcon';
+import { useModalStore } from '@/shared/stores/modalStore';
 import {
   DropdownMenu,
   DropdownMenuTrigger,
   DropdownMenuContent,
   DropdownMenuItem,
-} from '@/shared/ui/shadcn/dropdown-menu'; // Adjust path as needed
+} from '@/shared/ui/shadcn/dropdown-menu';
 
 type ProfileViewMode = 'general' | 'tasks' | 'receivables';
 
@@ -23,8 +23,6 @@ interface ClientProfileHeaderProps {
   onAddTask: () => void;
   onAddInvoice: () => void;
   onAddCredit: () => void;
-  onAddSarfVoucher?: () => void;
-  onAddQabdVoucher?: () => void;
   // --- MODIFIED PROPS ---
   onExportStatement: () => void;
   onExportTasks: () => void;
@@ -56,14 +54,16 @@ const ClientProfileHeader = ({
   onAddTask, 
   onAddInvoice, 
   onAddCredit,
-  onAddSarfVoucher,
-  onAddQabdVoucher,
   onExportStatement,
   onExportTasks,
   onExportCredits,
   isExporting,
 }: ClientProfileHeaderProps) => {
   const { t } = useTranslation();
+  const openModal = useModalStore(s => s.openModal);
+
+  const openUnified = (overrides: Record<string, any>) =>
+    openModal('unifiedTransaction', { lockDirection: true, ...overrides });
 
   return (
     <div className="rounded-lg border border-border bg-card shadow-sm mb-2">
@@ -124,27 +124,78 @@ const ClientProfileHeader = ({
               </DropdownMenuContent>
             </DropdownMenu>
 
-            {/* Voucher Buttons */}
-            {onAddQabdVoucher && (
-              <Button 
-                size="sm" 
-                onClick={onAddQabdVoucher}
-                variant="outline-primary"
-                className="font-bold"
-              >
-                <TrendingUp size={16} className="me-1 text-status-success-text" /> سند قبض
-              </Button>
-            )}
-            {onAddSarfVoucher && (
-              <Button 
-                size="sm" 
-                onClick={onAddSarfVoucher}
-                variant="outline-primary"
-                className="font-bold"
-              >
-                <TrendingDown size={16} className="me-1 text-status-danger-text" /> سند صرف
-              </Button>
-            )}
+            {/* Transaction Buttons */}
+            {/* سند قبض */}
+            <Button
+              size="sm"
+              variant="outline-success"
+              className="font-bold flex items-center gap-1"
+              onClick={() => openUnified({
+                defaultFromCardType: 'client',
+                defaultFromAccountId: String(client.id),
+                defaultToCardType: 'treasury',
+                title: 'سند قبض',
+              })}
+            >
+              <TrendingUp size={16} />
+              سند قبض
+            </Button>
+
+            {/* سند صرف */}
+            <Button
+              size="sm"
+              variant="outline-danger"
+              className="font-bold flex items-center gap-1"
+              onClick={() => openUnified({
+                defaultFromCardType: 'treasury',
+                defaultToCardType: 'client',
+                defaultToAccountId: String(client.id),
+                title: 'سند صرف',
+              })}
+            >
+              <TrendingDown size={16} />
+              سند صرف
+            </Button>
+
+            {/* سند تسوية */}
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  size="sm"
+                  variant="outline-secondary"
+                  className="font-bold flex items-center gap-1"
+                >
+                  <span>سند تسوية</span>
+                  <ChevronDown size={16} />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="text-right">
+                <DropdownMenuItem
+                  className="cursor-pointer flex flex-row-reverse justify-end gap-2 text-status-success-text font-bold"
+                  onClick={() => openUnified({
+                    defaultFromCardType: 'client',
+                    defaultFromAccountId: String(client.id),
+                    defaultToCardType: 'settlement',
+                    title: 'تسوية قبض',
+                  })}
+                >
+                  <span>تسوية قبض</span>
+                  <TrendingUp size={16} className="text-status-success-text" />
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  className="cursor-pointer flex flex-row-reverse justify-end gap-2 text-status-danger-text font-bold"
+                  onClick={() => openUnified({
+                    defaultFromCardType: 'settlement',
+                    defaultToCardType: 'client',
+                    defaultToAccountId: String(client.id),
+                    title: 'تسوية صرف',
+                  })}
+                >
+                  <span>تسوية صرف</span>
+                  <TrendingDown size={16} className="text-status-danger-text" />
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
 
             {/* Export Dropdown */}
             {(mode === 'receivables' || mode === 'tasks') && (

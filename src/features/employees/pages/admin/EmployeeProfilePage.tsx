@@ -1,11 +1,12 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { User, DollarSign, FileText, Users as UsersIcon, CreditCard, Activity, HandCoins, Clock, TrendingUp, TrendingDown, LayoutDashboard } from 'lucide-react';
+import { User, DollarSign, FileText, Users as UsersIcon, CreditCard, Activity, Clock, LayoutDashboard, ChevronDown, TrendingUp, TrendingDown } from 'lucide-react';
 import Button from '@/shared/ui/primitives/Button';
 import { useModalStore } from '@/shared/stores/modalStore';
 import { useGetEmployee, useGetEmployeeLedger, type EmployeeLedgerResponse } from '@/features/employees/api/employeeQueries';
 import { formatCurrency } from '@/shared/utils/formatUtils';
 import { Card, CardHeader, CardContent } from '@/shared/ui/shadcn/card';
+import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from '@/shared/ui/shadcn/dropdown-menu';
 
 // Import table components (to be created)
 import EmployeeTransactionsTable from '../../components/management/EmployeeTransactionsTable';
@@ -70,6 +71,8 @@ interface EmployeePageHeader {
   employee: any;
   onSarf: () => void;
   onQabd: () => void;
+  onSettlementQabd: () => void;
+  onSettlementSarf: () => void;
   activeMode: ViewMode;
   onModeChange: (mode: ViewMode) => void;
   modeOptions: ReadonlyArray<{ key: ViewMode; label: string; icon: any }>;
@@ -77,7 +80,9 @@ interface EmployeePageHeader {
   pendingCount: number;
 }
 
-const EmployeeHeader: React.FC<EmployeePageHeader> = ({ employee, onSarf, onQabd, activeMode, onModeChange, modeOptions, ledgerData, pendingCount }) => {
+const EmployeeHeader: React.FC<EmployeePageHeader> = ({ employee, onSarf, onQabd, onSettlementQabd, onSettlementSarf, activeMode, onModeChange, modeOptions, ledgerData, pendingCount }) => {
+  const openModal = useModalStore((state) => state.openModal);
+
   return (
     <div className="flex flex-wrap justify-around items-center gap-4 mb-6">
       {/* Employee Name and Status */}
@@ -116,24 +121,55 @@ const EmployeeHeader: React.FC<EmployeePageHeader> = ({ employee, onSarf, onQabd
 
       {/* Action Buttons */}
       <div className="flex items-center gap-2">
+        {/* سند قبض */}
         <Button
-          variant="outline-primary"
+          variant="outline-success"
           size="sm"
           onClick={onQabd}
-          className='font-bold text-lg rounded-md px-4 py-2'
+          className='font-bold text-lg rounded-md px-4 py-2 flex items-center gap-1'
         >
-          <HandCoins size={16} className="mr-1" />
-          قبض
+          <TrendingUp size={16} />
+          سند قبض
         </Button>
+        {/* سند صرف */}
         <Button
-          variant="primary"
+          variant="outline-danger"
           size="sm"
           onClick={onSarf}
-          className='font-bold text-lg rounded-md px-4 py-2'
+          className='font-bold text-lg rounded-md px-4 py-2 flex items-center gap-1'
         >
-          <DollarSign size={16} className="mr-1" />
-          صرف
+          <TrendingDown size={16} />
+          سند صرف
         </Button>
+        {/* سند تسوية */}
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button
+              variant="outline-secondary"
+              size="sm"
+              className='font-bold text-lg rounded-md px-4 py-2 flex items-center gap-1'
+            >
+              <span>سند تسوية</span>
+              <ChevronDown size={16} />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="text-right">
+            <DropdownMenuItem
+              className="cursor-pointer flex flex-row-reverse justify-end gap-2 text-status-success-text font-bold"
+              onClick={onSettlementQabd}
+            >
+              <span>تسوية قبض</span>
+              <TrendingUp size={16} className="text-status-success-text" />
+            </DropdownMenuItem>
+            <DropdownMenuItem
+              className="cursor-pointer flex flex-row-reverse justify-end gap-2 text-status-danger-text font-bold"
+              onClick={onSettlementSarf}
+            >
+              <span>تسوية صرف</span>
+              <TrendingDown size={16} className="text-status-danger-text" />
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
     </div>
   );
@@ -164,35 +200,45 @@ const EmployeeProfilePage = () => {
 
   const handleSarf = () => {
     if (!employee) return;
-    openModal('manualTransaction', {
-      preselectedAccount: {
-        type: 'employee',
-        id: employeeTableId,
-        name: employee.display_name,
-        email: employee.user_email,
-        balance: 0,
-        last_activity: null,
-        pending_count: 0,
-        pending_amount: 0
-      },
-      direction: 'payout'
+    openModal('unifiedTransaction', {
+      defaultFromCardType: 'treasury',
+      defaultToCardType: 'employee',
+      defaultToAccountId: String(employeeTableId),
+      lockDirection: true,
+      title: 'سند صرف',
     });
   };
 
   const handleQabd = () => {
     if (!employee) return;
-    openModal('manualTransaction', {
-      preselectedAccount: {
-        type: 'employee',
-        id: employeeTableId,
-        name: employee.display_name,
-        email: employee.user_email,
-        balance: 0,
-        last_activity: null,
-        pending_count: 0,
-        pending_amount: 0
-      },
-      direction: 'repayment'
+    openModal('unifiedTransaction', {
+      defaultFromCardType: 'employee',
+      defaultFromAccountId: String(employeeTableId),
+      defaultToCardType: 'treasury',
+      lockDirection: true,
+      title: 'سند قبض',
+    });
+  };
+
+  const handleSettlementQabd = () => {
+    if (!employee) return;
+    openModal('unifiedTransaction', {
+      defaultFromCardType: 'employee',
+      defaultFromAccountId: String(employee.id),
+      defaultToCardType: 'settlement',
+      lockDirection: true,
+      title: 'تسوية قبض',
+    });
+  };
+
+  const handleSettlementSarf = () => {
+    if (!employee) return;
+    openModal('unifiedTransaction', {
+      defaultFromCardType: 'settlement',
+      defaultToCardType: 'employee',
+      defaultToAccountId: String(employee.id),
+      lockDirection: true,
+      title: 'تسوية صرف',
     });
   };
 
@@ -228,6 +274,8 @@ const EmployeeProfilePage = () => {
         employee={employee}
         onSarf={handleSarf}
         onQabd={handleQabd}
+        onSettlementQabd={handleSettlementQabd}
+        onSettlementSarf={handleSettlementSarf}
         activeMode={activeMode}
         onModeChange={handleModeChange}
         modeOptions={modeOptions}

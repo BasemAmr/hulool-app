@@ -15,14 +15,29 @@ import { TOAST_MESSAGES } from '@/shared/constants/toastMessages';
 // Custom Cell for Actions
 const ActionsCell = React.memo(({ rowData }: CellProps<CashBox, any>) => {
   const navigate = useNavigate();
+  const openModal = useModalStore((state) => state.openModal);
+  const { isAdmin } = useAuthStore();
+  const isClosed = rowData.status === 'closed';
+
   return (
-    <Button 
-      variant="outline-primary" 
-      size="sm" 
-      onClick={() => navigate(`/financial-center/cash-boxes/${rowData.id}`)}
-    >
-      عرض السندات
-    </Button>
+    <div className="flex gap-2">
+      <Button
+        variant="outline-primary"
+        size="sm"
+        onClick={() => navigate(`/financial-center/cash-boxes/${rowData.id}`)}
+      >
+        عرض السندات
+      </Button>
+      {isAdmin() && !isClosed && (
+        <Button
+          variant="outline-info"
+          size="sm"
+          onClick={() => openModal('reassignCashBoxEmployee', { cashBox: rowData })}
+        >
+          إعادة تعيين
+        </Button>
+      )}
+    </div>
   );
 });
 ActionsCell.displayName = 'ActionsCell';
@@ -94,7 +109,7 @@ export const CashBoxesListPage = () => {
   ];
 
   return (
-    <div className="p-6 space-y-6">
+    <div className="p-6 space-y-6 text-right" dir="rtl">
       <div className="flex justify-between items-center">
         <h1 className="text-2xl font-bold">صناديق العهدة</h1>
         <div className="flex gap-2">
@@ -115,7 +130,7 @@ export const CashBoxesListPage = () => {
         </div>
       </div>
 
-      <div className="bg-white rounded-lg shadow">
+      <div className="bg-bg-surface rounded-lg shadow border border-border-default">
         <HuloolDataGrid
           data={boxes || []}
           columns={columns}

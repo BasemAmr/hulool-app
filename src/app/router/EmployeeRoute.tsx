@@ -1,4 +1,4 @@
-import { Navigate, Outlet } from 'react-router-dom';
+import { Navigate, Outlet, useLocation } from 'react-router-dom';
 import { useAuthStore } from '@/features/auth/store/authStore';
 
 /**
@@ -11,7 +11,8 @@ import { useAuthStore } from '@/features/auth/store/authStore';
 const EmployeeRoute = () => {
   const status = useAuthStore((state) => state.status);
   const userRole = useAuthStore((state) => state.userRole);
-
+  const user = useAuthStore((state) => state.user);
+  const location = useLocation();
 
   // On initial load, status is 'idle'. Show loading while auth state is being restored.
   if (status === 'idle') {
@@ -33,6 +34,11 @@ const EmployeeRoute = () => {
   // If authenticated but not an employee, redirect to admin dashboard
   if (userRole === 'admin') {
     return <Navigate to="/dashboard" replace />;
+  }
+
+  // Enforce PIN setup for employees who haven't set one yet
+  if (!user?.pin_set && !location.pathname.includes('/employee/onboarding')) {
+    return <Navigate to="/employee/onboarding" replace />;
   }
 
   // Allow employee and both roles to access employee routes

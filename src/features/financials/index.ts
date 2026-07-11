@@ -1,1 +1,1 @@
-export { default as AccountsOverviewPage } from './pages/AccountsOverviewPage';
+export { default as FinancialCenterPage } from './pages/FinancialCenterPage';

@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 // import { useNavigate } from 'react-router-dom';
 import { useGetClientsInfinite, /*useExportClients*/ } from '@/features/clients/api/clientQueries';
@@ -9,7 +9,8 @@ import type { Client } from '@/api/types';
 import ClientsTable from '@/features/clients/components/ClientsTable';
 import Button from '@/shared/ui/primitives/Button';
 import RegionSelect from '@/features/clients/components/RegionSelect';
-import { PlusCircle, FileSpreadsheet, Printer, X, TrendingUp, TrendingDown } from 'lucide-react';
+import { PlusCircle, FileSpreadsheet, Printer, X, ChevronDown, TrendingUp, TrendingDown } from 'lucide-react';
+import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from '@/shared/ui/shadcn/dropdown-menu';
 // --- MODIFICATIONS START ---
 import { useMutation } from '@tanstack/react-query';
 import { exportService } from '@/services/export/ExportService';
@@ -26,6 +27,7 @@ const AllClientsPage = () => {
 
   const [search, setSearch] = useState('');
   const [regionFilter, setRegionFilter] = useState<number | null>(null);
+
 
   // Apply clients page background
   useEffect(() => {
@@ -126,14 +128,78 @@ const AllClientsPage = () => {
             <PlusCircle size={16} className="me-1" />
             {t('clients.addNew')}
           </Button>
-          <Button onClick={() => openModal('manualTransaction', { direction: 'repayment' })} variant="outline-primary" size="sm" className="font-bold">
-            <TrendingUp size={16} className="me-1 text-status-success-text" />
+
+          {/* سند قبض */}
+          <Button
+            variant="outline-success"
+            size="sm"
+            className="font-bold flex items-center gap-1"
+            onClick={() => openModal('unifiedTransaction', {
+              defaultFromCardType: 'client',
+              defaultToCardType: 'treasury',
+              lockDirection: true,
+              title: 'سند قبض',
+            })}
+          >
+            <TrendingUp size={16} />
             سند قبض
           </Button>
-          <Button onClick={() => openModal('manualTransaction', { direction: 'payout' })} variant="outline-primary" size="sm" className="font-bold">
-            <TrendingDown size={16} className="me-1 text-status-danger-text" />
+
+          {/* سند صرف */}
+          <Button
+            variant="outline-danger"
+            size="sm"
+            className="font-bold flex items-center gap-1"
+            onClick={() => openModal('unifiedTransaction', {
+              defaultFromCardType: 'treasury',
+              defaultToCardType: 'client',
+              lockDirection: true,
+              title: 'سند صرف',
+            })}
+          >
+            <TrendingDown size={16} />
             سند صرف
           </Button>
+
+          {/* سند تسوية */}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                variant="outline-secondary"
+                size="sm"
+                className="font-bold flex items-center gap-1"
+              >
+                <span>سند تسوية</span>
+                <ChevronDown size={16} />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="text-right">
+              <DropdownMenuItem
+                className="cursor-pointer flex flex-row-reverse justify-end gap-2 text-status-success-text font-bold"
+                onClick={() => openModal('unifiedTransaction', {
+                  defaultFromCardType: 'client',
+                  defaultToCardType: 'settlement',
+                  lockDirection: true,
+                  title: 'تسوية قبض',
+                })}
+              >
+                <span>تسوية قبض</span>
+                <TrendingUp size={16} className="text-status-success-text" />
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                className="cursor-pointer flex flex-row-reverse justify-end gap-2 text-status-danger-text font-bold"
+                onClick={() => openModal('unifiedTransaction', {
+                  defaultFromCardType: 'settlement',
+                  defaultToCardType: 'client',
+                  lockDirection: true,
+                  title: 'تسوية صرف',
+                })}
+              >
+                <span>تسوية صرف</span>
+                <TrendingDown size={16} className="text-status-danger-text" />
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
         
         {/* Search and Export */}

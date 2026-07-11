@@ -6,7 +6,7 @@ import React, { useRef, useCallback } from 'react';
 interface NumberInputProps extends Omit<React.InputHTMLAttributes<HTMLInputElement>, 'onChange'> {
     value: number | string;
     onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
-    label?: string;
+    label?: React.ReactNode;
     error?: string;
     className?: string;
 }

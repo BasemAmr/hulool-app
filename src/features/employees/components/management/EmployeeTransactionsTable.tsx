@@ -8,6 +8,7 @@ import { useGetEmployeeTransactions, useDeleteEmployeeTransaction, useGetEmploye
 import { formatCurrency, formatDate } from '@/shared/utils/formatUtils';
 // Step 17: Removed TransactionEditModal and TransactionDeleteModal imports - using ModalManager
 import { useCurrentUserCapabilities } from '@/features/employees/api/userQueries';
+import { useAuthStore } from '@/features/auth/store/authStore';
 
 // Confirmed transaction from ledger
 interface ConfirmedTransaction {
@@ -96,7 +97,8 @@ const EmployeeTransactionsTable: React.FC<EmployeeTransactionsTableProps> = ({
   const { openModal } = useModalStore();
   const [activeTab, setActiveTab] = useState<ViewTab>('confirmed');
   const { data: capabilities } = useCurrentUserCapabilities();
-  const canEdit = capabilities?.manage_options || false;
+  const currentUser = useAuthStore((state) => state.user);
+  const canEdit = capabilities?.manage_options || currentUser?.type === 'admin' || currentUser?.type === 'employee_admin' || false;
   // Step 17: Removed local modal state - now using ModalManager
 
   // Fetch employee data - only if employeeId is provided

@@ -2,19 +2,27 @@ import { Navigate } from 'react-router-dom';
 import { useAuthStore } from '@/features/auth/store/authStore';
 
 /**
- * RoleBasedRedirect - Intelligently redirects users based on their role
+ * RoleBasedRedirect - Intelligently redirects users based on tm_employees.type
  * 
  * Routing Logic:
- * - Admin only -> /dashboard
- * - Employee only -> /employee/dashboard  
- * - Both roles -> /dashboard (default to admin view, but can access both)
- * - No role -> /dashboard (fallback)
+ * - type = 'admin' -> /dashboard
+ * - type = 'employee_admin' -> /dashboard (can also access employee routes)
+ * - type = 'employee' -> /employee/dashboard (or /employee/onboarding if PIN not set)
+ * - No employee record -> /dashboard (fallback)
  */
 const RoleBasedRedirect = () => {
   const userRole = useAuthStore((state) => state.userRole);
+  const user = useAuthStore((state) => state.user);
+  
+  // Enforce PIN setup for all employees who haven't set one yet
+  const needsPinSetup = !user?.pin_set;
   
   switch (userRole) {
     case 'employee':
+      // Redirect to onboarding if PIN hasn't been set yet
+      if (needsPinSetup) {
+        return <Navigate to="/employee/onboarding" replace />;
+      }
       return <Navigate to="/employee/dashboard" replace />;
     case 'admin':
     case 'both':

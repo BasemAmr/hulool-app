@@ -1,34 +1,42 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useGetClientsReceivablesSummaryInfinite, useGetClientsReceivablesTotals } from '@/features/receivables/api/receivableQueries';
 import { useModalStore } from '@/shared/stores/modalStore';
 import { applyPageBackground } from '@/shared/utils/backgroundUtils';
 import ClientsReceivablesTable from '../components/ClientsReceivablesTable';
 import Button from '@/shared/ui/primitives/Button';
-import { PlusCircle, FileSpreadsheet, Search, X, TrendingUp, TrendingDown } from 'lucide-react';
+import { PlusCircle, FileSpreadsheet, Search, X } from 'lucide-react';
 import { useReceivablesPermissions } from '@/shared/hooks/useReceivablesPermissions';
 import SaudiRiyalIcon from '@/shared/ui/icons/SaudiRiyalIcon';
 import { useDebounce } from '@/shared/hooks/useDebounce';
-// --- MODIFICATIONS START ---
 import { useMutation } from '@tanstack/react-query';
 import { exportService } from '@/services/export/ExportService';
 import { useToast } from '@/shared/hooks/useToast';
 import type { AllReceivablesReportData } from '@/services/export/exportTypes';
 import { useInView } from 'react-intersection-observer';
-// --- MODIFICATIONS END ---
 
 const ReceivablesPage = () => {
   const { t } = useTranslation();
   const openModal = useModalStore((state) => state.openModal);
   const { hasViewAllReceivablesPermission, isLoading: isPermissionsLoading } = useReceivablesPermissions();
-  const { showToast } = useToast(); // ADD
+  const { showToast } = useToast();
 
-  // Search state management
   const [search, setSearch] = useState('');
-  const debouncedSearch = useDebounce(search, 500); // 500ms delay
+  const debouncedSearch = useDebounce(search, 500);
 
+  const [settlementOpen, setSettlementOpen] = useState(false);
+  const settlementRef = useRef<HTMLDivElement>(null);
 
-  // Use infinite query for clients receivables summary with search
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (settlementRef.current && !settlementRef.current.contains(e.target as Node)) {
+        setSettlementOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
   const {
     data,
     isLoading,
@@ -37,13 +45,10 @@ const ReceivablesPage = () => {
     isFetchingNextPage,
   } = useGetClientsReceivablesSummaryInfinite(hasViewAllReceivablesPermission, debouncedSearch);
 
-  // Fetch totals separately (not paginated)
   const { data: totalsData, isLoading: isTotalsLoading } = useGetClientsReceivablesTotals(hasViewAllReceivablesPermission);
 
-  // Flatten the pages into a single array for rendering
   const allClients = useMemo(() => data?.pages.flatMap(page => page.clients) || [], [data]);
 
-  // Logic for infinite scroll
   const { ref } = useInView({
     threshold: 1,
     onChange: (inView) => {
@@ -53,7 +58,6 @@ const ReceivablesPage = () => {
     },
   });
 
-  // --- NEW: Mutation for exporting ---
   const exportReceivablesMutation = useMutation({
     mutationFn: (reportData: AllReceivablesReportData) => exportService.exportAllReceivables(reportData),
     onSuccess: () => {
@@ -64,31 +68,24 @@ const ReceivablesPage = () => {
     },
   });
 
-  // Apply receivables page background
   useEffect(() => {
     applyPageBackground('receivables');
   }, []);
 
-  // Handle adding a credit
   const handleAddCredit = () => openModal('recordCreditModal', {});
-
-  // Handle search clear
   const handleClearSearch = () => setSearch('');
 
-  // --- NEW: Export handler ---
   const handleExportExcel = () => {
     if (allClients.length > 0 && totalsData) {
       const receivablesForExport = allClients.map(client => ({
         client_id: client.client_id,
         client_name: client.client_name,
         client_phone: client.client_phone,
-        // Use consistent field names matching what's displayed in tables
         total_debit: client.total_amount,
         total_credit: client.paid_amount,
         net_receivables: client.remaining_amount,
       }));
 
-      // Use the totals from the separate API endpoint instead of calculating from paginated data
       const summary = {
         total_debit: totalsData.total_amount,
         total_credit: totalsData.total_paid,
@@ -102,8 +99,6 @@ const ReceivablesPage = () => {
     }
   };
 
-
-  // Show permission denied message if user doesn't have access
   if (isPermissionsLoading) {
     return <div className="flex justify-center p-4">Loading permissions...</div>;
   }
@@ -120,39 +115,99 @@ const ReceivablesPage = () => {
   return (
     <div>
       <header className="flex justify-between items-center mb-1 py-1">
-        {/* Title and Add buttons */}
         <div className="flex items-center gap-2">
-          <h5 className="mb-0 text-primary" style={{
-            fontWeight: 'bold',
-            fontSize: '1.1rem'
-          }}>{t('receivables.title')}</h5>
-          
+          <h5 className="mb-0 text-primary font-bold" style={{ fontSize: '1.1rem' }}>{t('receivables.title')}</h5>
+
           <Button onClick={handleAddCredit} variant="outline-primary" size="sm">
             <SaudiRiyalIcon size={14} className="me-1" />
             إضافة دفعة للرصيد
           </Button>
-          
+
           <Button onClick={() => openModal('invoiceForm', {})} size="sm">
             <PlusCircle size={14} className="me-1" />
             إضافة فاتورة يدوية
           </Button>
-          <Button onClick={() => openModal('manualTransaction', { direction: 'repayment' })} variant="outline-primary" size="sm" className="font-bold">
-            <TrendingUp size={16} className="me-1 text-status-success-text" />
+
+          <Button
+            variant="outline-success"
+            size="sm"
+            className="font-bold"
+            onClick={() => openModal('unifiedTransaction', {
+              defaultFromCardType: 'client',
+              defaultToCardType: 'treasury',
+              lockDirection: true,
+              title: 'سند قبض',
+            })}
+          >
             سند قبض
           </Button>
-          <Button onClick={() => openModal('manualTransaction', { direction: 'payout' })} variant="outline-primary" size="sm" className="font-bold">
-            <TrendingDown size={16} className="me-1 text-status-danger-text" />
+
+          <Button
+            variant="outline-danger"
+            size="sm"
+            className="font-bold"
+            onClick={() => openModal('unifiedTransaction', {
+              defaultFromCardType: 'treasury',
+              defaultToCardType: 'client',
+              lockDirection: true,
+              title: 'سند صرف',
+            })}
+          >
             سند صرف
           </Button>
+
+          <div ref={settlementRef} className="relative">
+            <Button
+              variant="outline-secondary"
+              size="sm"
+              className="font-bold"
+              onClick={() => setSettlementOpen((v) => !v)}
+            >
+              سند تسوية
+            </Button>
+            {settlementOpen && (
+              <div className="absolute left-0 top-full mt-1 z-50 min-w-[180px] rounded-lg border border-border bg-card shadow-xl">
+                <button
+                  type="button"
+                  className="flex w-full items-center gap-2 px-4 py-2.5 text-sm font-semibold text-text-primary hover:bg-muted/50 transition-colors rounded-t-lg"
+                  onClick={() => {
+                    setSettlementOpen(false);
+                    openModal('unifiedTransaction', {
+                      defaultFromCardType: 'client',
+                      defaultToCardType: 'settlement',
+                      lockDirection: true,
+                      title: 'تسوية قبض',
+                    });
+                  }}
+                >
+                  تسوية قبض
+                </button>
+                <div className="border-t border-border" />
+                <button
+                  type="button"
+                  className="flex w-full items-center gap-2 px-4 py-2.5 text-sm font-semibold text-text-primary hover:bg-muted/50 transition-colors rounded-b-lg"
+                  onClick={() => {
+                    setSettlementOpen(false);
+                    openModal('unifiedTransaction', {
+                      defaultFromCardType: 'settlement',
+                      defaultToCardType: 'client',
+                      lockDirection: true,
+                      title: 'تسوية صرف',
+                    });
+                  }}
+                >
+                  تسوية صرف
+                </button>
+              </div>
+            )}
+          </div>
         </div>
-        
-        {/* Search and Export */}
+
         <div className="flex items-center gap-2">
-          {/* Compact Search */}
           <div className="relative" style={{ minWidth: '250px' }}>
-            <Search 
-              size={14} 
-              className="absolute text-text-primary" 
+            <Search
+              size={14}
+              className="absolute text-text-primary"
               style={{ left: '8px', top: '50%', transform: 'translateY(-50%)' }}
             />
             <input
@@ -175,15 +230,14 @@ const ReceivablesPage = () => {
               </button>
             )}
           </div>
-          
-          {/* Search results indicator */}
+
           {debouncedSearch && data && (
             <small className="text-text-primary" style={{ minWidth: 'fit-content' }}>
               ({data.pages[0]?.pagination?.total || 0} نتيجة)
             </small>
           )}
-          
-          <Button 
+
+          <Button
             variant="outline-primary"
             size="sm"
             onClick={handleExportExcel}
@@ -197,7 +251,6 @@ const ReceivablesPage = () => {
 
       <div className="rounded-lg border border-border bg-card shadow-sm">
         <div className="p-0">
-          {/* Show search results or no results message */}
           {debouncedSearch && allClients.length === 0 && !isLoading ? (
             <div className="text-center p-4">
               <Search size={32} className="text-text-primary mb-2" />
@@ -217,8 +270,7 @@ const ReceivablesPage = () => {
                 totals={totalsData}
                 isTotalsLoading={isTotalsLoading}
               />
-              
-              {/* Load More Button & Intersection Observer */}
+
               <div ref={ref} className="text-center p-4">
                 {hasNextPage && (
                   <Button

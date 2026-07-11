@@ -1,18 +1,32 @@
 import { useCurrentUserCapabilities } from '@/features/employees/api/userQueries';
+import { useAuthStore } from '@/features/auth/store/authStore';
+import { hasPermission } from '@/shared/permissions/permissionDefinitions';
 
 /**
- * Custom hook to check user permissions for receivables-related actions
+ * Custom hook to check user permissions for receivables-related actions.
+ * Checks both employee type (admin/employee_admin) and granular capabilities.
  */
 export const useReceivablesPermissions = () => {
+  const userType = useAuthStore((state) => state.user?.type);
   const { data: capabilities, isLoading } = useCurrentUserCapabilities();
 
-  // Admin users (with manage_options) bypass all restrictions
-  const isAdmin = capabilities?.manage_options || false;
-  
-  const hasViewAmountsPermission = isAdmin || capabilities?.tm_view_receivables_amounts || false;
-  const hasViewPaidReceivablesPermission = isAdmin || capabilities?.tm_view_paid_receivables || false;
-  const hasViewOverdueReceivablesPermission = isAdmin || capabilities?.tm_view_overdue_receivables || false;
-  const hasViewAllReceivablesPermission = isAdmin || capabilities?.tm_view_all_receivables || false;
+  const isAdmin = userType === 'admin' || capabilities?.manage_options || false;
+
+  const hasViewAmountsPermission = isAdmin
+    || userType === 'employee_admin'
+    || capabilities?.tm_view_receivables_amounts || false;
+
+  const hasViewPaidReceivablesPermission = isAdmin
+    || userType === 'employee_admin'
+    || hasPermission(userType, capabilities, 'receivables:view-paid');
+
+  const hasViewOverdueReceivablesPermission = isAdmin
+    || userType === 'employee_admin'
+    || hasPermission(userType, capabilities, 'receivables:view-overdue');
+
+  const hasViewAllReceivablesPermission = isAdmin
+    || userType === 'employee_admin'
+    || hasPermission(userType, capabilities, 'receivables:view-all');
 
   return {
     isLoading,
@@ -20,7 +34,6 @@ export const useReceivablesPermissions = () => {
     hasViewPaidReceivablesPermission,
     hasViewOverdueReceivablesPermission,
     hasViewAllReceivablesPermission,
-    // Combined permission - user can view receivables if they have any of the view permissions
     hasAnyReceivablesPermission: hasViewAllReceivablesPermission || hasViewPaidReceivablesPermission || hasViewOverdueReceivablesPermission,
   };
 };

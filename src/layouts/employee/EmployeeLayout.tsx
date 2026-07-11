@@ -1,8 +1,9 @@
-import { Outlet, useLocation } from 'react-router-dom';
+import { Outlet, useLocation, Navigate } from 'react-router-dom';
 import { useMemo } from 'react';
 import EmployeeNavbar from './EmployeeNavbar';
 import ModalManager from '@/shared/modals/ModalManager';
 import TaskFollowUpPanel from '@/features/tasks/components/followup/TaskFollowUpPanel';
+import { useAuthStore } from '@/features/auth/store/authStore';
 
 /**
  * EmployeePageWrapper - Main layout wrapper for employee pages
@@ -14,6 +15,12 @@ import TaskFollowUpPanel from '@/features/tasks/components/followup/TaskFollowUp
  */
 const EmployeePageWrapper = () => {
   const location = useLocation();
+  const user = useAuthStore((state) => state.user);
+
+  // PIN check: redirect to onboarding if needed (skip if already on onboarding)
+  if (!user?.pin_set && location.pathname !== '/employee/onboarding') {
+    return <Navigate to="/employee/onboarding" replace />;
+  }
 
   // Determine page type for background styling (if needed)
   const pageType = useMemo(() => {

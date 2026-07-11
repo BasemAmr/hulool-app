@@ -29,6 +29,7 @@ import { useGetEmployeesForSelection } from '@/features/employees/api/employeeQu
 import { useToast } from '@/shared/hooks/useToast';
 import { useModalStore } from '@/shared/stores/modalStore';
 import { useCurrentUserCapabilities } from '@/features/employees/api/userQueries';
+import { useAuthStore } from '@/features/auth/store/authStore';
 import { useDrawerStore } from '@/shared/stores/drawerStore';
 import type { CellProps } from 'react-datasheet-grid';
 import { X, DollarSign, CreditCard, RotateCcw, Pause, Play, CheckCircle, ClipboardCheck } from 'lucide-react';
@@ -439,6 +440,7 @@ const AllTasksTable: React.FC<AllTasksTableProps> = ({
   const resumeTaskMutation = useResumeTask();
   const rejectTaskMutation = useRejectTask();
   const { data: currentCapabilities } = useCurrentUserCapabilities();
+  const currentUser = useAuthStore((state) => state.user);
   const { success, error } = useToast();
   const { openDrawer } = useDrawerStore();
   const { openModal } = useModalStore();
@@ -510,7 +512,7 @@ const AllTasksTable: React.FC<AllTasksTableProps> = ({
     openModal('taskRestore', { task });
   };
 
-  const canDeleteTasks = currentCapabilities?.tm_delete_any_task || false;
+  const canDeleteTasks = currentCapabilities?.tm_delete_any_task || currentUser?.type === 'admin' || currentUser?.type === 'employee_admin' || false;
 
   // Sort tasks: Urgent first, then by status, then by date
   const sortedTasks = useMemo(() => {

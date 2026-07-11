@@ -18,6 +18,7 @@ import type {
   CreatePendingItemPayload,
   UnifiedAccountsResponse,
   CreateManualTransactionPayload,
+  CreateUnifiedTransactionPayload,
   InvoiceAgingAnalysis,
   PendingItemType,
   PendingItemStatus,
@@ -248,6 +249,29 @@ export const useCreateManualTransaction = () => {
     onSuccess: () => {
       // Invalidate all account-related queries
       queryClient.invalidateQueries({ queryKey: ['account'] }); // ← CRITICAL: AccountLedgerTable uses ['account', 'client', id, 'history']
+      queryClient.invalidateQueries({ queryKey: ['accounts'] });
+      queryClient.invalidateQueries({ queryKey: ['transactions'] });
+      queryClient.invalidateQueries({ queryKey: ['invoices'] });
+      queryClient.invalidateQueries({ queryKey: ['clients'] });
+      queryClient.invalidateQueries({ queryKey: ['dashboard'] });
+    },
+  });
+};
+
+/**
+ * Create a unified transaction via POST /transactions/unified.
+ * Accepts any (from_account_type, from_account_id) → (to_account_type, to_account_id)
+ * combination and routes to the correct underlying handler.
+ */
+export const useCreateUnifiedTransaction = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (payload: CreateUnifiedTransactionPayload) => {
+      const { data } = await apiClient.post<ApiResponse<any>>('/transactions/unified', payload);
+      return data.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['account'] });
       queryClient.invalidateQueries({ queryKey: ['accounts'] });
       queryClient.invalidateQueries({ queryKey: ['transactions'] });
       queryClient.invalidateQueries({ queryKey: ['invoices'] });

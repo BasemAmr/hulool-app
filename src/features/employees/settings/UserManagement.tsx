@@ -4,6 +4,7 @@ import { Users, UserPlus, Shield, Briefcase, UserMinus } from 'lucide-react';
 import { useUsers, useCreateUser, useUpdateUserCapabilities, useCurrentUserCapabilities } from '@/features/employees/api/userQueries';
 import { useCreateEmployee, useRemoveEmployeeStatus } from '@/features/employees/api/employeeQueries';
 import { useToast } from '@/shared/hooks/useToast';
+import { useAuthStore } from '@/features/auth/store/authStore';
 import type { CreateUserRequest, User } from '@/api/types';
 
 const UserManagement: React.FC = () => {
@@ -27,8 +28,9 @@ const UserManagement: React.FC = () => {
   const removeEmployeeStatusMutation = useRemoveEmployeeStatus();
 
   // Check if current user can manage users
-  console.log('Current capabilities:', currentCapabilities);
-  const canManageUsers = currentCapabilities?.tm_manage_users || false;
+  const currentUser = useAuthStore((state) => state.user);
+  const isElevated = currentUser?.type === 'admin' || currentUser?.type === 'employee_admin';
+  const canManageUsers = isElevated || currentCapabilities?.tm_manage_users || false;
 
   // Employee status is now directly available in the user object
   const isEmployee = (user: User) => user.employee_id !== null;

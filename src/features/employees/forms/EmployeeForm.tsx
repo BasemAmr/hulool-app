@@ -7,43 +7,29 @@ interface EmployeeFormProps {
     onSubmit: (data: CreateEmployeeAccountRequest) => void;
     isLoading?: boolean;
     onCancel: () => void;
+    isAdmin?: boolean;
 }
 
-const EmployeeForm = ({ onSubmit, isLoading = false, onCancel }: EmployeeFormProps) => {
+const EmployeeForm = ({ onSubmit, isLoading = false, onCancel, isAdmin = false }: EmployeeFormProps) => {
     const {
         register,
         handleSubmit,
         formState: { errors },
-    } = useForm<CreateEmployeeAccountRequest>();
+    } = useForm<CreateEmployeeAccountRequest>({
+        defaultValues: {
+            type: 'employee',
+        },
+    });
 
     return (
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4" dir="rtl">
             <Input
-                label="اسم المستخدم *"
-                {...register('username', {
-                    required: 'اسم المستخدم مطلوب',
-                    pattern: {
-                        value: /^[a-zA-Z0-9_]+$/,
-                        message: 'اسم المستخدم يمكن أن يحتوي فقط على حروف وأرقام وشرطات سفلية',
-                    },
-                    validate: (value) => {
-                        if (value.includes(' ')) {
-                            return 'اسم المستخدم لا يمكن أن يحتوي على مسافات';
-                        }
-                        return true;
-                    },
-                })}
-                error={errors.username?.message}
-                placeholder="مثال: ahmed_ali"
-            />
-
-            <Input
-                label="الاسم المعروض *"
+                label="الاسم *"
                 {...register('display_name', {
-                    required: 'الاسم المعروض مطلوب',
+                    required: 'الاسم مطلوب',
                     minLength: {
                         value: 2,
-                        message: 'الاسم المعروض يجب أن يكون حرفين على الأقل',
+                        message: 'الاسم يجب أن يكون حرفين على الأقل',
                     },
                 })}
                 error={errors.display_name?.message}
@@ -51,17 +37,18 @@ const EmployeeForm = ({ onSubmit, isLoading = false, onCancel }: EmployeeFormPro
             />
 
             <Input
-                label="البريد الإلكتروني *"
-                type="email"
-                {...register('email', {
-                    required: 'البريد الإلكتروني مطلوب',
+                label="رقم الجوال *"
+                type="tel"
+                {...register('phone', {
+                    required: 'رقم الجوال مطلوب',
                     pattern: {
-                        value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
-                        message: 'صيغة البريد الإلكتروني غير صحيحة',
+                        value: /^[0-9]{7,15}$/,
+                        message: 'رقم الجوال يجب أن يكون أرقاماً فقط (7-15 خانة)',
                     },
                 })}
-                error={errors.email?.message}
-                placeholder="مثال: ahmed@company.com"
+                error={errors.phone?.message}
+                placeholder="مثال: 0512345678"
+                inputMode="numeric"
             />
 
             <Input
@@ -74,6 +61,22 @@ const EmployeeForm = ({ onSubmit, isLoading = false, onCancel }: EmployeeFormPro
             <p className="text-xs text-foreground/60 mt-2">
                 * إذا تركت كلمة المرور فارغة، سيتم إنشاء كلمة مرور آمنة تلقائياً
             </p>
+
+            {isAdmin && (
+                <div className="space-y-1.5">
+                    <label className="block text-sm font-semibold text-foreground tracking-tight">
+                        نوع الحساب
+                    </label>
+                    <select
+                        {...register('type')}
+                        className="base-input w-full"
+                    >
+                        <option value="employee">موظف</option>
+                        <option value="employee_admin">مدير موظفين</option>
+                        <option value="admin">مدير</option>
+                    </select>
+                </div>
+            )}
 
             <div className="flex items-center justify-start gap-3 pt-4 border-t border-border">
                 <Button

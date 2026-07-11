@@ -1,10 +1,13 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Settings, User, Lock } from 'lucide-react';
+import { Settings, User, Lock, ShieldCheck, KeyRound } from 'lucide-react';
 import { useToast } from '@/shared/hooks/useToast';
 import { useAuthStore } from '@/features/auth/store/authStore';
-import { useUpdateMyProfile, useSetMyPassword } from '@/features/employees/api/userQueries';
+import { useUpdateMyProfile, useSetMyPassword, useSetupPin } from '@/features/employees/api/userQueries';
 import Button from '@/shared/ui/primitives/Button';
+import PinSetupForm from '@/features/employees/components/PinSetupForm';
+import RecoveryCodesModal from '@/features/employees/modals/RecoveryCodesModal';
+import type { EmployeeAccount } from '@/api/types';
 
 const EmployeeSettingsPage = () => {
     const { t } = useTranslation();
@@ -22,8 +25,19 @@ const EmployeeSettingsPage = () => {
     const [confirmPassword, setConfirmPassword] = useState('');
     const [passwordError, setPasswordError] = useState('');
 
+    // PIN change state
+    const [showPinForm, setShowPinForm] = useState(false);
+    const [currentPin, setCurrentPin] = useState('');
+    const [newPin, setNewPin] = useState('');
+    const [confirmPin, setConfirmPin] = useState('');
+    const [pinError, setPinError] = useState('');
+
+    // Recovery codes modal state
+    const [showRecoveryModal, setShowRecoveryModal] = useState(false);
+
     const updateProfileMutation = useUpdateMyProfile();
     const setPasswordMutation = useSetMyPassword();
+    const setupPinMutation = useSetupPin();
 
     const handleProfileUpdate = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -85,6 +99,54 @@ const EmployeeSettingsPage = () => {
                 message: error.response?.data?.message || 'تحقق من كلمة المرور الحالية'
             });
         }
+    };
+
+    const handlePinChange = async (e: React.FormEvent) => {
+        e.preventDefault();
+        setPinError('');
+
+        if (newPin.length !== 4 || !/^\d{4}$/.test(newPin)) {
+            setPinError('رمز PIN يجب أن يكون 4 أرقام');
+            return;
+        }
+
+        if (newPin !== confirmPin) {
+            setPinError('رمز PIN غير متطابق');
+            return;
+        }
+
+        try {
+            await setupPinMutation.mutateAsync({
+                pin: newPin,
+                ...(user?.pin_set && currentPin ? { current_pin: currentPin } : {}),
+            });
+
+            showToast({ type: 'success', title: 'تم تحديث رمز PIN بنجاح' });
+            setShowPinForm(false);
+            setCurrentPin('');
+            setNewPin('');
+            setConfirmPin('');
+        } catch (error: any) {
+            showToast({
+                type: 'error',
+                title: 'فشل تحديث رمز PIN',
+                message: error.response?.data?.message || 'تحقق من رمز PIN الحالي'
+            });
+        }
+    };
+
+    // Build a minimal EmployeeAccount for the modal (only needs display_name and phone)
+    const employeeForModal: EmployeeAccount = {
+        id: user?.id || 0,
+        user_id: user?.id || 0,
+        display_name: user?.display_name || '',
+        phone: user?.phone || '',
+        type: 'employee',
+        is_active: true,
+        employee_id: user?.employee_id || null,
+        commission_rate: user?.commission_rate || null,
+        created_at: null,
+        pin_set: user?.pin_set,
     };
 
     return (
@@ -209,7 +271,114 @@ const EmployeeSettingsPage = () => {
                         </Button>
                     </form>
                 </div>
+
+                {/* PIN Settings */}
+                <div className="rounded-lg border bg-card p-6">
+                    <h2 className="text-xl font-semibold text-text-primary mb-4 flex items-center gap-2">
+                        <ShieldCheck size={20} />
+                        رمز PIN
+                    </h2>
+
+                    {!showPinForm ? (
+                        <div className="space-y-3">
+                            <p className="text-sm text-text-secondary">
+                                {user?.pin_set
+                                    ? 'تم إعداد رمز PIN. يمكنك تغييره من هنا.'
+                                    : 'لم يتم إعداد رمز PIN بعد. يُنصح بإعداده لحماية حسابك.'}
+                            </p>
+                            <Button
+                                variant="outline-primary"
+                                onClick={() => setShowPinForm(true)}
+                            >
+                                <ShieldCheck className="h-4 w-4" />
+                                {user?.pin_set ? 'تغيير رمز PIN' : 'إعداد رمز PIN'}
+                            </Button>
+                        </div>
+                    ) : (
+                        <form onSubmit={handlePinChange} className="space-y-4">
+                            {user?.pin_set && (
+                                <PinSetupForm
+                                    label="رمز PIN الحالي"
+                                    value={currentPin}
+                                    onChange={setCurrentPin}
+                                    disabled={setupPinMutation.isPending}
+                                />
+                            )}
+
+                            <PinSetupForm
+                                label={user?.pin_set ? 'رمز PIN الجديد' : 'رمز PIN'}
+                                value={newPin}
+                                onChange={setNewPin}
+                                disabled={setupPinMutation.isPending}
+                            />
+
+                            <PinSetupForm
+                                label="تأكيد رمز PIN"
+                                value={confirmPin}
+                                onChange={setConfirmPin}
+                                error={pinError}
+                                disabled={setupPinMutation.isPending}
+                            />
+
+                            <div className="flex gap-2">
+                                <Button
+                                    type="submit"
+                                    isLoading={setupPinMutation.isPending}
+                                >
+                                    حفظ رمز PIN
+                                </Button>
+                                <Button
+                                    type="button"
+                                    variant="outline-info"
+                                    onClick={() => {
+                                        setShowPinForm(false);
+                                        setCurrentPin('');
+                                        setNewPin('');
+                                        setConfirmPin('');
+                                        setPinError('');
+                                    }}
+                                    disabled={setupPinMutation.isPending}
+                                >
+                                    إلغاء
+                                </Button>
+                            </div>
+                        </form>
+                    )}
+                </div>
+
+                {/* Recovery Codes Section */}
+                <div className="rounded-lg border bg-card p-6">
+                    <h2 className="text-xl font-semibold text-text-primary mb-4 flex items-center gap-2">
+                        <KeyRound size={20} />
+                        رموز الاسترجاع
+                    </h2>
+
+                    <p className="text-sm text-text-secondary mb-4">
+                        رموز الاسترجاع تُستخدم لإعادة تعيين كلمة المرور في حال نسيانها.
+                        احتفظ بها في مكان آمن.
+                    </p>
+
+                    <div className="flex gap-2">
+                        <Button
+                            variant="outline-primary"
+                            onClick={() => setShowRecoveryModal(true)}
+                        >
+                            <KeyRound className="h-4 w-4" />
+                            عرض رموز الاسترجاع
+                        </Button>
+                    </div>
+                </div>
             </div>
+
+            {/* Recovery Codes Modal */}
+            {showRecoveryModal && user && (
+                <RecoveryCodesModal
+                    employee={employeeForModal}
+                    isOpen={showRecoveryModal}
+                    onClose={() => setShowRecoveryModal(false)}
+                    isAdmin={false}
+                />
+            )}
         </div>
     );
 };

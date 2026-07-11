@@ -6,6 +6,7 @@ import ClientSearchCombobox from '@/shared/search/ClientSearchCombobox';
 import { NumberInput } from '@/shared/ui/primitives/NumberInput';
 import { useGetAccountsByType } from '@/features/financials/api/financialCenterQueries';
 import { useRecordVoucher, useUpdateVoucher, useGetCashBoxes } from '../api/cashBoxQueries';
+import { useUpdateTransaction } from '../api/accountQueries';
 import { useToast } from '@/shared/hooks/useToast';
 import type { CashBoxVoucher } from '@/api/types';
 
@@ -15,6 +16,7 @@ interface RecordVoucherModalProps {
   boxId?: number;
   defaultType?: 'receipt' | 'payment';
   voucherToEdit?: CashBoxVoucher;
+  isTreasury?: boolean;
 }
 
 export const RecordVoucherModal: React.FC<RecordVoucherModalProps> = ({
@@ -22,7 +24,8 @@ export const RecordVoucherModal: React.FC<RecordVoucherModalProps> = ({
   onClose,
   boxId,
   defaultType = 'payment',
-  voucherToEdit
+  voucherToEdit,
+  isTreasury = false
 }) => {
   const isEdit = !!voucherToEdit;
   
@@ -49,6 +52,7 @@ export const RecordVoucherModal: React.FC<RecordVoucherModalProps> = ({
 
   const recordMutation = useRecordVoucher(selectedBoxId || 0);
   const updateMutation = useUpdateVoucher(selectedBoxId || 0, voucherToEdit?.id || 0);
+  const updateTransactionMutation = useUpdateTransaction();
 
   const [originalTime, setOriginalTime] = useState('');
 
@@ -57,8 +61,9 @@ export const RecordVoucherModal: React.FC<RecordVoucherModalProps> = ({
     if (isOpen) {
       if (boxId) setSelectedBoxId(boxId);
       if (voucherToEdit) {
-        setType(voucherToEdit.transaction_type === 'CASHBOX_RECEIPT' ? 'receipt' : 'payment');
-        const amt = voucherToEdit.debit > 0 ? voucherToEdit.debit : voucherToEdit.credit;
+        const isReceipt = (voucherToEdit.debit || 0) > 0 || voucherToEdit.transaction_type === 'CASHBOX_RECEIPT' || (voucherToEdit as any).type === 'CASHBOX_RECEIPT';
+        setType(isReceipt ? 'receipt' : 'payment');
+        const amt = (voucherToEdit.debit || 0) > 0 ? voucherToEdit.debit : voucherToEdit.credit;
         setAmount(String(amt));
         setDescription(voucherToEdit.description);
         
@@ -119,6 +124,28 @@ export const RecordVoucherModal: React.FC<RecordVoucherModalProps> = ({
       target_account_id: isEdit ? 1 : (targetType === 'company' ? 1 : parseInt(targetId)),
       transaction_date: finalDateTime || undefined,
     };
+
+    if (isEdit && isTreasury) {
+      const debit = type === 'receipt' ? parseFloat(amount) : 0;
+      const credit = type === 'payment' ? parseFloat(amount) : 0;
+      const updatePayload = {
+        debit,
+        credit,
+        description: description.trim(),
+        transaction_date: finalDateTime || undefined,
+      };
+
+      updateTransactionMutation.mutate({ id: voucherToEdit!.id, data: updatePayload }, {
+        onSuccess: () => {
+          toast.success('تم تحديث الحركة بنجاح');
+          onClose();
+        },
+        onError: (err: any) => {
+          toast.error('حدث خطأ', err.response?.data?.message || 'حاول مرة أخرى');
+        }
+      });
+      return;
+    }
 
     const mutation = isEdit ? updateMutation : recordMutation;
 

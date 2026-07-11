@@ -156,6 +156,25 @@ export const useCloseCashBox = () => {
 };
 
 /**
+ * Reassign a cash box to a different employee (Admin only)
+ */
+export const useReassignCashBoxEmployee = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ boxId, employee_id }: { boxId: number; employee_id: number }) => {
+      const response = await apiClient.post(`/cash-boxes/${boxId}/reassign`, { employee_id });
+      return response.data;
+    },
+    onSuccess: () => {
+      invalidateFinancials(queryClient);
+      queryClient.invalidateQueries({ queryKey: ['treasury-accounts'] });
+      queryClient.invalidateQueries({ queryKey: ['treasury-accounts', 'categories'] });
+    },
+  });
+};
+
+/**
  * Fetch all cash boxes export data (Admin only)
  */
 export const getCashBoxesExport = async (startDate?: string, endDate?: string) => {

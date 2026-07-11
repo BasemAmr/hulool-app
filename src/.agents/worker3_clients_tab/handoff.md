@@ -1,0 +1,1 @@
+# Handoff Report\n\n**Status**: IN_PROGRESS\n**Agent**: worker3_clients_tab\n**Archetype**: worker\n\nThis file will be overwritten by agent_handoff when the agent completes its work.\n

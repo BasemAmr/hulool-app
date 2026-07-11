@@ -14,12 +14,13 @@ import type {
   UnifiedAccount,
   TransactionDirection,
   CashBox,
-  CashBoxVoucher
+  CashBoxVoucher,
+  TreasuryAccount
 } from '@/api/types';
 
 // Define all possible modals in the app.
 // We will add more types like 'task' in later phases.
-export type ModalType = 'clientForm' | 'confirmDelete' | 'taskForm' | 'requirements' | 'manualReceivable' | 'clientReceivables' | 'paymentForm' | 'paymentHistory' | 'clientSearch' | 'tagForm' | 'tagManagement' | 'selectReceivableForPayment' | 'taskCompletion' | 'amountDetails' | 'subtasksModal' | 'taskSelection' | 'taskDetails' | 'taskSubtasks' | 'recordCreditModal' | 'applyCreditModal' | 'clientCreditHistory' | 'creditEdit' | 'creditDelete' | 'allocationEdit' | 'allocationDelete' | 'paymentEdit' | 'paymentDelete' | 'editReceivable' | 'deleteReceivable' | 'clientReceivablesEdit' | 'urgentAlert' | 'prepaidConflict' | 'taskAmountConflict' | 'taskCancellation' | 'concurrentModification' | 'assignTask' | 'approval' | 'employeePayout' | 'editEmployeePayout' | 'editTaskExpense' | 'submitForReview' | 'employeeBorrow' | 'invoiceForm' | 'recordPayment' | 'recordBatchPayment' | 'accountLedger' | 'invoiceDetails' | 'applyCreditToInvoice' | 'manualTransaction' | 'createInvoice' | 'journalEntryDetails' | 'taskRestore' | 'taskRestoreValidation' | 'taskAmountEdit' | 'invoiceEdit' | 'invoiceCancel' | 'invoiceDelete' | 'transactionEdit' | 'transactionDelete' | 'createEmployee' | 'employeeCredentials' | 'deleteEmployee' | 'employeeDeletionPreview' | 'cashBoxForm' | 'recordVoucher' | 'voucherEdit' | 'voucherDetails';
+export type ModalType = 'clientForm' | 'confirmDelete' | 'taskForm' | 'requirements' | 'manualReceivable' | 'clientReceivables' | 'paymentForm' | 'paymentHistory' | 'clientSearch' | 'tagForm' | 'tagManagement' | 'selectReceivableForPayment' | 'taskCompletion' | 'amountDetails' | 'subtasksModal' | 'taskSelection' | 'taskDetails' | 'taskSubtasks' | 'recordCreditModal' | 'applyCreditModal' | 'clientCreditHistory' | 'creditEdit' | 'creditDelete' | 'allocationEdit' | 'allocationDelete' | 'paymentEdit' | 'paymentDelete' | 'editReceivable' | 'deleteReceivable' | 'clientReceivablesEdit' | 'urgentAlert' | 'prepaidConflict' | 'taskAmountConflict' | 'taskCancellation' | 'concurrentModification' | 'assignTask' | 'approval' | 'employeePayout' | 'editEmployeePayout' | 'editTaskExpense' | 'submitForReview' | 'employeeBorrow' | 'invoiceForm' | 'recordPayment' | 'recordBatchPayment' | 'accountLedger' | 'invoiceDetails' | 'applyCreditToInvoice' | 'manualTransaction' | 'createInvoice' | 'journalEntryDetails' | 'taskRestore' | 'taskRestoreValidation' | 'taskAmountEdit' | 'invoiceEdit' | 'invoiceCancel' | 'invoiceDelete' | 'transactionEdit' | 'transactionDelete' | 'createEmployee' | 'employeeCredentials' | 'deleteEmployee' | 'employeeDeletionPreview' | 'cashBoxForm' | 'reassignCashBoxEmployee' | 'recordVoucher' | 'voucherEdit' | 'voucherDetails' | 'unifiedTransaction' | 'treasuryCreateAccount' | 'treasuryEditAccount' | 'treasuryPermissions' | 'categoryManager' | 'fcAccountLedger' | 'clientReport' | 'employeeReport' | 'accountReport';
 
 // Define the props each modal type can receive.
 interface ModalProps {
@@ -139,7 +140,7 @@ interface ModalProps {
   transactionDelete: { transaction: any };
 
   // EMPLOYEE ACCOUNT MANAGEMENT MODALS
-  createEmployee: { onSubmit?: (data: any) => void; isLoading?: boolean };
+  createEmployee: { onSubmit?: (data: any) => void; isLoading?: boolean; isAdmin?: boolean };
   employeeCredentials: { credentials: any };
   deleteEmployee: { employee?: any; onConfirm?: () => void; isLoading?: boolean };
   employeeDeletionPreview: { employee?: any; onConfirmDelete?: () => void };
@@ -153,9 +154,40 @@ interface ModalProps {
   };
 
   cashBoxForm: { boxToEdit?: CashBox };
+  reassignCashBoxEmployee: { cashBox: CashBox; onSuccess?: () => void };
   recordVoucher: { boxId?: number; defaultType?: 'receipt' | 'payment' };
-  voucherEdit: { boxId: number; voucher: CashBoxVoucher };
+  voucherEdit: { boxId: number; voucher: CashBoxVoucher; isTreasury?: boolean };
   voucherDetails: { voucher: CashBoxVoucher };
+
+  // UNIFIED TRANSACTION MODAL (M5)
+  unifiedTransaction: {
+    defaultFromCardType?: 'employee' | 'client' | 'treasury' | 'company_cashbox' | 'settlement';
+    defaultToCardType?: 'employee' | 'client' | 'treasury' | 'company_cashbox' | 'settlement';
+    defaultFromAccountId?: string;
+    defaultToAccountId?: string;
+    lockDirection?: boolean;
+    title?: string;
+  };
+
+  // TREASURY MODALS
+  treasuryCreateAccount: { initialSectionId?: string };
+  treasuryEditAccount: { account: TreasuryAccount };
+  treasuryPermissions: { account: TreasuryAccount };
+
+  // CATEGORY MANAGER MODAL
+  categoryManager: { sectionId?: string };
+
+  // FC ACCOUNT LEDGER MODAL
+  fcAccountLedger: {
+    type: 'treasury' | 'employee' | 'client' | 'cashbox';
+    id: number;
+    name: string;
+  };
+
+  // REPORT MODALS
+  clientReport: {};
+  employeeReport: {};
+  accountReport: {};
 }
 
 interface ModalState {

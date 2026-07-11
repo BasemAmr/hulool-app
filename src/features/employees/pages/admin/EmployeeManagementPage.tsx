@@ -7,6 +7,7 @@ import { useUsers } from '@/features/employees/api/userQueries';
 import { useCreateEmployee, useRemoveEmployeeStatus } from '@/features/employees/api/employeeQueries';
 import { useToast } from '@/shared/hooks/useToast';
 import { useCurrentUserCapabilities } from '@/features/employees/api/userQueries';
+import { useAuthStore } from '@/features/auth/store/authStore';
 import type { User } from '@/api/types';
 import { TOAST_MESSAGES } from '@/shared/constants/toastMessages';
 
@@ -19,11 +20,14 @@ const EmployeeManagementPage = () => {
 
   const { data: users = [], isLoading: usersLoading, refetch } = useUsers();
   const { data: currentCapabilities } = useCurrentUserCapabilities();
+  const { user: currentUser } = useAuthStore();
   const createEmployeeMutation = useCreateEmployee();
   const removeEmployeeStatusMutation = useRemoveEmployeeStatus();
 
-  // Check if current user can manage users
-  const canManageUsers = currentCapabilities?.tm_manage_users || currentCapabilities?.manage_options || false;
+  // Derive tm_manage_employees: manage_options, employee type, or tm_manage_users
+  const hasManageOptions = currentCapabilities?.manage_options || false;
+  const isElevated = currentUser?.type === 'admin' || currentUser?.type === 'employee_admin';
+  const canManageUsers = hasManageOptions || isElevated || currentUser?.capabilities?.tm_manage_users || false;
 
   // Filter users based on search
   const filteredUsers = users.filter((user) => {

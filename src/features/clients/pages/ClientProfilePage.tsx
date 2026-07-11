@@ -17,8 +17,7 @@ import ClientProfileHeader from '@/features/clients/components/ClientProfileHead
 import AllTasksTable from '@/features/tasks/components/tables/AllTasksTable';
 import ClientReceivablesTable from '@/features/receivables/components/ClientReceivablesTable';
 import AccountLedgerTable from '@/features/invoices/components/AccountLedgerTable';
-import { TrendingUp, TrendingDown } from 'lucide-react';
-import type { Task, StatementItem, TaskCancellationConflictData, UnifiedAccount } from '@/api/types';
+import type { Task, StatementItem, TaskCancellationConflictData } from '@/api/types';
 import { useReceivablesPermissions } from '@/shared/hooks/useReceivablesPermissions';
 import ClientCreditsHistoryTable from '@/features/clients/components/ClientCreditsHistoryTable';
 
@@ -121,44 +120,6 @@ const ClientProfilePage = () => {
 
     const handleAddCredit = () => {
         if (client) openModal('recordCreditModal', { client });
-    };
-
-    const handleAddSarfVoucher = () => {
-        if (client) {
-            const clientAccount: UnifiedAccount = {
-                type: 'client',
-                id: client.id,
-                name: client.name,
-                email: null,
-                balance: statementData?.totals.balance || 0,
-                last_activity: null,
-                pending_count: 0,
-                pending_amount: 0
-            };
-            openModal('manualTransaction', {
-                preselectedAccount: clientAccount,
-                direction: 'payout'
-            });
-        }
-    };
-
-    const handleAddQabdVoucher = () => {
-        if (client) {
-            const clientAccount: UnifiedAccount = {
-                type: 'client',
-                id: client.id,
-                name: client.name,
-                email: null,
-                balance: statementData?.totals.balance || 0,
-                last_activity: null,
-                pending_count: 0,
-                pending_amount: 0
-            };
-            openModal('manualTransaction', {
-                preselectedAccount: clientAccount,
-                direction: 'repayment'
-            });
-        }
     };
 
     const handleEditTask = (task: Task) => openModal('taskForm', { taskToEdit: task });
@@ -352,8 +313,6 @@ const ClientProfilePage = () => {
                 onAddTask={handleAddTask}
                 onAddInvoice={handleAddReceivable}
                 onAddCredit={handleAddCredit}
-                onAddSarfVoucher={handleAddSarfVoucher}
-                onAddQabdVoucher={handleAddQabdVoucher}
                 onExportStatement={handleExportStatement}
                 onExportTasks={handleExportTasks}
                 onExportCredits={handleExportCredits}

@@ -18,7 +18,7 @@ import SettingsPage from '@/features/settings/pages/SettingsPage';
 import TagsPage from '@/features/tags/pages/TagsPage';
 import EmployeeManagementPage from '@/features/employees/pages/admin/EmployeeManagementPage';
 import EmployeeProfilePage from '@/features/employees/pages/admin/EmployeeProfilePage';
-import AccountsOverviewPage from '@/features/financials/pages/AccountsOverviewPage';
+import FinancialCenterPage from '@/features/financials/pages/FinancialCenterPage';
 import InvoicesHubPage from '@/features/invoices/pages/InvoicesHubPage';
 import CompanyProfilePage from '@/features/financials/pages/CompanyProfilePage';
 import PendingCommissionsPage from '@/features/financials/pages/PendingCommissionsPage';
@@ -30,8 +30,13 @@ import EmployeeClientProfilePage from '@/features/employees/pages/employee/Emplo
 import EmployeeNotificationsPage from '@/features/employees/pages/employee/EmployeeNotificationsPage';
 import EmployeeClientReceivablesPage from '@/features/employees/pages/employee/EmployeeClientReceivablesPage';
 import EmployeeSettingsPage from '@/features/employees/pages/employee/EmployeeSettingsPage';
+import EmployeeOnboardingPage from '@/features/employees/pages/employee/EmployeeOnboardingPage';
+import EmployeeAccountsPage from '@/features/employees/pages/employee/EmployeeAccountsPage';
 import { CashBoxDetailsPage } from '@/features/financials/pages/CashBoxDetailsPage';
 import { CashBoxesListPage } from '@/features/financials/pages/CashBoxesListPage';
+import { TreasuryAccountsPage } from '@/features/financials/pages/TreasuryAccountsPage';
+import { TreasuryCategoryListPage } from '@/features/financials/pages/TreasuryCategoryListPage';
+import { TreasuryAccountDetailsPage } from '@/features/financials/pages/TreasuryAccountDetailsPage';
 
 
 const routes: RouteObject[] = [
@@ -93,18 +98,23 @@ const routes: RouteObject[] = [
         path: 'financial-center', element: <AdminRoute />,
         children: [{
           element: <AdminLayout />, children: [
-            { index: true, element: <Navigate to="accounts" replace /> },
-            { path: 'accounts', element: <AccountsOverviewPage /> },
+            { index: true, element: <Navigate to="treasury-accounts" replace /> },
+            { path: 'treasury-accounts', element: <FinancialCenterPage /> },
             { path: 'pending', element: <PendingCommissionsPage /> },
             { path: 'invoices', element: <InvoicesHubPage /> },
             { path: "cash-boxes", element: <CashBoxesListPage /> },
-            { path: "cash-boxes/:id", element: <CashBoxDetailsPage /> }
+            { path: "cash-boxes/:id", element: <CashBoxDetailsPage /> },
+            { path: "treasury/:subType", element: <TreasuryCategoryListPage /> },
+            { path: "treasury-accounts/:id", element: <TreasuryAccountDetailsPage /> },
+
           ]
         }],
       },
       {
         path: 'employee', element: <EmployeeRoute />,
-        children: [{
+        children: [
+          { path: 'onboarding', element: <EmployeeOnboardingPage /> },
+          {
           element: <EmployeeLayout />, children: [
             { index: true, element: <Navigate to="dashboard" replace /> },
             { path: 'dashboard', element: <EmployeeDashboardPage /> },
@@ -113,7 +123,8 @@ const routes: RouteObject[] = [
             { path: 'clients/:id', element: <EmployeeClientProfilePage /> },
             { path: 'receivables', element: <EmployeeClientReceivablesPage /> },
             { path: 'financials', element: <EmployeeFinancialsPage /> },
-            { path: 'cash-box/:id', element: <CashBoxDetailsPage /> },
+            { path: 'accounts', element: <EmployeeAccountsPage /> },
+            { path: 'treasury-accounts/:id', element: <TreasuryAccountDetailsPage /> },
             { path: 'settings', element: <EmployeeSettingsPage /> },
             { path: 'notifications', element: <EmployeeNotificationsPage /> },
           ]

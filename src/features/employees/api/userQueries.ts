@@ -7,7 +7,11 @@ import type {
   CreateEmployeeAccountRequest,
   UpdateUserProfileRequest,
   EmployeeCredentials,
-  EmployeeAccount
+  EmployeeAccount,
+  RecoveryCodesResponse,
+  AdminResetPasswordResponse,
+  SetupPinPayload,
+  RecoverPasswordPayload,
 } from '@/api/types';
 
 /**
@@ -186,6 +190,7 @@ export const useCreateEmployee = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['users'] });
       queryClient.invalidateQueries({ queryKey: ['employees'] });
+      queryClient.invalidateQueries({ queryKey: ['employee-accounts'] });
     },
   });
 };
@@ -204,6 +209,7 @@ export const useUpdateUserProfile = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['users'] });
       queryClient.invalidateQueries({ queryKey: ['employees'] });
+      queryClient.invalidateQueries({ queryKey: ['employee-accounts'] });
     },
   });
 };
@@ -220,6 +226,7 @@ export const useDeleteEmployee = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['users'] });
       queryClient.invalidateQueries({ queryKey: ['employees'] });
+      queryClient.invalidateQueries({ queryKey: ['employee-accounts'] });
     },
   });
 };
@@ -230,12 +237,95 @@ export const useDeleteEmployee = () => {
  */
 export const useEmployeesList = () => {
   return useQuery({
-    queryKey: ['employees'],
+    queryKey: ['employee-accounts'],
     queryFn: async (): Promise<EmployeeAccount[]> => {
       const response = await apiClient.get('/users/employees');
       return response.data.data;
     },
     staleTime: 2 * 60 * 1000, // 2 minutes
+  });
+};
+
+/**
+ * Fetch a single employee account by ID
+ */
+export const useEmployeeAccount = (id: number) => {
+  return useQuery({
+    queryKey: ['employee-accounts', id],
+    queryFn: async (): Promise<EmployeeAccount> => {
+      const response = await apiClient.get(`/users/${id}`);
+      return response.data.data;
+    },
+    enabled: !!id,
+    staleTime: 2 * 60 * 1000,
+  });
+};
+
+/**
+ * Regenerate recovery codes for an employee
+ */
+export const useRegenerateCodes = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ userId }: { userId: number }): Promise<RecoveryCodesResponse> => {
+      const response = await apiClient.post(`/users/${userId}/regenerate-codes`);
+      return response.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['employee-accounts'] });
+    },
+  });
+};
+
+/**
+ * Admin reset password for an employee (generates new recovery codes)
+ */
+export const useAdminResetPassword = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ userId, password }: { userId: number; password: string }): Promise<AdminResetPasswordResponse> => {
+      const response = await apiClient.post(`/users/${userId}/admin-reset-password`, { new_password: password });
+      return response.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['employee-accounts'] });
+    },
+  });
+};
+
+/**
+ * Setup PIN for the current user
+ */
+export const useSetupPin = () => {
+  return useMutation({
+    mutationFn: async (data: SetupPinPayload) => {
+      const response = await apiClient.post('/auth/setup-pin', data);
+      return response.data;
+    },
+  });
+};
+
+/**
+ * Verify phone number to initiate password recovery (public endpoint, no auth needed)
+ */
+export const useVerifyPhone = () => {
+  return useMutation({
+    mutationFn: async (data: { phone: string }) => {
+      const response = await publicApiClient.post('/auth/verify-phone', data);
+      return response.data;
+    },
+  });
+};
+
+/**
+ * Recover password using recovery code (public endpoint, no auth needed)
+ */
+export const useRecoverPassword = () => {
+  return useMutation({
+    mutationFn: async (data: RecoverPasswordPayload) => {
+      const response = await publicApiClient.post('/auth/recover-password', data);
+      return response.data;
+    },
   });
 };
 
