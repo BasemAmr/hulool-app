@@ -89,6 +89,7 @@ export interface User {
   commission_rate: number | null;
   type?: 'admin' | 'employee_admin' | 'employee';
   is_active?: boolean;
+  can_make_transactions?: boolean;
   roles: string[];
   capabilities: Record<string, boolean>;
   pin_set?: boolean;
@@ -105,6 +106,7 @@ export interface EmployeeAccount {
   type: 'admin' | 'employee_admin' | 'employee'; // Account type tier
   email?: string;                // User email (dummy, server-generated)
   is_active: boolean;            // Account active status
+  can_make_transactions?: boolean; // Whether employee can make transactions
   employee_id: number | null;    // ID in tm_employees table
   commission_rate: number | null; // Commission rate percentage
   created_at: string | null;     // Account creation date
@@ -1795,6 +1797,7 @@ export interface UpdateUserProfileRequest {
   username?: string;
   display_name?: string;
   email?: string;
+  can_make_transactions?: boolean;
 }
 
 /**

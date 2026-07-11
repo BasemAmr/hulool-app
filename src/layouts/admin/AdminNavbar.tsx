@@ -201,9 +201,14 @@ const Navbar = () => {
               <ChevronDown size={14} className="text-text-secondary" />
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="min-w-0 text-center max-h-80 overflow-y-auto">
-              <DropdownMenuLabel className="text-center font-extrabold text-sm px-4 py-2">
-                الصندوق
-              </DropdownMenuLabel>
+              <DropdownMenuItem asChild>
+                <NavLink
+                  to="/financial-center/treasury-accounts?section=assets&category=cashbox"
+                  className="flex items-center justify-center w-full cursor-pointer px-4 py-2 border-b border-border/40"
+                >
+                  <span className="font-extrabold text-sm text-primary whitespace-nowrap">إدارة الصناديق</span>
+                </NavLink>
+              </DropdownMenuItem>
               <DropdownMenuSeparator />
               {cashboxAccounts.length === 0 ? (
                 <div className="py-4 px-4 text-sm text-text-secondary whitespace-nowrap">
@@ -231,9 +236,14 @@ const Navbar = () => {
               <ChevronDown size={14} className="text-text-secondary" />
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="min-w-0 text-center max-h-80 overflow-y-auto">
-              <DropdownMenuLabel className="text-center font-extrabold text-sm px-4 py-2">
-                البنك
-              </DropdownMenuLabel>
+              <DropdownMenuItem asChild>
+                <NavLink
+                  to="/financial-center/treasury-accounts?section=assets&category=bank"
+                  className="flex items-center justify-center w-full cursor-pointer px-4 py-2 border-b border-border/40"
+                >
+                  <span className="font-extrabold text-sm text-primary whitespace-nowrap">إدارة البنوك</span>
+                </NavLink>
+              </DropdownMenuItem>
               <DropdownMenuSeparator />
               {bankAccounts.length === 0 ? (
                 <div className="py-4 px-4 text-sm text-text-secondary whitespace-nowrap">

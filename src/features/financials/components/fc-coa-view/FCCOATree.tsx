@@ -5,11 +5,12 @@ import type { COATreeData } from '@/features/financials/types/fcTypes';
 
 interface FCCOATreeProps {
   data: COATreeData;
+  filterSection?: string;
 }
 
-const FCCOATree: React.FC<FCCOATreeProps> = ({ data }) => {
+const FCCOATree: React.FC<FCCOATreeProps> = ({ data, filterSection }) => {
   return (
-    <Accordion type="multiple" defaultValue={[]} className="border border-border-default rounded-lg overflow-hidden bg-bg-surface">
+    <Accordion type="multiple" defaultValue={filterSection ? [filterSection] : []} className="border border-border-default rounded-lg overflow-hidden bg-bg-surface">
       {data.map((section) => (
         <FCCOASection key={section.section.id} section={section} />
       ))}

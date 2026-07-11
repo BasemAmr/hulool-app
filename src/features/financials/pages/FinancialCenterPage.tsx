@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { applyPageBackground } from '@/shared/utils/backgroundUtils';
 import type { FCActiveTab } from '@/features/financials/types/fcTypes';
 import FCMegaTabs from '@/features/financials/components/fc-mega-tabs/FCMegaTabs';
@@ -10,18 +11,31 @@ import { useModalStore } from '@/shared/stores/modalStore';
 import { TrendingUp, TrendingDown } from 'lucide-react';
 
 const FinancialCenterPage: React.FC = () => {
-  const [activeTab, setActiveTab] = useState<FCActiveTab>('treasury');
+  const [searchParams] = useSearchParams();
+  const filterSection = searchParams.get('section');
+  const filterCategory = searchParams.get('category');
+
+  const hasFilter = Boolean(filterSection && filterCategory);
+  const [activeTab, setActiveTab] = useState<FCActiveTab>(() => hasFilter ? 'treasury' : 'treasury');
   const openModal = useModalStore((state) => state.openModal);
 
   useEffect(() => {
     applyPageBackground('financial');
   }, []);
 
+  // When URL has section/category filters, show a filtered header
+  const filterTitle = useMemo(() => {
+    if (!hasFilter) return null;
+    if (filterCategory === 'cashbox') return 'إدارة الصناديق';
+    if (filterCategory === 'bank') return 'إدارة البنوك';
+    return null;
+  }, [hasFilter, filterCategory]);
+
   return (
     <div dir="rtl" className="p-4">
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-2xl font-extrabold text-text-primary tracking-tight">
-          المركز المالي
+          {filterTitle || 'المركز المالي'}
         </h1>
 
         {/* Actions in the center */}
@@ -68,9 +82,14 @@ const FinancialCenterPage: React.FC = () => {
         <FCMegaTabs activeTab={activeTab} onTabChange={setActiveTab} />
       </div>
 
-      {activeTab === 'treasury' && <FCTreasuryView />}
-      {activeTab === 'employees' && <FCEmployeesView />}
-      {activeTab === 'clients' && <FCClientsView />}
+      {activeTab === 'treasury' && (
+        <FCTreasuryView
+          filterSection={hasFilter ? filterSection : undefined}
+          filterCategory={hasFilter ? filterCategory : undefined}
+        />
+      )}
+      {activeTab === 'employees' && !hasFilter && <FCEmployeesView />}
+      {activeTab === 'clients' && !hasFilter && <FCClientsView />}
     </div>
   );
 };

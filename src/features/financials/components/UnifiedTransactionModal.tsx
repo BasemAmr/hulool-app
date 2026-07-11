@@ -22,6 +22,8 @@ import { useGetTreasuryAccounts, useGetCategoryMetadata } from '@/features/finan
 import { useToast } from '@/shared/hooks/useToast';
 import AccountPickerCard from './AccountPickerCard';
 import type { PickerValue, PickerKind } from './AccountPickerCard';
+// PickerKind: 'client' | 'employee' | 'cashbox' | 'bank'
+// PickerValue: { kind, accountId, categorySlug }
 import {
   ArrowLeftRight,
   Loader2,
@@ -79,21 +81,22 @@ const UnifiedTransactionModal = () => {
   const presetToPickerKind = (cardType: string | undefined): PickerKind | null => {
     if (cardType === 'client') return 'client';
     if (cardType === 'employee') return 'employee';
-    if (cardType === 'treasury' || cardType === 'company_cashbox') return 'treasury_section';
+    if (cardType === 'cashbox' || cardType === 'company_cashbox') return 'cashbox';
+    if (cardType === 'bank') return 'bank';
     if (cardType === 'settlement') return 'settlement';
     return null;
   };
 
+  // Initial state uses presetToPickerKind (safe, no treasuryData dependency).
+  // The re-initialize effect below resolves 'treasury' → cashbox/bank once data loads.
   const initialFromPicker: PickerValue = {
     kind: presetToPickerKind(defaultFromCardType),
     accountId: defaultFromAccountId,
-    sectionSlug: null,
     categorySlug: null,
   };
   const initialToPicker: PickerValue = {
     kind: presetToPickerKind(defaultToCardType),
     accountId: defaultToAccountId,
-    sectionSlug: null,
     categorySlug: null,
   };
 
@@ -121,37 +124,7 @@ const UnifiedTransactionModal = () => {
   // ---- Auto-resolve settlement account ID when treasury data loads ----
   useEffect(() => {
     if (!isVisible || !treasuryData || treasuryData.length === 0) return;
-    const settlement = treasuryData.find(
-      (t) =>
-        t.sub_type === 'internal' &&
-        t.coa_section === 'assets' &&
-        (t.metadata as any)?.is_settlement === true,
-    );
-    if (settlement) {
-      setFromPicker((prev) =>
-        prev.kind === 'settlement' && !prev.accountId
-          ? { ...prev, accountId: String(settlement.id) }
-          : prev,
-      );
-      setToPicker((prev) =>
-        prev.kind === 'settlement' && !prev.accountId
-          ? { ...prev, accountId: String(settlement.id) }
-          : prev,
-      );
-    }
-
-    // Auto-resolve sectionSlug and categorySlug for treasury_section preset
-    const resolvePicker = (prev: PickerValue): PickerValue => {
-      if (prev.kind === 'treasury_section' && prev.accountId && !prev.sectionSlug) {
-        const acc = treasuryData.find((t) => String(t.id) === prev.accountId);
-        if (acc) {
-          return { ...prev, sectionSlug: acc.coa_section || 'assets', categorySlug: acc.sub_type || null };
-        }
-      }
-      return prev;
-    };
-    setFromPicker(resolvePicker);
-    setToPicker(resolvePicker);
+    // No longer auto-resolving settlement — removed from picker
   }, [treasuryData, isVisible]);
 
   // ---- Re-initialize when modal opens with new props ----
@@ -162,49 +135,45 @@ const UnifiedTransactionModal = () => {
       const fId = (props?.defaultFromAccountId as string | undefined) ?? '';
       const tId = (props?.defaultToAccountId as string | undefined) ?? '';
 
-      const fKind = presetToPickerKind(fType);
-      const tKind = presetToPickerKind(tType);
-
-      // Resolve settlement account ID immediately if treasury data is available,
-      // so the picker has an accountId from the start and "Next" isn't greyed out.
-      const resolveSettlement = (kind: PickerKind | null, accountId: string) => {
-        if (kind === 'settlement' && !accountId && treasuryData?.length) {
-          const settlement = treasuryData.find(
-            (t) => t.sub_type === 'internal' && t.coa_section === 'assets' && (t.metadata as any)?.is_settlement === true,
-          );
-          if (settlement) return String(settlement.id);
+      const fKind = (() => {
+        if (fType === 'treasury' && fId && treasuryData?.length) {
+          const acc = treasuryData.find((t) => String(t.id) === fId);
+          if (acc?.sub_type === 'cashbox') return 'cashbox' as PickerKind;
+          if (acc?.sub_type === 'bank') return 'bank' as PickerKind;
         }
-        return accountId;
-      };
+        return presetToPickerKind(fType);
+      })();
+      const tKind = (() => {
+        if (tType === 'treasury' && tId && treasuryData?.length) {
+          const acc = treasuryData.find((t) => String(t.id) === tId);
+          if (acc?.sub_type === 'cashbox') return 'cashbox' as PickerKind;
+          if (acc?.sub_type === 'bank') return 'bank' as PickerKind;
+        }
+        return presetToPickerKind(tType);
+      })();
 
-      const resolvedFId = resolveSettlement(fKind, fId);
-      const resolvedTId = resolveSettlement(tKind, tId);
-
-      // Resolve section/category slugs immediately if treasury data is available,
-      // so the account picker doesn't show a blank state on first render.
-      const resolveSection = (cardType: string, accountId: string) => {
-        if ((cardType === 'treasury' || cardType === 'company_cashbox') && accountId && treasuryData?.length) {
+      // Resolve categorySlug from treasury data if kind is cashbox or bank
+      const resolveCategory = (kind: PickerKind | null, accountId: string) => {
+        if ((kind === 'cashbox' || kind === 'bank') && accountId && treasuryData?.length) {
           const acc = treasuryData.find((t) => String(t.id) === accountId);
-          if (acc) return { sectionSlug: acc.coa_section || 'assets', categorySlug: acc.sub_type || null };
+          if (acc) return acc.sub_type || null;
         }
-        return { sectionSlug: null, categorySlug: null };
+        return null;
       };
 
-      const fSection = resolveSection(fType, resolvedFId);
-      const tSection = resolveSection(tType, resolvedTId);
+      const fCategory = resolveCategory(fKind, fId);
+      const tCategory = resolveCategory(tKind, tId);
 
       setStep(1);
       setFromPicker({
         kind: fKind,
-        accountId: resolvedFId,
-        sectionSlug: fSection.sectionSlug,
-        categorySlug: fSection.categorySlug,
+        accountId: fId,
+        categorySlug: fCategory,
       });
       setToPicker({
         kind: tKind,
-        accountId: resolvedTId,
-        sectionSlug: tSection.sectionSlug,
-        categorySlug: tSection.categorySlug,
+        accountId: tId,
+        categorySlug: tCategory,
       });
       setAmount('');
       setDescription('');
@@ -221,10 +190,7 @@ const UnifiedTransactionModal = () => {
     if (!pv.kind || !pv.accountId) return null;
     if (pv.kind === 'client') return 'client';
     if (pv.kind === 'employee') return 'employee';
-    if (pv.kind === 'treasury_section' || pv.kind === 'settlement') {
-      const acc = (treasuryData ?? []).find((t) => String(t.id) === pv.accountId);
-      return acc ? 'treasury' : null;
-    }
+    if (pv.kind === 'cashbox' || pv.kind === 'bank' || pv.kind === 'settlement') return 'treasury';
     return null;
   };
 
@@ -333,8 +299,8 @@ const UnifiedTransactionModal = () => {
   // ---- Reset on open/close ----
   const handleClose = () => {
     setStep(1);
-    setFromPicker({ kind: null, accountId: '', sectionSlug: null, categorySlug: null });
-    setToPicker({ kind: null, accountId: '', sectionSlug: null, categorySlug: null });
+    setFromPicker({ kind: null, accountId: '', categorySlug: null });
+    setToPicker({ kind: null, accountId: '', categorySlug: null });
     setAmount('');
     setDescription('');
     setAutoDescription('');
@@ -363,7 +329,7 @@ const UnifiedTransactionModal = () => {
       const e = employeesRaw?.accounts?.find((a: any) => String(a.id) === pv.accountId);
       return e?.name ?? `موظف #${pv.accountId}`;
     }
-    if (pv.kind === 'treasury_section' || pv.kind === 'settlement') {
+    if (pv.kind === 'cashbox' || pv.kind === 'bank' || pv.kind === 'settlement') {
       const a = (treasuryData ?? []).find((t) => String(t.id) === pv.accountId);
       return a?.name ?? `حساب #${pv.accountId}`;
     }
@@ -374,11 +340,9 @@ const UnifiedTransactionModal = () => {
     if (!pv.kind) return '';
     if (pv.kind === 'client') return 'عميل';
     if (pv.kind === 'employee') return 'موظف';
+    if (pv.kind === 'cashbox') return 'صندوق';
+    if (pv.kind === 'bank') return 'بنك';
     if (pv.kind === 'settlement') return 'تسوية';
-    if (pv.kind === 'treasury_section') {
-      const meta = categoryMetadata?.find((c) => c.slug === pv.sectionSlug);
-      return meta?.label ?? pv.sectionSlug ?? 'خزينة';
-    }
     return '';
   };
 
@@ -440,7 +404,14 @@ const UnifiedTransactionModal = () => {
               employees={employees}
               treasuryData={treasuryData ?? []}
               categoryMetadata={categoryMetadata ?? []}
-              presetKind={presetToPickerKind(defaultFromCardType)}
+              presetKind={(() => {
+                if (defaultFromCardType === 'treasury' && defaultFromAccountId && treasuryData?.length) {
+                  const acc = treasuryData.find((t) => String(t.id) === defaultFromAccountId);
+                  if (acc?.sub_type === 'cashbox') return 'cashbox' as PickerKind;
+                  if (acc?.sub_type === 'bank') return 'bank' as PickerKind;
+                }
+                return presetToPickerKind(defaultFromCardType);
+              })()}
               isVisible={isVisible}
             />
             <AccountPickerCard
@@ -451,7 +422,14 @@ const UnifiedTransactionModal = () => {
               employees={employees}
               treasuryData={treasuryData ?? []}
               categoryMetadata={categoryMetadata ?? []}
-              presetKind={presetToPickerKind(defaultToCardType)}
+              presetKind={(() => {
+                if (defaultToCardType === 'treasury' && defaultToAccountId && treasuryData?.length) {
+                  const acc = treasuryData.find((t) => String(t.id) === defaultToAccountId);
+                  if (acc?.sub_type === 'cashbox') return 'cashbox' as PickerKind;
+                  if (acc?.sub_type === 'bank') return 'bank' as PickerKind;
+                }
+                return presetToPickerKind(defaultToCardType);
+              })()}
               isVisible={isVisible}
             />
           </div>

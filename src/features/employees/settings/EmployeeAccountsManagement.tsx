@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Trash2, Save, X, Key, RotateCcw, Shield } from 'lucide-react';
+import { Trash2, Save, X, Key, RotateCcw, Shield, ArrowLeftRight } from 'lucide-react';
 import Button from '@/shared/ui/primitives/Button';
 import {
     useEmployeesList,
@@ -142,6 +142,20 @@ const EmployeeAccountsManagement = () => {
         }
     };
 
+    const handleToggleTransactionPermission = async (employee: EmployeeAccount) => {
+        const newValue = !employee.can_make_transactions;
+        try {
+            await updateUserProfile.mutateAsync({
+                userId: employee.id,
+                can_make_transactions: newValue,
+            });
+            success(newValue ? 'تم تفعيل صلاحية المعاملات' : 'تم إلغاء صلاحية المعاملات');
+        } catch (err: any) {
+            const errorMessage = err.response?.data?.message || 'فشل تحديث صلاحية المعاملات';
+            showError(errorMessage);
+        }
+    };
+
     if (!hasTmManageEmployees) {
         return (
             <div className="p-6 bg-status-warning-bg border border-status-warning-border rounded-lg">
@@ -229,6 +243,9 @@ const EmployeeAccountsManagement = () => {
                                     الحالة
                                 </th>
                                 <th className="px-4 py-3 text-center text-sm font-semibold text-foreground border-b border-border">
+                                    صلاحية المعاملات
+                                </th>
+                                <th className="px-4 py-3 text-center text-sm font-semibold text-foreground border-b border-border">
                                     الإجراءات
                                 </th>
                             </tr>
@@ -311,6 +328,29 @@ const EmployeeAccountsManagement = () => {
                                             <span className="inline-flex items-center gap-1 rounded-full border border-status-danger-border bg-status-danger-bg px-2.5 py-1 text-xs text-status-danger-text">
                                                 غير نشط
                                             </span>
+                                        )}
+                                    </td>
+
+                                    {/* Transaction Permission Toggle */}
+                                    <td className="px-4 py-3 text-sm border-b border-border text-center">
+                                        {employee.type === 'admin' || employee.type === 'employee_admin' ? (
+                                            <span className="inline-flex items-center gap-1 rounded-full border border-status-success-border bg-status-success-bg px-2.5 py-1 text-xs text-status-success-text">
+                                                <ArrowLeftRight className="h-3 w-3" />
+                                                مسموح (مدير)
+                                            </span>
+                                        ) : (
+                                            <button
+                                                onClick={() => handleToggleTransactionPermission(employee)}
+                                                disabled={updateUserProfile.isPending}
+                                                className={`inline-flex items-center gap-1 rounded-full border px-2.5 py-1 text-xs font-medium transition-colors ${
+                                                    employee.can_make_transactions
+                                                        ? 'border-status-success-border bg-status-success-bg text-status-success-text hover:bg-status-success-bg/80'
+                                                        : 'border-status-danger-border bg-status-danger-bg text-status-danger-text hover:bg-status-danger-bg/80'
+                                                }`}
+                                            >
+                                                <ArrowLeftRight className="h-3 w-3" />
+                                                {employee.can_make_transactions ? 'مسموح' : 'غير مسموح'}
+                                            </button>
                                         )}
                                     </td>
 

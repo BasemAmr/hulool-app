@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Settings, User, Lock, ShieldCheck, KeyRound } from 'lucide-react';
+import { Settings, User, Lock, ShieldCheck, KeyRound, ArrowLeftRight } from 'lucide-react';
 import { useToast } from '@/shared/hooks/useToast';
 import { useAuthStore } from '@/features/auth/store/authStore';
 import { useUpdateMyProfile, useSetMyPassword, useSetupPin } from '@/features/employees/api/userQueries';
@@ -344,6 +344,46 @@ const EmployeeSettingsPage = () => {
                             </div>
                         </form>
                     )}
+                </div>
+
+                {/* Transaction Permission Status */}
+                <div className="rounded-lg border bg-card p-6">
+                    <h2 className="text-xl font-semibold text-text-primary mb-4 flex items-center gap-2">
+                        <ArrowLeftRight size={20} />
+                        صلاحية المعاملات المالية
+                    </h2>
+
+                    <div className="space-y-3">
+                        {user?.type === 'admin' || user?.type === 'employee_admin' ? (
+                            <div className="flex items-center gap-2">
+                                <span className="inline-flex items-center gap-1 rounded-full border border-status-success-border bg-status-success-bg px-3 py-1.5 text-sm font-medium text-status-success-text">
+                                    <ArrowLeftRight className="h-4 w-4" />
+                                    مسموح — صلاحيات المدير
+                                </span>
+                            </div>
+                        ) : user?.can_make_transactions ? (
+                            <div className="flex items-center gap-2">
+                                <span className="inline-flex items-center gap-1 rounded-full border border-status-success-border bg-status-success-bg px-3 py-1.5 text-sm font-medium text-status-success-text">
+                                    <ArrowLeftRight className="h-4 w-4" />
+                                    مسموح بإجراء المعاملات
+                                </span>
+                            </div>
+                        ) : (
+                            <div className="flex items-center gap-2">
+                                <span className="inline-flex items-center gap-1 rounded-full border border-status-danger-border bg-status-danger-bg px-3 py-1.5 text-sm font-medium text-status-danger-text">
+                                    <ArrowLeftRight className="h-4 w-4" />
+                                    غير مسموح بإجراء المعاملات
+                                </span>
+                            </div>
+                        )}
+                        <p className="text-sm text-text-secondary">
+                            تُحدد هذه الصلاحية ما إذا كان بإمكانك استخدام سندات القبض والصرف والتسوية.
+                            {(user?.type === 'admin' || user?.type === 'employee_admin')
+                                ? 'كمدير، لديك صلاحية إجراء المعاملات دائماً.'
+                                : 'تواصل مع المدير لتفعيل هذه الصلاحية.'
+                            }
+                        </p>
+                    </div>
                 </div>
 
                 {/* Recovery Codes Section */}

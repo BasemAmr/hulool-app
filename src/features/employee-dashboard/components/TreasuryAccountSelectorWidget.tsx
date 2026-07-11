@@ -1,8 +1,10 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Card, CardContent } from '@/shared/ui/shadcn/card';
-import { Wallet } from 'lucide-react';
+import { Wallet, ExternalLink } from 'lucide-react';
 import { useGetMyTreasuryAccounts } from '@/features/financials/api/treasuryQueries';
 import { useModalStore } from '@/shared/stores/modalStore';
+import { useAuthStore } from '@/features/auth/store/authStore';
 import {
   ShadcnSelect as Select,
   ShadcnSelectContent as SelectContent,
@@ -15,7 +17,12 @@ import type { TreasuryAccountWithPermission } from '@/api/types';
 export const TreasuryAccountSelectorWidget: React.FC = () => {
   const { data: accounts, isLoading } = useGetMyTreasuryAccounts();
   const openModal = useModalStore((state) => state.openModal);
+  const navigate = useNavigate();
+  const user = useAuthStore((state) => state.user);
   const [selectedAccountId, setSelectedAccountId] = useState<string>('');
+
+  const hasTransactionPermission =
+    user?.type === 'admin' || user?.type === 'employee_admin' || user?.can_make_transactions;
 
   if (isLoading || !accounts || accounts.length === 0) {
     return null;
@@ -96,33 +103,46 @@ export const TreasuryAccountSelectorWidget: React.FC = () => {
           <div className="text-xs text-text-muted mt-0.5">ر.س</div>
         </div>
 
-        {/* Quick action buttons */}
-        <div className="flex gap-2">
+        {/* Account details link */}
+        <div className="mb-3 text-center">
           <button
-            onClick={() =>
-              openModal('unifiedTransaction', {
-                defaultToCardType: 'treasury',
-                defaultToAccountId: String(selectedAccount.id),
-                title: 'سند قبض',
-              })
-            }
-            className="flex-1 px-3 py-2 text-sm font-bold rounded-md bg-status-success-bg text-status-success-text border border-status-success-border hover:opacity-80 transition-opacity"
+            onClick={() => navigate(`/employee/treasury-accounts/${selectedAccount.id}`)}
+            className="inline-flex items-center gap-1 text-xs text-text-brand hover:underline transition-colors"
           >
-            سند قبض
-          </button>
-          <button
-            onClick={() =>
-              openModal('unifiedTransaction', {
-                defaultFromCardType: 'treasury',
-                defaultFromAccountId: String(selectedAccount.id),
-                title: 'سند صرف',
-              })
-            }
-            className="flex-1 px-3 py-2 text-sm font-bold rounded-md bg-status-danger-bg text-status-danger-text border border-status-danger-border hover:opacity-80 transition-opacity"
-          >
-            سند صرف
+            <ExternalLink size={12} />
+            عرض تفاصيل الحساب
           </button>
         </div>
+
+        {/* Quick action buttons */}
+        {hasTransactionPermission && selectedAccount.can_transact && (
+          <div className="flex gap-2">
+            <button
+              onClick={() =>
+                openModal('unifiedTransaction', {
+                  defaultToCardType: 'treasury',
+                  defaultToAccountId: String(selectedAccount.id),
+                  title: 'سند قبض',
+                })
+              }
+              className="flex-1 px-3 py-2 text-sm font-bold rounded-md bg-status-success-bg text-status-success-text border border-status-success-border hover:opacity-80 transition-opacity"
+            >
+              سند قبض
+            </button>
+            <button
+              onClick={() =>
+                openModal('unifiedTransaction', {
+                  defaultFromCardType: 'treasury',
+                  defaultFromAccountId: String(selectedAccount.id),
+                  title: 'سند صرف',
+                })
+              }
+              className="flex-1 px-3 py-2 text-sm font-bold rounded-md bg-status-danger-bg text-status-danger-text border border-status-danger-border hover:opacity-80 transition-opacity"
+            >
+              سند صرف
+            </button>
+          </div>
+        )}
       </CardContent>
     </Card>
   );
