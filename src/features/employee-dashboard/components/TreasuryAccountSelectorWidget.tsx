@@ -29,6 +29,8 @@ export const TreasuryAccountSelectorWidget: React.FC = () => {
     return null;
   }
 
+  const mappedAccountsWithoutSettlement = accounts.filter((account) => !account.metadata?.is_settlement);
+
   const formatBalance = (balance: number) =>
     new Intl.NumberFormat('en-US', {
       minimumFractionDigits: 0,
@@ -52,7 +54,7 @@ export const TreasuryAccountSelectorWidget: React.FC = () => {
               <SelectValue placeholder="اختر خزينة" />
             </SelectTrigger>
             <SelectContent>
-              {accounts.map((account) => (
+              {mappedAccountsWithoutSettlement.map((account) => (
                 <SelectItem key={account.id} value={String(account.id)}>
                   <div className="flex flex-col">
                     <span className="font-medium">{account.name}</span>
