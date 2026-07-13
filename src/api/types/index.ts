@@ -1145,6 +1145,7 @@ export interface UpdateInvoicePayload {
 export interface RecordInvoicePaymentPayload {
   amount: number;
   payment_method_id: number;
+  treasury_account_id: number;
   paid_at: string;
   note?: string;
   reference_number?: string;
@@ -1177,6 +1178,7 @@ export interface RecordPaymentResponse {
 export interface BatchPaymentAllocation {
   invoice_id: number;
   amount: number;
+  treasury_account_id: number;
 }
 
 /**

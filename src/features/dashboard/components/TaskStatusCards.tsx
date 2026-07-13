@@ -27,6 +27,7 @@ interface CardConfig {
   iconClass: string;
   textClass: string;
   isClickable?: boolean;
+  isHighlighted?: boolean;
 }
 
 const TaskStatusCards = ({ stats, totalPaidAmount = 0, isLoading }: TaskStatusCardsProps) => {
@@ -38,50 +39,51 @@ const TaskStatusCards = ({ stats, totalPaidAmount = 0, isLoading }: TaskStatusCa
       icon: Clock,
       label: 'مهام جديدة',
       value: stats.new_tasks,
-      bgClass: 'bg-card',
-      borderClass: 'border-border',
-      iconClass: 'text-text-primary',
-      textClass: 'text-text-primary',
+      bgClass: 'bg-[var(--token-status-info-bg)]',
+      borderClass: 'border-[var(--token-status-info-border)]',
+      iconClass: 'text-[var(--token-status-info-text)]',
+      textClass: 'text-[var(--token-status-info-text)]',
     },
     {
       to: '/tasks?status=Deferred',
       icon: PauseCircle,
       label: 'مهام مؤجلة',
       value: stats.deferred_tasks,
-      bgClass: 'bg-card',
-      borderClass: 'border-border',
-      iconClass: 'text-text-primary',
-      textClass: 'text-text-primary',
+      bgClass: 'bg-[var(--token-status-neutral-bg)]',
+      borderClass: 'border-[var(--token-status-neutral-border)]',
+      iconClass: 'text-[var(--token-status-neutral-text)]',
+      textClass: 'text-[var(--token-status-neutral-text)]',
     },
     {
       to: '/tasks?status=Pending Review',
       icon: ClipboardCheck,
       label: 'مهام قيد المراجعة',
       value: stats.pending_review_tasks || 0,
-      bgClass: 'bg-card',
-      borderClass: 'border-border',
-      iconClass: 'text-text-primary',
-      textClass: 'text-text-primary',
+      bgClass: 'bg-[var(--token-status-warning-bg)]',
+      borderClass: 'border-[var(--token-status-warning-border)]',
+      iconClass: 'text-[var(--token-status-warning-text)]',
+      textClass: 'text-[var(--token-status-warning-text)]',
+      isHighlighted: true,
     },
     {
       to: '/tasks?status=Completed',
       icon: CheckCircle,
       label: 'مهام مكتملة',
       value: stats.completed_tasks,
-      bgClass: 'bg-card',
-      borderClass: 'border-border',
-      iconClass: 'text-text-primary',
-      textClass: 'text-text-primary',
+      bgClass: 'bg-[var(--token-status-success-bg)]',
+      borderClass: 'border-[var(--token-status-success-border)]',
+      iconClass: 'text-[var(--token-status-success-text)]',
+      textClass: 'text-[var(--token-status-success-text)]',
     },
     {
       to: '/tasks?status=Late',
       icon: AlertTriangle,
       label: 'مهام متأخرة',
       value: stats.late_tasks,
-      bgClass: 'bg-card',
-      borderClass: 'border-border',
-      iconClass: 'text-text-primary',
-      textClass: 'text-text-primary',
+      bgClass: 'bg-[var(--token-status-danger-bg)]',
+      borderClass: 'border-[var(--token-status-danger-border)]',
+      iconClass: 'text-[var(--token-status-danger-text)]',
+      textClass: 'text-[var(--token-status-danger-text)]',
       isClickable: true,
     },
     {
@@ -89,10 +91,10 @@ const TaskStatusCards = ({ stats, totalPaidAmount = 0, isLoading }: TaskStatusCa
       icon: SaudiRiyalIcon,
       label: 'مستحقات مسددة',
       value: hasViewAmountsPermission ? totalPaidAmount : '***',
-      bgClass: 'bg-card',
-      borderClass: 'border-border',
-      iconClass: 'text-text-primary',
-      textClass: 'text-text-primary',
+      bgClass: 'bg-[var(--token-status-success-bg)]',
+      borderClass: 'border-[var(--token-status-success-border)]',
+      iconClass: 'text-[var(--token-status-success-text)]',
+      textClass: 'text-[var(--token-status-success-text)]',
       isClickable: hasViewPaidReceivablesPermission,
     },
     {
@@ -100,10 +102,10 @@ const TaskStatusCards = ({ stats, totalPaidAmount = 0, isLoading }: TaskStatusCa
       icon: SaudiRiyalIcon,
       label: 'مستحقات متأخرة',
       value: hasViewAmountsPermission ? (stats.total_unpaid_amount || 0) : '***',
-      bgClass: 'bg-card',
-      borderClass: 'border-border',
-      iconClass: 'text-text-primary',
-      textClass: 'text-text-primary',
+      bgClass: 'bg-[var(--token-status-danger-bg)]',
+      borderClass: 'border-[var(--token-status-danger-border)]',
+      iconClass: 'text-[var(--token-status-danger-text)]',
+      textClass: 'text-[var(--token-status-danger-text)]',
       isClickable: hasViewOverdueReceivablesPermission,
     },
   ];
@@ -114,14 +116,14 @@ const TaskStatusCards = ({ stats, totalPaidAmount = 0, isLoading }: TaskStatusCa
         {[1, 2, 3, 4, 5, 6, 7].map(i => (
           <div
             key={i}
-            className="rounded-lg shadow-sm bg-card border border-border min-w-[140px] flex-1"
+            className="rounded-lg shadow-sm bg-card border-2 border-border min-w-[140px] flex-1"
           >
-            <div className="p-2">
-              <div className="flex items-center gap-2">
-                <div className="w-5 h-5 rounded bg-border-default animate-pulse"></div>
+            <div className="p-3">
+              <div className="flex items-center gap-2.5">
+                <div className="w-6 h-6 rounded bg-border-default animate-pulse"></div>
                 <div className="flex-1">
-                  <div className="h-2.5 w-12 bg-border-default rounded mb-1 animate-pulse"></div>
-                  <div className="h-4 w-8 bg-border-default rounded animate-pulse"></div>
+                  <div className="h-3 w-14 bg-border-default rounded mb-1.5 animate-pulse"></div>
+                  <div className="h-5 w-10 bg-border-default rounded animate-pulse"></div>
                 </div>
               </div>
             </div>
@@ -134,31 +136,39 @@ const TaskStatusCards = ({ stats, totalPaidAmount = 0, isLoading }: TaskStatusCa
   return (
     <div className="flex gap-3 mb-4 flex-wrap">
       {cardData.map(card => {
+        const isPendingReview = card.isHighlighted;
         const CardContent = (
           <div
-            className={`rounded-lg shadow-sm border-l-4 border-l-primary transition-colors duration-150 min-w-[140px] flex-1 ${card.bgClass} ${card.borderClass}`}
+            className={`rounded-lg transition-all duration-150 min-w-[140px] flex-1 border ${
+              card.bgClass
+            } ${card.borderClass} shadow-sm`}
+            style={isPendingReview ? {
+              borderLeftWidth: '4px',
+              borderLeftColor: 'var(--token-status-warning-text)',
+              boxShadow: '0 0 12px var(--token-status-warning-border), 0 0 4px var(--token-status-warning-border)',
+            } : undefined}
           >
-            <div className="p-2">
-              <div className="flex items-center gap-2">
+            <div className="p-3">
+              <div className="flex items-center gap-2.5">
                 <div className="flex-shrink-0">
                   {card.icon === SaudiRiyalIcon ? (
                     <SaudiRiyalIcon
-                      size={20}
+                      size={24}
                       className={card.iconClass}
                     />
                   ) : (
                     <card.icon
-                      size={20}
-                      strokeWidth={1.5}
+                      size={24}
+                      strokeWidth={2}
                       className={card.iconClass}
                     />
                   )}
                 </div>
                 <div className="flex-1">
-                  <p className={`mb-0 text-[0.7rem] font-semibold leading-tight ${card.textClass}`}>
+                  <p className={`mb-0 text-xs font-bold leading-tight ${card.textClass}`}>
                     {card.label}
                   </p>
-                  <h6 className={`mb-0 font-bold text-base leading-tight ${card.textClass}`}>
+                  <h6 className={`mb-0 font-extrabold text-lg leading-tight ${card.textClass}`}>
                     {(card.label === 'مستحقات مسددة' || card.label === 'مستحقات متأخرة')
                       ? (typeof card.value === 'number' ? card.value.toLocaleString('ar-SA') : card.value)
                       : card.value}
