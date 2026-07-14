@@ -220,7 +220,7 @@ const ManualTransactionModal = ({
         amount: parseFloat(amount),
         description,
         category: category as 'salary' | 'commission' | 'loan' | 'expense' | 'advance_repayment' | 'loan_repayment' | 'other',
-        effective_date: `${effectiveDate}T12:00:00`,
+        effective_date: `${effectiveDate}T${new Date().toTimeString().split(' ')[0]}`,
         notes: notes || undefined,
       });
 

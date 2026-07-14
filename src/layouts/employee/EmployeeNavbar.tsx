@@ -1,4 +1,4 @@
-import { Link, NavLink, useNavigate } from 'react-router-dom';
+import { Link, NavLink, useNavigate, useLocation } from 'react-router-dom';
 import { useAuthStore } from '@/features/auth/store/authStore';
 import Logo from '@/shared/ui/primitives/Logo';
 import NotificationBell from '@/layouts/admin/NotificationBell';
@@ -70,6 +70,13 @@ const EmployeeNavbar = () => {
         });
     }, [myTreasuryAccounts]);
 
+    const location = useLocation();
+    const match = location.pathname.match(/\/employee\/treasury-accounts\/(\d+)/);
+    const activeAccountId = match ? match[1] : null;
+    const isCashboxActive = activeAccountId ? cashboxAccounts.some((a) => String(a.id) === activeAccountId) : false;
+    const isBankActive = activeAccountId ? bankAccounts.some((a) => String(a.id) === activeAccountId) : false;
+    const isOtherActive = activeAccountId ? otherAccounts.some((a) => String(a.id) === activeAccountId) : false;
+
     return (
         <nav className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60" dir="rtl">
             <div className="flex h-16 items-center px-4 gap-4">
@@ -135,7 +142,7 @@ const EmployeeNavbar = () => {
 
                         {/* الصناديق Dropdown */}
                         <DropdownMenu>
-                            <DropdownMenuTrigger className="flex items-center gap-1.5 px-3 py-2 text-sm font-bold rounded-md text-text-secondary hover:bg-accent hover:text-accent-foreground transition-colors outline-none">
+                            <DropdownMenuTrigger className={`flex items-center gap-1.5 px-3 py-2 text-sm font-bold rounded-md transition-colors outline-none ${isCashboxActive ? 'bg-primary/10 text-primary' : 'text-text-secondary hover:bg-accent hover:text-accent-foreground'}`}>
                                 <span>الصناديق</span>
                                 <ChevronDown size={14} className="text-text-secondary opacity-70" />
                             </DropdownMenuTrigger>
@@ -144,7 +151,7 @@ const EmployeeNavbar = () => {
                                     <div className="py-4 px-4 text-xs text-text-secondary whitespace-nowrap">
                                         لا توجد صناديق
                                     </div>
-                                ) : (
+                               ) : (
                                     cashboxAccounts.map((account) => (
                                         <DropdownMenuItem key={account.id} asChild>
                                             <NavLink
@@ -161,7 +168,7 @@ const EmployeeNavbar = () => {
 
                         {/* البنوك Dropdown */}
                         <DropdownMenu>
-                            <DropdownMenuTrigger className="flex items-center gap-1.5 px-3 py-2 text-sm font-bold rounded-md text-text-secondary hover:bg-accent hover:text-accent-foreground transition-colors outline-none">
+                            <DropdownMenuTrigger className={`flex items-center gap-1.5 px-3 py-2 text-sm font-bold rounded-md transition-colors outline-none ${isBankActive ? 'bg-primary/10 text-primary' : 'text-text-secondary hover:bg-accent hover:text-accent-foreground'}`}>
                                 <span>البنوك</span>
                                 <ChevronDown size={14} className="text-text-secondary opacity-70" />
                             </DropdownMenuTrigger>
@@ -188,7 +195,7 @@ const EmployeeNavbar = () => {
                         {/* حسابات أخرى Dropdown (only shows if accounts exist) */}
                         {otherAccounts.length > 0 && (
                             <DropdownMenu>
-                                <DropdownMenuTrigger className="flex items-center gap-1.5 px-3 py-2 text-sm font-bold rounded-md text-text-secondary hover:bg-accent hover:text-accent-foreground transition-colors outline-none">
+                                <DropdownMenuTrigger className={`flex items-center gap-1.5 px-3 py-2 text-sm font-bold rounded-md transition-colors outline-none ${isOtherActive ? 'bg-primary/10 text-primary' : 'text-text-secondary hover:bg-accent hover:text-accent-foreground'}`}>
                                     <span>حسابات أخرى</span>
                                     <ChevronDown size={14} className="text-text-secondary opacity-70" />
                                 </DropdownMenuTrigger>

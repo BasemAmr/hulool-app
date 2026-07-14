@@ -115,7 +115,7 @@ function formatDate(dateString: string | null | undefined): string {
   try {
     const date = new Date(dateString);
     if (isNaN(date.getTime())) return '—';
-    return new Intl.DateTimeFormat('en-US', {
+    return new Intl.DateTimeFormat('en-GB', {
       year: 'numeric',
       month: '2-digit',
       day: '2-digit',

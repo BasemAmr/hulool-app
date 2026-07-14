@@ -7,7 +7,7 @@ import HuloolDataGrid from '@/shared/grid/HuloolDataGrid';
 import type { HuloolGridColumn } from '@/shared/grid/HuloolDataGrid';
 import type { CellProps } from 'react-datasheet-grid';
 import Button from '@/shared/ui/primitives/Button';
-import { Landmark } from 'lucide-react';
+import { Landmark, FileSpreadsheet, ArrowRight, Search, X, RotateCcw } from 'lucide-react';
 import type { FinancialTransaction, CashBoxVoucher } from '@/api/types';
 import { useModalStore } from '@/shared/stores/modalStore';
 import { useAuthStore } from '@/features/auth/store/authStore';
@@ -15,10 +15,17 @@ import { useToast } from '@/shared/hooks/useToast';
 import { exportService } from '@/services/export/ExportService';
 import { ExportChoiceModal } from '../modals/ExportChoiceModal';
 import apiClient from '@/api/client';
-import AccountDetailHeader from '../components/AccountDetailHeader';
-import TransactionFilters from '../components/TransactionFilters';
 import type { FilterState } from '../components/TransactionFilters';
-import TransactionActionButtons from '../components/TransactionActionButtons';
+import DatePicker from 'react-datepicker';
+import 'react-datepicker/dist/react-datepicker.css';
+import { arSA } from 'date-fns/locale';
+import {
+  ShadcnSelect as Select,
+  ShadcnSelectContent as SelectContent,
+  ShadcnSelectItem as SelectItem,
+  ShadcnSelectTrigger as SelectTrigger,
+  ShadcnSelectValue as SelectValue,
+} from '@/shared/ui/shadcn/select';
 
 interface TransformedVoucherTransaction extends FinancialTransaction {
   debit: number;
@@ -95,6 +102,43 @@ const ActionsCell = React.memo(({ rowData }: CellProps<TransformedVoucherTransac
 });
 ActionsCell.displayName = 'ActionsCell';
 
+const ALL_TYPES_VALUE = '__all__';
+
+function parseDate(value: string): Date | null {
+  if (!value) return null;
+  const d = new Date(value);
+  return isNaN(d.getTime()) ? null : d;
+}
+
+function formatDate(date: Date | null): string {
+  if (!date) return '';
+  return date.toLocaleDateString('en-CA');
+}
+
+const filterDateStyles = `
+  .header-inline-filters .react-datepicker__input-container input {
+    height: 2.25rem;
+    padding-inline: 0.6rem;
+    font-size: 0.85rem;
+    border: 1px solid var(--color-border);
+    border-radius: 0.5rem;
+    background-color: var(--color-background);
+    color: var(--color-foreground);
+    outline: none;
+    width: 105px;
+    box-sizing: border-box;
+    font-family: inherit;
+    direction: rtl;
+    text-align: right;
+  }
+  .header-inline-filters .react-datepicker-wrapper {
+    width: auto;
+  }
+  .header-inline-filters .react-datepicker-popper {
+    z-index: 60 !important;
+  }
+`;
+
 export const TreasuryAccountDetailsPage = () => {
   const { id } = useParams<{ id: string }>();
   const accountId = Number(id);
@@ -111,6 +155,22 @@ export const TreasuryAccountDetailsPage = () => {
     type: '',
     search: '',
   });
+
+  const [localSearch, setLocalSearch] = useState('');
+
+  useEffect(() => {
+    setLocalSearch(filters.search);
+  }, [filters.search]);
+
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      if (localSearch !== filters.search) {
+        setFilters(prev => ({ ...prev, search: localSearch }));
+        setPage(1);
+      }
+    }, 350);
+    return () => clearTimeout(handler);
+  }, [localSearch, filters.search]);
 
   const categoryLabels = useCategoryLabels();
 
@@ -155,7 +215,6 @@ export const TreasuryAccountDetailsPage = () => {
   const resetAndFilter = useCallback((newFilters: FilterState) => {
     setFilters(newFilters);
     setPage(1);
-    setAllTransactions([]);
   }, []);
 
   const totalPages = historyData?.pagination?.total_pages || 1;
@@ -178,7 +237,7 @@ export const TreasuryAccountDetailsPage = () => {
   }, [hasMore, isLoadingHistory, loadMore]);
 
   const transactions = allTransactions;
-  const isInitialLoad = isLoadingAccount || (isLoadingHistory && allTransactions.length === 0);
+  const isInitialLoad = isLoadingAccount;
 
   if (isInitialLoad) {
     return <div className="p-6 text-center text-text-secondary">جاري التحميل...</div>;
@@ -241,7 +300,19 @@ export const TreasuryAccountDetailsPage = () => {
 
   const columns: HuloolGridColumn<TransformedVoucherTransaction>[] = [
     { id: 'transaction_date', title: 'التاريخ', key: 'date', type: 'date', grow: 1 },
-    { id: 'transaction_type', title: 'نوع الحركة', key: 'transaction_type', type: 'text', grow: 1 },
+    {
+      id: 'transaction_type',
+      title: 'نوع الحركة',
+      key: 'transaction_type',
+      cellClassName: ({ rowData }: any) => {
+        if (Number(rowData.debit || 0) > 0) return 'cashbox-debit-cell text-center font-bold';
+        return 'cashbox-credit-cell text-center font-bold';
+      },
+      formatter: (_val: string, rowData: any) => {
+        return Number(rowData.debit || 0) > 0 ? 'قبض' : 'صرف';
+      },
+      grow: 0.8,
+    },
     { id: 'description', title: 'البيان', key: 'description', type: 'text', grow: 2.5 },
     {
       id: 'debit', title: 'مدين (+)', key: 'debit', type: 'currency', grow: 1,
@@ -268,43 +339,152 @@ export const TreasuryAccountDetailsPage = () => {
     ? account?.sub_type === 'internal' && account?.coa_section === 'assets' && (account.metadata as any)?.is_settlement === true
     : false;
 
+  const formatCurrencyAr = (amount: number) =>
+    new Intl.NumberFormat('ar-SA', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(amount);
+
+  const hasActiveFilters = Boolean(filters.start_date || filters.end_date || filters.type || filters.search);
+
   return (
     <>
+      <style>{filterDateStyles}</style>
       <div className="p-6 space-y-4 text-right" dir="rtl">
-        <AccountDetailHeader
-          name={account?.name || ''}
-          balance={account?.balance || 0}
-          icon={<Landmark size={24} />}
-          subtitle={subtitle}
-          onBack={() => navigate('/financial-center/treasury-accounts')}
-        />
+        {/* Unified Compact Header and Filter Card */}
+        <div className="bg-bg-surface border border-border-default rounded-xl p-4 shadow-sm">
+          <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+            
+            {/* Right: Back button + Title */}
+            <div className="flex items-center gap-3 shrink-0 min-w-0">
+              <button
+                onClick={() => navigate('/financial-center/treasury-accounts')}
+                className="shrink-0 p-1.5 rounded-md text-text-secondary hover:text-text-primary hover:bg-bg-surface-muted transition-colors"
+              >
+                <ArrowRight size={20} />
+              </button>
+              <div className="shrink-0 text-primary">
+                <Landmark size={24} />
+              </div>
+              <div className="min-w-0">
+                <h2 className="text-lg font-bold text-text-primary truncate">{account?.name || ''}</h2>
+                {subtitle && <p className="text-xs text-text-secondary mt-0.5">{subtitle}</p>}
+              </div>
+            </div>
 
-        <TransactionActionButtons
-          accountId={accountId}
-          cardType="treasury"
-          isSettlement={isSettlementAccount}
-          onExport={() => setShowExportChoice(true)}
-          isExporting={isExporting}
-        />
+            {/* Center: Inline Filter Fields */}
+            <div className="header-inline-filters flex flex-wrap items-center gap-2 lg:flex-1 lg:justify-center min-w-0">
+              {/* Search */}
+              <div className="relative w-44">
+                <Search size={14} className="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 text-text-muted" />
+                <input
+                  type="text"
+                  dir="rtl"
+                  className="base-input h-9 w-full rounded-lg border-border-default bg-background/50 px-2 pl-8 text-right text-xs shadow-sm transition-all placeholder:text-text-muted/70 focus:bg-background focus:ring-1 focus:ring-primary/30"
+                  placeholder="بحث..."
+                  value={localSearch}
+                  onChange={e => setLocalSearch(e.target.value)}
+                />
+                {localSearch && (
+                  <button
+                    type="button"
+                    className="absolute left-1.5 top-1/2 -translate-y-1/2 rounded-full p-1 text-text-muted hover:bg-muted hover:text-text-primary"
+                    onClick={() => setLocalSearch('')}
+                  >
+                    <X size={11} />
+                  </button>
+                )}
+              </div>
 
-        <div className="border-b border-border-default pb-1">
-          <TransactionFilters
-            filters={filters}
-            onChange={f => resetAndFilter(f)}
-            onReset={() => resetAndFilter({ start_date: '', end_date: '', type: '', search: '' })}
-            typeOptions={[
-              { value: '', label: 'كل الحركات' },
-              { value: 'CASHBOX_RECEIPT', label: 'قبض' },
-              { value: 'CASHBOX_PAYMENT', label: 'صرف' },
-            ]}
-          />
+              {/* Start Date */}
+              <DatePicker
+                selected={parseDate(filters.start_date)}
+                onChange={(date: Date | null) => setFilters(prev => ({ ...prev, start_date: formatDate(date) }))}
+                dateFormat="yyyy-MM-dd"
+                placeholderText="من تاريخ"
+                locale={arSA}
+                portalId="inline-filters-datepicker-portal"
+                showYearDropdown
+                scrollableYearDropdown
+                dropdownMode="select"
+                calendarStartDay={6}
+              />
+
+              {/* End Date */}
+              <DatePicker
+                selected={parseDate(filters.end_date)}
+                onChange={(date: Date | null) => setFilters(prev => ({ ...prev, end_date: formatDate(date) }))}
+                dateFormat="yyyy-MM-dd"
+                placeholderText="إلى تاريخ"
+                locale={arSA}
+                portalId="inline-filters-datepicker-portal"
+                showYearDropdown
+                scrollableYearDropdown
+                dropdownMode="select"
+                calendarStartDay={6}
+              />
+
+              {/* Type Select */}
+              <div className="w-28 shrink-0">
+                <Select
+                  value={filters.type || ALL_TYPES_VALUE}
+                  onValueChange={value => {
+                    setFilters(prev => ({ ...prev, type: value === ALL_TYPES_VALUE ? '' : value }));
+                    setPage(1);
+                  }}
+                >
+                  <SelectTrigger className="h-9 w-full rounded-lg border-border-default bg-background/50 text-xs font-medium shadow-sm transition-all hover:bg-background focus:ring-1 focus:ring-primary/20">
+                    <SelectValue placeholder="النوع" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value={ALL_TYPES_VALUE}>كل الحركات</SelectItem>
+                    <SelectItem value="CASHBOX_RECEIPT">قبض</SelectItem>
+                    <SelectItem value="CASHBOX_PAYMENT">صرف</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* Reset */}
+              {hasActiveFilters && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setFilters({ start_date: '', end_date: '', type: '', search: '' });
+                    setPage(1);
+                  }}
+                  className="flex h-9 w-9 items-center justify-center rounded-lg border border-dashed border-border-default bg-background hover:bg-primary/5 hover:text-text-primary transition-all active:scale-95 text-text-secondary"
+                  title="إعادة ضبط الفلاتر"
+                >
+                  <RotateCcw size={14} />
+                </button>
+              )}
+            </div>
+
+            {/* Left: Balance Info + Export Button */}
+            <div className="flex items-center gap-3 shrink-0 lg:border-s lg:border-border-default lg:ps-4">
+              <Button
+                variant="outline-primary"
+                size="sm"
+                onClick={() => setShowExportChoice(true)}
+                disabled={isExporting || transactions.length === 0}
+                className="h-9"
+              >
+                <FileSpreadsheet size={15} className="me-1.5" />
+                تصدير Excel
+              </Button>
+              <div className="text-left">
+                <p className="text-[10px] text-text-secondary leading-none">الرصيد الحالي</p>
+                <p className="text-lg font-black text-text-brand mt-0.5 whitespace-nowrap">
+                  {formatCurrencyAr(account?.balance || 0)} <span className="text-xs font-bold text-text-secondary">ريال</span>
+                </p>
+              </div>
+            </div>
+
+          </div>
         </div>
 
         <div className="bg-bg-surface rounded-lg border border-border-default overflow-hidden">
           <HuloolDataGrid
             data={transactions}
             columns={columns}
-            isLoading={isLoadingHistory && page === 1}
+            isLoading={isLoadingHistory && page === 1 && transactions.length === 0}
           />
 
           {hasMore && (

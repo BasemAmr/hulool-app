@@ -239,7 +239,7 @@ const UnifiedTransactionModal = () => {
         to_account_id: Number(toPicker.accountId),
         amount: parseFloat(amount),
         description: displayDescription.trim(),
-        effective_date: effectiveDate ? `${effectiveDate}T12:00:00` : undefined,
+        effective_date: effectiveDate ? `${effectiveDate}T${new Date().toTimeString().split(' ')[0]}` : undefined,
       });
 
       success('تم تسجيل المعاملة بنجاح');
@@ -266,7 +266,7 @@ const UnifiedTransactionModal = () => {
         to_account_id: Number(toPicker.accountId),
         amount: parseFloat(amount),
         description: displayDescription.trim(),
-        effective_date: effectiveDate ? `${effectiveDate}T12:00:00` : undefined,
+        effective_date: effectiveDate ? `${effectiveDate}T${new Date().toTimeString().split(' ')[0]}` : undefined,
       });
 
       success('تم التسجيل — جاهز للمعاملة التالية');

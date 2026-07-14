@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useMutation } from '@tanstack/react-query';
 import apiClient from '@/api/client';
 import BaseModal from '@/shared/ui/layout/BaseModal';
@@ -11,6 +12,8 @@ import { FileSpreadsheet, ClipboardList, DollarSign } from 'lucide-react';
 import type { Client, ApiResponse } from '@/api/types';
 import type { ClientStatementReportData, ClientTasksReportData } from '@/services/export/exportTypes';
 
+import { useAuthStore } from '@/features/auth/store/authStore';
+
 type ReportType = 'tasks' | 'financial';
 
 interface ClientReportModalProps {
@@ -19,6 +22,8 @@ interface ClientReportModalProps {
 }
 
 const ClientReportModal = ({ isOpen, onClose }: ClientReportModalProps) => {
+  const navigate = useNavigate();
+  const user = useAuthStore((state) => state.user);
   const { success, error: showError } = useToast();
   const [step, setStep] = useState<1 | 2>(1);
   const [reportType, setReportType] = useState<ReportType | null>(null);
@@ -198,20 +203,45 @@ const ClientReportModal = ({ isOpen, onClose }: ClientReportModalProps) => {
               />
             </div>
 
-            <div className="flex justify-end gap-2 pt-4 border-t border-border-default">
+            <div className="flex justify-end items-center gap-2 pt-4 border-t border-border-default">
               <Button type="button" variant="outline-primary" onClick={onClose}>
                 إلغاء
               </Button>
-              <Button
-                type="button"
-                variant="primary"
-                onClick={() => exportMutation.mutate()}
-                isLoading={exportMutation.isPending}
-                disabled={!canExport}
-              >
-                <FileSpreadsheet size={16} className="me-1" />
-                {exportMutation.isPending ? 'جاري التصدير...' : 'تصدير إلى Excel'}
-              </Button>
+              {reportType === 'financial' ? (
+                <>
+                  <button
+                    type="button"
+                    disabled={!canExport || exportMutation.isPending}
+                    onClick={() => exportMutation.mutate()}
+                    className="px-2.5 py-1 text-xs font-semibold text-text-secondary hover:text-text-primary transition-colors disabled:opacity-40"
+                  >
+                    {exportMutation.isPending ? 'جاري التصدير...' : 'تصدير Excel'}
+                  </button>
+                  <Button
+                    type="button"
+                    variant="primary"
+                    disabled={!canExport}
+                    onClick={() => {
+                      const isAdminRole = useAuthStore.getState().isAdmin();
+                      navigate(isAdminRole ? `/clients/${clientId}` : `/employee/clients/${clientId}`);
+                      onClose();
+                    }}
+                  >
+                    عرض كشف الحساب المالي
+                  </Button>
+                </>
+              ) : (
+                <Button
+                  type="button"
+                  variant="primary"
+                  onClick={() => exportMutation.mutate()}
+                  isLoading={exportMutation.isPending}
+                  disabled={!canExport}
+                >
+                  <FileSpreadsheet size={16} className="me-1" />
+                  {exportMutation.isPending ? 'جاري التصدير...' : 'تصدير إلى Excel'}
+                </Button>
+              )}
             </div>
           </>
         )}

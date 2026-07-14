@@ -1,3 +1,4 @@
+import React, { useState, useEffect } from 'react';
 import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
 import { arSA } from 'date-fns/locale';
@@ -84,6 +85,21 @@ const TransactionFilters: React.FC<TransactionFiltersProps> = ({
   onReset,
   typeOptions = FILTER_TYPE_OPTIONS,
 }) => {
+  const [localSearch, setLocalSearch] = useState(filters.search);
+
+  useEffect(() => {
+    setLocalSearch(filters.search);
+  }, [filters.search]);
+
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      if (localSearch !== filters.search) {
+        onChange({ ...filters, search: localSearch });
+      }
+    }, 350);
+    return () => clearTimeout(handler);
+  }, [localSearch, filters, onChange]);
+
   const update = (patch: Partial<FilterState>) => onChange({ ...filters, ...patch });
   const hasActiveFilters = Boolean(filters.start_date || filters.end_date || filters.type || filters.search);
 
@@ -150,14 +166,14 @@ const TransactionFilters: React.FC<TransactionFiltersProps> = ({
               dir="rtl"
               className="base-input h-10 w-full rounded-xl border-border/80 bg-background/95 px-3 pl-10 text-right text-[0.92rem] shadow-sm transition-all duration-200 placeholder:text-text-muted/70 focus:border-primary/50 focus:ring-2 focus:ring-primary/20"
               placeholder="بحث"
-              value={filters.search}
-              onChange={e => update({ search: e.target.value })}
+              value={localSearch}
+              onChange={e => setLocalSearch(e.target.value)}
             />
-            {filters.search && (
+            {localSearch && (
               <button
                 type="button"
                 className="absolute left-2 top-1/2 -translate-y-1/2 rounded-full p-1.5 text-text-muted transition-colors hover:bg-muted hover:text-text-primary"
-                onClick={() => update({ search: '' })}
+                onClick={() => setLocalSearch('')}
                 aria-label="مسح البحث"
               >
                 <ClearIcon size={13} />

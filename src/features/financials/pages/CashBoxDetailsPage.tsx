@@ -179,10 +179,10 @@ export const CashBoxDetailsPage = () => {
     {
       id: 'type', title: 'النوع', key: 'type',
       cellClassName: ({ rowData }) => {
-        if ((rowData.type ?? '') === 'CASHBOX_RECEIPT') return 'cashbox-debit-cell text-center';
-        return 'cashbox-credit-cell text-center';
+        if (Number(rowData.debit || 0) > 0) return 'cashbox-debit-cell text-center font-bold';
+        return 'cashbox-credit-cell text-center font-bold';
       },
-      formatter: (val: string) => val === 'CASHBOX_RECEIPT' ? 'قبض' : 'صرف',
+      formatter: (_val: string, rowData: any) => Number(rowData.debit || 0) > 0 ? 'قبض' : 'صرف',
       grow: 0.8
     },
     { id: 'description', title: 'البيان', key: 'description', type: 'text', grow: 2.5 },

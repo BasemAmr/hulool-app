@@ -57,8 +57,10 @@ const Navbar = () => {
     [treasuryAccounts]
   );
 
-  const isCashboxActive = location.pathname.startsWith('/financial-center/cash-boxes/');
-  const isBankActive = location.pathname.startsWith('/financial-center/treasury-accounts/');
+  const match = location.pathname.match(/\/financial-center\/treasury-accounts\/(\d+)/);
+  const activeAccountId = match ? match[1] : null;
+  const isCashboxActive = activeAccountId ? cashboxAccounts.some((a: any) => String(a.id) === activeAccountId) : false;
+  const isBankActive = activeAccountId ? bankAccounts.some((a: any) => String(a.id) === activeAccountId) : false;
 
   const taskNavigationItems = [
     { path: '/tasks', icon: NotebookText, label: 'الكل', isMainTasks: true },
@@ -78,7 +80,7 @@ const Navbar = () => {
     return location.pathname === '/tasks' && typeParam === expectedType;
   };
 
-  const isFinancialActive = location.pathname === '/financial-center';
+  const isFinancialActive = location.pathname.startsWith('/financial-center') && !isCashboxActive && !isBankActive;
   const isTasksActive = location.pathname.startsWith('/tasks');
 
   return (
@@ -218,7 +220,7 @@ const Navbar = () => {
                 cashboxAccounts.map((account) => (
                   <DropdownMenuItem key={account.id} asChild>
                     <NavLink
-                      to={`/financial-center/cash-boxes/${account.id}`}
+                      to={`/financial-center/treasury-accounts/${account.id}`}
                       className="flex items-center justify-center w-full cursor-pointer px-4 py-2"
                     >
                       <span className="font-bold text-sm whitespace-nowrap">{account.name}</span>
