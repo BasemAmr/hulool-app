@@ -335,7 +335,9 @@ const UnifiedTransactionModal = () => {
   const toKindLabel = getPickerKindLabel(toPicker);
   useEffect(() => {
     if (fromName && toName && fromPicker.accountId && toPicker.accountId) {
-      setAutoDescription(`\n\nمن ${fromKindLabel}: ${fromName}\nالى ${toKindLabel}: ${toName}`);
+      const fromStr = fromPicker.kind === 'settlement' ? fromName : `${fromKindLabel}: ${fromName}`;
+      const toStr = toPicker.kind === 'settlement' ? toName : `${toKindLabel}: ${toName}`;
+      setAutoDescription(`\n\nمن ${fromStr}\nالى ${toStr}`);
     } else {
       setAutoDescription('');
     }
