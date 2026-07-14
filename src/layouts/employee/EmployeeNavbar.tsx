@@ -9,6 +9,7 @@ import {
     Receipt, UserPlus,
     Settings, Wallet
 } from 'lucide-react';
+import { useGetMyTreasuryAccounts } from '@/features/financials/api/treasuryQueries';
 import { useModalStore } from '@/shared/stores/modalStore';
 import {
     DropdownMenu,
@@ -18,6 +19,7 @@ import {
     DropdownMenuSeparator,
     DropdownMenuTrigger
 } from '@/shared/ui/shadcn/dropdown-menu';
+import { useMemo } from 'react';
 
 /**
  * EmployeeNavbar - Horizontal navigation bar for employee users
@@ -38,20 +40,35 @@ const EmployeeNavbar = () => {
         navigate('/login', { replace: true });
     };
 
-    // Employee navigation items
-    const employeeNavigationItems = [
-        { path: '/employee/dashboard', icon: Home, label: 'لوحة التحكم' },
-        { path: '/employee/tasks', icon: ClipboardList, label: 'مهامي' },
-        { path: '/employee/clients', icon: Users, label: 'العملاء' },
-        { path: '/employee/receivables', icon: FileText, label: 'مستحقات العملاء' },
-        { path: '/employee/financials', icon: DollarSign, label: 'الماليات' },
-    ];
+    // Fetch treasury accounts assigned to the current employee
+    const { data: myTreasuryAccounts = [] } = useGetMyTreasuryAccounts();
 
-    employeeNavigationItems.push({
-        path: '/employee/accounts',
-        icon: Wallet,
-        label: 'حساباتي'
-    });
+    // Group accounts
+    const cashboxAccounts = useMemo(
+        () => myTreasuryAccounts.filter((a) => a.sub_type === 'cashbox'),
+        [myTreasuryAccounts]
+    );
+    const bankAccounts = useMemo(
+        () => myTreasuryAccounts.filter((a) => a.sub_type === 'bank'),
+        [myTreasuryAccounts]
+    );
+    const otherAccounts = useMemo(() => {
+        const parseMeta = (meta: any) => {
+            if (!meta) return null;
+            if (typeof meta === 'string') {
+                try { return JSON.parse(meta); } catch { return null; }
+            }
+            return meta;
+        };
+        return myTreasuryAccounts.filter((t) => {
+            const meta = parseMeta(t.metadata);
+            const isSettlement =
+                meta?.is_settlement === true ||
+                meta?.is_settlement === 'true' ||
+                meta?.type === 'settlement';
+            return t.sub_type !== 'cashbox' && t.sub_type !== 'bank' && !isSettlement;
+        });
+    }, [myTreasuryAccounts]);
 
     return (
         <nav className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60" dir="rtl">
@@ -72,115 +89,162 @@ const EmployeeNavbar = () => {
 
                     {/* Main Navigation - Desktop */}
                     <div className="hidden md:flex items-center gap-1 overflow-x-auto scrollbar-hide">
-                        {employeeNavigationItems.map((item) => (
-                            <NavLink
-                                key={item.path}
-                                to={item.path}
-                                className={({ isActive }) =>
-                                    `flex items-center gap-2 px-3 py-2 text-sm font-bold rounded-md transition-colors whitespace-nowrap ${isActive
-                                        ? 'bg-primary/10 text-primary'
-                                        : 'text-text-secondary hover:bg-accent hover:text-accent-foreground'
-                                    }`
-                                }
-                            >
-                                <item.icon size={16} />
-                                <span>{item.label}</span>
-                            </NavLink>
-                        ))}
+                        {/* الصفحة الرئيسية */}
+                        <NavLink
+                            to="/employee/dashboard"
+                            className={({ isActive }) =>
+                                `flex items-center gap-2 px-3 py-2 text-sm font-bold rounded-md transition-colors whitespace-nowrap ${isActive
+                                    ? 'bg-primary/10 text-primary'
+                                    : 'text-text-secondary hover:bg-accent hover:text-accent-foreground'
+                                }`
+                            }
+                        >
+                            <Home size={16} />
+                            <span>الصفحة الرئيسية</span>
+                        </NavLink>
+
+                        {/* العملاء Dropdown */}
+                        <DropdownMenu>
+                            <DropdownMenuTrigger className="flex items-center gap-1.5 px-3 py-2 text-sm font-bold rounded-md text-text-secondary hover:bg-accent hover:text-accent-foreground transition-colors outline-none">
+                                <Users size={16} />
+                                <span>العملاء</span>
+                                <ChevronDown size={14} className="text-text-secondary opacity-70" />
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end" className="w-56 text-right">
+                                <DropdownMenuItem onClick={() => openModal('clientForm', {})} className="cursor-pointer flex flex-row-reverse justify-end gap-3 px-3 py-2 text-sm font-bold">
+                                    <span>إضافة عميل</span>
+                                </DropdownMenuItem>
+                                <DropdownMenuSeparator />
+                                <DropdownMenuItem onClick={() => openModal('invoiceForm', {})} className="cursor-pointer flex flex-row-reverse justify-end gap-3 px-3 py-2 text-sm font-bold">
+                                    <span>إضافة فاتورة</span>
+                                </DropdownMenuItem>
+                                <DropdownMenuSeparator />
+                                <DropdownMenuItem asChild>
+                                    <NavLink to="/employee/clients" className="flex items-center gap-3 w-full cursor-pointer flex-row-reverse justify-end px-3 py-2 text-sm font-bold">
+                                        <span>صفحة إدارة العملاء</span>
+                                    </NavLink>
+                                </DropdownMenuItem>
+                                <DropdownMenuSeparator />
+                                <DropdownMenuItem asChild>
+                                    <NavLink to="/employee/receivables" className="flex items-center gap-3 w-full cursor-pointer flex-row-reverse justify-end px-3 py-2 text-sm font-bold">
+                                        <span>مستحقات العملاء</span>
+                                    </NavLink>
+                                </DropdownMenuItem>
+                            </DropdownMenuContent>
+                        </DropdownMenu>
+
+                        {/* الصناديق Dropdown */}
+                        <DropdownMenu>
+                            <DropdownMenuTrigger className="flex items-center gap-1.5 px-3 py-2 text-sm font-bold rounded-md text-text-secondary hover:bg-accent hover:text-accent-foreground transition-colors outline-none">
+                                <span>الصناديق</span>
+                                <ChevronDown size={14} className="text-text-secondary opacity-70" />
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end" className="min-w-0 text-center max-h-80 overflow-y-auto">
+                                {cashboxAccounts.length === 0 ? (
+                                    <div className="py-4 px-4 text-xs text-text-secondary whitespace-nowrap">
+                                        لا توجد صناديق
+                                    </div>
+                                ) : (
+                                    cashboxAccounts.map((account) => (
+                                        <DropdownMenuItem key={account.id} asChild>
+                                            <NavLink
+                                                to={`/employee/treasury-accounts/${account.id}`}
+                                                className="flex items-center justify-center w-full cursor-pointer px-4 py-2 text-sm font-bold"
+                                            >
+                                                <span className="whitespace-nowrap">{account.name}</span>
+                                            </NavLink>
+                                        </DropdownMenuItem>
+                                    ))
+                                )}
+                            </DropdownMenuContent>
+                        </DropdownMenu>
+
+                        {/* البنوك Dropdown */}
+                        <DropdownMenu>
+                            <DropdownMenuTrigger className="flex items-center gap-1.5 px-3 py-2 text-sm font-bold rounded-md text-text-secondary hover:bg-accent hover:text-accent-foreground transition-colors outline-none">
+                                <span>البنوك</span>
+                                <ChevronDown size={14} className="text-text-secondary opacity-70" />
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end" className="min-w-0 text-center max-h-80 overflow-y-auto">
+                                {bankAccounts.length === 0 ? (
+                                    <div className="py-4 px-4 text-xs text-text-secondary whitespace-nowrap">
+                                        لا توجد حسابات بنكية
+                                    </div>
+                                ) : (
+                                    bankAccounts.map((account) => (
+                                        <DropdownMenuItem key={account.id} asChild>
+                                            <NavLink
+                                                to={`/employee/treasury-accounts/${account.id}`}
+                                                className="flex items-center justify-center w-full cursor-pointer px-4 py-2 text-sm font-bold"
+                                            >
+                                                <span className="whitespace-nowrap">{account.name}</span>
+                                            </NavLink>
+                                        </DropdownMenuItem>
+                                    ))
+                                )}
+                            </DropdownMenuContent>
+                        </DropdownMenu>
+
+                        {/* حسابات أخرى Dropdown (only shows if accounts exist) */}
+                        {otherAccounts.length > 0 && (
+                            <DropdownMenu>
+                                <DropdownMenuTrigger className="flex items-center gap-1.5 px-3 py-2 text-sm font-bold rounded-md text-text-secondary hover:bg-accent hover:text-accent-foreground transition-colors outline-none">
+                                    <span>حسابات أخرى</span>
+                                    <ChevronDown size={14} className="text-text-secondary opacity-70" />
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent align="end" className="min-w-0 text-center max-h-80 overflow-y-auto">
+                                    {otherAccounts.map((account) => (
+                                        <DropdownMenuItem key={account.id} asChild>
+                                            <NavLink
+                                                to={`/employee/treasury-accounts/${account.id}`}
+                                                className="flex items-center justify-center w-full cursor-pointer px-4 py-2 text-sm font-bold"
+                                            >
+                                                <span className="whitespace-nowrap">{account.name}</span>
+                                            </NavLink>
+                                        </DropdownMenuItem>
+                                    ))}
+                                </DropdownMenuContent>
+                            </DropdownMenu>
+                        )}
+
+                        {/* المهام Dropdown */}
+                        <DropdownMenu>
+                            <DropdownMenuTrigger className="flex items-center gap-1.5 px-3 py-2 text-sm font-bold rounded-md text-text-secondary hover:bg-accent hover:text-accent-foreground transition-colors outline-none">
+                                <ClipboardList size={16} />
+                                <span>المهام</span>
+                                <ChevronDown size={14} className="text-text-secondary opacity-70" />
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end" className="w-56 text-right">
+                                <DropdownMenuItem onClick={() => openModal('taskForm', {})} className="cursor-pointer flex flex-row-reverse justify-end gap-3 px-3 py-2 text-sm font-bold">
+                                    <span>إضافة مهمة</span>
+                                </DropdownMenuItem>
+                                <DropdownMenuSeparator />
+                                <DropdownMenuItem asChild>
+                                    <NavLink to="/employee/tasks" className="flex items-center gap-3 w-full cursor-pointer flex-row-reverse justify-end px-3 py-2 text-sm font-bold">
+                                        <span>صفحة المهام</span>
+                                    </NavLink>
+                                </DropdownMenuItem>
+                            </DropdownMenuContent>
+                        </DropdownMenu>
                     </div>
                 </div>
 
                 {/* Center Group: Quick Action Buttons */}
                 <div className="hidden lg:flex items-center gap-2 flex-shrink-0">
-                    <button
-                        onClick={() => openModal('clientForm', {})}
-                        className="px-3 py-1.5 text-sm font-bold border border-primary text-primary rounded-md hover:bg-primary hover:text-primary-foreground transition-colors"
-                    >
-                        <UserPlus size={14} className="inline me-1" />
-                        إضافة عميل
-                    </button>
-                    <button
-                        onClick={() => openModal('taskForm', {})}
-                        className="px-3 py-1.5 text-sm font-bold border border-primary text-primary rounded-md hover:bg-primary hover:text-white transition-colors"
-                    >
-                        <FileText size={14} className="inline me-1" />
-                        إضافة مهمة
-                    </button>
-                    <button
-                        onClick={() => openModal('invoiceForm', {})}
-                        className="px-3 py-1.5 text-sm font-bold border border-border text-text-primary rounded-md hover:bg-accent hover:text-accent-foreground transition-colors"
-                    >
-                        <Receipt size={14} className="inline me-1" />
-                        إضافة فاتورة
-                    </button>
                     {(user?.type === 'admin' || user?.type === 'employee_admin' || user?.can_make_transactions) && (
                         <>
-                            <DropdownMenu>
-                                <DropdownMenuTrigger asChild>
-                                    <button
-                                        className="px-3 py-1.5 text-sm font-bold border border-status-success-border text-status-success-text rounded-md hover:bg-status-success-text hover:text-primary-foreground transition-colors"
-                                    >
-                                        سند قبض
-                                    </button>
-                                </DropdownMenuTrigger>
-                                <DropdownMenuContent align="end" className="text-right">
-                                    <DropdownMenuItem
-                                        className="cursor-pointer flex flex-row-reverse justify-end gap-2 font-bold"
-                                        onClick={() => openModal('unifiedTransaction', {
-                                            defaultFromCardType: 'client',
-                                            defaultToCardType: 'treasury',
-                                            lockDirection: true,
-                                            title: 'سند قبض - عميل',
-                                        })}
-                                    >
-                                        سند قبض عميل
-                                    </DropdownMenuItem>
-                                    <DropdownMenuItem
-                                        className="cursor-pointer flex flex-row-reverse justify-end gap-2 font-bold"
-                                        onClick={() => openModal('unifiedTransaction', {
-                                            defaultFromCardType: 'employee',
-                                            defaultToCardType: 'treasury',
-                                            lockDirection: true,
-                                            title: 'سند قبض - موظف',
-                                        })}
-                                    >
-                                        سند قبض موظف
-                                    </DropdownMenuItem>
-                                </DropdownMenuContent>
-                            </DropdownMenu>
-                            <DropdownMenu>
-                                <DropdownMenuTrigger asChild>
-                                    <button
-                                        className="px-3 py-1.5 text-sm font-bold border border-status-danger-border text-status-danger-text rounded-md hover:bg-red-600 hover:text-white transition-colors"
-                                    >
-                                        سند صرف
-                                    </button>
-                                </DropdownMenuTrigger>
-                                <DropdownMenuContent align="end" className="text-right">
-                                    <DropdownMenuItem
-                                        className="cursor-pointer flex flex-row-reverse justify-end gap-2 font-bold"
-                                        onClick={() => openModal('unifiedTransaction', {
-                                            defaultFromCardType: 'treasury',
-                                            defaultToCardType: 'client',
-                                            lockDirection: true,
-                                            title: 'سند صرف - عميل',
-                                        })}
-                                    >
-                                        سند صرف عميل
-                                    </DropdownMenuItem>
-                                    <DropdownMenuItem
-                                        className="cursor-pointer flex flex-row-reverse justify-end gap-2 font-bold"
-                                        onClick={() => openModal('unifiedTransaction', {
-                                            defaultFromCardType: 'treasury',
-                                            defaultToCardType: 'employee',
-                                            lockDirection: true,
-                                            title: 'سند صرف - موظف',
-                                        })}
-                                    >
-                                        سند صرف موظف
-                                    </DropdownMenuItem>
-                                </DropdownMenuContent>
-                            </DropdownMenu>
+                            <button
+                                onClick={() => openModal('unifiedTransaction', { title: 'سند قبض' })}
+                                className="px-3 py-1.5 text-sm font-bold border border-status-success-border text-status-success-text rounded-md hover:bg-status-success-bg transition-colors"
+                            >
+                                سند قبض
+                            </button>
+                            <button
+                                onClick={() => openModal('unifiedTransaction', { title: 'سند صرف' })}
+                                className="px-3 py-1.5 text-sm font-bold border border-status-danger-border text-status-danger-text rounded-md hover:bg-status-danger-bg transition-colors"
+                            >
+                                سند صرف
+                            </button>
                             <DropdownMenu>
                                 <DropdownMenuTrigger asChild>
                                     <button
@@ -193,46 +257,20 @@ const EmployeeNavbar = () => {
                                     <DropdownMenuItem
                                         className="cursor-pointer flex flex-row-reverse justify-end gap-2 text-status-success-text font-bold"
                                         onClick={() => openModal('unifiedTransaction', {
-                                            defaultFromCardType: 'client',
-                                            defaultToCardType: 'settlement',
-                                            lockDirection: true,
-                                            title: 'تسوية قبض - عميل',
+                                            defaultFromCardType: 'settlement',
+                                            title: 'تسوية قبض',
                                         })}
                                     >
-                                        تسوية قبض عميل
-                                    </DropdownMenuItem>
-                                    <DropdownMenuItem
-                                        className="cursor-pointer flex flex-row-reverse justify-end gap-2 text-status-success-text font-bold"
-                                        onClick={() => openModal('unifiedTransaction', {
-                                            defaultFromCardType: 'employee',
-                                            defaultToCardType: 'settlement',
-                                            lockDirection: true,
-                                            title: 'تسوية قبض - موظف',
-                                        })}
-                                    >
-                                        تسوية قبض موظف
+                                        تسوية قبض
                                     </DropdownMenuItem>
                                     <DropdownMenuItem
                                         className="cursor-pointer flex flex-row-reverse justify-end gap-2 text-status-danger-text font-bold"
                                         onClick={() => openModal('unifiedTransaction', {
-                                            defaultFromCardType: 'settlement',
-                                            defaultToCardType: 'client',
-                                            lockDirection: true,
-                                            title: 'تسوية صرف - عميل',
+                                            defaultToCardType: 'settlement',
+                                            title: 'تسوية صرف',
                                         })}
                                     >
-                                        تسوية صرف عميل
-                                    </DropdownMenuItem>
-                                    <DropdownMenuItem
-                                        className="cursor-pointer flex flex-row-reverse justify-end gap-2 text-status-danger-text font-bold"
-                                        onClick={() => openModal('unifiedTransaction', {
-                                            defaultFromCardType: 'settlement',
-                                            defaultToCardType: 'employee',
-                                            lockDirection: true,
-                                            title: 'تسوية صرف - موظف',
-                                        })}
-                                    >
-                                        تسوية صرف موظف
+                                        تسوية صرف
                                     </DropdownMenuItem>
                                 </DropdownMenuContent>
                             </DropdownMenu>

@@ -2,9 +2,9 @@
  * UnifiedTransactionModal
  *
  * Single-screen transaction entry between any two account types.
- * All account selection, amount, description, date, category and notes
- * live on one sheet — a live summary strip confirms the transaction
- * as fields fill in, so confirming is a glance, not a navigation.
+ * - Direction toggle (قبض / صرف) at the top swaps from/to
+ * - Settlement side renders nothing (clean, hidden)
+ * - Account pickers: من (right in RTL) → إلى (left in RTL)
  */
 
 import { useState, useEffect, useMemo } from 'react';
@@ -31,7 +31,7 @@ import {
   CircleDashed,
   RotateCcw,
 } from 'lucide-react';
-import type { AccountType, TreasuryAccount } from '@/api/types';
+import type { AccountType } from '@/api/types';
 
 // ========================================
 // Types
@@ -39,21 +39,11 @@ import type { AccountType, TreasuryAccount } from '@/api/types';
 
 type Step = 1 | 2 | 3;
 
-// ========================================
-// Constants
-// ========================================
-
-const CATEGORY_OPTIONS = [
-  { value: 'salary', label: 'Salary' },
-  { value: 'commission', label: 'Commission' },
-  { value: 'loan', label: 'Loan' },
-  { value: 'expense', label: 'Expense' },
-  { value: 'advance_repayment', label: 'Advance Repayment' },
-  { value: 'loan_repayment', label: 'Loan Repayment' },
-  { value: 'other', label: 'Other' },
-] as const;
-
-type TransactionCategory = (typeof CATEGORY_OPTIONS)[number]['value'];
+/**
+ * Direction: 'qabdh' = incoming (قبض), 'sarf' = outgoing (صرف)
+ * When settlement is involved: 'qabdh' = تسوية قبض, 'sarf' = تسوية صرف
+ */
+type Direction = 'qabdh' | 'sarf';
 
 // ========================================
 // Component
@@ -64,7 +54,6 @@ const UnifiedTransactionModal = () => {
   const { success, error: toastError } = useToast();
   const createTransaction = useCreateUnifiedTransaction();
 
-  // Only render when this modal is active
   const isVisible = isOpen && modalType === 'unifiedTransaction';
 
   // Read preset defaults from modal store props
@@ -72,10 +61,10 @@ const UnifiedTransactionModal = () => {
   const defaultToCardType = props?.defaultToCardType as string | undefined;
   const defaultFromAccountId = (props?.defaultFromAccountId as string | undefined) ?? '';
   const defaultToAccountId = (props?.defaultToAccountId as string | undefined) ?? '';
-  const lockDirection = Boolean(props?.lockDirection);
-  const customTitle = props?.title as string | undefined;
 
-  const hasPresets = Boolean(defaultFromCardType && defaultToCardType);
+  // ---- Settlement detection ----
+  const isSettlement =
+    defaultFromCardType === 'settlement' || defaultToCardType === 'settlement';
 
   // Convert card type preset → PickerKind
   const presetToPickerKind = (cardType: string | undefined): PickerKind | null => {
@@ -87,45 +76,42 @@ const UnifiedTransactionModal = () => {
     return null;
   };
 
-  // Initial state uses presetToPickerKind (safe, no treasuryData dependency).
-  // The re-initialize effect below resolves 'treasury' → cashbox/bank once data loads.
-  const initialFromPicker: PickerValue = {
+  // ---- State ----
+  const [direction, setDirection] = useState<Direction>(
+    defaultFromCardType === 'settlement' ? 'qabdh'
+    : defaultToCardType === 'settlement' ? 'sarf'
+    : (defaultToCardType === 'treasury' || defaultToCardType === 'cashbox') ? 'qabdh'
+    : 'sarf'
+  );
+  const [fromPicker, setFromPicker] = useState<PickerValue>({
     kind: presetToPickerKind(defaultFromCardType),
     accountId: defaultFromAccountId,
     categorySlug: null,
-  };
-  const initialToPicker: PickerValue = {
+  });
+  const [toPicker, setToPicker] = useState<PickerValue>({
     kind: presetToPickerKind(defaultToCardType),
     accountId: defaultToAccountId,
     categorySlug: null,
-  };
-
-  // ---- Multi-step state ----
-  const [step, setStep] = useState<Step>(hasPresets ? 1 : 1);
-  const [fromPicker, setFromPicker] = useState<PickerValue>(initialFromPicker);
-  const [toPicker, setToPicker] = useState<PickerValue>(initialToPicker);
+  });
+  // Preset kind locks — travel with the picker on swaps
+  const [fromPresetKind, setFromPresetKind] = useState<PickerKind | null>(null);
+  const [toPresetKind, setToPresetKind] = useState<PickerKind | null>(null);
   const [amount, setAmount] = useState<string>('');
   const [description, setDescription] = useState<string>('');
   const [autoDescription, setAutoDescription] = useState<string>('');
   const [effectiveDate, setEffectiveDate] = useState<string>(
     new Date().toISOString().split('T')[0],
   );
-  const [category, setCategory] = useState<TransactionCategory>('other');
-  const [notes, setNotes] = useState<string>('');
   const [initialized, setInitialized] = useState<boolean>(false);
 
   // ---- Fetch accounts ----
   const { data: clientsData } = useGetAccountsByType('client', {}, isVisible);
   const { data: treasuryData } = useGetTreasuryAccounts();
   const { data: categoryMetadata } = useGetCategoryMetadata();
+  const { data: employeesRaw } = useGetAccountsByType('employee', {}, isVisible);
 
   const clients = useMemo(() => clientsData?.accounts ?? [], [clientsData]);
-
-  // ---- Auto-resolve settlement account ID when treasury data loads ----
-  useEffect(() => {
-    if (!isVisible || !treasuryData || treasuryData.length === 0) return;
-    // No longer auto-resolving settlement — removed from picker
-  }, [treasuryData, isVisible]);
+  const employees = useMemo(() => employeesRaw?.accounts ?? [], [employeesRaw]);
 
   // ---- Re-initialize when modal opens with new props ----
   useEffect(() => {
@@ -135,108 +121,86 @@ const UnifiedTransactionModal = () => {
       const fId = (props?.defaultFromAccountId as string | undefined) ?? '';
       const tId = (props?.defaultToAccountId as string | undefined) ?? '';
 
-      // If we have a preset treasury type but treasuryData is not loaded yet, wait for it
-      const needsTreasuryData = fType === 'treasury' || tType === 'treasury' || fType === 'settlement' || tType === 'settlement';
-      if (needsTreasuryData && (!treasuryData || treasuryData.length === 0)) {
-        return;
-      }
+      const needsTreasuryData =
+        fType === 'treasury' || tType === 'treasury' ||
+        fType === 'settlement' || tType === 'settlement';
+      if (needsTreasuryData && (!treasuryData || treasuryData.length === 0)) return;
 
-      const fKind = (() => {
-        if (fType === 'treasury' && fId && treasuryData?.length) {
-          const acc = treasuryData.find((t) => String(t.id) === fId);
-          if (acc?.sub_type === 'cashbox') return 'cashbox' as PickerKind;
-          if (acc?.sub_type === 'bank') return 'bank' as PickerKind;
+      const resolveKind = (type: string, id: string): PickerKind | null => {
+        if (type === 'treasury' && id && treasuryData?.length) {
+          const acc = treasuryData.find((t) => String(t.id) === id);
+          if (acc?.sub_type === 'cashbox') return 'cashbox';
+          if (acc?.sub_type === 'bank') return 'bank';
         }
-        return presetToPickerKind(fType);
-      })();
-      const tKind = (() => {
-        if (tType === 'treasury' && tId && treasuryData?.length) {
-          const acc = treasuryData.find((t) => String(t.id) === tId);
-          if (acc?.sub_type === 'cashbox') return 'cashbox' as PickerKind;
-          if (acc?.sub_type === 'bank') return 'bank' as PickerKind;
-        }
-        return presetToPickerKind(tType);
-      })();
+        return presetToPickerKind(type);
+      };
 
-      // Resolve categorySlug from treasury data if kind is cashbox or bank
-      const resolveCategory = (kind: PickerKind | null, accountId: string) => {
-        if ((kind === 'cashbox' || kind === 'bank') && accountId && treasuryData?.length) {
-          const acc = treasuryData.find((t) => String(t.id) === accountId);
+      const resolveCategory = (kind: PickerKind | null, id: string) => {
+        if ((kind === 'cashbox' || kind === 'bank') && id && treasuryData?.length) {
+          const acc = treasuryData.find((t) => String(t.id) === id);
           if (acc) return acc.sub_type || null;
         }
         return null;
       };
 
-      const fCategory = resolveCategory(fKind, fId);
-      const tCategory = resolveCategory(tKind, tId);
+      const fKind = resolveKind(fType, fId);
+      const tKind = resolveKind(tType, tId);
 
-      setStep(1);
-      setFromPicker({
-        kind: fKind,
-        accountId: fId,
-        categorySlug: fCategory,
-      });
-      setToPicker({
-        kind: tKind,
-        accountId: tId,
-        categorySlug: tCategory,
-      });
+      const initDir: Direction =
+        fType === 'settlement' ? 'qabdh'
+        : tType === 'settlement' ? 'sarf'
+        : (tType === 'treasury' || tType === 'cashbox') ? 'qabdh'
+        : 'sarf';
+
+      // Preset kind = the resolved kind only when that side has a pre-selected account id
+      const fPreset: PickerKind | null = fId ? fKind : null;
+      const tPreset: PickerKind | null = tId ? tKind : null;
+
+      setDirection(initDir);
+      setFromPicker({ kind: fKind, accountId: fId, categorySlug: resolveCategory(fKind, fId) });
+      setToPicker({ kind: tKind, accountId: tId, categorySlug: resolveCategory(tKind, tId) });
+      setFromPresetKind(fPreset);
+      setToPresetKind(tPreset);
       setAmount('');
       setDescription('');
       setAutoDescription('');
       setEffectiveDate(new Date().toISOString().split('T')[0]);
-      setCategory('other');
-      setNotes('');
       setInitialized(true);
     }
   }, [isVisible, initialized, props, treasuryData]);
 
+  // ---- Direction toggle: swap from ↔ to (presets travel with their pickers) ----
+  const handleDirectionToggle = (newDir: Direction) => {
+    if (newDir === direction) return;
+    setDirection(newDir);
+    // Swap pickers
+    setFromPicker(toPicker);
+    setToPicker(fromPicker);
+    // Swap their associated preset locks
+    setFromPresetKind(toPresetKind);
+    setToPresetKind(fromPresetKind);
+  };
+
   // ---- Resolve account type from PickerValue ----
-  const resolveFromPickerType = (pv: PickerValue): AccountType | null => {
+  const resolvePickerType = (pv: PickerValue): AccountType | null => {
     if (!pv.kind || !pv.accountId) return null;
     if (pv.kind === 'client') return 'client';
     if (pv.kind === 'employee') return 'employee';
-    if (pv.kind === 'cashbox' || pv.kind === 'bank' || pv.kind === 'settlement') return 'treasury';
+    if (pv.kind === 'cashbox' || pv.kind === 'bank' || pv.kind === 'settlement' || pv.kind === 'other') return 'treasury';
     return null;
   };
 
-  const resolvedFromType = resolveFromPickerType(fromPicker);
-  const resolvedToType = resolveFromPickerType(toPicker);
+  const resolvedFromType = resolvePickerType(fromPicker);
+  const resolvedToType = resolvePickerType(toPicker);
 
-  // ---- Stepper (kept internally to preserve isStepComplete/canGoNext contract) ----
-  const steps: { num: Step; label: string }[] = [
-    { num: 1, label: 'Account' },
-    { num: 2, label: 'Details' },
-    { num: 3, label: 'Review' },
-  ];
   const displayDescription = description + autoDescription;
 
-  const isStepComplete = (s: Step): boolean => {
-    switch (s) {
-      case 1:
-        return fromPicker.accountId !== '' && toPicker.accountId !== '' &&
-          resolvedFromType !== null && resolvedToType !== null;
-      case 2:
-        return amount !== '' && parseFloat(amount) > 0 && displayDescription.trim() !== '';
-      case 3:
-        return true;
-    }
-  };
-
-  const accountsReady = isStepComplete(1);
-  const detailsReady = isStepComplete(2);
+  const accountsReady =
+    fromPicker.accountId !== '' && toPicker.accountId !== '' &&
+    resolvedFromType !== null && resolvedToType !== null;
+  const detailsReady =
+    amount !== '' && parseFloat(amount) > 0 && displayDescription.trim() !== '';
   const canSubmit = accountsReady && detailsReady;
-
-  const handleNext = () => {
-    if (step === 1) setStep(2);
-    else if (step === 2) setStep(3);
-  };
-
-  const handleBack = () => {
-    if (step === 1) { handleClose(); return; }
-    if (step === 2) setStep(1);
-    else if (step === 3) setStep(2);
-  };
 
   // ---- Submit ----
   const handleSubmit = async () => {
@@ -253,8 +217,6 @@ const UnifiedTransactionModal = () => {
         amount: parseFloat(amount),
         description: displayDescription.trim(),
         effective_date: effectiveDate ? `${effectiveDate}T12:00:00` : undefined,
-        category: category,
-        notes: notes.trim() || undefined,
       });
 
       success('تم تسجيل المعاملة بنجاح');
@@ -282,8 +244,6 @@ const UnifiedTransactionModal = () => {
         amount: parseFloat(amount),
         description: displayDescription.trim(),
         effective_date: effectiveDate ? `${effectiveDate}T12:00:00` : undefined,
-        category: category,
-        notes: notes.trim() || undefined,
       });
 
       success('تم التسجيل — جاهز للمعاملة التالية');
@@ -291,9 +251,7 @@ const UnifiedTransactionModal = () => {
       setAmount('');
       setDescription('');
       setAutoDescription('');
-      setNotes('');
       setEffectiveDate(new Date().toISOString().split('T')[0]);
-      setCategory('other');
     } catch (err: any) {
       toastError(
         'فشلت العملية',
@@ -304,16 +262,16 @@ const UnifiedTransactionModal = () => {
 
   // ---- Reset on open/close ----
   const handleClose = () => {
-    setStep(1);
     setFromPicker({ kind: null, accountId: '', categorySlug: null });
     setToPicker({ kind: null, accountId: '', categorySlug: null });
+    setFromPresetKind(null);
+    setToPresetKind(null);
     setAmount('');
     setDescription('');
     setAutoDescription('');
     setEffectiveDate(new Date().toISOString().split('T')[0]);
-    setCategory('other');
-    setNotes('');
     setInitialized(false);
+    setDirection('sarf');
     closeModal();
   };
 
@@ -335,7 +293,7 @@ const UnifiedTransactionModal = () => {
       const e = employeesRaw?.accounts?.find((a: any) => String(a.id) === pv.accountId);
       return e?.name ?? `موظف #${pv.accountId}`;
     }
-    if (pv.kind === 'cashbox' || pv.kind === 'bank' || pv.kind === 'settlement') {
+    if (pv.kind === 'cashbox' || pv.kind === 'bank' || pv.kind === 'settlement' || pv.kind === 'other') {
       const a = (treasuryData ?? []).find((t) => String(t.id) === pv.accountId);
       return a?.name ?? `حساب #${pv.accountId}`;
     }
@@ -344,25 +302,14 @@ const UnifiedTransactionModal = () => {
 
   const getPickerKindLabel = (pv: PickerValue): string => {
     if (!pv.kind) return '';
-    if (pv.kind === 'client') return 'عميل';
-    if (pv.kind === 'employee') return 'موظف';
-    if (pv.kind === 'cashbox') return 'صندوق';
-    if (pv.kind === 'bank') return 'بنك';
-    if (pv.kind === 'settlement') return 'تسوية';
-    return '';
+    const map: Record<string, string> = { client: 'عميل', employee: 'موظف', cashbox: 'صندوق', bank: 'بنك', settlement: 'تسوية', other: 'حساب آخر' };
+    return map[pv.kind] ?? '';
   };
-
-  // ---- Fetch employees for the picker ----
-  const { data: employeesRaw } = useGetAccountsByType('employee', {}, isVisible);
-  const employees = useMemo(() => employeesRaw?.accounts ?? [], [employeesRaw]);
 
   const fromName = getPickerLabel(fromPicker);
   const toName = getPickerLabel(toPicker);
   const fromKindLabel = getPickerKindLabel(fromPicker);
   const toKindLabel = getPickerKindLabel(toPicker);
-
-
-  // ---- Auto-generate description suffix from from/to accounts ----
   useEffect(() => {
     if (fromName && toName && fromPicker.accountId && toPicker.accountId) {
       setAutoDescription(`\n\nمن ${fromKindLabel}: ${fromName}\nالى ${toKindLabel}: ${toName}`);
@@ -381,16 +328,66 @@ const UnifiedTransactionModal = () => {
     }
   };
 
-  const categoryLabel = CATEGORY_OPTIONS.find((c) => c.value === category)?.label ?? category;
+  // ---- Settlement / presetKind helpers ----
+  const fromIsSettlement = fromPicker.kind === 'settlement';
+  const toIsSettlement = toPicker.kind === 'settlement';
 
-  // ---- Main render: single-sheet layout ----
+  const resolvePresetKind = (cardType: string | undefined, accountId: string): PickerKind | null => {
+    if (cardType === 'treasury' && accountId && treasuryData?.length) {
+      const acc = treasuryData.find((t) => String(t.id) === accountId);
+      if (acc?.sub_type === 'cashbox') return 'cashbox';
+      if (acc?.sub_type === 'bank') return 'bank';
+    }
+    return presetToPickerKind(cardType);
+  };
+
+  const dirQabdhLabel = isSettlement ? 'تسوية قبض' : 'سند قبض';
+  const dirSarfLabel = isSettlement ? 'تسوية صرف' : 'سند صرف';
+
+  // ---- Active modal title follows direction ----
+  const activeTitle = direction === 'qabdh' ? dirQabdhLabel : dirSarfLabel;
+
+  // ---- Direction tabs — welded into modal header ----
+  const directionTabs = (
+    <div dir="rtl" className="flex gap-0 -mb-px">
+      <button
+        type="button"
+        onClick={() => handleDirectionToggle('qabdh')}
+        className={`
+          cursor-pointer px-5 py-3 text-sm font-bold border-b-2 transition-all duration-150
+          ${direction === 'qabdh'
+            ? 'border-status-success-text text-status-success-text'
+            : 'border-transparent text-text-muted hover:text-text-primary hover:border-border-strong'}
+        `}
+      >
+        {dirQabdhLabel}
+      </button>
+      <button
+        type="button"
+        onClick={() => handleDirectionToggle('sarf')}
+        className={`
+          cursor-pointer px-5 py-3 text-sm font-bold border-b-2 transition-all duration-150
+          ${direction === 'sarf'
+            ? 'border-status-danger-text text-status-danger-text'
+            : 'border-transparent text-text-muted hover:text-text-primary hover:border-border-strong'}
+        `}
+      >
+        {dirSarfLabel}
+      </button>
+    </div>
+  );
+
+
+  // ---- Main render ----
   return (
     <BaseModal
       isOpen={isVisible}
       onClose={handleClose}
-      title={customTitle || 'معاملة مالية'}
+      title={activeTitle}
+      headerContent={directionTabs}
     >
       <div dir="rtl" className="space-y-5">
+
         {/* ============ ACCOUNTS ============ */}
         <section>
           <div className="flex items-center gap-2 mb-2.5">
@@ -401,43 +398,52 @@ const UnifiedTransactionModal = () => {
             )}
             <span className="text-sm font-bold text-text-primary">الحسابات</span>
           </div>
+
+          {/* من (right) → إلى (left) — settlement side is empty, counterparty always in col 1 */}
           <div className="grid grid-cols-2 gap-3">
-            <AccountPickerCard
-              label="إلى"
-              value={toPicker}
-              onChange={setToPicker}
-              clients={clients}
-              employees={employees}
-              treasuryData={treasuryData ?? []}
-              categoryMetadata={categoryMetadata ?? []}
-              presetKind={(() => {
-                if (defaultToCardType === 'treasury' && defaultToAccountId && treasuryData?.length) {
-                  const acc = treasuryData.find((t) => String(t.id) === defaultToAccountId);
-                  if (acc?.sub_type === 'cashbox') return 'cashbox' as PickerKind;
-                  if (acc?.sub_type === 'bank') return 'bank' as PickerKind;
-                }
-                return presetToPickerKind(defaultToCardType);
-              })()}
-              isVisible={isVisible}
-            />
-            <AccountPickerCard
-              label="من"
-              value={fromPicker}
-              onChange={setFromPicker}
-              clients={clients}
-              employees={employees}
-              treasuryData={treasuryData ?? []}
-              categoryMetadata={categoryMetadata ?? []}
-              presetKind={(() => {
-                if (defaultFromCardType === 'treasury' && defaultFromAccountId && treasuryData?.length) {
-                  const acc = treasuryData.find((t) => String(t.id) === defaultFromAccountId);
-                  if (acc?.sub_type === 'cashbox') return 'cashbox' as PickerKind;
-                  if (acc?.sub_type === 'bank') return 'bank' as PickerKind;
-                }
-                return presetToPickerKind(defaultFromCardType);
-              })()}
-              isVisible={isVisible}
-            />
+            {isSettlement ? (
+              <>
+                {/* Counterparty picker — always first column, no kind lock */}
+                <AccountPickerCard
+                  label={fromIsSettlement ? 'إلى' : 'من'}
+                  value={fromIsSettlement ? toPicker : fromPicker}
+                  onChange={fromIsSettlement ? setToPicker : setFromPicker}
+                  clients={clients}
+                  employees={employees}
+                  treasuryData={treasuryData ?? []}
+                  categoryMetadata={categoryMetadata ?? []}
+                  presetKind={null}
+                  isVisible={isVisible}
+                />
+                {/* Empty second column */}
+                <div />
+              </>
+            ) : (
+              <>
+                <AccountPickerCard
+                  label="من"
+                  value={fromPicker}
+                  onChange={setFromPicker}
+                  clients={clients}
+                  employees={employees}
+                  treasuryData={treasuryData ?? []}
+                  categoryMetadata={categoryMetadata ?? []}
+                  presetKind={fromPresetKind}
+                  isVisible={isVisible}
+                />
+                <AccountPickerCard
+                  label="إلى"
+                  value={toPicker}
+                  onChange={setToPicker}
+                  clients={clients}
+                  employees={employees}
+                  treasuryData={treasuryData ?? []}
+                  categoryMetadata={categoryMetadata ?? []}
+                  presetKind={toPresetKind}
+                  isVisible={isVisible}
+                />
+              </>
+            )}
           </div>
         </section>
 
@@ -455,27 +461,35 @@ const UnifiedTransactionModal = () => {
           </div>
 
           <div className="space-y-3.5">
-            {/* Amount — largest, boldest field on the sheet */}
-            <div>
-              <label className="block text-xs font-bold text-text-secondary mb-1.5">
-                المبلغ <span className="text-status-danger-text">*</span>
-              </label>
-              <div className="relative">
-                <NumberInput
-                  name="amount"
-                  label=""
-                  value={amount}
-                  onChange={(e) => setAmount(e.target.value)}
-                  placeholder="0.00"
-                  className="text-2xl font-extrabold h-14 pl-16"
-                />
-                <span className="absolute left-4 top-1/2 -translate-y-1/2 text-sm font-bold text-text-secondary pointer-events-none">
-                  SAR
-                </span>
+            {/* Amount + Date — same row, half/half */}
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="block text-xs font-bold text-text-secondary mb-1.5">
+                  المبلغ <span className="text-status-danger-text">*</span>
+                </label>
+                <div className="relative">
+                  <NumberInput
+                    name="amount"
+                    label=""
+                    value={amount}
+                    onChange={(e) => setAmount(e.target.value)}
+                    placeholder="0.00"
+                    className="text-lg font-extrabold h-11 pl-14"
+                  />
+                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs font-bold text-text-secondary pointer-events-none">
+                    SAR
+                  </span>
+                </div>
               </div>
+              <DateInput
+                name="effectiveDate"
+                label="تاريخ التنفيذ"
+                value={effectiveDate}
+                onChange={(e) => setEffectiveDate(e.target.value)}
+              />
             </div>
 
-            {/* Description — full width, primary text field */}
+            {/* Description — full width */}
             <div>
               <label className="block text-xs font-bold text-text-secondary mb-1.5">
                 الوصف <span className="text-status-danger-text">*</span>
@@ -484,58 +498,17 @@ const UnifiedTransactionModal = () => {
                 value={displayDescription}
                 onChange={handleDescriptionChange}
                 maxLength={255}
-                rows={5}
+                rows={4}
                 className="w-full rounded-lg border border-input bg-background px-3.5 py-2.5 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-primary-500/25 focus:border-primary-500 resize-none"
                 placeholder="مثال: دفعة راتب، تحويل عمولة..."
                 required
-              />
-            </div>
-
-            {/* Date + Category — paired, secondary priority */}
-            <div className="grid grid-cols-2 gap-3">
-              <DateInput
-                name="effectiveDate"
-                label="تاريخ التنفيذ"
-                value={effectiveDate}
-                onChange={(e) => setEffectiveDate(e.target.value)}
-              />
-              <div>
-                <label className="block text-xs font-bold text-text-secondary mb-1.5">
-                  التصنيف
-                </label>
-                <select
-                  value={category}
-                  onChange={(e) => setCategory(e.target.value as TransactionCategory)}
-                  className="w-full rounded-lg border border-input bg-background px-3.5 py-2.5 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-primary-500/25 focus:border-primary-500"
-                >
-                  {CATEGORY_OPTIONS.map((opt) => (
-                    <option key={opt.value} value={opt.value}>
-                      {opt.label}
-                    </option>
-                  ))}
-                </select>
-              </div>
-            </div>
-
-            {/* Notes — collapsed priority, optional */}
-            <div>
-              <label className="block text-xs font-bold text-text-secondary mb-1.5">
-                ملاحظات <span className="font-normal text-text-secondary/70">(اختياري)</span>
-              </label>
-              <textarea
-                value={notes}
-                onChange={(e) => setNotes(e.target.value)}
-                maxLength={1000}
-                rows={2}
-                className="w-full resize-none rounded-lg border border-input bg-background px-3.5 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500/25 focus:border-primary-500"
-                placeholder="ملاحظات إضافية..."
               />
             </div>
           </div>
         </section>
 
         {/* ============ LIVE SUMMARY STRIP ============ */}
-        {(fromName || toName || amount) && (
+        {(fromName || toName || fromIsSettlement || toIsSettlement || amount) && (
           <Card className="border-2 border-primary-500/20 bg-primary-500/[0.03] overflow-hidden">
             <CardContent className="p-3.5">
               <div className="flex items-center gap-3">
@@ -544,7 +517,7 @@ const UnifiedTransactionModal = () => {
                     {fromKindLabel || 'من'}
                   </div>
                   <div className="text-sm font-bold text-text-primary truncate">
-                    {fromName || '—'}
+                    {fromIsSettlement ? 'تسوية' : (fromName || '—')}
                   </div>
                 </div>
                 <ArrowLeftRight className="h-4 w-4 text-primary-500 shrink-0" />
@@ -553,7 +526,7 @@ const UnifiedTransactionModal = () => {
                     {toKindLabel || 'إلى'}
                   </div>
                   <div className="text-sm font-bold text-text-primary truncate">
-                    {toName || '—'}
+                    {toIsSettlement ? 'تسوية' : (toName || '—')}
                   </div>
                 </div>
                 <div className="w-px h-9 bg-border shrink-0" />

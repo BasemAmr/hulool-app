@@ -1,7 +1,7 @@
 // AccountPickerCard.tsx
 
 import { useState, useMemo, useEffect } from 'react';
-import { User, Building2, Landmark, Wallet, Search, Lock } from 'lucide-react';
+import { User, Building2, Landmark, Wallet, Search, Lock, LayoutGrid } from 'lucide-react';
 import ClientSearchCombobox from '@/shared/search/ClientSearchCombobox';
 import type {
   UnifiedAccount,
@@ -15,7 +15,7 @@ import { useGetAccountsByType } from '@/features/financials/api/financialCenterQ
 // Types
 // ========================================
 
-type PickerKind = 'client' | 'employee' | 'cashbox' | 'bank' | 'settlement';
+type PickerKind = 'client' | 'employee' | 'cashbox' | 'bank' | 'settlement' | 'other';
 
 interface PickerValue {
   kind: PickerKind | null;
@@ -48,18 +48,20 @@ const formatCurrency = (amount: number) =>
   }).format(amount);
 
 // Quick action definitions
-const QUICK_ACTIONS: { kind: PickerKind; label: string; icon: React.ReactNode; categorySlug: string | null }[] = [
-  { kind: 'cashbox', label: 'الصندوق', icon: <Wallet size={14} />, categorySlug: 'cashbox' },
-  { kind: 'bank', label: 'البنك', icon: <Landmark size={14} />, categorySlug: 'bank' },
-  { kind: 'client', label: 'العميل', icon: <Building2 size={14} />, categorySlug: null },
-  { kind: 'employee', label: 'الموظف', icon: <User size={14} />, categorySlug: null },
-  { kind: 'settlement', label: 'تسوية', icon: <Lock size={14} />, categorySlug: null },
+const QUICK_ACTIONS: { kind: PickerKind; label: string; categorySlug: string | null }[] = [
+  { kind: 'cashbox', label: 'الصندوق', categorySlug: 'cashbox' },
+  { kind: 'bank', label: 'البنك', categorySlug: 'bank' },
+  { kind: 'other', label: 'حسابات أخرى', categorySlug: 'other' },
+  { kind: 'client', label: 'العميل', categorySlug: null },
+  { kind: 'employee', label: 'الموظف', categorySlug: null },
+  { kind: 'settlement', label: 'تسوية', categorySlug: null },
 ];
 
 // Color map for each picker kind
 const colorMap: Record<string, { border: string; text: string; activeBg: string; chipBorder: string; chipBg: string }> = {
   cashbox: { border: 'border-status-success-border', text: 'text-status-success-text', activeBg: 'bg-status-success-bg', chipBorder: 'border-status-success-border', chipBg: 'bg-status-success-bg' },
   bank: { border: 'border-status-info-border', text: 'text-status-info-text', activeBg: 'bg-status-info-bg', chipBorder: 'border-status-info-border', chipBg: 'bg-status-info-bg' },
+  other: { border: 'border-border-strong', text: 'text-text-primary', activeBg: 'bg-bg-surface-muted', chipBorder: 'border-border-strong', chipBg: 'bg-bg-surface-muted' },
   client: { border: 'border-status-warning-border', text: 'text-status-warning-text', activeBg: 'bg-status-warning-bg', chipBorder: 'border-status-warning-border', chipBg: 'bg-status-warning-bg' },
   employee: { border: 'border-status-danger-border', text: 'text-status-danger-text', activeBg: 'bg-status-danger-bg', chipBorder: 'border-status-danger-border', chipBg: 'bg-status-danger-bg' },
   settlement: { border: 'border-status-neutral-border', text: 'text-status-neutral-text', activeBg: 'bg-status-neutral-bg', chipBorder: 'border-status-neutral-border', chipBg: 'bg-status-neutral-bg' },
@@ -91,6 +93,23 @@ export default function AccountPickerCard({
       (t) => t.sub_type === categorySlug && (t.coa_section || 'assets') === 'assets',
     );
   }, [treasuryData, value.kind]);
+
+  // ---- Filter "other" treasury accounts (not cashbox, bank, or settlement) ----
+  const filteredOtherAccounts = useMemo(() => {
+    if (value.kind !== 'other') return [];
+    const q = searchQuery.trim().toLowerCase();
+    return treasuryData.filter((t) => {
+      const isSettlement =
+        (typeof t.metadata === 'object' && t.metadata !== null && (t.metadata as any).is_settlement) ||
+        (typeof t.metadata === 'object' && t.metadata !== null && (t.metadata as any).type === 'settlement');
+      const matchesKind = t.sub_type !== 'cashbox' && t.sub_type !== 'bank' && !isSettlement;
+      if (!matchesKind) return false;
+      if (q) {
+        return t.name.toLowerCase().includes(q);
+      }
+      return true;
+    });
+  }, [treasuryData, value.kind, searchQuery]);
 
   // ---- Search through ALL treasury accounts (global search) ----
   const searchResults = useMemo(() => {
@@ -174,7 +193,6 @@ export default function AccountPickerCard({
                 ${presetLocked ? 'cursor-default' : ''}
               `}
             >
-              <span className="shrink-0">{action.icon}</span>
               <span>{action.label}</span>
             </button>
           );
@@ -266,6 +284,83 @@ export default function AccountPickerCard({
     );
   };
 
+  // ---- "Other" treasury accounts list ----
+  const renderOtherAccounts = () => {
+    const selectedAccount = filteredOtherAccounts.find((a) => String(a.id) === value.accountId);
+    const showChip = Boolean(value.accountId) && Boolean(selectedAccount) && !forceShowList;
+
+    // COA section label helper
+    const coaLabel = (coa: string | null | undefined): string => {
+      const map: Record<string, string> = {
+        assets: 'أصول',
+        liabilities: 'خصوم',
+        equity: 'حقوق ملكية',
+        income: 'إيرادات',
+        expenses: 'مصروفات',
+      };
+      return coa ? (map[coa] ?? coa) : 'غير محدد';
+    };
+
+    if (showChip && selectedAccount) {
+      const colors = colorMap.other;
+      return (
+        <div className={`flex items-center justify-between gap-2 rounded-lg border-2 ${colors.chipBorder} ${colors.chipBg} px-3 py-2`}>
+          <div className="flex min-w-0 flex-col">
+            <span className="truncate text-sm font-bold text-text-primary">{selectedAccount.name}</span>
+            <span className="text-[10px] text-text-muted">{coaLabel(selectedAccount.coa_section)}</span>
+          </div>
+          <div className="flex shrink-0 items-center gap-2">
+            <span className="text-xs font-semibold text-text-secondary">
+              {formatCurrency(selectedAccount.balance)} SAR
+            </span>
+            <button
+              type="button"
+              onClick={() => setForceShowList(true)}
+              className="text-[11px] font-bold text-primary-500 hover:underline"
+            >
+              تغيير
+            </button>
+          </div>
+        </div>
+      );
+    }
+
+    return filteredOtherAccounts.length === 0 ? (
+      <p className="py-2 text-xs text-text-secondary">لا توجد حسابات أخرى</p>
+    ) : (
+      <div className="max-h-44 space-y-1 overflow-y-auto">
+        {filteredOtherAccounts.map((acc) => {
+          const isSelected = String(acc.id) === value.accountId;
+          return (
+            <button
+              key={acc.id}
+              type="button"
+              onClick={() => {
+                onChange({ ...value, accountId: isSelected ? '' : String(acc.id) });
+                setForceShowList(false);
+              }}
+              className={`w-full rounded-lg border p-2.5 text-right transition-all
+                ${isSelected
+                  ? 'border-primary-500 bg-primary-500/5 ring-1 ring-primary-500'
+                  : 'border-border-default hover:border-border-strong hover:bg-muted/20'
+                }`}
+            >
+              <div className="flex items-start justify-between gap-2">
+                <div className="flex flex-col min-w-0">
+                  <span className="text-sm font-bold text-text-primary truncate">{acc.name}</span>
+                  <span className="text-[10px] text-text-muted mt-0.5">{coaLabel(acc.coa_section)}</span>
+                </div>
+                <span className="text-xs font-semibold text-text-secondary shrink-0 mt-0.5">
+                  {formatCurrency(acc.balance)} SAR
+                </span>
+              </div>
+            </button>
+          );
+        })}
+      </div>
+    );
+  };
+
   // ---- Search results (global) ----
   const renderSearchResults = () => {
     if (!searchQuery.trim()) return null;
@@ -336,8 +431,8 @@ export default function AccountPickerCard({
 
   // ---- Main account selection area ----
   const renderAccountSelector = () => {
-    // If searching, show search results
-    if (searchQuery.trim()) return renderSearchResults();
+    // If searching, show search results (unless selecting 'other', which filters its own list)
+    if (searchQuery.trim() && value.kind !== 'other') return renderSearchResults();
     if (!value.kind) {
       return (
         <div className="flex min-h-[36px] items-center justify-center rounded-lg border border-dashed border-border-default bg-muted/10 px-3 py-2">
@@ -347,6 +442,7 @@ export default function AccountPickerCard({
     }
     if (value.kind === 'client') return renderClientPicker();
     if (value.kind === 'employee') return renderEmployeePicker();
+    if (value.kind === 'other') return renderOtherAccounts();
     if (value.kind === 'settlement') {
       if (!settlementAccount) {
         return (
@@ -377,7 +473,7 @@ export default function AccountPickerCard({
         <span className="text-sm font-bold text-text-primary">{label}</span>
       </div>
       {renderQuickActions()}
-      {!value.kind && renderSearch()}
+      {((value.kind === 'other' && !value.accountId) || (value.kind === 'other' && forceShowList)) && renderSearch()}
       <div className="min-h-[36px]">{renderAccountSelector()}</div>
     </div>
   );

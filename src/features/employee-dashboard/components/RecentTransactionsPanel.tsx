@@ -1,6 +1,7 @@
 // src/components/employee/RecentTransactionsPanel.tsx
 import React, { useState, useEffect, useRef } from 'react';
-import { MoreHorizontal, Loader2 } from 'lucide-react';
+import { MoreHorizontal, Loader2, ArrowLeftRight } from 'lucide-react';
+import { Link } from 'react-router-dom';
 import { formatDate } from '@/shared/utils/dateUtils';
 import type { MonthlyLedgerData } from '@/features/employee-dashboard/api/employeeDashboardQueries';
 import {
@@ -334,16 +335,25 @@ const RecentTransactionsPanel: React.FC<RecentTransactionsPanelProps> = ({
       </div>
 
       {/* Footer */}
-      <div className="px-4 py-2 bg-background border-t border-border-default text-center flex-shrink-0">
-        {hasMoreTransactions && (
+      <div className="px-4 py-2.5 bg-background border-t border-border-default flex items-center justify-between gap-4 flex-shrink-0">
+        {hasMoreTransactions ? (
           <button
             onClick={handleShowMore}
-            className="text-text-secondary p-0 flex items-center justify-center gap-1 w-full hover:text-text-primary transition-colors text-sm"
+            className="text-text-secondary p-0 flex items-center gap-1 hover:text-text-primary transition-colors text-xs font-bold"
           >
-            <MoreHorizontal size={16} />
+            <MoreHorizontal size={14} />
             <span>عرض المزيد ({transactions.length - visibleTransactions} متبقي)</span>
           </button>
+        ) : (
+          <div />
         )}
+        <Link
+          to="/employee/financials"
+          className="text-primary-500 hover:text-primary-600 flex items-center gap-1 text-xs font-bold transition-colors"
+        >
+          <ArrowLeftRight size={14} />
+          <span>صفحة العمليات المالية</span>
+        </Link>
       </div>
     </div>
   );

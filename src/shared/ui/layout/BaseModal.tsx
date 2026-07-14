@@ -8,9 +8,11 @@ interface BaseModalProps {
   children: ReactNode;
   className?: string;
   allowOutsideClick?: boolean;
+  /** Optional slot rendered below the title row, flush inside the header */
+  headerContent?: ReactNode;
 }
 
-const BaseModal = ({ isOpen, onClose, title, children, className, allowOutsideClick = false }: BaseModalProps) => {
+const BaseModal = ({ isOpen, onClose, title, children, className, allowOutsideClick = false, headerContent }: BaseModalProps) => {
   useEffect(() => {
     const handleEscape = (event: KeyboardEvent) => {
       if (event.key === 'Escape') {
@@ -43,15 +45,20 @@ const BaseModal = ({ isOpen, onClose, title, children, className, allowOutsideCl
           className={`flex w-full max-w-4xl flex-col rounded-xl border border-border bg-card shadow-2xl animate-in fade-in-0 zoom-in-95 duration-200 ${className || ''}`}
           onClick={(e) => e.stopPropagation()}
         >
-          <header className="flex items-center justify-between border-b border-border bg-background px-6 py-4">
-            <h5 className="text-lg font-semibold tracking-tight text-text-primary">{title}</h5>
-            <button
-              type="button"
-              className="rounded-lg p-1.5 text-text-secondary transition-colors hover:bg-muted/50 hover:text-text-primary"
-              onClick={onClose}
-            >
-              <X className="h-5 w-5" />
-            </button>
+          <header className="border-b border-border bg-background">
+            <div className="flex items-center justify-between px-6 py-4">
+              <h5 className="text-lg font-semibold tracking-tight text-text-primary">{title}</h5>
+              <button
+                type="button"
+                className="rounded-lg p-1.5 text-text-secondary transition-colors hover:bg-muted/50 hover:text-text-primary"
+                onClick={onClose}
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+            {headerContent && (
+              <div className="px-6 pb-0">{headerContent}</div>
+            )}
           </header>
 
           <div className="flex w-full justify-center bg-card p-6">

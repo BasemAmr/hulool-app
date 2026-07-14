@@ -1,13 +1,10 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Card, CardContent } from '@/shared/ui/shadcn/card';
-import { Wallet, ExternalLink, FileSpreadsheet, ChevronDown } from 'lucide-react';
+import { Wallet, ExternalLink, ChevronDown, ArrowLeftRight } from 'lucide-react';
 import { useGetMyTreasuryAccounts } from '@/features/financials/api/treasuryQueries';
 import { useModalStore } from '@/shared/stores/modalStore';
 import { useAuthStore } from '@/features/auth/store/authStore';
-import { useToast } from '@/shared/hooks/useToast';
-import apiClient from '@/api/client';
-import { exportService } from '@/services/export/ExportService';
 import {
   ShadcnSelect as Select,
   ShadcnSelectContent as SelectContent,
@@ -17,15 +14,17 @@ import {
 } from '@/shared/ui/shadcn/select';
 import type { TreasuryAccountWithPermission } from '@/api/types';
 
+const TREASURY_SELECTOR_KEY = 'employee-treasury-selected-account-id';
+
 export const TreasuryAccountSelectorWidget: React.FC = () => {
   const { data: accounts, isLoading } = useGetMyTreasuryAccounts();
   const openModal = useModalStore((state) => state.openModal);
   const navigate = useNavigate();
   const user = useAuthStore((state) => state.user);
-  const toast = useToast();
-  const [selectedAccountId, setSelectedAccountId] = useState<string>('');
+  const [selectedAccountId, setSelectedAccountId] = useState<string>(
+    () => localStorage.getItem(TREASURY_SELECTOR_KEY) || ''
+  );
   const [settlementOpen, setSettlementOpen] = useState(false);
-  const [isExporting, setIsExporting] = useState(false);
   const settlementRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -40,10 +39,6 @@ export const TreasuryAccountSelectorWidget: React.FC = () => {
 
   const hasTransactionPermission =
     user?.type === 'admin' || user?.type === 'employee_admin' || user?.can_make_transactions;
-
-  if (isLoading || !accounts || accounts.length === 0) {
-    return null;
-  }
 
   const parseMetadata = (metadata: TreasuryAccountWithPermission['metadata']) => {
     if (!metadata) return null;
@@ -60,16 +55,32 @@ export const TreasuryAccountSelectorWidget: React.FC = () => {
     return null;
   };
 
-  const mappedAccountsWithoutSettlement = accounts.filter((account) => {
+  const mappedAccountsWithoutSettlement = (accounts || []).filter((account) => {
     const metadata = parseMetadata(account.metadata);
     const isSettlementByFlag = metadata?.is_settlement === true || metadata?.is_settlement === 'true';
     const isSettlementByType = metadata?.type === 'settlement';
     return !isSettlementByFlag && !isSettlementByType;
   });
 
-  // Set default to first non-settlement account if none selected yet
+  const defaultAccountId = useMemo(() => {
+    if (selectedAccountId && mappedAccountsWithoutSettlement.some((a) => String(a.id) === selectedAccountId)) {
+      return selectedAccountId;
+    }
+    const cashbox = mappedAccountsWithoutSettlement.find((a) => a.sub_type === 'cashbox');
+    return cashbox ? String(cashbox.id) : String(mappedAccountsWithoutSettlement[0]?.id ?? '');
+  }, [selectedAccountId, mappedAccountsWithoutSettlement]);
+
+  if (isLoading || !accounts || accounts.length === 0) {
+    return null;
+  }
+
   const selectedAccount: TreasuryAccountWithPermission | undefined =
-    mappedAccountsWithoutSettlement.find((a) => String(a.id) === selectedAccountId) || mappedAccountsWithoutSettlement[0];
+    mappedAccountsWithoutSettlement.find((a) => String(a.id) === defaultAccountId) || mappedAccountsWithoutSettlement[0];
+
+  const handleAccountChange = (value: string) => {
+    setSelectedAccountId(value);
+    localStorage.setItem(TREASURY_SELECTOR_KEY, value);
+  };
 
   if (!selectedAccount) {
     return null;
@@ -80,38 +91,6 @@ export const TreasuryAccountSelectorWidget: React.FC = () => {
       minimumFractionDigits: 0,
       maximumFractionDigits: 2,
     }).format(balance);
-
-  const handleExportFull = async () => {
-    try {
-      setIsExporting(true);
-      const { data } = await apiClient.get<any>(`/accounts/treasury/${selectedAccount.id}/history`, {
-        params: { page: 1, per_page: 100000 },
-      });
-      let allTxns: any[] = [];
-      if (data?.data?.transactions) allTxns = data.data.transactions;
-      else if (data?.data?.data) allTxns = data.data.data;
-      else if (data?.transactions) allTxns = data.transactions;
-      else if (Array.isArray(data?.data)) allTxns = data.data;
-
-      const exportItems = allTxns.map((txn: any) => ({
-        transaction_date: txn.transaction_date || txn.created_at || '',
-        transaction_type: txn.transaction_type,
-        description: txn.description,
-        debit: Number(txn.debit || (txn.direction === 'debit' ? txn.amount : 0)),
-        credit: Number(txn.credit || (txn.direction === 'credit' ? txn.amount : 0)),
-        balance: Number(txn.balance || txn.balance_after || 0),
-      }));
-      await exportService.exportTreasuryAccount({
-        title: `كشف حركة الحساب كامل - ${selectedAccount.name}`,
-        items: exportItems,
-      });
-      toast.success('تم تصدير كامل التاريخ بنجاح');
-    } catch (err: any) {
-      toast.error('فشل التصدير', err.message || '');
-    } finally {
-      setIsExporting(false);
-    }
-  };
 
   const openUnified = (overrides: Record<string, any>) => {
     openModal('unifiedTransaction', {
@@ -136,8 +115,8 @@ export const TreasuryAccountSelectorWidget: React.FC = () => {
 
           <div className="flex items-center gap-1.5 min-w-0">
             <Select
-              value={String(selectedAccount.id)}
-              onValueChange={setSelectedAccountId}
+              value={defaultAccountId}
+              onValueChange={handleAccountChange}
             >
               <SelectTrigger className="h-8 text-xs border-border-default bg-bg-surface max-w-[120px] md:max-w-[150px] truncate">
                 <SelectValue placeholder="اختر خزينة" />
@@ -167,88 +146,70 @@ export const TreasuryAccountSelectorWidget: React.FC = () => {
           </div>
         </div>
 
-        {/* Action Buttons in a structured 2x2 layout */}
+        {/* Action Buttons in a single row layout */}
         {hasTransactionPermission && selectedAccount.can_transact && (
-          <div className="flex flex-col gap-2">
-            <div className="flex gap-2">
-              <button
-                onClick={() =>
-                  openModal('unifiedTransaction', {
-                    defaultToCardType: 'treasury',
-                    defaultToAccountId: String(selectedAccount.id),
-                    title: 'سند قبض',
-                  })
-                }
-                className="flex-1 py-2 text-xs font-bold rounded-md bg-status-success-bg text-status-success-text border border-status-success-border hover:opacity-80 transition-opacity text-center"
-              >
-                سند قبض
-              </button>
-              <button
-                onClick={() =>
-                  openModal('unifiedTransaction', {
-                    defaultFromCardType: 'treasury',
-                    defaultFromAccountId: String(selectedAccount.id),
-                    title: 'سند صرف',
-                  })
-                }
-                className="flex-1 py-2 text-xs font-bold rounded-md bg-status-danger-bg text-status-danger-text border border-status-danger-border hover:opacity-80 transition-opacity text-center"
-              >
-                سند صرف
-              </button>
-            </div>
+          <div className="flex gap-2">
+            <button
+              onClick={() =>
+                openModal('unifiedTransaction', {
+                  title: 'سند قبض',
+                })
+              }
+              className="flex-1 py-2 text-[11px] font-bold rounded-md bg-status-success-bg text-status-success-text border border-status-success-border hover:opacity-80 transition-opacity text-center"
+            >
+              سند قبض
+            </button>
+            <button
+              onClick={() =>
+                openModal('unifiedTransaction', {
+                  title: 'سند صرف',
+                })
+              }
+              className="flex-1 py-2 text-[11px] font-bold rounded-md bg-status-danger-bg text-status-danger-text border border-status-danger-border hover:opacity-80 transition-opacity text-center"
+            >
+              سند صرف
+            </button>
 
-            <div className="flex gap-2">
-              {/* سند تسوية - dropdown */}
-              <div ref={settlementRef} className="flex-1 relative">
-                <button
-                  onClick={() => setSettlementOpen((prev) => !prev)}
-                  className="w-full flex items-center justify-center gap-1 py-2 text-xs font-bold rounded-md bg-bg-surface text-text-primary border border-border-default hover:bg-bg-surface-muted transition-colors text-center"
-                >
-                  <span>سند تسوية</span>
-                  <ChevronDown size={12} className="opacity-70" />
-                </button>
-                {settlementOpen && (
-                  <div className="absolute right-0 top-full mt-1 z-50 w-full min-w-[120px] rounded-lg border border-border-default bg-bg-surface shadow-xl py-1">
-                    <button
-                      type="button"
-                      className="flex w-full items-center justify-start px-3 py-2 text-xs font-bold text-text-primary hover:bg-bg-surface-muted transition-colors text-right"
-                      onClick={() => {
-                        setSettlementOpen(false);
-                        openUnified({
-                          defaultFromCardType: 'settlement',
-                          title: 'تسوية قبض',
-                        });
-                      }}
-                    >
-                      تسوية قبض
-                    </button>
-                    <div className="border-t border-border-default" />
-                    <button
-                      type="button"
-                      className="flex w-full items-center justify-start px-3 py-2 text-xs font-bold text-text-primary hover:bg-bg-surface-muted transition-colors text-right"
-                      onClick={() => {
-                        setSettlementOpen(false);
-                        openUnified({
-                          defaultToCardType: 'settlement',
-                          title: 'تسوية صرف',
-                        });
-                      }}
-                    >
-                      تسوية صرف
-                    </button>
-                  </div>
-                )}
-              </div>
-
-              {/* كشف (Excel Export) */}
+            {/* سند تسوية - dropdown */}
+            <div ref={settlementRef} className="flex-1 relative">
               <button
-                onClick={handleExportFull}
-                disabled={isExporting}
-                className="flex-1 flex items-center justify-center gap-1 py-2 text-xs font-bold rounded-md bg-bg-surface text-text-primary border border-border-default hover:bg-bg-surface-muted disabled:opacity-50 transition-all text-center"
+                onClick={() => setSettlementOpen((prev) => !prev)}
+                className="w-full flex items-center justify-center gap-1 py-2 text-[11px] font-bold rounded-md bg-bg-surface text-text-primary border border-border-default hover:bg-bg-surface-muted transition-colors text-center"
               >
-                <FileSpreadsheet size={13} className="text-text-brand" />
-                <span>{isExporting ? 'جاري التصدير...' : 'كشف حساب'}</span>
+                <span>سند تسوية</span>
+                <ChevronDown size={12} className="opacity-70" />
               </button>
+              {settlementOpen && (
+                <div className="absolute right-0 top-full mt-1 z-50 w-full min-w-[120px] rounded-lg border border-border-default bg-bg-surface shadow-xl py-1">
+                  <button
+                    type="button"
+                    className="flex w-full items-center justify-start px-3 py-2 text-xs font-bold text-text-primary hover:bg-bg-surface-muted transition-colors text-right"
+                    onClick={() => {
+                      setSettlementOpen(false);
+                      openUnified({
+                        defaultFromCardType: 'settlement',
+                        title: 'تسوية قبض',
+                      });
+                    }}
+                  >
+                    تسوية قبض
+                  </button>
+                  <div className="border-t border-border-default" />
+                  <button
+                    type="button"
+                    className="flex w-full items-center justify-start px-3 py-2 text-xs font-bold text-text-primary hover:bg-bg-surface-muted transition-colors text-right"
+                    onClick={() => {
+                      setSettlementOpen(false);
+                      openUnified({
+                        defaultToCardType: 'settlement',
+                        title: 'تسوية صرف',
+                      });
+                    }}
+                  >
+                    تسوية صرف
+                  </button>
+                </div>
+              )}
             </div>
           </div>
         )}
@@ -256,4 +217,3 @@ export const TreasuryAccountSelectorWidget: React.FC = () => {
     </Card>
   );
 };
-;

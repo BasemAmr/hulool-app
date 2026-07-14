@@ -39,7 +39,6 @@ import { useTranslation } from 'react-i18next';
 import ClientSearchModal from '@/shared/search/ClientSearchModal';
 import { useGetClientReceivables } from '@/features/receivables/api/receivableQueries';
 import ApplyCreditModal from '@/features/receivables/modals/ApplyCreditModal';
-import EditManualReceivableModal from '@/features/receivables/modals/EditManualReceivableModal';
 import DeleteReceivableModal from '@/features/receivables/modals/DeleteReceivableModal';
 import ClientReceivablesEditModal from '@/features/receivables/modals/ClientReceivablesEditModal';
 
@@ -231,8 +230,6 @@ const ModalManager = () => {
       case 'allocationDelete':
         return <AllocationDeleteModal key="allocationDelete" />;
 
-      case 'editReceivable':
-        return <EditManualReceivableModal key="editReceivable" />;
 
       case 'deleteReceivable':
         return <DeleteReceivableModal key="deleteReceivable" />;

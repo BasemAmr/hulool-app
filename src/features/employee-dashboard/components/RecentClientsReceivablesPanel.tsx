@@ -177,23 +177,6 @@ const RecentClientsReceivablesPanel: React.FC<RecentClientsReceivablesPanelProps
                       </td>
                       <td className="px-2 py-1.5 border border-border-default text-center">
                         <div className="flex justify-center gap-0.5">
-                          {/* Edit */}
-                          <button
-                            className="inline-flex items-center justify-center rounded p-1.5 text-text-secondary hover:text-text-primary bg-transparent hover:bg-background border border-transparent hover:border-border-default transition-colors duration-150"
-                            onClick={() => openModal('editReceivable', { receivable: {
-                              id: invoice.id,
-                              client_id: invoice.client_id,
-                              description: invoice.description,
-                              amount: invoice.amount,
-                              remaining_amount: invoice.remaining_amount,
-                              client_name: invoice.client_name,
-                              client_phone: invoice.client_phone,
-                              task_id: invoice.task_id
-                            } as any })}
-                            title="تعديل المستحق"
-                          >
-                            <Edit3 size={12} />
-                          </button>
 
                           {/* Record Payment */}
                           <button
