@@ -40,7 +40,6 @@ import ClientSearchModal from '@/shared/search/ClientSearchModal';
 import { useGetClientReceivables } from '@/features/receivables/api/receivableQueries';
 import ApplyCreditModal from '@/features/receivables/modals/ApplyCreditModal';
 import DeleteReceivableModal from '@/features/receivables/modals/DeleteReceivableModal';
-import ClientReceivablesEditModal from '@/features/receivables/modals/ClientReceivablesEditModal';
 
 // NEW CONFLICT RESOLUTION MODALS
 import PrepaidConflictModal from '@/features/tasks/modals/PrepaidConflictModal';
@@ -233,9 +232,6 @@ const ModalManager = () => {
 
       case 'deleteReceivable':
         return <DeleteReceivableModal key="deleteReceivable" />;
-
-      case 'clientReceivablesEdit':
-        return <ClientReceivablesEditModal key="clientReceivablesEdit" />;
 
       case 'urgentAlert':
         return <UrgentAlertModal key="urgentAlert" />;
