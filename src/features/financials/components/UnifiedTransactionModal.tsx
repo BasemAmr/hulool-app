@@ -77,12 +77,15 @@ const UnifiedTransactionModal = () => {
   };
 
   // ---- State ----
-  const [direction, setDirection] = useState<Direction>(
-    defaultFromCardType === 'settlement' ? 'qabdh'
-    : defaultToCardType === 'settlement' ? 'sarf'
-    : (defaultToCardType === 'treasury' || defaultToCardType === 'cashbox') ? 'qabdh'
-    : 'sarf'
-  );
+  const [direction, setDirection] = useState<Direction>(() => {
+    const modalTitle = (props?.title as string | undefined) || '';
+    if (defaultFromCardType === 'settlement') return 'qabdh';
+    if (defaultToCardType === 'settlement') return 'sarf';
+    if (defaultToCardType === 'treasury' || defaultToCardType === 'cashbox') return 'qabdh';
+    if (modalTitle.includes('قبض')) return 'qabdh';
+    if (modalTitle.includes('صرف')) return 'sarf';
+    return 'sarf';
+  });
   const [fromPicker, setFromPicker] = useState<PickerValue>({
     kind: presetToPickerKind(defaultFromCardType),
     accountId: defaultFromAccountId,
@@ -146,10 +149,14 @@ const UnifiedTransactionModal = () => {
       const fKind = resolveKind(fType, fId);
       const tKind = resolveKind(tType, tId);
 
+      // Determine initial direction from props: card types, or modal title parameter
+      const modalTitle = (props?.title as string | undefined) || '';
       const initDir: Direction =
         fType === 'settlement' ? 'qabdh'
         : tType === 'settlement' ? 'sarf'
         : (tType === 'treasury' || tType === 'cashbox') ? 'qabdh'
+        : modalTitle.includes('قبض') ? 'qabdh'
+        : modalTitle.includes('صرف') ? 'sarf'
         : 'sarf';
 
       // Preset kind = the resolved kind only when that side has a pre-selected account id
