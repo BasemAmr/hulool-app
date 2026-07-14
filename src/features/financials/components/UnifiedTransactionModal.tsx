@@ -146,8 +146,24 @@ const UnifiedTransactionModal = () => {
         return null;
       };
 
-      const fKind = resolveKind(fType, fId);
-      const tKind = resolveKind(tType, tId);
+      // Helper to find settlement account id
+      const getSettlementId = (): string => {
+        const settlementAcc = treasuryData?.find(
+          (t) =>
+            typeof t.metadata === 'object' &&
+            t.metadata !== null &&
+            ((t.metadata as any).is_settlement === true ||
+              (t.metadata as any).is_settlement === 'true' ||
+              (t.metadata as any).type === 'settlement')
+        );
+        return settlementAcc ? String(settlementAcc.id) : '';
+      };
+
+      const resolvedFromId = fType === 'settlement' ? getSettlementId() : fId;
+      const resolvedToId = tType === 'settlement' ? getSettlementId() : tId;
+
+      const fKind = resolveKind(fType, resolvedFromId);
+      const tKind = resolveKind(tType, resolvedToId);
 
       // Determine initial direction from props: card types, or modal title parameter
       const modalTitle = (props?.title as string | undefined) || '';
@@ -160,12 +176,12 @@ const UnifiedTransactionModal = () => {
         : 'sarf';
 
       // Preset kind = the resolved kind only when that side has a pre-selected account id
-      const fPreset: PickerKind | null = fId ? fKind : null;
-      const tPreset: PickerKind | null = tId ? tKind : null;
+      const fPreset: PickerKind | null = resolvedFromId ? fKind : null;
+      const tPreset: PickerKind | null = resolvedToId ? tKind : null;
 
       setDirection(initDir);
-      setFromPicker({ kind: fKind, accountId: fId, categorySlug: resolveCategory(fKind, fId) });
-      setToPicker({ kind: tKind, accountId: tId, categorySlug: resolveCategory(tKind, tId) });
+      setFromPicker({ kind: fKind, accountId: resolvedFromId, categorySlug: resolveCategory(fKind, resolvedFromId) });
+      setToPicker({ kind: tKind, accountId: resolvedToId, categorySlug: resolveCategory(tKind, resolvedToId) });
       setFromPresetKind(fPreset);
       setToPresetKind(tPreset);
       setAmount('');
