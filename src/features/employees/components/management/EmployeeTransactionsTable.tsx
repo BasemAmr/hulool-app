@@ -298,7 +298,7 @@ const EmployeeTransactionsTable: React.FC<EmployeeTransactionsTableProps> = ({
       ...t,
       is_pending: false,
       is_summary: false,
-      date: t.transaction_date || t.created_at || '',
+      date: t.transaction_date || '',
       debit_val: parseFloat(t.debit || '0'),
       credit_val: parseFloat(t.credit || '0'),
       balance_val: t.balance ? parseFloat(t.balance) : null,
