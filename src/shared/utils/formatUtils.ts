@@ -18,7 +18,7 @@ export function formatDate(dateString: string | null | undefined): string {
   try {
     const date = new Date(dateString);
     if (isNaN(date.getTime())) return '—';
-    return new Intl.DateTimeFormat('en-US', {
+    return new Intl.DateTimeFormat('en-GB', {
       year: 'numeric',
       month: '2-digit',
       day: '2-digit',
@@ -50,10 +50,10 @@ export function formatDateForExcel(dateString: string): string {
  */
 export function formatPhoneNumber(phone: string): string {
   if (!phone) return '';
-  
+
   // Remove any existing +966 prefix and clean the number
   const cleanPhone = phone.replace(/^\+?966/, '').replace(/\D/g, '');
-  
+
   // Add +966 prefix if we have a valid number
   return cleanPhone ? `+966${cleanPhone}` : '';
 }
@@ -110,7 +110,7 @@ export function formatClientTypeArabic(type: string): string {
 export function formatTaskTypeArabic(type: string): string {
   const typeMap: Record<string, string> = {
     'Government': 'حكومي',
-    'RealEstate': 'عقاري', 
+    'RealEstate': 'عقاري',
     'Accounting': 'محاسبي',
     'Other': 'آخر',
     'Consultation': 'استشارة',

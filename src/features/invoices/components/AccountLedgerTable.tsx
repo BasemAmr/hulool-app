@@ -98,6 +98,7 @@ const getBalance = (tx: FinancialTransaction): number => {
 
 // Transaction Icon Cell
 const TransactionIconCell = React.memo(({ rowData }: CellProps<FinancialTransaction>) => {
+  if ((rowData as any).is_summary) return <span className="hulool-cell-content" />;
   const getIcon = (type: string) => {
     switch (type) {
       case 'INVOICE_CREATED':
@@ -127,6 +128,7 @@ TransactionIconCell.displayName = 'TransactionIconCell';
 
 // Description Cell
 const DescriptionCell = React.memo(({ rowData, active }: CellProps<FinancialTransaction>) => {
+  if ((rowData as any).is_summary) return <span className="hulool-cell-content">الإجماليات</span>;
   return (
     <span className="hulool-cell-content" style={{ fontWeight: active ? 700 : 500, color: 'var(--token-text-primary)' }}>
       {rowData.description}
@@ -137,6 +139,13 @@ DescriptionCell.displayName = 'DescriptionCell';
 
 // Debit Cell
 const DebitCell = React.memo(({ rowData, columnData, active }: CellProps<FinancialTransaction, { hideAmounts: boolean }>) => {
+  if ((rowData as any).is_summary) {
+    return (
+      <span className="hulool-cell-content font-bold text-text-primary" style={{ justifyContent: 'center', fontSize: '0.875rem' }}>
+        {columnData?.hideAmounts ? '***' : `${formatCurrency(getDebitAmount(rowData))}`}
+      </span>
+    );
+  }
   const amount = getDebitAmount(rowData);
   return (
     <span className="hulool-cell-content" style={{ justifyContent: 'center', color: 'inherit', fontWeight: active ? 700 : 500 }}>
@@ -148,6 +157,13 @@ DebitCell.displayName = 'DebitCell';
 
 // Credit Cell
 const CreditCell = React.memo(({ rowData, columnData, active }: CellProps<FinancialTransaction, { hideAmounts: boolean }>) => {
+  if ((rowData as any).is_summary) {
+    return (
+      <span className="hulool-cell-content font-bold text-text-primary" style={{ justifyContent: 'center', fontSize: '0.875rem' }}>
+        {columnData?.hideAmounts ? '***' : `${formatCurrency(getCreditAmount(rowData))}`}
+      </span>
+    );
+  }
   const amount = getCreditAmount(rowData);
   return (
     <span className="hulool-cell-content" style={{ justifyContent: 'center', color: 'inherit', fontWeight: active ? 700 : 500 }}>
@@ -159,6 +175,14 @@ CreditCell.displayName = 'CreditCell';
 
 // Balance Cell
 const BalanceCell = React.memo(({ rowData, columnData, active }: CellProps<FinancialTransaction, { hideAmounts: boolean }>) => {
+  if ((rowData as any).is_summary) {
+    const balance = getBalance(rowData);
+    return (
+      <span className="hulool-cell-content font-bold text-text-primary" style={{ justifyContent: 'center', fontSize: '0.875rem' }}>
+        {columnData?.hideAmounts ? '***' : `${formatCurrency(balance)}`}
+      </span>
+    );
+  }
   const balance = getBalance(rowData);
   return (
     <span className="hulool-cell-content" style={{ justifyContent: 'center', fontWeight: active ? 800 : 700, color: balance < 0 ? 'var(--token-text-danger)' : 'var(--token-text-primary)' }}>
@@ -170,6 +194,7 @@ BalanceCell.displayName = 'BalanceCell';
 
 // Date Cell
 const DateCell = React.memo(({ rowData, active }: CellProps<FinancialTransaction>) => {
+  if ((rowData as any).is_summary) return <span className="hulool-cell-content" />;
   return (
     <span className="hulool-cell-content" style={{ justifyContent: 'center', fontSize: '0.875rem', color: 'var(--token-text-primary)', fontWeight: active ? 700 : 500 }}>
       {formatDate(rowData.transaction_date || rowData.created_at)}
@@ -180,6 +205,7 @@ DateCell.displayName = 'DateCell';
 
 // Type Badge Cell
 const TypeBadgeCell = React.memo(({ rowData }: CellProps<FinancialTransaction>) => {
+  if ((rowData as any).is_summary) return <span className="hulool-cell-content" />;
   const badges: Record<string, { bg: string; text: string; label: string }> = {
     'INVOICE_CREATED': { bg: 'var(--token-status-danger-bg)', text: 'var(--token-status-danger-text)', label: 'فاتورة' },
     'INVOICE_GENERATED': { bg: 'var(--token-status-danger-bg)', text: 'var(--token-status-danger-text)', label: 'فاتورة' },
@@ -229,6 +255,7 @@ interface ActionsColumnData {
 }
 
 const ActionsCell = React.memo(({ rowData, columnData }: CellProps<FinancialTransaction & { is_payable?: boolean }, ActionsColumnData>) => {
+  if ((rowData as any).is_summary) return null;
   const { client, payableMap, openModal, onEditTx, onDeleteTx, onEditInv, isEmployeeView } = columnData || {};
 
   if (!columnData) return null;
@@ -422,7 +449,7 @@ const AccountLedgerTable: React.FC<AccountLedgerTableProps> = ({
 
   // Pre-calculate is_payable flag for each transaction to ensure grid updates
   const transactionsWithFlags = useMemo(() => {
-    return filteredTransactions.map(tx => {
+    const list = filteredTransactions.map(tx => {
       const relatedId = tx.related_object_id ?? (tx as any).related_id ?? (tx as any).related_object_reference;
       const relatedType = String(tx.related_object_type ?? '').toLowerCase();
       const key = String(relatedId ?? '');
@@ -456,7 +483,23 @@ const AccountLedgerTable: React.FC<AccountLedgerTableProps> = ({
 
       return { ...tx, is_payable: isPayable, is_highlighted: isHighlighted };
     });
-  }, [filteredTransactions, payableMap, highlightInvoiceId]);
+
+    if (list.length > 0) {
+      list.push({
+        id: -999,
+        transaction_type: 'SUMMARY_ROW',
+        description: '',
+        debit: totals.totalDebit,
+        credit: totals.totalCredit,
+        balance_after: totals.balance,
+        transaction_date: '',
+        created_at: '',
+        is_summary: true,
+      } as any);
+    }
+
+    return list;
+  }, [filteredTransactions, payableMap, highlightInvoiceId, totals]);
 
   // Generate a version key to force grid re-render when payable status changes
   const payableVersion = useMemo(() => {
@@ -466,14 +509,6 @@ const AccountLedgerTable: React.FC<AccountLedgerTableProps> = ({
 
   // Define columns - order is right-to-left for RTL
   const columns = useMemo((): HuloolGridColumn<FinancialTransaction>[] => [
-    {
-      id: 'icon',
-      key: '',
-      title: '',
-      type: 'custom',
-      component: TransactionIconCell,
-      grow: 0.2,
-    },
     {
       id: 'date',
       key: 'transaction_date',
@@ -595,6 +630,16 @@ const AccountLedgerTable: React.FC<AccountLedgerTableProps> = ({
           animation: highlightPulse 1.5s ease-in-out 3;
         }
         
+        /* Summary row styling */
+        .hulool-data-grid .dsg-row.ledger-summary-row {
+          background-color: var(--token-bg-surface-muted) !important;
+          font-weight: bold;
+          border-top: 2px solid var(--token-border-default);
+        }
+        .hulool-data-grid .dsg-row.ledger-summary-row .dsg-cell {
+          background-color: var(--token-bg-surface-muted) !important;
+        }
+
         @keyframes highlightPulse {
           0%, 100% {
             outline-color: var(--token-border-focus);
@@ -606,37 +651,6 @@ const AccountLedgerTable: React.FC<AccountLedgerTableProps> = ({
           }
         }
       `}</style>
-      {/* Balance Summary Header */}
-      {historyData && (
-        <div className="rounded-lg border border-border bg-card shadow-sm mb-4 p-4">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4 text-center">
-            <div className="flex flex-col items-center p-3 bg-bg-surface-muted rounded-lg">
-              <span className="text-sm text-text-muted mb-1">إجمالي المستحقات</span>
-              <span className="text-lg font-bold text-text-primary">
-                {hideAmounts ? '***' : formatCurrency(historyData.total_debits)}
-              </span>
-            </div>
-            <div className="flex flex-col items-center p-3 bg-bg-surface-muted rounded-lg">
-              <span className="text-sm text-text-muted mb-1">إجمالي المدفوعات</span>
-              <span className="text-lg font-bold text-text-primary">
-                {hideAmounts ? '***' : formatCurrency(historyData.total_credits)}
-              </span>
-            </div>
-            <div className="flex flex-col items-center p-3 bg-bg-surface-muted rounded-lg">
-              <span className="text-sm text-text-muted mb-1">الرصيد الحالي</span>
-              <span className={`text-xl font-bold ${(historyData.balance ?? 0) < 0 ? 'text-status-danger-text' : 'text-text-primary'}`}>
-                {hideAmounts ? '***' : formatCurrency(historyData.balance)}
-              </span>
-            </div>
-            <div className="flex flex-col items-center p-3 bg-bg-surface-muted rounded-lg">
-              <span className="text-sm text-text-muted mb-1">عدد المعاملات</span>
-              <span className="text-sm font-medium text-text-secondary">
-                {historyData.transactions?.length || 0}
-              </span>
-            </div>
-          </div>
-        </div>
-      )}
 
       {/* Transactions Grid */}
       <HuloolDataGrid
@@ -648,34 +662,11 @@ const AccountLedgerTable: React.FC<AccountLedgerTableProps> = ({
         showId={false}
         height="auto"
         minHeight={300}
-        rowClassName={(row: any) => row.is_highlighted ? 'transaction-row-highlighted' : ''}
+        rowClassName={(row: any) => {
+          if (row.is_summary) return 'ledger-summary-row';
+          return row.is_highlighted ? 'transaction-row-highlighted' : '';
+        }}
       />
-
-      {/* Summary Totals Row */}
-      <div className="rounded-lg border border-border bg-card shadow-sm mt-2">
-        <div className="p-2">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-2 text-center">
-            <div className="flex justify-between items-center p-2 bg-bg-surface-muted rounded">
-              <span className="text-text-secondary text-sm">إجمالي المدين:</span>
-              <span className="font-bold text-text-primary">
-                {hideAmounts ? '***' : formatCurrency(totals.totalDebit)}
-              </span>
-            </div>
-            <div className="flex justify-between items-center p-2 bg-bg-surface-muted rounded">
-              <span className="text-text-secondary text-sm">إجمالي الدائن:</span>
-              <span className="font-bold text-text-primary">
-                {hideAmounts ? '***' : formatCurrency(totals.totalCredit)}
-              </span>
-            </div>
-            <div className="flex justify-between items-center p-2 bg-bg-surface-muted rounded">
-              <span className="text-sm">الرصيد النهائي:</span>
-              <span className={`font-bold ${totals.balance < 0 ? 'text-status-danger-text' : 'text-text-primary'}`}>
-                {hideAmounts ? '***' : formatCurrency(totals.balance)}
-              </span>
-            </div>
-          </div>
-        </div>
-      </div>
       {/* Modals */}
       {modalType === 'editTx' && selectedTransaction && (
         <TransactionEditModal

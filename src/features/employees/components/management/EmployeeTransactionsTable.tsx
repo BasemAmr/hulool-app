@@ -1,16 +1,28 @@
-import React, { useState } from 'react';
-import { Edit, Trash2, TrendingUp, TrendingDown, Clock, CheckCircle } from 'lucide-react';
-import Button from '@/shared/ui/primitives/Button';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/shared/ui/shadcn/table';
-import { useToast } from '@/shared/hooks/useToast';
+/**
+ * EmployeeTransactionsTable - Excel-like grid for displaying employee transactions
+ *
+ * Uses HuloolDataGrid for consistent styling with:
+ * - Proper RTL alignment
+ * - Combined confirmed and pending transactions
+ * - Colors for debit/credit cells
+ * - Active cell bold text
+ */
+
+import React, { useMemo } from 'react';
+import { Edit3, Trash2 } from 'lucide-react';
+import HuloolDataGrid from '@/shared/grid/HuloolDataGrid';
+import type { HuloolGridColumn } from '@/shared/grid/HuloolDataGrid';
+import type { CellProps } from 'react-datasheet-grid';
 import { useModalStore } from '@/shared/stores/modalStore';
-import { useGetEmployeeTransactions, useDeleteEmployeeTransaction, useGetEmployee } from '@/features/employees/api/employeeQueries';
-import { formatCurrency, formatDate } from '@/shared/utils/formatUtils';
-// Step 17: Removed TransactionEditModal and TransactionDeleteModal imports - using ModalManager
+import { useGetEmployeeTransactions, useGetEmployee } from '@/features/employees/api/employeeQueries';
 import { useCurrentUserCapabilities } from '@/features/employees/api/userQueries';
 import { useAuthStore } from '@/features/auth/store/authStore';
+import { formatDate } from '@/shared/utils/dateUtils';
 
-// Confirmed transaction from ledger
+// ================================
+// TYPE DEFINITIONS
+// ================================
+
 interface ConfirmedTransaction {
   id: string;
   transaction_type: string;
@@ -25,7 +37,6 @@ interface ConfirmedTransaction {
   client_name?: string | null;
 }
 
-// Pending commission from pending_items table
 interface PendingCommission {
   id: string;
   item_type: string;
@@ -40,35 +51,7 @@ interface PendingCommission {
   task_status?: string | null;
   client_name?: string | null;
   invoice_id?: string | null;
-  invoice_status?: string | null;
-  invoice_amount?: string | null;
-  invoice_paid_amount?: string | null;
-  days_pending?: number;
-  invoice_payment_progress?: number;
 }
-
-// Legacy transaction format (for backward compatibility)
-interface LegacyTransaction {
-  id: string;
-  employee_user_id?: string;
-  transaction_name: string;
-  direction: 'CREDIT' | 'DEBIT';
-  amount: string | null;
-  related_task_id: string | null;
-  task_amount: string | null;
-  notes: string;
-  transaction_date: string;
-  created_at?: string;
-  task_name?: string | null;
-  client_id?: string | null;
-  client_name?: string | null;
-  balance?: string | null;
-  is_pending?: boolean;
-  source?: 'new_ledger' | 'legacy';
-  transaction_type?: string;
-}
-
-type ViewTab = 'confirmed' | 'pending';
 
 interface EmployeeTransactionsTableProps {
   employeeId?: number;
@@ -78,9 +61,185 @@ interface EmployeeTransactionsTableProps {
   page?: number;
   perPage?: number;
   onPageChange?: (page: number) => void;
-  onEdit?: (transaction: ConfirmedTransaction | LegacyTransaction) => void;
-  onDelete?: (transaction: ConfirmedTransaction | LegacyTransaction) => void;
+  onEdit?: (transaction: any) => void;
+  onDelete?: (transaction: any) => void;
 }
+
+// ================================
+// HELPER FUNCTIONS
+// ================================
+
+const formatCurrency = (amount: number | string | undefined | null) => {
+  const numAmount = typeof amount === 'string' ? parseFloat(amount) : (amount ?? 0);
+  if (isNaN(numAmount)) return 'SAR 0.00';
+  return new Intl.NumberFormat('en-US', {
+    style: 'currency',
+    currency: 'SAR',
+    minimumFractionDigits: 2
+  }).format(numAmount);
+};
+
+// ================================
+// CUSTOM CELL COMPONENTS
+// ================================
+
+// Date Cell
+const DateCell = React.memo(({ rowData, active }: CellProps<any>) => {
+  if (rowData.is_summary) return <span className="hulool-cell-content" />;
+  return (
+    <span className="hulool-cell-content" style={{ justifyContent: 'center', fontSize: '0.875rem', color: 'var(--token-text-primary)', fontWeight: active ? 700 : 500 }}>
+      {formatDate(rowData.date)}
+    </span>
+  );
+});
+DateCell.displayName = 'DateCell';
+
+// Type Badge Cell
+const TypeBadgeCell = React.memo(({ rowData }: CellProps<any>) => {
+  if (rowData.is_summary) return <span className="hulool-cell-content" />;
+  if (rowData.is_pending) {
+    return (
+      <span className="hulool-cell-content" style={{ justifyContent: 'center' }}>
+        <span style={{
+          backgroundColor: 'var(--token-status-warning-bg)',
+          color: 'var(--token-status-warning-text)',
+          padding: '4px 10px',
+          borderRadius: '9999px',
+          fontSize: '0.875rem',
+          fontWeight: 600,
+        }}>
+          عمولة معلقة
+        </span>
+      </span>
+    );
+  }
+  const badges: Record<string, { bg: string; text: string; label: string }> = {
+    'EMPLOYEE_COMMISSION': { bg: 'var(--token-status-success-bg)', text: 'var(--token-status-success-text)', label: 'عمولة' },
+    'EMPLOYEE_PAYOUT': { bg: 'var(--token-status-danger-bg)', text: 'var(--token-status-danger-text)', label: 'صرف' },
+    'PAYOUT': { bg: 'var(--token-status-danger-bg)', text: 'var(--token-status-danger-text)', label: 'صرف' },
+    'CASHBOX_PAYMENT': { bg: 'var(--token-status-danger-bg)', text: 'var(--token-status-danger-text)', label: 'صرف صندوق' },
+    'EMPLOYEE_EXPENSE': { bg: 'var(--token-status-warning-bg)', text: 'var(--token-status-warning-text)', label: 'مصروف' },
+    'EMPLOYEE_BORROW': { bg: 'var(--token-status-info-bg)', text: 'var(--token-status-info-text)', label: 'سلفة' },
+  };
+
+  const badge = badges[rowData.transaction_type] || {
+    bg: 'var(--token-status-neutral-bg)',
+    text: 'var(--token-text-primary)',
+    label: rowData.transaction_type || 'أخرى',
+  };
+
+  return (
+    <span className="hulool-cell-content" style={{ justifyContent: 'center' }}>
+      <span style={{
+        backgroundColor: badge.bg,
+        color: badge.text,
+        padding: '4px 10px',
+        borderRadius: '9999px',
+        fontSize: '0.875rem',
+        fontWeight: 600,
+      }}>
+        {badge.label}
+      </span>
+    </span>
+  );
+});
+TypeBadgeCell.displayName = 'TypeBadgeCell';
+
+// Description Cell
+const DescriptionCell = React.memo(({ rowData, active }: CellProps<any>) => {
+  if (rowData.is_summary) return <span className="hulool-cell-content">الإجماليات</span>;
+  return (
+    <span className="hulool-cell-content" style={{ fontWeight: active ? 700 : 500, color: 'var(--token-text-primary)' }}>
+      {rowData.description}
+    </span>
+  );
+});
+DescriptionCell.displayName = 'DescriptionCell';
+
+// Debit Cell
+const DebitCell = React.memo(({ rowData, active }: CellProps<any>) => {
+  const amount = rowData.debit_val;
+  return (
+    <span className="hulool-cell-content" style={{ justifyContent: 'center', color: 'inherit', fontWeight: active ? 700 : 500 }}>
+      {amount > 0 ? formatCurrency(amount) : '—'}
+    </span>
+  );
+});
+DebitCell.displayName = 'DebitCell';
+
+// Credit Cell
+const CreditCell = React.memo(({ rowData, active }: CellProps<any>) => {
+  const amount = rowData.credit_val;
+  return (
+    <span className="hulool-cell-content" style={{ justifyContent: 'center', color: 'inherit', fontWeight: active ? 700 : 500 }}>
+      {amount > 0 ? formatCurrency(amount) : '—'}
+    </span>
+  );
+});
+CreditCell.displayName = 'CreditCell';
+
+// Balance Cell
+const BalanceCell = React.memo(({ rowData, active }: CellProps<any>) => {
+  const balance = rowData.balance_val;
+  if (balance === null || balance === undefined) {
+    return <span className="hulool-cell-content" style={{ justifyContent: 'center', color: 'var(--token-text-secondary)' }}>—</span>;
+  }
+  return (
+    <span className="hulool-cell-content" style={{ justifyContent: 'center', fontWeight: active ? 800 : 700, color: balance < 0 ? 'var(--token-text-danger)' : 'var(--token-text-primary)' }}>
+      {formatCurrency(balance)}
+    </span>
+  );
+});
+BalanceCell.displayName = 'BalanceCell';
+
+// Actions Cell
+interface ActionsCellData {
+  canEdit: boolean;
+  onEdit: (transaction: any) => void;
+  onDelete: (transaction: any) => void;
+}
+
+const ActionsCell = React.memo(({ rowData, columnData }: CellProps<any, ActionsCellData>) => {
+  if (rowData.is_summary || rowData.is_pending) return <span className="hulool-cell-content" />;
+  const { canEdit, onEdit, onDelete } = columnData || {};
+
+  if (!canEdit) return <span className="hulool-cell-content" />;
+
+  return (
+    <div
+      style={{
+        display: 'flex',
+        gap: '4px',
+        justifyContent: 'center',
+        alignItems: 'center',
+        height: '100%',
+        pointerEvents: 'auto',
+      }}
+      onMouseDown={(e) => e.stopPropagation()}
+      onClick={(e) => e.stopPropagation()}
+    >
+      <button
+        onClick={(e) => { e.stopPropagation(); onEdit?.(rowData); }}
+        className="inline-flex items-center justify-center rounded p-1.5 text-text-secondary hover:text-text-primary cursor-pointer transition-colors duration-150"
+        title="تعديل"
+      >
+        <Edit3 size={14} />
+      </button>
+      <button
+        onClick={(e) => { e.stopPropagation(); onDelete?.(rowData); }}
+        className="inline-flex items-center justify-center rounded p-1.5 text-text-secondary hover:text-text-danger cursor-pointer transition-colors duration-150"
+        title="حذف"
+      >
+        <Trash2 size={14} />
+      </button>
+    </div>
+  );
+});
+ActionsCell.displayName = 'ActionsCell';
+
+// ================================
+// MAIN COMPONENT
+// ================================
 
 const EmployeeTransactionsTable: React.FC<EmployeeTransactionsTableProps> = ({
   employeeId,
@@ -88,34 +247,24 @@ const EmployeeTransactionsTable: React.FC<EmployeeTransactionsTableProps> = ({
   pendingCommissions: propPendingCommissions,
   isLoading: propIsLoading,
   page = 1,
-  perPage = 10,
+  perPage = 20,
   onPageChange,
   onEdit,
   onDelete,
 }) => {
-  const { success, error } = useToast();
   const { openModal } = useModalStore();
-  const [activeTab, setActiveTab] = useState<ViewTab>('confirmed');
   const { data: capabilities } = useCurrentUserCapabilities();
   const currentUser = useAuthStore((state) => state.user);
   const canEdit = capabilities?.manage_options || currentUser?.type === 'admin' || currentUser?.type === 'employee_admin' || false;
-  // Step 17: Removed local modal state - now using ModalManager
 
-  // Fetch employee data - only if employeeId is provided
-  const { data: employee } = useGetEmployee(employeeId as number);
-
-  // Fetch employee transactions - only if employeeId is provided and no transactions prop
+  // Fetch employee transactions if not provided via props
   const {
     data: transactionsData,
     isLoading: isQueryLoading,
-    refetch
   } = useGetEmployeeTransactions(employeeId as number, { page, per_page: perPage });
 
   const isLoading = propIsLoading !== undefined ? propIsLoading : isQueryLoading;
 
-  const deleteTransactionMutation = useDeleteEmployeeTransaction();
-
-  // Extract confirmed transactions and pending commissions
   const confirmedTransactions: ConfirmedTransaction[] = propTransactions
     ? propTransactions
     : (transactionsData?.data?.confirmed_transactions || []);
@@ -127,327 +276,192 @@ const EmployeeTransactionsTable: React.FC<EmployeeTransactionsTableProps> = ({
   const pagination = transactionsData?.pagination || {};
   const summary = transactionsData?.data?.summary || {};
 
-  const handleEditTransaction = (transaction: ConfirmedTransaction | LegacyTransaction) => {
+  const handleEditTransaction = (transaction: any) => {
     if (onEdit) {
       onEdit(transaction);
       return;
     }
-
-    // Step 17: Use ModalManager instead of local modal state
     openModal('transactionEdit', { transaction });
   };
 
-  const handleDeleteTransaction = async (transaction: ConfirmedTransaction | LegacyTransaction) => {
+  const handleDeleteTransaction = (transaction: any) => {
     if (onDelete) {
       onDelete(transaction);
       return;
     }
-
-    // Step 17: Use ModalManager instead of local modal state
     openModal('transactionDelete', { transaction });
   };
 
-  // Helper: Get transaction icon for confirmed transactions
-  const getConfirmedTransactionIcon = (transaction: ConfirmedTransaction) => {
-    const debit = parseFloat(transaction.debit || '0');
+  // Combine confirmed & pending transactions
+  const combinedData = useMemo(() => {
+    const confirmed = confirmedTransactions.map((t) => ({
+      ...t,
+      is_pending: false,
+      is_summary: false,
+      date: t.transaction_date || t.created_at || '',
+      debit_val: parseFloat(t.debit || '0'),
+      credit_val: parseFloat(t.credit || '0'),
+      balance_val: t.balance ? parseFloat(t.balance) : null,
+    }));
 
-    if (debit > 0) {
-      return <TrendingUp size={16} className="text-success" />; // Commission earned
-    } else {
-      return <TrendingDown size={16} className="text-danger" />; // Payout/expense
-    }
-  };
+    const pending = pendingCommissions.map((p) => ({
+      ...p,
+      is_pending: true,
+      is_summary: false,
+      transaction_type: 'PENDING_COMMISSION',
+      date: p.created_at || '',
+      debit_val: parseFloat(p.expected_amount || '0'),
+      credit_val: 0,
+      balance_val: null,
+      description: p.notes || p.task_name || 'عمولة معلقة',
+    }));
 
-  // Helper: Format transaction type for display
-  const getTransactionTypeBadge = (type: string) => {
-    const typeMap: Record<string, { label: string; className: string }> = {
-      'EMPLOYEE_COMMISSION': { label: 'عمولة', className: 'bg-status-success-bg text-status-success-text' },
-      'EMPLOYEE_PAYOUT': { label: 'صرف', className: 'bg-status-danger-bg text-status-danger-text' },
-      'EMPLOYEE_EXPENSE': { label: 'مصروف', className: 'bg-orange-100 text-orange-800' },
-      'EMPLOYEE_BORROW': { label: 'سلفة', className: 'bg-blue-100 text-blue-800' },
-    };
+    const all = [...confirmed, ...pending];
+    // Sort descending by date
+    all.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
 
-    const config = typeMap[type] || { label: type, className: 'bg-background text-text-primary' };
-    return (
-      <span className={`inline-flex items-center px-2 py-0.5 text-xs font-medium rounded ${config.className}`}>
-        {config.label}
-      </span>
-    );
-  };
+    // Append summary row
+    const totalDebit = confirmed.reduce((sum, t) => sum + t.debit_val, 0);
+    const totalCredit = confirmed.reduce((sum, t) => sum + t.credit_val, 0);
+    const finalBalance = summary.balance_due ?? (totalDebit - totalCredit);
+
+    all.push({
+      id: 'summary',
+      is_summary: true,
+      is_pending: false,
+      date: '',
+      transaction_type: '',
+      description: 'الإجماليات',
+      debit_val: totalDebit,
+      credit_val: totalCredit,
+      balance_val: finalBalance,
+    } as any);
+
+    return all;
+  }, [confirmedTransactions, pendingCommissions, summary]);
+
+  // Define columns - RTL order (first is rightmost)
+  const columns = useMemo((): HuloolGridColumn<any>[] => [
+    {
+      id: 'date',
+      key: 'date',
+      title: 'التاريخ',
+      type: 'custom',
+      component: DateCell,
+      width: 120,
+      grow: 0,
+    },
+    {
+      id: 'transaction_type',
+      key: 'transaction_type',
+      title: 'النوع',
+      type: 'custom',
+      component: TypeBadgeCell,
+      width: 130,
+      grow: 0,
+    },
+    {
+      id: 'description',
+      key: 'description',
+      title: 'الوصف',
+      type: 'custom',
+      component: DescriptionCell,
+      grow: 2,
+    },
+    {
+      id: 'debit',
+      key: 'debit_val',
+      title: 'مدين',
+      type: 'custom',
+      component: DebitCell,
+      grow: 1,
+      cellClassName: ({ rowData }) => {
+        if (rowData.is_summary) return '';
+        return rowData.debit_val > 0 ? 'employee-debit-cell' : '';
+      }
+    },
+    {
+      id: 'credit',
+      key: 'credit_val',
+      title: 'دائن',
+      type: 'custom',
+      component: CreditCell,
+      grow: 1,
+      cellClassName: ({ rowData }) => {
+        if (rowData.is_summary) return '';
+        return rowData.credit_val > 0 ? 'employee-credit-cell' : '';
+      }
+    },
+    {
+      id: 'balance',
+      key: 'balance_val',
+      title: 'الرصيد',
+      type: 'custom',
+      component: BalanceCell,
+      grow: 1,
+    },
+    {
+      id: 'actions',
+      key: 'id',
+      title: 'الإجراءات',
+      type: 'custom',
+      component: ActionsCell as React.ComponentType<CellProps<any>>,
+      columnData: {
+        canEdit,
+        onEdit: handleEditTransaction,
+        onDelete: handleDeleteTransaction,
+      },
+      width: 100,
+      grow: 0,
+    },
+  ], [canEdit]);
 
   if (isLoading) {
     return <div className="p-4 text-center">Loading transactions...</div>;
   }
 
   return (
-    <div>
-      {/* Tab Navigation */}
-      <div className="flex border-b mb-4">
-        <button
-          className={`px-4 py-2 font-medium text-sm border-b-2 transition-colors ${activeTab === 'confirmed'
-            ? 'border-primary text-primary'
-            : 'border-transparent text-text-muted hover:text-text-primary'
-            }`}
-          onClick={() => setActiveTab('confirmed')}
-        >
-          <div className="flex items-center gap-2">
-            <CheckCircle size={16} />
-            <span>المعاملات المؤكدة</span>
-            <span className="bg-status-success-bg text-status-success-text text-xs px-2 py-0.5 rounded-full">
-              {confirmedTransactions.length}
-            </span>
-          </div>
-        </button>
-        <button
-          className={`px-4 py-2 font-medium text-sm border-b-2 transition-colors ${activeTab === 'pending'
-            ? 'border-primary text-primary'
-            : 'border-transparent text-text-muted hover:text-text-primary'
-            }`}
-          onClick={() => setActiveTab('pending')}
-        >
-          <div className="flex items-center gap-2">
-            <Clock size={16} />
-            <span>العمولات المعلقة</span>
-            {pendingCommissions.length > 0 && (
-              <span className="bg-amber-100 text-amber-800 text-xs px-2 py-0.5 rounded-full">
-                {pendingCommissions.length}
-              </span>
-            )}
-          </div>
-        </button>
-      </div>
-
-      {/* Confirmed Transactions Tab */}
-      {activeTab === 'confirmed' && (
-        <div className="overflow-x-auto">
-          <Table className="border-collapse border border-border-strong">
-            <TableHeader>
-              <TableRow>
-                <TableHead className="text-text-primary border border-border-strong">التاريخ</TableHead>
-                <TableHead className="text-text-primary border border-border-strong">الوصف</TableHead>
-                <TableHead className="text-text-primary border border-border-strong">النوع</TableHead>
-                <TableHead className="text-text-primary border border-border-strong">المهمة/العميل</TableHead>
-                <TableHead className="text-right text-text-primary border border-border-strong">المبلغ</TableHead>
-                <TableHead className="text-right text-text-primary border border-border-strong">الرصيد</TableHead>
-                <TableHead className="text-right text-text-primary border border-border-strong">الإجراءات</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {confirmedTransactions.map((transaction) => {
-                const debit = parseFloat(transaction.debit || '0');
-                const credit = parseFloat(transaction.credit || '0');
-                const amount = debit > 0 ? debit : credit;
-                const isPositive = debit > 0;
-
-                return (
-                  <TableRow key={transaction.id}>
-                    <TableCell className="border border-border-strong">
-                      <div className="flex items-center gap-2">
-                        {getConfirmedTransactionIcon(transaction)}
-                        <div className="font-medium text-text-primary">
-                          {formatDate(transaction.transaction_date)}
-                        </div>
-                      </div>
-                    </TableCell>
-                    <TableCell className="border border-border-strong">
-                      <div className="font-medium text-text-primary">{transaction.description}</div>
-                    </TableCell>
-                    <TableCell className="border border-border-strong">
-                      {getTransactionTypeBadge(transaction.transaction_type)}
-                    </TableCell>
-                    <TableCell>
-                      {transaction.task_name ? (
-                        <div>
-                          <div className="font-medium text-text-primary">{transaction.task_name}</div>
-                          {transaction.client_name && (
-                            <small className="text-text-muted">{transaction.client_name}</small>
-                          )}
-                        </div>
-                      ) : (
-                        <span className="text-text-muted">—</span>
-                      )}
-                    </TableCell>
-                    <TableCell className={`text-right border border-border-strong ${debit > 0 ? 'employee-debit-cell' : credit > 0 ? 'employee-credit-cell' : ''
-                      }`}>
-                      <div className="font-medium">
-                        {isPositive ? '+' : '-'}{formatCurrency(amount)} <span className="text-xs">ر.س</span>
-                      </div>
-                    </TableCell>
-                    <TableCell className="text-right border border-border-strong">
-                      <span className="text-text-primary">
-                        {transaction.balance ? formatCurrency(parseFloat(transaction.balance)) : '—'}
-                      </span>
-                    </TableCell>
-                    <TableCell className="text-right border border-border-strong">
-                      <div className="inline-flex gap-2">
-                        {canEdit && (
-                          <>
-                            <Button
-                              variant="outline-secondary"
-                              size="sm"
-                              onClick={() => handleEditTransaction(transaction)}
-                              title="Edit"
-                            >
-                              <Edit size={12} />
-                            </Button>
-                            <Button
-                              variant="outline-danger"
-                              size="sm"
-                              onClick={() => handleDeleteTransaction(transaction)}
-                              title="Delete"
-                            >
-                              <Trash2 size={12} />
-                            </Button>
-                          </>
-                        )}
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                );
-              })}
-            </TableBody>
-          </Table>
-
-          {confirmedTransactions.length === 0 && (
-            <div className="p-8 text-center text-text-muted">
-              <CheckCircle size={48} className="mx-auto mb-4 text-border-default" />
-              <p>لا توجد معاملات مؤكدة حتى الآن</p>
-            </div>
-          )}
-        </div>
-      )}
-
-      {/* Pending Commissions Tab */}
-      {activeTab === 'pending' && (
-        <div className="overflow-x-auto">
-          <Table className="border-collapse border border-border-strong">
-            <TableHeader>
-              <TableRow>
-                <TableHead className="text-text-primary">المهمة</TableHead>
-                <TableHead className="text-text-primary">العميل</TableHead>
-                <TableHead className="text-right text-text-primary">المبلغ المتوقع</TableHead>
-                <TableHead className="text-text-primary">حالة الفاتورة</TableHead>
-                <TableHead className="text-text-primary">تقدم السداد</TableHead>
-                <TableHead className="text-text-primary">أيام الانتظار</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {pendingCommissions.map((pending) => {
-                const progress = pending.invoice_payment_progress || 0;
-                const invoiceStatus = pending.invoice_status || 'unknown';
-
-                return (
-                  <TableRow key={pending.id}>
-                    <TableCell className="border border-border-strong">
-                      <div className="flex items-center gap-2">
-                        <Clock size={16} className="text-amber-500" />
-                        <div className="font-medium text-text-primary">
-                          {pending.task_name || `مهمة #${pending.task_id}`}
-                        </div>
-                      </div>
-                    </TableCell>
-                    <TableCell className="border border-border-strong">
-                      <span className="text-text-primary">{pending.client_name || '—'}</span>
-                    </TableCell>
-                    <TableCell className="text-right border border-border-strong">
-                      <div className="font-medium text-status-warning-text">
-                        {formatCurrency(parseFloat(pending.expected_amount))} <span className="text-xs">ر.س</span>
-                      </div>
-                    </TableCell>
-                    <TableCell className="border border-border-strong">
-                      <span className={`inline-flex items-center px-2 py-0.5 text-xs font-medium rounded ${invoiceStatus === 'paid' ? 'bg-status-success-bg text-status-success-text' :
-                        invoiceStatus === 'partially_paid' ? 'bg-blue-100 text-blue-800' :
-                          invoiceStatus === 'pending' ? 'bg-status-warning-bg text-status-warning-text' :
-                            'bg-background text-text-primary'
-                        }`}>
-                        {invoiceStatus === 'paid' ? 'مدفوع' :
-                          invoiceStatus === 'partially_paid' ? 'مدفوع جزئياً' :
-                            invoiceStatus === 'pending' ? 'قيد الانتظار' :
-                              invoiceStatus}
-                      </span>
-                    </TableCell>
-                    <TableCell className="border border-border-strong">
-                      <div className="w-24">
-                        <div className="flex items-center gap-2">
-                          <div className="flex-1 bg-border-default rounded-full h-2">
-                            <div
-                              className={`h-2 rounded-full ${progress >= 100 ? 'bg-status-success-bg0' :
-                                progress > 50 ? 'bg-status-info-bg0' :
-                                  progress > 0 ? 'bg-status-warning-bg0' :
-                                    'bg-gray-300'
-                                }`}
-                              style={{ width: `${Math.min(progress, 100)}%` }}
-                            />
-                          </div>
-                          <span className="text-xs text-text-muted">{progress.toFixed(0)}%</span>
-                        </div>
-                      </div>
-                    </TableCell>
-                    <TableCell className="border border-border-strong">
-                      <span className={`text-sm ${(pending.days_pending || 0) > 30 ? 'text-status-danger-text font-medium' :
-                        (pending.days_pending || 0) > 14 ? 'text-orange-600' :
-                          'text-text-secondary'
-                        }`}>
-                        {pending.days_pending || 0} يوم
-                      </span>
-                    </TableCell>
-                  </TableRow>
-                );
-              })}
-            </TableBody>
-          </Table>
-
-          {pendingCommissions.length === 0 && (
-            <div className="p-8 text-center text-text-muted">
-              <Clock size={48} className="mx-auto mb-4 text-border-default" />
-              <p>لا توجد عمولات معلقة</p>
-              <p className="text-sm mt-1">ستظهر هنا العمولات في انتظار دفع الفاتورة</p>
-            </div>
-          )}
-
-          {/* Pending Summary */}
-          {pendingCommissions.length > 0 && (
-            <div className="p-4 bg-status-warning-bg border-t border-status-warning-border">
-              <div className="flex justify-between items-center">
-                <span className="text-amber-800 font-medium">
-                  إجمالي العمولات المعلقة: {pendingCommissions.length} عمولة
-                </span>
-                <span className="text-amber-800 font-bold">
-                  {formatCurrency(summary.total_pending || 0)} ر.س
-                </span>
-              </div>
-            </div>
-          )}
-        </div>
-      )}
+    <div className="employee-transactions-wrapper" dir="rtl">
+      <HuloolDataGrid
+        data={combinedData}
+        columns={columns}
+        isLoading={isLoading}
+        emptyMessage="لا توجد معاملات مؤكدة أو معلقة حالياً"
+        showId={false}
+        height="auto"
+        minHeight={400}
+        rowClassName={(rowData) => {
+          if (!rowData) return '';
+          if (rowData.is_summary) return 'ledger-summary-row';
+          if (rowData.is_pending) return 'bg-amber-50/40 hover:bg-amber-50/70 dark:bg-amber-950/10 dark:hover:bg-amber-950/20';
+          return '';
+        }}
+      />
 
       {/* Pagination */}
-      {pagination.total > perPage && activeTab === 'confirmed' && (
-        <div className="p-4 flex justify-between items-center border-t">
+      {pagination.total > perPage && onPageChange && (
+        <div className="p-4 flex justify-between items-center border-t border-border bg-card">
           <div className="text-text-primary text-sm">
-            Showing {((page - 1) * perPage) + 1} to {Math.min(page * perPage, pagination.total)} of {pagination.total} transactions
+            عرض {((page - 1) * perPage) + 1} إلى {Math.min(page * perPage, pagination.total)} من {pagination.total} معاملة
           </div>
           <div className="inline-flex gap-2">
-            <Button
-              variant="outline-secondary"
-              size="sm"
+            <button
+              onClick={() => onPageChange(page - 1)}
               disabled={page <= 1}
-              onClick={() => onPageChange?.(page - 1)}
+              className="px-3 py-1 text-sm border rounded hover:bg-accent disabled:opacity-50"
             >
-              Previous
-            </Button>
-            <Button
-              variant="outline-secondary"
-              size="sm"
+              السابق
+            </button>
+            <button
+              onClick={() => onPageChange(page + 1)}
               disabled={page >= Math.ceil(pagination.total / perPage)}
-              onClick={() => onPageChange?.(page + 1)}
+              className="px-3 py-1 text-sm border rounded hover:bg-accent disabled:opacity-50"
             >
-              Next
-            </Button>
+              التالي
+            </button>
           </div>
         </div>
       )}
-      {/* Step 17: Modals now handled by ModalManager */}
     </div>
   );
 };

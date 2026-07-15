@@ -28,18 +28,18 @@ const DEFAULT_DATETIME_OPTIONS: Intl.DateTimeFormatOptions = {
 export const formatDate = (
   date: string | Date | number | null | undefined,
   options: Intl.DateTimeFormatOptions = DEFAULT_FORMAT_OPTIONS,
-  locale: string = 'en-US'
+  locale: string = 'en-GB'
 ): string => {
   if (!date) return '';
-  
+
   try {
-    const dateObj = typeof date === 'string' ? new Date(date) : 
-                   typeof date === 'number' ? new Date(date) : date;
-    
+    const dateObj = typeof date === 'string' ? new Date(date) :
+      typeof date === 'number' ? new Date(date) : date;
+
     if (isNaN(dateObj.getTime())) {
       return '';
     }
-    
+
     return new Intl.DateTimeFormat(locale, options).format(dateObj);
   } catch (error) {
     console.warn('Date formatting error:', error);
@@ -69,15 +69,15 @@ export const formatDateForInput = (
   date: string | Date | number | null | undefined
 ): string => {
   if (!date) return '';
-  
+
   try {
-    const dateObj = typeof date === 'string' ? new Date(date) : 
-                   typeof date === 'number' ? new Date(date) : date;
-    
+    const dateObj = typeof date === 'string' ? new Date(date) :
+      typeof date === 'number' ? new Date(date) : date;
+
     if (isNaN(dateObj.getTime())) {
       return '';
     }
-    
+
     return dateObj.toISOString().split('T')[0];
   } catch (error) {
     console.warn('Date input formatting error:', error);
@@ -92,15 +92,15 @@ export const formatDateForInput = (
  */
 export const formatDateLegacy = (date: string | Date): string => {
   const dateObj = new Date(date);
-  
+
   if (isNaN(dateObj.getTime())) {
     return '';
   }
-  
+
   const day = dateObj.getDate().toString().padStart(2, '0');
   const month = (dateObj.getMonth() + 1).toString().padStart(2, '0');
   const year = dateObj.getFullYear();
-  
+
   return `${day}-${month}-${year}`;
 };
 
@@ -115,19 +115,19 @@ export const formatRelativeDate = (
   locale: string = 'ar-SA'
 ): string => {
   if (!date) return '';
-  
+
   try {
-    const dateObj = typeof date === 'string' ? new Date(date) : 
-                   typeof date === 'number' ? new Date(date) : date;
-    
+    const dateObj = typeof date === 'string' ? new Date(date) :
+      typeof date === 'number' ? new Date(date) : date;
+
     if (isNaN(dateObj.getTime())) {
       return '';
     }
-    
+
     const now = new Date();
     const diffMs = now.getTime() - dateObj.getTime();
     const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
-    
+
     if (locale === 'ar-SA') {
       if (diffDays === 0) return 'اليوم';
       if (diffDays === 1) return 'أمس';
@@ -136,7 +136,7 @@ export const formatRelativeDate = (
       if (diffDays < 365) return `منذ ${Math.floor(diffDays / 30)} أشهر`;
       return `منذ ${Math.floor(diffDays / 365)} سنوات`;
     }
-    
+
     // Fallback to English
     if (diffDays === 0) return 'Today';
     if (diffDays === 1) return 'Yesterday';
@@ -144,7 +144,7 @@ export const formatRelativeDate = (
     if (diffDays < 30) return `${Math.floor(diffDays / 7)} weeks ago`;
     if (diffDays < 365) return `${Math.floor(diffDays / 30)} months ago`;
     return `${Math.floor(diffDays / 365)} years ago`;
-    
+
   } catch (error) {
     console.warn('Relative date formatting error:', error);
     return '';
@@ -160,19 +160,19 @@ export const isOverdue = (
   date: string | Date | number | null | undefined
 ): boolean => {
   if (!date) return false;
-  
+
   try {
-    const dateObj = typeof date === 'string' ? new Date(date) : 
-                   typeof date === 'number' ? new Date(date) : date;
-    
+    const dateObj = typeof date === 'string' ? new Date(date) :
+      typeof date === 'number' ? new Date(date) : date;
+
     if (isNaN(dateObj.getTime())) {
       return false;
     }
-    
+
     const now = new Date();
     now.setHours(0, 0, 0, 0); // Start of today
     dateObj.setHours(0, 0, 0, 0); // Start of the given date
-    
+
     return dateObj < now;
   } catch (error) {
     console.warn('Overdue check error:', error);

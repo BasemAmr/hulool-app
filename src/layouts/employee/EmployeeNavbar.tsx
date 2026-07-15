@@ -132,6 +132,10 @@ const EmployeeNavbar = () => {
                                     </NavLink>
                                 </DropdownMenuItem>
                                 <DropdownMenuSeparator />
+                                <DropdownMenuItem onClick={() => openModal('clientReport', {})} className="cursor-pointer flex flex-row-reverse justify-end gap-3 px-3 py-2 text-sm font-bold">
+                                    <span>تقرير العملاء</span>
+                                </DropdownMenuItem>
+                                <DropdownMenuSeparator />
                                 <DropdownMenuItem asChild>
                                     <NavLink to="/employee/receivables" className="flex items-center gap-3 w-full cursor-pointer flex-row-reverse justify-end px-3 py-2 text-sm font-bold">
                                         <span>مستحقات العملاء</span>

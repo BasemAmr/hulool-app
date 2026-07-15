@@ -1,9 +1,16 @@
+/**
+ * EmployeeReceivablesPage
+ *
+ * Shows all clients receivables summary for employees.
+ * Same layout, table structure, and actions as ReceivablesPage (admin view),
+ * but navigates to employee client profile routes.
+ */
+
 import { useEffect, useMemo, useState, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useGetClientsReceivablesSummaryInfinite, useGetClientsReceivablesTotals } from '@/features/receivables/api/receivableQueries';
 import { useModalStore } from '@/shared/stores/modalStore';
 import { applyPageBackground } from '@/shared/utils/backgroundUtils';
-import ClientsReceivablesTable from '../components/ClientsReceivablesTable';
 import Button from '@/shared/ui/primitives/Button';
 import { FileSpreadsheet, Search, X } from 'lucide-react';
 import { useReceivablesPermissions } from '@/shared/hooks/useReceivablesPermissions';
@@ -13,8 +20,9 @@ import { exportService } from '@/services/export/ExportService';
 import { useToast } from '@/shared/hooks/useToast';
 import type { AllReceivablesReportData } from '@/services/export/exportTypes';
 import { useInView } from 'react-intersection-observer';
+import EmployeeReceivablesTable from './EmployeeReceivablesTable';
 
-const ReceivablesPage = () => {
+const EmployeeReceivablesPage = () => {
   const { t } = useTranslation();
   const openModal = useModalStore((state) => state.openModal);
   const { hasViewAllReceivablesPermission, isLoading: isPermissionsLoading } = useReceivablesPermissions();
@@ -114,7 +122,7 @@ const ReceivablesPage = () => {
     <div>
       <header className="flex justify-between items-center mb-1 py-1">
         <div className="flex items-center gap-2">
-          <h5 className="mb-0 text-primary font-bold" style={{ fontSize: '1.1rem' }}>{t('receivables.title')}</h5>
+          <h5 className="mb-0 text-primary font-bold" style={{ fontSize: '1.1rem' }}>مستحقات العملاء</h5>
 
           <Button
             variant="outline-success"
@@ -252,7 +260,7 @@ const ReceivablesPage = () => {
             </div>
           ) : (
             <>
-              <ClientsReceivablesTable
+              <EmployeeReceivablesTable
                 clients={allClients}
                 isLoading={isLoading && !data}
                 totals={totalsData}
@@ -283,4 +291,4 @@ const ReceivablesPage = () => {
   );
 };
 
-export default ReceivablesPage;
+export default EmployeeReceivablesPage;

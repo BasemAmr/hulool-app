@@ -317,7 +317,7 @@ const EmployeeReportModal = ({ isOpen, onClose }: EmployeeReportModalProps) => {
                     variant="primary"
                     disabled={!canExport}
                     onClick={() => {
-                      navigate(`/employees/${employeeId}/dashboard`);
+                      navigate(`/employees/${employeeId}/transactions`);
                       onClose();
                     }}
                   >

@@ -29,6 +29,7 @@ import EmployeeFinancialsPage from '@/features/employees/pages/employee/Employee
 import EmployeeClientProfilePage from '@/features/employees/pages/employee/EmployeeClientProfilePage';
 import EmployeeNotificationsPage from '@/features/employees/pages/employee/EmployeeNotificationsPage';
 import EmployeeClientReceivablesPage from '@/features/employees/pages/employee/EmployeeClientReceivablesPage';
+import EmployeeReceivablesPage from '@/features/employees/pages/employee/EmployeeReceivablesPage';
 import EmployeeSettingsPage from '@/features/employees/pages/employee/EmployeeSettingsPage';
 import EmployeeOnboardingPage from '@/features/employees/pages/employee/EmployeeOnboardingPage';
 import EmployeeAccountsPage from '@/features/employees/pages/employee/EmployeeAccountsPage';
@@ -115,20 +116,20 @@ const routes: RouteObject[] = [
         children: [
           { path: 'onboarding', element: <EmployeeOnboardingPage /> },
           {
-          element: <EmployeeLayout />, children: [
-            { index: true, element: <Navigate to="dashboard" replace /> },
-            { path: 'dashboard', element: <EmployeeDashboardPage /> },
-            { path: 'tasks', element: <EmployeeTasksPage /> },
-            { path: 'clients', element: <EmployeeClientsPage /> },
-            { path: 'clients/:id', element: <EmployeeClientProfilePage /> },
-            { path: 'receivables', element: <EmployeeClientReceivablesPage /> },
-            { path: 'financials', element: <EmployeeFinancialsPage /> },
-            { path: 'accounts', element: <EmployeeAccountsPage /> },
-            { path: 'treasury-accounts/:id', element: <TreasuryAccountDetailsPage /> },
-            { path: 'settings', element: <EmployeeSettingsPage /> },
-            { path: 'notifications', element: <EmployeeNotificationsPage /> },
-          ]
-        }],
+            element: <EmployeeLayout />, children: [
+              { index: true, element: <Navigate to="dashboard" replace /> },
+              { path: 'dashboard', element: <EmployeeDashboardPage /> },
+              { path: 'tasks', element: <EmployeeTasksPage /> },
+              { path: 'clients', element: <EmployeeClientsPage /> },
+              { path: 'clients/:id', element: <EmployeeClientProfilePage /> },
+              { path: 'receivables', element: <EmployeeReceivablesPage /> },
+              { path: 'financials', element: <EmployeeFinancialsPage /> },
+              { path: 'accounts', element: <EmployeeAccountsPage /> },
+              { path: 'treasury-accounts/:id', element: <TreasuryAccountDetailsPage /> },
+              { path: 'settings', element: <EmployeeSettingsPage /> },
+              { path: 'notifications', element: <EmployeeNotificationsPage /> },
+            ]
+          }],
       },
     ],
   },

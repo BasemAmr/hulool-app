@@ -355,9 +355,6 @@ const ClientProfilePage = () => {
             {(mode === 'general' || mode === 'receivables') && (
                 hasViewAllReceivablesPermission ? (
                     <div className="rounded-lg border border-border bg-card shadow-sm mb-3">
-                        <div className="px-4 py-3 border-b border-border">
-                            <h5 className="text-primary font-bold text-lg mb-0">كشف الحساب</h5>
-                        </div>
                         <div className="p-0">
                             {USE_INVOICE_LEDGER_SYSTEM ? (
                                 <AccountLedgerTable

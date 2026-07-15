@@ -233,6 +233,11 @@ const ClientProfileHeader = ({
 
           {/* Center: Client Info */}
           <div className="absolute left-1/2 -translate-x-1/2 flex items-center">
+            {mode === 'receivables' && (
+              <span className="font-bold text-text-primary me-1.5 text-base">
+                كشف الحساب - 
+              </span>
+            )}
             <span className="font-bold text-text-primary me-3 text-base">
               {client.name}
             </span>

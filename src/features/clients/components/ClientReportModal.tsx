@@ -8,7 +8,7 @@ import Button from '@/shared/ui/primitives/Button';
 import { useToast } from '@/shared/hooks/useToast';
 import { exportService } from '@/services/export/ExportService';
 import { TOAST_MESSAGES } from '@/shared/constants/toastMessages';
-import { FileSpreadsheet, ClipboardList, DollarSign } from 'lucide-react';
+import { FileSpreadsheet, ClipboardList, DollarSign, Users } from 'lucide-react';
 import type { Client, ApiResponse } from '@/api/types';
 import type { ClientStatementReportData, ClientTasksReportData } from '@/services/export/exportTypes';
 
@@ -211,6 +211,18 @@ const ClientReportModal = ({ isOpen, onClose }: ClientReportModalProps) => {
                 <>
                   <button
                     type="button"
+                    onClick={() => {
+                      const isAdminRole = useAuthStore.getState().isAdmin();
+                      navigate(isAdminRole ? '/receivables' : '/employee/receivables');
+                      onClose();
+                    }}
+                    className="px-2.5 py-1 text-xs font-semibold text-text-secondary hover:text-text-primary transition-colors flex items-center gap-1"
+                  >
+                    <Users size={13} />
+                    مستحقات العملاء
+                  </button>
+                  <button
+                    type="button"
                     disabled={!canExport || exportMutation.isPending}
                     onClick={() => exportMutation.mutate()}
                     className="px-2.5 py-1 text-xs font-semibold text-text-secondary hover:text-text-primary transition-colors disabled:opacity-40"
@@ -223,7 +235,7 @@ const ClientReportModal = ({ isOpen, onClose }: ClientReportModalProps) => {
                     disabled={!canExport}
                     onClick={() => {
                       const isAdminRole = useAuthStore.getState().isAdmin();
-                      navigate(isAdminRole ? `/clients/${clientId}` : `/employee/clients/${clientId}`);
+                      navigate(isAdminRole ? `/clients/${clientId}?mode=receivables` : `/employee/clients/${clientId}?mode=receivables`);
                       onClose();
                     }}
                   >

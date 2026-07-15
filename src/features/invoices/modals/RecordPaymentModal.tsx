@@ -115,6 +115,24 @@ const RecordPaymentModal = () => {
   const watchedAmount = watch('amount');
   const watchedTreasuryId = watch('treasury_account_id');
 
+  // Find the first cashbox account to use as default
+  const firstCashboxAccount = useMemo(() => {
+    if (!treasuryAccounts) return undefined;
+    return treasuryAccounts.find(
+      (acc) =>
+        acc.can_transact === true &&
+        acc.sub_type === 'cashbox' &&
+        !(acc.metadata?.is_settlement === true)
+    );
+  }, [treasuryAccounts]);
+
+  // Set treasury_account_id to the first cashbox account by default
+  useEffect(() => {
+    if (firstCashboxAccount && !watchedTreasuryId) {
+      setValue('treasury_account_id', firstCashboxAccount.id, { shouldValidate: true });
+    }
+  }, [firstCashboxAccount, watchedTreasuryId, setValue]);
+
   // ---- Treasury name tracking ----
   const [treasuryName, setTreasuryName] = useState('');
 
@@ -278,36 +296,77 @@ const RecordPaymentModal = () => {
             <span className="text-sm font-bold text-text-primary">التفاصيل</span>
           </div>
           <div className="space-y-3.5">
-            {/* Amount — large bold field */}
-            <Controller
-              name="amount"
-              control={control}
-              rules={{
-                required: t('common.required'),
-                min: { value: 0.01, message: 'المبلغ يجب أن يكون أكبر من صفر' },
-              }}
-              defaultValue={Number(remainingAmount) || 0}
-              render={({ field }) => (
-                <div className="relative">
-                  <NumberInput
-                    name={field.name}
-                    label=""
-                    value={field.value}
-                    onChange={(e) => {
-                      field.onChange(e.target.value ? Number(e.target.value) : '');
-                    }}
-                    placeholder="0.00"
-                    className="text-2xl font-extrabold h-14 pl-16"
-                  />
-                  <span className="absolute left-4 top-1/2 -translate-y-1/2 text-sm font-bold text-text-secondary pointer-events-none">
-                    SAR
-                  </span>
-                </div>
-              )}
-            />
-            {errors.amount && (
-              <div className="text-danger text-xs mt-1">{errors.amount.message}</div>
-            )}
+            {/* Amount and Date in a single flex parent row */}
+            <div className="flex gap-4 items-start">
+              {/* Amount */}
+              <div className="flex-1 min-w-0">
+                <label className="block text-sm font-medium text-text-primary mb-1">
+                  المبلغ
+                </label>
+                <Controller
+                  name="amount"
+                  control={control}
+                  rules={{
+                    required: t('common.required'),
+                    min: { value: 0.01, message: 'المبلغ يجب أن يكون أكبر من صفر' },
+                  }}
+                  defaultValue={Number(remainingAmount) || 0}
+                  render={({ field }) => (
+                    <div className="relative">
+                      <NumberInput
+                        name={field.name}
+                        label=""
+                        value={field.value}
+                        onChange={(e) => {
+                          field.onChange(e.target.value ? Number(e.target.value) : '');
+                        }}
+                        placeholder="0.00"
+                        className="text-2xl font-extrabold h-14 pl-16"
+                      />
+                      <span className="absolute left-4 top-1/2 -translate-y-1/2 text-sm font-bold text-text-secondary pointer-events-none">
+                        SAR
+                      </span>
+                    </div>
+                  )}
+                />
+                {errors.amount && (
+                  <div className="text-danger text-xs mt-1">{errors.amount.message}</div>
+                )}
+              </div>
+
+              {/* Date */}
+              <div className="flex-1 min-w-0">
+                <Controller
+                  name="paid_at"
+                  control={control}
+                  rules={{ required: t('common.required') }}
+                  defaultValue={new Date().toISOString().split('T')[0]}
+                  render={({ field }) => (
+                    <DateInput
+                      name={field.name}
+                      label="تاريخ الدفع"
+                      value={field.value}
+                      onChange={(e) => {
+                        field.onChange(e.target.value);
+                      }}
+                      error={errors.paid_at?.message}
+                    />
+                  )}
+                />
+              </div>
+            </div>
+
+            {/* Notes — editable textarea with auto-generated content */}
+            <div className="space-y-1.5">
+              <label className="text-sm font-medium text-text-primary">ملاحظات</label>
+              <textarea
+                className="w-full rounded-lg border border-border-default bg-transparent px-3 py-2.5 text-sm text-text-primary placeholder:text-text-secondary/40 focus:outline-none focus:ring-1 focus:ring-primary-500/20 focus:border-primary-500/40 transition-all resize-y"
+                rows={3}
+                placeholder="من العميل: ...\nإلى حساب: ..."
+                value={editableNotes}
+                onChange={handleNotesChange}
+              />
+            </div>
 
             {/* Payment Preview */}
             {watchedAmount > 0 && (
@@ -338,37 +397,6 @@ const RecordPaymentModal = () => {
                 )}
               </div>
             )}
-
-            {/* Date */}
-            <Controller
-              name="paid_at"
-              control={control}
-              rules={{ required: t('common.required') }}
-              defaultValue={new Date().toISOString().split('T')[0]}
-              render={({ field }) => (
-                <DateInput
-                  name={field.name}
-                  label="تاريخ الدفع"
-                  value={field.value}
-                  onChange={(e) => {
-                    field.onChange(e.target.value);
-                  }}
-                  error={errors.paid_at?.message}
-                />
-              )}
-            />
-
-            {/* Notes — editable textarea with auto-generated content */}
-            <div className="space-y-1.5">
-              <label className="text-sm font-medium text-text-primary">ملاحظات</label>
-              <textarea
-                className="w-full rounded-lg border border-border-default bg-transparent px-3 py-2.5 text-sm text-text-primary placeholder:text-text-secondary/40 focus:outline-none focus:ring-1 focus:ring-primary-500/20 focus:border-primary-500/40 transition-all resize-y"
-                rows={3}
-                placeholder="من العميل: ...\nإلى حساب: ..."
-                value={editableNotes}
-                onChange={handleNotesChange}
-              />
-            </div>
           </div>
         </section>
 
