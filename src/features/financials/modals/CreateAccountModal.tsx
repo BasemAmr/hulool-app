@@ -20,16 +20,26 @@ interface CreateAccountModalProps {
   isOpen: boolean;
   onClose: () => void;
   initialSectionId?: string; // NEW: pre-fill section from COA tree
+  defaultSubType?: string;
 }
 
 export const CreateAccountModal: React.FC<CreateAccountModalProps> = React.memo(({
   isOpen,
   onClose,
   initialSectionId,
+  defaultSubType,
 }) => {
   const [name, setName] = useState('');
   const [subType, setSubType] = useState('');
   const [normalBalance, setNormalBalance] = useState<'debit' | 'credit'>('debit');
+
+  React.useEffect(() => {
+    if (isOpen) {
+      setName('');
+      setSubType(defaultSubType || '');
+      setNormalBalance('debit');
+    }
+  }, [isOpen, defaultSubType]);
 
   const toast = useToast();
   const { data: categories = [], isLoading: isLoadingCategories } = useGetCategoryMetadata();

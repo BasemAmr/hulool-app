@@ -76,6 +76,7 @@ const FCCOAView: React.FC<FCCOAViewProps> = ({ filterSection, filterCategory }) 
         isOpen={isCreateModalOpen}
         onClose={closeModal}
         initialSectionId={initialSectionId}
+        defaultSubType={props?.defaultSubType}
       />
     </div>
   );

@@ -17,6 +17,7 @@ import DashboardPage from '@/features/dashboard/pages/DashboardPage';
 import SettingsPage from '@/features/settings/pages/SettingsPage';
 import TagsPage from '@/features/tags/pages/TagsPage';
 import EmployeeManagementPage from '@/features/employees/pages/admin/EmployeeManagementPage';
+import AllEmployeesPage from '@/features/employees/pages/admin/AllEmployeesPage';
 import EmployeeProfilePage from '@/features/employees/pages/admin/EmployeeProfilePage';
 import FinancialCenterPage from '@/features/financials/pages/FinancialCenterPage';
 import InvoicesHubPage from '@/features/invoices/pages/InvoicesHubPage';
@@ -73,6 +74,7 @@ const routes: RouteObject[] = [
         children: [{
           element: <AdminLayout />, children: [
             { index: true, element: <EmployeeManagementPage /> },
+            { path: 'all', element: <AllEmployeesPage /> },
             { path: ':id/:mode?', element: <EmployeeProfilePage /> },
           ]
         }],

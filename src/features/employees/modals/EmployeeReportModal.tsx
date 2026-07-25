@@ -223,6 +223,16 @@ const EmployeeReportModal = ({ isOpen, onClose }: EmployeeReportModalProps) => {
               <span className="text-sm font-bold text-text-primary px-3 py-1 rounded-full bg-primary/10">
                 {reportType === 'tasks' ? 'مهام' : 'مالي'}
               </span>
+              <button
+                type="button"
+                onClick={() => {
+                  navigate('/employees/all');
+                  onClose();
+                }}
+                className="text-xs font-semibold text-primary hover:underline flex items-center gap-1 ms-1"
+              >
+                جميع الموظفين ↗
+              </button>
             </div>
 
             <div>

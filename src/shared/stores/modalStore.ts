@@ -170,7 +170,7 @@ interface ModalProps {
   };
 
   // TREASURY MODALS
-  treasuryCreateAccount: { initialSectionId?: string };
+  treasuryCreateAccount: { initialSectionId?: string; defaultSubType?: string };
   treasuryEditAccount: { account: TreasuryAccount };
   treasuryPermissions: { account: TreasuryAccount };
 

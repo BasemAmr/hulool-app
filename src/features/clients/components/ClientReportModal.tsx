@@ -192,6 +192,20 @@ const ClientReportModal = ({ isOpen, onClose }: ClientReportModalProps) => {
               <span className="text-sm font-bold text-text-primary px-3 py-1 rounded-full bg-primary/10">
                 {reportType === 'tasks' ? 'معاملات' : 'مالي'}
               </span>
+              {reportType === 'financial' && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    const isAdminRole = useAuthStore.getState().isAdmin();
+                    navigate(isAdminRole ? '/receivables' : '/employee/receivables');
+                    onClose();
+                  }}
+                  className="text-xs font-semibold text-primary hover:underline flex items-center gap-1 ms-1"
+                >
+                  <Users size={13} />
+                  مستحقات العملاء
+                </button>
+              )}
             </div>
 
             <div>
@@ -209,18 +223,6 @@ const ClientReportModal = ({ isOpen, onClose }: ClientReportModalProps) => {
               </Button>
               {reportType === 'financial' ? (
                 <>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      const isAdminRole = useAuthStore.getState().isAdmin();
-                      navigate(isAdminRole ? '/receivables' : '/employee/receivables');
-                      onClose();
-                    }}
-                    className="px-2.5 py-1 text-xs font-semibold text-text-secondary hover:text-text-primary transition-colors flex items-center gap-1"
-                  >
-                    <Users size={13} />
-                    مستحقات العملاء
-                  </button>
                   <button
                     type="button"
                     disabled={!canExport || exportMutation.isPending}

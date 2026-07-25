@@ -46,6 +46,7 @@ import PrepaidConflictModal from '@/features/tasks/modals/PrepaidConflictModal';
 import TaskAmountConflictModal from '@/features/tasks/modals/TaskAmountConflictModal';
 import TaskCancellationModal from '@/features/tasks/modals/TaskCancellationModal';
 import ConcurrentModificationModal from '@/features/tasks/modals/ConcurrentModificationModal';
+import { CreateAccountModal } from '@/features/financials/modals/CreateAccountModal';
 import AssignTaskModal from '@/features/tasks/modals/AssignTaskModal';
 import ApprovalModal from '@/features/tasks/modals/ApprovalModal';
 import SubmitForReviewModal from '@/features/tasks/modals/SubmitForReviewModal';
@@ -540,6 +541,17 @@ const ModalManager = () => {
         );
 
       // UNIFIED TRANSACTION MODAL (M5)
+      case 'treasuryCreateAccount':
+        return (
+          <CreateAccountModal
+            key="treasuryCreateAccount"
+            isOpen={isOpen}
+            onClose={closeModal}
+            initialSectionId={props.initialSectionId}
+            defaultSubType={props.defaultSubType}
+          />
+        );
+
       case 'unifiedTransaction':
         return (
           <UnifiedTransactionModal
