@@ -15,6 +15,7 @@ import type { ClientStatementReportData, ClientTasksReportData } from '@/service
 import { useAuthStore } from '@/features/auth/store/authStore';
 
 type ReportType = 'tasks' | 'financial';
+type SelectionScope = 'all' | 'single' | null;
 
 interface ClientReportModalProps {
   isOpen: boolean;
@@ -27,17 +28,17 @@ const ClientReportModal = ({ isOpen, onClose }: ClientReportModalProps) => {
   const { success, error: showError } = useToast();
   const [step, setStep] = useState<1 | 2>(1);
   const [reportType, setReportType] = useState<ReportType | null>(null);
+  const [selectionScope, setSelectionScope] = useState<SelectionScope>(null);
   const [clientId, setClientId] = useState<string>('');
   const [clientData, setClientData] = useState<Client | null>(null);
-  const [isAllSelected, setIsAllSelected] = useState<boolean>(false);
 
   useEffect(() => {
     if (isOpen) {
       setStep(1);
       setReportType(null);
+      setSelectionScope(null);
       setClientId('');
       setClientData(null);
-      setIsAllSelected(false);
     }
   }, [isOpen]);
 
@@ -51,18 +52,9 @@ const ClientReportModal = ({ isOpen, onClose }: ClientReportModalProps) => {
     }
   }, [clientId]);
 
-  const handleSelectClient = (newValue: string) => {
-    setClientId(newValue);
-    if (newValue) {
-      setIsAllSelected(false);
-    }
-  };
-
-  const handleToggleSelectAll = () => {
-    if (isAllSelected) {
-      setIsAllSelected(false);
-    } else {
-      setIsAllSelected(true);
+  const handleSelectScope = (scope: SelectionScope) => {
+    setSelectionScope(scope);
+    if (scope === 'all') {
       setClientId('');
       setClientData(null);
     }
@@ -73,83 +65,87 @@ const ClientReportModal = ({ isOpen, onClose }: ClientReportModalProps) => {
       if (!reportType) throw new Error('Missing data');
 
       if (reportType === 'financial') {
-        if (!clientId || !clientData) throw new Error('Missing client data');
-        const { data } = await apiClient.get<ApiResponse<any>>(`/receivables/client/${clientId}`);
-        if (!data.success) throw new Error(data.message || 'Failed to fetch statement');
+        if (selectionScope === 'single') {
+          if (!clientId || !clientData) throw new Error('Missing client data');
+          const { data } = await apiClient.get<ApiResponse<any>>(`/receivables/client/${clientId}`);
+          if (!data.success) throw new Error(data.message || 'Failed to fetch statement');
 
-        const sData = data.data;
-        const statementItems = (sData.statementItems || []).map((item: any) => ({
-          id: Number(item.id),
-          description: item.description || '',
-          debit: Number(item.debit || 0),
-          credit: Number(item.credit || 0),
-          date: item.date || new Date().toISOString(),
-          type: item.type || 'Other',
-          transaction_type: item.transaction_type as any,
-          reference_id: item.reference_id,
-          details: item.details,
-        }));
+          const sData = data.data;
+          const statementItems = (sData.statementItems || []).map((item: any) => ({
+            id: Number(item.id),
+            description: item.description || '',
+            debit: Number(item.debit || 0),
+            credit: Number(item.credit || 0),
+            date: item.date || new Date().toISOString(),
+            type: item.type || 'Other',
+            transaction_type: item.transaction_type as any,
+            reference_id: item.reference_id,
+            details: item.details,
+          }));
 
-        const totalDebit = statementItems.reduce((sum: number, i: any) => sum + i.debit, 0);
-        const totalCredit = statementItems.reduce((sum: number, i: any) => sum + i.credit, 0);
-        const balance = statementItems.length > 0 ? statementItems[statementItems.length - 1].balance : 0;
+          const totalDebit = statementItems.reduce((sum: number, i: any) => sum + i.debit, 0);
+          const totalCredit = statementItems.reduce((sum: number, i: any) => sum + i.credit, 0);
+          const balance = statementItems.length > 0 ? statementItems[statementItems.length - 1].balance : 0;
 
-        const reportData: ClientStatementReportData = {
-          client: clientData,
-          clientName: clientData.name,
-          clientPhone: clientData.phone || '',
-          statementItems,
-          totals: { totalDebit, totalCredit, balance },
-          period: {
-            from: new Date(Date.now() - 365 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-            to: new Date().toISOString().split('T')[0],
-          },
-        };
+          const reportData: ClientStatementReportData = {
+            client: clientData,
+            clientName: clientData.name,
+            clientPhone: clientData.phone || '',
+            statementItems,
+            totals: { totalDebit, totalCredit, balance },
+            period: {
+              from: new Date(Date.now() - 365 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+              to: new Date().toISOString().split('T')[0],
+            },
+          };
 
-        await exportService.exportClientStatement(reportData);
+          await exportService.exportClientStatement(reportData);
+        }
       } else {
-        if (!clientId || !clientData) throw new Error('Missing client data');
-        const { data } = await apiClient.get<ApiResponse<any>>('/tasks', {
-          params: { client_id: Number(clientId), page: 1, per_page: 1000 },
-        });
-        if (!data.success) throw new Error(data.message || 'Failed to fetch tasks');
+        if (selectionScope === 'single') {
+          if (!clientId || !clientData) throw new Error('Missing client data');
+          const { data } = await apiClient.get<ApiResponse<any>>('/tasks', {
+            params: { client_id: Number(clientId), page: 1, per_page: 1000 },
+          });
+          if (!data.success) throw new Error(data.message || 'Failed to fetch tasks');
 
-        const tasks = (data.data?.tasks || []).map((task: any) => ({
-          ...task,
-          client_name: clientData.name,
-          client_phone: clientData.phone || '',
-          service_name: task.task_name || task.type,
-          task_type: task.type,
-          amount_paid: task.receivable ? task.amount - task.receivable.amount : task.amount,
-          amount_remaining: task.receivable?.amount || 0,
-          is_overdue: task.receivable
-            ? new Date(task.receivable.due_date || '') < new Date() && task.status !== 'Completed'
-            : false,
-        }));
+          const tasks = (data.data?.tasks || []).map((task: any) => ({
+            ...task,
+            client_name: clientData.name,
+            client_phone: clientData.phone || '',
+            service_name: task.task_name || task.type,
+            task_type: task.type,
+            amount_paid: task.receivable ? task.amount - task.receivable.amount : task.amount,
+            amount_remaining: task.receivable?.amount || 0,
+            is_overdue: task.receivable
+              ? new Date(task.receivable.due_date || '') < new Date() && task.status !== 'Completed'
+              : false,
+          }));
 
-        const completedTasks = tasks.filter((t: any) => t.status === 'Completed').length;
-        const cancelledTasks = tasks.filter((t: any) => t.status === 'Cancelled').length;
-        const totalAmount = tasks.reduce((sum: number, t: any) => sum + t.amount, 0);
-        const totalPaid = tasks.reduce((sum: number, t: any) => sum + t.amount_paid, 0);
-        const totalRemaining = tasks.reduce((sum: number, t: any) => sum + t.amount_remaining, 0);
+          const completedTasks = tasks.filter((t: any) => t.status === 'Completed').length;
+          const cancelledTasks = tasks.filter((t: any) => t.status === 'Cancelled').length;
+          const totalAmount = tasks.reduce((sum: number, t: any) => sum + t.amount, 0);
+          const totalPaid = tasks.reduce((sum: number, t: any) => sum + t.amount_paid, 0);
+          const totalRemaining = tasks.reduce((sum: number, t: any) => sum + t.amount_remaining, 0);
 
-        const reportData: ClientTasksReportData = {
-          client: clientData,
-          tasks,
-          summary: {
-            total_tasks: tasks.length,
-            completed_tasks: completedTasks,
-            in_progress_tasks: tasks.filter((t: any) => !t.status?.match(/Completed|Cancelled/)).length,
-            new_tasks: tasks.filter((t: any) => t.status === 'New').length,
-            cancelled_tasks: cancelledTasks,
-            total_amount: totalAmount,
-            total_paid: totalPaid,
-            total_remaining: totalRemaining,
-            average_completion_days: 0,
-          },
-        };
+          const reportData: ClientTasksReportData = {
+            client: clientData,
+            tasks,
+            summary: {
+              total_tasks: tasks.length,
+              completed_tasks: completedTasks,
+              in_progress_tasks: tasks.filter((t: any) => !t.status?.match(/Completed|Cancelled/)).length,
+              new_tasks: tasks.filter((t: any) => t.status === 'New').length,
+              cancelled_tasks: cancelledTasks,
+              total_amount: totalAmount,
+              total_paid: totalPaid,
+              total_remaining: totalRemaining,
+              average_completion_days: 0,
+            },
+          };
 
-        await exportService.exportClientTasks(reportData);
+          await exportService.exportClientTasks(reportData);
+        }
       }
     },
     onSuccess: () => {
@@ -161,11 +157,11 @@ const ClientReportModal = ({ isOpen, onClose }: ClientReportModalProps) => {
     },
   });
 
-  const canExportSingle = reportType && clientId && clientId !== '0' && clientData;
-  const canProceed = isAllSelected || canExportSingle;
+  const canExportSingle = selectionScope === 'single' && clientId && clientId !== '0' && clientData;
+  const canProceed = selectionScope === 'all' || canExportSingle;
 
   const handleConfirmAction = () => {
-    if (isAllSelected) {
+    if (selectionScope === 'all') {
       const isAdminRole = useAuthStore.getState().isAdmin();
       navigate(isAdminRole ? '/receivables' : '/employee/receivables');
       onClose();
@@ -228,33 +224,49 @@ const ClientReportModal = ({ isOpen, onClose }: ClientReportModalProps) => {
               </span>
             </div>
 
-            <div className="space-y-3">
-              <div className="flex items-center justify-between">
-                <label className="block text-sm font-medium text-text-primary">اختر العميل</label>
-
-                {/* Option to select All clients (mutually exclusive with picking a single client) */}
+            {/* Scope selection cards: الكل vs اختر عميل */}
+            <div className="space-y-4">
+              <label className="block text-sm font-medium text-text-primary">نطاق التقرير</label>
+              <div className="grid grid-cols-2 gap-4">
                 <button
                   type="button"
-                  onClick={handleToggleSelectAll}
-                  className={`flex items-center gap-1.5 px-3 py-1 text-xs font-bold rounded-lg border transition-all ${
-                    isAllSelected
-                      ? 'border-primary bg-primary text-primary-foreground shadow-sm'
-                      : 'border-border-default text-primary hover:border-primary'
+                  onClick={() => handleSelectScope('all')}
+                  className={`p-4 rounded-xl border-2 text-center transition-all cursor-pointer ${
+                    selectionScope === 'all'
+                      ? 'border-primary bg-primary/10 text-primary shadow-sm'
+                      : 'border-border-default hover:border-primary/40 text-text-secondary'
                   }`}
                 >
-                  <Users size={14} />
-                  <span>جميع العملاء</span>
-                  {isAllSelected && <UserCheck size={14} className="ms-1" />}
+                  <Users size={28} className="mx-auto mb-2 text-primary" />
+                  <span className="block text-base font-bold text-text-primary">الكل</span>
+                  <span className="block text-xs text-text-secondary mt-1">عرض/كشف مستحقات جميع العملاء</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => handleSelectScope('single')}
+                  className={`p-4 rounded-xl border-2 text-center transition-all cursor-pointer ${
+                    selectionScope === 'single'
+                      ? 'border-primary bg-primary/10 text-primary shadow-sm'
+                      : 'border-border-default hover:border-primary/40 text-text-secondary'
+                  }`}
+                >
+                  <UserCheck size={28} className="mx-auto mb-2 text-primary" />
+                  <span className="block text-base font-bold text-text-primary">اختر عميل</span>
+                  <span className="block text-xs text-text-secondary mt-1">تحديد عميل محدد من القائمة</span>
                 </button>
               </div>
 
-              <ClientSearchCombobox
-                value={clientId}
-                onChange={handleSelectClient}
-                placeholder={isAllSelected ? "تم تحديد جميع العملاء — ابحث لتحديد عميل معين..." : "ابحث عن عميل..."}
-              />
-              {isAllSelected && (
-                <p className="text-xs font-bold text-primary">✓ تم تحديد جميع العملاء. اضغط على الزر أدناه للانتقال لصفحة المستحقات.</p>
+              {/* Conditionally render client search field ONLY if user chooses "اختر عميل" */}
+              {selectionScope === 'single' && (
+                <div className="pt-2 animate-in fade-in-50 duration-150">
+                  <label className="block text-sm font-medium text-text-primary mb-2">اسم العميل</label>
+                  <ClientSearchCombobox
+                    value={clientId}
+                    onChange={(newValue) => setClientId(newValue)}
+                    placeholder="ابحث عن عميل..."
+                  />
+                </div>
               )}
             </div>
 
@@ -271,7 +283,7 @@ const ClientReportModal = ({ isOpen, onClose }: ClientReportModalProps) => {
               <div className="flex items-center gap-2">
                 {reportType === 'financial' ? (
                   <>
-                    {!isAllSelected && (
+                    {selectionScope === 'single' && (
                       <button
                         type="button"
                         disabled={!canExportSingle || exportMutation.isPending}
@@ -287,7 +299,7 @@ const ClientReportModal = ({ isOpen, onClose }: ClientReportModalProps) => {
                       disabled={!canProceed}
                       onClick={handleConfirmAction}
                     >
-                      {isAllSelected ? 'عرض مستحقات جميع العملاء' : 'عرض كشف الحساب المالي'}
+                      {selectionScope === 'all' ? 'عرض مستحقات جميع العملاء' : 'عرض كشف الحساب المالي'}
                     </Button>
                   </>
                 ) : (

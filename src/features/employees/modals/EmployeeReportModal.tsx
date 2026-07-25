@@ -7,13 +7,14 @@ import Button from '@/shared/ui/primitives/Button';
 import { useToast } from '@/shared/hooks/useToast';
 import { exportService } from '@/services/export/ExportService';
 import { TOAST_MESSAGES } from '@/shared/constants/toastMessages';
-import { FileSpreadsheet, DollarSign, ClipboardList, UserCog, UserCheck } from 'lucide-react';
+import { FileSpreadsheet, DollarSign, ClipboardList, UserCog, UserCheck, Users } from 'lucide-react';
 import { useGetEmployeesForSelection } from '@/features/employees/api/employeeQueries';
 import type { EmployeeStatementReportData } from '@/services/export/exportTypes';
 
 import { useAuthStore } from '@/features/auth/store/authStore';
 
 type ReportType = 'financial' | 'tasks';
+type SelectionScope = 'all' | 'single' | null;
 
 interface EmployeeReportModalProps {
   isOpen: boolean;
@@ -25,8 +26,8 @@ const EmployeeReportModal = ({ isOpen, onClose }: EmployeeReportModalProps) => {
   const { success, error: showError } = useToast();
   const [step, setStep] = useState<1 | 2>(1);
   const [reportType, setReportType] = useState<ReportType | null>(null);
+  const [selectionScope, setSelectionScope] = useState<SelectionScope>(null);
   const [employeeId, setEmployeeId] = useState<string>('');
-  const [isAllSelected, setIsAllSelected] = useState<boolean>(false);
   const [selectedPeriod, setSelectedPeriod] = useState<'monthly' | 'full'>('full');
   const [selectedMonth, setSelectedMonth] = useState<number>(new Date().getMonth() + 1);
   const [selectedYear, setSelectedYear] = useState<number>(new Date().getFullYear());
@@ -38,8 +39,8 @@ const EmployeeReportModal = ({ isOpen, onClose }: EmployeeReportModalProps) => {
     if (isOpen) {
       setStep(1);
       setReportType(null);
+      setSelectionScope(null);
       setEmployeeId('');
-      setIsAllSelected(false);
       setSelectedPeriod('full');
       setSelectedMonth(new Date().getMonth() + 1);
       setSelectedYear(new Date().getFullYear());
@@ -53,18 +54,9 @@ const EmployeeReportModal = ({ isOpen, onClose }: EmployeeReportModalProps) => {
 
   const yearOptions = Array.from({ length: 11 }, (_, i) => 2020 + i);
 
-  const handleSelectEmployee = (id: string) => {
-    setEmployeeId(id);
-    if (id) {
-      setIsAllSelected(false);
-    }
-  };
-
-  const handleToggleSelectAll = () => {
-    if (isAllSelected) {
-      setIsAllSelected(false);
-    } else {
-      setIsAllSelected(true);
+  const handleSelectScope = (scope: SelectionScope) => {
+    setSelectionScope(scope);
+    if (scope === 'all') {
       setEmployeeId('');
     }
   };
@@ -191,11 +183,11 @@ const EmployeeReportModal = ({ isOpen, onClose }: EmployeeReportModalProps) => {
     },
   });
 
-  const canExportSingle = reportType && employeeId && employeeId !== '0' && selectedEmployee;
-  const canProceed = isAllSelected || canExportSingle;
+  const canExportSingle = selectionScope === 'single' && employeeId && employeeId !== '0' && selectedEmployee;
+  const canProceed = selectionScope === 'all' || canExportSingle;
 
   const handleConfirmAction = () => {
-    if (isAllSelected) {
+    if (selectionScope === 'all') {
       const isAdminRole = useAuthStore.getState().isAdmin();
       navigate(isAdminRole ? '/employees/all' : '/employee/dashboard');
       onClose();
@@ -244,114 +236,128 @@ const EmployeeReportModal = ({ isOpen, onClose }: EmployeeReportModalProps) => {
 
         {step === 2 && (
           <>
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <button
-                  type="button"
-                  onClick={() => setStep(1)}
-                  className="text-sm text-primary font-bold hover:underline"
-                >
-                  &larr; تغيير نوع التقرير
-                </button>
-                <span className="text-sm font-bold text-text-primary px-3 py-1 rounded-full bg-primary/10">
-                  {reportType === 'tasks' ? 'مهام' : 'مالي'}
-                </span>
-              </div>
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => setStep(1)}
+                className="text-sm text-primary font-bold hover:underline"
+              >
+                &larr; تغيير نوع التقرير
+              </button>
+              <span className="text-sm font-bold text-text-primary px-3 py-1 rounded-full bg-primary/10">
+                {reportType === 'tasks' ? 'مهام' : 'مالي'}
+              </span>
             </div>
 
-            <div className="space-y-3">
-              <div className="flex items-center justify-between">
-                <label className="block text-sm font-medium text-text-primary">اختر الموظف</label>
-
-                {/* Option to select All employees (mutually exclusive with picking a single employee) */}
+            {/* Scope selection cards: الكل vs اختر موظف */}
+            <div className="space-y-4">
+              <label className="block text-sm font-medium text-text-primary">نطاق التقرير</label>
+              <div className="grid grid-cols-2 gap-4">
                 <button
                   type="button"
-                  onClick={handleToggleSelectAll}
-                  className={`flex items-center gap-1.5 px-3 py-1 text-xs font-bold rounded-lg border transition-all ${
-                    isAllSelected
-                      ? 'border-primary bg-primary text-primary-foreground shadow-sm'
-                      : 'border-border-default text-primary hover:border-primary'
+                  onClick={() => handleSelectScope('all')}
+                  className={`p-4 rounded-xl border-2 text-center transition-all cursor-pointer ${
+                    selectionScope === 'all'
+                      ? 'border-primary bg-primary/10 text-primary shadow-sm'
+                      : 'border-border-default hover:border-primary/40 text-text-secondary'
                   }`}
                 >
-                  <UserCog size={14} />
-                  <span>جميع الموظفين</span>
-                  {isAllSelected && <UserCheck size={14} className="ms-1" />}
+                  <Users size={28} className="mx-auto mb-2 text-primary" />
+                  <span className="block text-base font-bold text-text-primary">الكل</span>
+                  <span className="block text-xs text-text-secondary mt-1">عرض ملخص جميع الموظفين</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => handleSelectScope('single')}
+                  className={`p-4 rounded-xl border-2 text-center transition-all cursor-pointer ${
+                    selectionScope === 'single'
+                      ? 'border-primary bg-primary/10 text-primary shadow-sm'
+                      : 'border-border-default hover:border-primary/40 text-text-secondary'
+                  }`}
+                >
+                  <UserCheck size={28} className="mx-auto mb-2 text-primary" />
+                  <span className="block text-base font-bold text-text-primary">اختر موظف</span>
+                  <span className="block text-xs text-text-secondary mt-1">تحديد موظف محدد من القائمة</span>
                 </button>
               </div>
 
-              <select
-                value={employeeId}
-                onChange={(e) => handleSelectEmployee(e.target.value)}
-                className="base-input w-full"
-                disabled={employeesLoading}
-              >
-                <option value="">{isAllSelected ? 'تم تحديد جميع الموظفين — اختر موظف محدد...' : '-- اختر موظف --'}</option>
-                {employees.map((emp) => (
-                  <option key={emp.id} value={emp.id.toString()}>
-                    {emp.display_name}
-                  </option>
-                ))}
-              </select>
-              {isAllSelected && (
-                <p className="text-xs font-bold text-primary">✓ تم تحديد جميع الموظفين. اضغط على الزر أدناه للانتقال لصفحة كشف حساب الجميع.</p>
+              {/* Conditionally render employee select field ONLY if user chooses "اختر موظف" */}
+              {selectionScope === 'single' && (
+                <div className="pt-2 animate-in fade-in-50 duration-150 space-y-3">
+                  <div>
+                    <label className="block text-sm font-medium text-text-primary mb-2">اسم الموظف</label>
+                    <select
+                      value={employeeId}
+                      onChange={(e) => setEmployeeId(e.target.value)}
+                      className="base-input w-full"
+                      disabled={employeesLoading}
+                    >
+                      <option value="">{employeesLoading ? 'جاري التحميل...' : '-- اختر موظف --'}</option>
+                      {employees.map((emp) => (
+                        <option key={emp.id} value={emp.id.toString()}>
+                          {emp.display_name}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  {reportType === 'financial' && employeeId && (
+                    <div className="space-y-3 pt-2">
+                      <label className="block text-sm font-medium text-text-primary mb-2">نطاق التقرير</label>
+                      <div className="flex gap-2">
+                        <button
+                          type="button"
+                          onClick={() => setSelectedPeriod('full')}
+                          className={`flex-1 p-3 rounded-lg border-2 text-center transition-all ${
+                            selectedPeriod === 'full'
+                              ? 'border-primary bg-primary/5'
+                              : 'border-border-default hover:border-primary/40'
+                          }`}
+                        >
+                          <span className="block text-sm font-bold">كل المعاملات</span>
+                          <span className="block text-xs text-text-secondary mt-1">جميع الفترات</span>
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setSelectedPeriod('monthly')}
+                          className={`flex-1 p-3 rounded-lg border-2 text-center transition-all ${
+                            selectedPeriod === 'monthly'
+                              ? 'border-primary bg-primary/5'
+                              : 'border-border-default hover:border-primary/40'
+                          }`}
+                        >
+                          <span className="block text-sm font-bold">شهر محدد</span>
+                          <span className="block text-xs text-text-secondary mt-1">تصفية حسب الشهر</span>
+                        </button>
+                      </div>
+                      {selectedPeriod === 'monthly' && (
+                        <div className="flex gap-2">
+                          <select
+                            value={selectedMonth}
+                            onChange={(e) => setSelectedMonth(Number(e.target.value))}
+                            className="base-input flex-1"
+                          >
+                            {arabicMonths.map((month, index) => (
+                              <option key={index + 1} value={index + 1}>{month}</option>
+                            ))}
+                          </select>
+                          <select
+                            value={selectedYear}
+                            onChange={(e) => setSelectedYear(Number(e.target.value))}
+                            className="base-input w-24"
+                          >
+                            {yearOptions.map((year) => (
+                              <option key={year} value={year}>{year}</option>
+                            ))}
+                          </select>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
               )}
             </div>
-
-            {reportType === 'financial' && employeeId && !isAllSelected && (
-              <div className="space-y-3">
-                <div>
-                  <label className="block text-sm font-medium text-text-primary mb-2">نطاق التقرير</label>
-                  <div className="flex gap-2">
-                    <button
-                      type="button"
-                      onClick={() => setSelectedPeriod('full')}
-                      className={`flex-1 p-3 rounded-lg border-2 text-center transition-all ${
-                        selectedPeriod === 'full'
-                          ? 'border-primary bg-primary/5'
-                          : 'border-border-default hover:border-primary/40'
-                      }`}
-                    >
-                      <span className="block text-sm font-bold">كل المعاملات</span>
-                      <span className="block text-xs text-text-secondary mt-1">جميع الفترات</span>
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setSelectedPeriod('monthly')}
-                      className={`flex-1 p-3 rounded-lg border-2 text-center transition-all ${
-                        selectedPeriod === 'monthly'
-                          ? 'border-primary bg-primary/5'
-                          : 'border-border-default hover:border-primary/40'
-                      }`}
-                    >
-                      <span className="block text-sm font-bold">شهر محدد</span>
-                      <span className="block text-xs text-text-secondary mt-1">تصفية حسب الشهر</span>
-                    </button>
-                  </div>
-                </div>
-                {selectedPeriod === 'monthly' && (
-                  <div className="flex gap-2">
-                    <select
-                      value={selectedMonth}
-                      onChange={(e) => setSelectedMonth(Number(e.target.value))}
-                      className="base-input flex-1"
-                    >
-                      {arabicMonths.map((month, index) => (
-                        <option key={index + 1} value={index + 1}>{month}</option>
-                      ))}
-                    </select>
-                    <select
-                      value={selectedYear}
-                      onChange={(e) => setSelectedYear(Number(e.target.value))}
-                      className="base-input w-24"
-                    >
-                      {yearOptions.map((year) => (
-                        <option key={year} value={year}>{year}</option>
-                      ))}
-                    </select>
-                  </div>
-                )}
-              </div>
-            )}
 
             <div className="flex justify-between items-center pt-4 border-t border-border-default">
               <div className="flex items-center gap-2">
@@ -366,7 +372,7 @@ const EmployeeReportModal = ({ isOpen, onClose }: EmployeeReportModalProps) => {
               <div className="flex items-center gap-2">
                 {reportType === 'financial' ? (
                   <>
-                    {!isAllSelected && (
+                    {selectionScope === 'single' && (
                       <button
                         type="button"
                         disabled={!canExportSingle || exportMutation.isPending}
@@ -382,7 +388,7 @@ const EmployeeReportModal = ({ isOpen, onClose }: EmployeeReportModalProps) => {
                       disabled={!canProceed}
                       onClick={handleConfirmAction}
                     >
-                      {isAllSelected ? 'عرض ملخص جميع الموظفين' : 'عرض كشف الحساب المالي'}
+                      {selectionScope === 'all' ? 'عرض ملخص جميع الموظفين' : 'عرض كشف الحساب المالي'}
                     </Button>
                   </>
                 ) : (
