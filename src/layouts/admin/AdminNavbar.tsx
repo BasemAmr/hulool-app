@@ -266,7 +266,7 @@ const Navbar = () => {
             }
           >
             <div
-              onClick={() => navigate('/employees')}
+              onClick={() => navigate('/settings')}
               className="flex items-center gap-2 w-full cursor-pointer flex-row-reverse justify-end px-3 py-2 text-primary hover:underline font-extrabold text-sm rounded hover:bg-primary/10 transition-colors"
             >
               <UserCog size={16} />

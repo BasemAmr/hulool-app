@@ -7,9 +7,11 @@ import Button from '@/shared/ui/primitives/Button';
 import { useToast } from '@/shared/hooks/useToast';
 import { exportService } from '@/services/export/ExportService';
 import { TOAST_MESSAGES } from '@/shared/constants/toastMessages';
-import { FileSpreadsheet, DollarSign, ClipboardList } from 'lucide-react';
+import { FileSpreadsheet, DollarSign, ClipboardList, UserCog, UserCheck } from 'lucide-react';
 import { useGetEmployeesForSelection } from '@/features/employees/api/employeeQueries';
 import type { EmployeeStatementReportData } from '@/services/export/exportTypes';
+
+import { useAuthStore } from '@/features/auth/store/authStore';
 
 type ReportType = 'financial' | 'tasks';
 
@@ -24,6 +26,7 @@ const EmployeeReportModal = ({ isOpen, onClose }: EmployeeReportModalProps) => {
   const [step, setStep] = useState<1 | 2>(1);
   const [reportType, setReportType] = useState<ReportType | null>(null);
   const [employeeId, setEmployeeId] = useState<string>('');
+  const [isAllSelected, setIsAllSelected] = useState<boolean>(false);
   const [selectedPeriod, setSelectedPeriod] = useState<'monthly' | 'full'>('full');
   const [selectedMonth, setSelectedMonth] = useState<number>(new Date().getMonth() + 1);
   const [selectedYear, setSelectedYear] = useState<number>(new Date().getFullYear());
@@ -36,6 +39,7 @@ const EmployeeReportModal = ({ isOpen, onClose }: EmployeeReportModalProps) => {
       setStep(1);
       setReportType(null);
       setEmployeeId('');
+      setIsAllSelected(false);
       setSelectedPeriod('full');
       setSelectedMonth(new Date().getMonth() + 1);
       setSelectedYear(new Date().getFullYear());
@@ -48,6 +52,22 @@ const EmployeeReportModal = ({ isOpen, onClose }: EmployeeReportModalProps) => {
   ];
 
   const yearOptions = Array.from({ length: 11 }, (_, i) => 2020 + i);
+
+  const handleSelectEmployee = (id: string) => {
+    setEmployeeId(id);
+    if (id) {
+      setIsAllSelected(false);
+    }
+  };
+
+  const handleToggleSelectAll = () => {
+    if (isAllSelected) {
+      setIsAllSelected(false);
+    } else {
+      setIsAllSelected(true);
+      setEmployeeId('');
+    }
+  };
 
   const exportMutation = useMutation({
     mutationFn: async () => {
@@ -171,7 +191,19 @@ const EmployeeReportModal = ({ isOpen, onClose }: EmployeeReportModalProps) => {
     },
   });
 
-  const canExport = reportType && employeeId && employeeId !== '0' && selectedEmployee;
+  const canExportSingle = reportType && employeeId && employeeId !== '0' && selectedEmployee;
+  const canProceed = isAllSelected || canExportSingle;
+
+  const handleConfirmAction = () => {
+    if (isAllSelected) {
+      const isAdminRole = useAuthStore.getState().isAdmin();
+      navigate(isAdminRole ? '/employees/all' : '/employee/dashboard');
+      onClose();
+    } else if (canExportSingle) {
+      navigate(`/employees/${employeeId}/transactions`);
+      onClose();
+    }
+  };
 
   return (
     <BaseModal isOpen={isOpen} onClose={onClose} title="تقرير موظف" titleClassName="text-center w-full ms-6">
@@ -212,47 +244,60 @@ const EmployeeReportModal = ({ isOpen, onClose }: EmployeeReportModalProps) => {
 
         {step === 2 && (
           <>
-            <div className="flex items-center gap-2">
-              <button
-                type="button"
-                onClick={() => setStep(1)}
-                className="text-sm text-primary font-bold hover:underline"
-              >
-                &larr; تغيير نوع التقرير
-              </button>
-              <span className="text-sm font-bold text-text-primary px-3 py-1 rounded-full bg-primary/10">
-                {reportType === 'tasks' ? 'مهام' : 'مالي'}
-              </span>
-              <button
-                type="button"
-                onClick={() => {
-                  navigate('/employees/all');
-                  onClose();
-                }}
-                className="text-xs font-semibold text-primary hover:underline flex items-center gap-1 ms-1"
-              >
-                جميع الموظفين ↗
-              </button>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => setStep(1)}
+                  className="text-sm text-primary font-bold hover:underline"
+                >
+                  &larr; تغيير نوع التقرير
+                </button>
+                <span className="text-sm font-bold text-text-primary px-3 py-1 rounded-full bg-primary/10">
+                  {reportType === 'tasks' ? 'مهام' : 'مالي'}
+                </span>
+              </div>
             </div>
 
-            <div>
-              <label className="block text-sm font-medium text-text-primary mb-2">اختر الموظف</label>
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <label className="block text-sm font-medium text-text-primary">اختر الموظف</label>
+
+                {/* Option to select All employees (mutually exclusive with picking a single employee) */}
+                <button
+                  type="button"
+                  onClick={handleToggleSelectAll}
+                  className={`flex items-center gap-1.5 px-3 py-1 text-xs font-bold rounded-lg border transition-all ${
+                    isAllSelected
+                      ? 'border-primary bg-primary text-primary-foreground shadow-sm'
+                      : 'border-border-default text-primary hover:border-primary'
+                  }`}
+                >
+                  <UserCog size={14} />
+                  <span>جميع الموظفين</span>
+                  {isAllSelected && <UserCheck size={14} className="ms-1" />}
+                </button>
+              </div>
+
               <select
                 value={employeeId}
-                onChange={(e) => setEmployeeId(e.target.value)}
+                onChange={(e) => handleSelectEmployee(e.target.value)}
                 className="base-input w-full"
                 disabled={employeesLoading}
               >
-                <option value="">{employeesLoading ? 'جاري التحميل...' : '-- اختر موظف --'}</option>
+                <option value="">{isAllSelected ? 'تم تحديد جميع الموظفين — اختر موظف محدد...' : '-- اختر موظف --'}</option>
                 {employees.map((emp) => (
                   <option key={emp.id} value={emp.id.toString()}>
                     {emp.display_name}
                   </option>
                 ))}
               </select>
+              {isAllSelected && (
+                <p className="text-xs font-bold text-primary">✓ تم تحديد جميع الموظفين. اضغط على الزر أدناه للانتقال لصفحة كشف حساب الجميع.</p>
+              )}
             </div>
 
-            {reportType === 'financial' && employeeId && (
+            {reportType === 'financial' && employeeId && !isAllSelected && (
               <div className="space-y-3">
                 <div>
                   <label className="block text-sm font-medium text-text-primary mb-2">نطاق التقرير</label>
@@ -308,44 +353,51 @@ const EmployeeReportModal = ({ isOpen, onClose }: EmployeeReportModalProps) => {
               </div>
             )}
 
-            <div className="flex justify-end items-center gap-2 pt-4 border-t border-border-default">
-              <Button type="button" variant="outline-primary" onClick={onClose}>
-                إلغاء
-              </Button>
-              {reportType === 'financial' ? (
-                <>
-                  <button
-                    type="button"
-                    disabled={!canExport || exportMutation.isPending}
-                    onClick={() => exportMutation.mutate()}
-                    className="px-2.5 py-1 text-xs font-semibold text-text-secondary hover:text-text-primary transition-colors disabled:opacity-40"
-                  >
-                    {exportMutation.isPending ? 'جاري التصدير...' : 'تصدير Excel'}
-                  </button>
+            <div className="flex justify-between items-center pt-4 border-t border-border-default">
+              <div className="flex items-center gap-2">
+                <Button type="button" variant="outline-primary" onClick={onClose}>
+                  إلغاء
+                </Button>
+                <Button type="button" variant="outline-secondary" onClick={() => setStep(1)}>
+                  رجوع
+                </Button>
+              </div>
+
+              <div className="flex items-center gap-2">
+                {reportType === 'financial' ? (
+                  <>
+                    {!isAllSelected && (
+                      <button
+                        type="button"
+                        disabled={!canExportSingle || exportMutation.isPending}
+                        onClick={() => exportMutation.mutate()}
+                        className="px-2.5 py-1 text-xs font-semibold text-text-secondary hover:text-text-primary transition-colors disabled:opacity-40"
+                      >
+                        {exportMutation.isPending ? 'جاري التصدير...' : 'تصدير Excel'}
+                      </button>
+                    )}
+                    <Button
+                      type="button"
+                      variant="primary"
+                      disabled={!canProceed}
+                      onClick={handleConfirmAction}
+                    >
+                      {isAllSelected ? 'عرض ملخص جميع الموظفين' : 'عرض كشف الحساب المالي'}
+                    </Button>
+                  </>
+                ) : (
                   <Button
                     type="button"
                     variant="primary"
-                    disabled={!canExport}
-                    onClick={() => {
-                      navigate(`/employees/${employeeId}/transactions`);
-                      onClose();
-                    }}
+                    onClick={() => exportMutation.mutate()}
+                    isLoading={exportMutation.isPending}
+                    disabled={!canExportSingle}
                   >
-                    عرض كشف الحساب المالي
+                    <FileSpreadsheet size={16} className="me-1" />
+                    {exportMutation.isPending ? 'جاري التصدير...' : 'تصدير إلى Excel'}
                   </Button>
-                </>
-              ) : (
-                <Button
-                  type="button"
-                  variant="primary"
-                  onClick={() => exportMutation.mutate()}
-                  isLoading={exportMutation.isPending}
-                  disabled={!canExport}
-                >
-                  <FileSpreadsheet size={16} className="me-1" />
-                  {exportMutation.isPending ? 'جاري التصدير...' : 'تصدير إلى Excel'}
-                </Button>
-              )}
+                )}
+              </div>
             </div>
           </>
         )}

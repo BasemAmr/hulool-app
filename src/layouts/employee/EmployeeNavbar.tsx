@@ -7,7 +7,7 @@ import ThemeToggleButton from '@/shared/ui/primitives/ThemeToggleButton';
 import {
   Home, ClipboardList, Users, LogOut,
   Search, ChevronDown, Plus, FileSpreadsheet,
-  Settings, TrendingUp, TrendingDown
+  Settings, TrendingUp, TrendingDown, UserCog
 } from 'lucide-react';
 import { useGetMyTreasuryAccounts } from '@/features/financials/api/treasuryQueries';
 import { useModalStore } from '@/shared/stores/modalStore';

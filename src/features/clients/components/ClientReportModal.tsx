@@ -8,7 +8,7 @@ import Button from '@/shared/ui/primitives/Button';
 import { useToast } from '@/shared/hooks/useToast';
 import { exportService } from '@/services/export/ExportService';
 import { TOAST_MESSAGES } from '@/shared/constants/toastMessages';
-import { FileSpreadsheet, ClipboardList, DollarSign, Users } from 'lucide-react';
+import { FileSpreadsheet, ClipboardList, DollarSign, Users, UserCheck } from 'lucide-react';
 import type { Client, ApiResponse } from '@/api/types';
 import type { ClientStatementReportData, ClientTasksReportData } from '@/services/export/exportTypes';
 
@@ -29,6 +29,7 @@ const ClientReportModal = ({ isOpen, onClose }: ClientReportModalProps) => {
   const [reportType, setReportType] = useState<ReportType | null>(null);
   const [clientId, setClientId] = useState<string>('');
   const [clientData, setClientData] = useState<Client | null>(null);
+  const [isAllSelected, setIsAllSelected] = useState<boolean>(false);
 
   useEffect(() => {
     if (isOpen) {
@@ -36,6 +37,7 @@ const ClientReportModal = ({ isOpen, onClose }: ClientReportModalProps) => {
       setReportType(null);
       setClientId('');
       setClientData(null);
+      setIsAllSelected(false);
     }
   }, [isOpen]);
 
@@ -49,11 +51,29 @@ const ClientReportModal = ({ isOpen, onClose }: ClientReportModalProps) => {
     }
   }, [clientId]);
 
+  const handleSelectClient = (newValue: string) => {
+    setClientId(newValue);
+    if (newValue) {
+      setIsAllSelected(false);
+    }
+  };
+
+  const handleToggleSelectAll = () => {
+    if (isAllSelected) {
+      setIsAllSelected(false);
+    } else {
+      setIsAllSelected(true);
+      setClientId('');
+      setClientData(null);
+    }
+  };
+
   const exportMutation = useMutation({
     mutationFn: async () => {
-      if (!reportType || !clientId || !clientData) throw new Error('Missing data');
+      if (!reportType) throw new Error('Missing data');
 
       if (reportType === 'financial') {
+        if (!clientId || !clientData) throw new Error('Missing client data');
         const { data } = await apiClient.get<ApiResponse<any>>(`/receivables/client/${clientId}`);
         if (!data.success) throw new Error(data.message || 'Failed to fetch statement');
 
@@ -88,6 +108,7 @@ const ClientReportModal = ({ isOpen, onClose }: ClientReportModalProps) => {
 
         await exportService.exportClientStatement(reportData);
       } else {
+        if (!clientId || !clientData) throw new Error('Missing client data');
         const { data } = await apiClient.get<ApiResponse<any>>('/tasks', {
           params: { client_id: Number(clientId), page: 1, per_page: 1000 },
         });
@@ -140,10 +161,23 @@ const ClientReportModal = ({ isOpen, onClose }: ClientReportModalProps) => {
     },
   });
 
-  const canExport = reportType && clientId && clientId !== '0' && clientData;
+  const canExportSingle = reportType && clientId && clientId !== '0' && clientData;
+  const canProceed = isAllSelected || canExportSingle;
+
+  const handleConfirmAction = () => {
+    if (isAllSelected) {
+      const isAdminRole = useAuthStore.getState().isAdmin();
+      navigate(isAdminRole ? '/receivables' : '/employee/receivables');
+      onClose();
+    } else if (canExportSingle) {
+      const isAdminRole = useAuthStore.getState().isAdmin();
+      navigate(isAdminRole ? `/clients/${clientId}?mode=receivables` : `/employee/clients/${clientId}?mode=receivables`);
+      onClose();
+    }
+  };
 
   return (
-    <BaseModal isOpen={isOpen} onClose={onClose} title="تقرير عميل" titleClassName="text-center w-full ms-6">
+    <BaseModal isOpen={isOpen} onClose={onClose} title="كشف حساب عميل" titleClassName="text-center w-full ms-6">
       <div className="space-y-5">
         {step === 1 && (
           <>
@@ -192,70 +226,83 @@ const ClientReportModal = ({ isOpen, onClose }: ClientReportModalProps) => {
               <span className="text-sm font-bold text-text-primary px-3 py-1 rounded-full bg-primary/10">
                 {reportType === 'tasks' ? 'معاملات' : 'مالي'}
               </span>
-              {reportType === 'financial' && (
+            </div>
+
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <label className="block text-sm font-medium text-text-primary">اختر العميل</label>
+
+                {/* Option to select All clients (mutually exclusive with picking a single client) */}
                 <button
                   type="button"
-                  onClick={() => {
-                    const isAdminRole = useAuthStore.getState().isAdmin();
-                    navigate(isAdminRole ? '/receivables' : '/employee/receivables');
-                    onClose();
-                  }}
-                  className="text-xs font-semibold text-primary hover:underline flex items-center gap-1 ms-1"
+                  onClick={handleToggleSelectAll}
+                  className={`flex items-center gap-1.5 px-3 py-1 text-xs font-bold rounded-lg border transition-all ${
+                    isAllSelected
+                      ? 'border-primary bg-primary text-primary-foreground shadow-sm'
+                      : 'border-border-default text-primary hover:border-primary'
+                  }`}
                 >
-                  <Users size={13} />
-                  مستحقات العملاء
+                  <Users size={14} />
+                  <span>جميع العملاء</span>
+                  {isAllSelected && <UserCheck size={14} className="ms-1" />}
                 </button>
+              </div>
+
+              <ClientSearchCombobox
+                value={clientId}
+                onChange={handleSelectClient}
+                placeholder={isAllSelected ? "تم تحديد جميع العملاء — ابحث لتحديد عميل معين..." : "ابحث عن عميل..."}
+              />
+              {isAllSelected && (
+                <p className="text-xs font-bold text-primary">✓ تم تحديد جميع العملاء. اضغط على الزر أدناه للانتقال لصفحة المستحقات.</p>
               )}
             </div>
 
-            <div>
-              <label className="block text-sm font-medium text-text-primary mb-2">اختر العميل</label>
-              <ClientSearchCombobox
-                value={clientId}
-                onChange={(newValue) => setClientId(newValue)}
-                placeholder="ابحث عن عميل..."
-              />
-            </div>
+            <div className="flex justify-between items-center pt-4 border-t border-border-default">
+              <div className="flex items-center gap-2">
+                <Button type="button" variant="outline-primary" onClick={onClose}>
+                  إلغاء
+                </Button>
+                <Button type="button" variant="outline-secondary" onClick={() => setStep(1)}>
+                  رجوع
+                </Button>
+              </div>
 
-            <div className="flex justify-end items-center gap-2 pt-4 border-t border-border-default">
-              <Button type="button" variant="outline-primary" onClick={onClose}>
-                إلغاء
-              </Button>
-              {reportType === 'financial' ? (
-                <>
-                  <button
-                    type="button"
-                    disabled={!canExport || exportMutation.isPending}
-                    onClick={() => exportMutation.mutate()}
-                    className="px-2.5 py-1 text-xs font-semibold text-text-secondary hover:text-text-primary transition-colors disabled:opacity-40"
-                  >
-                    {exportMutation.isPending ? 'جاري التصدير...' : 'تصدير Excel'}
-                  </button>
+              <div className="flex items-center gap-2">
+                {reportType === 'financial' ? (
+                  <>
+                    {!isAllSelected && (
+                      <button
+                        type="button"
+                        disabled={!canExportSingle || exportMutation.isPending}
+                        onClick={() => exportMutation.mutate()}
+                        className="px-2.5 py-1 text-xs font-semibold text-text-secondary hover:text-text-primary transition-colors disabled:opacity-40"
+                      >
+                        {exportMutation.isPending ? 'جاري التصدير...' : 'تصدير Excel'}
+                      </button>
+                    )}
+                    <Button
+                      type="button"
+                      variant="primary"
+                      disabled={!canProceed}
+                      onClick={handleConfirmAction}
+                    >
+                      {isAllSelected ? 'عرض مستحقات جميع العملاء' : 'عرض كشف الحساب المالي'}
+                    </Button>
+                  </>
+                ) : (
                   <Button
                     type="button"
                     variant="primary"
-                    disabled={!canExport}
-                    onClick={() => {
-                      const isAdminRole = useAuthStore.getState().isAdmin();
-                      navigate(isAdminRole ? `/clients/${clientId}?mode=receivables` : `/employee/clients/${clientId}?mode=receivables`);
-                      onClose();
-                    }}
+                    onClick={() => exportMutation.mutate()}
+                    isLoading={exportMutation.isPending}
+                    disabled={!canExportSingle}
                   >
-                    عرض كشف الحساب المالي
+                    <FileSpreadsheet size={16} className="me-1" />
+                    {exportMutation.isPending ? 'جاري التصدير...' : 'تصدير إلى Excel'}
                   </Button>
-                </>
-              ) : (
-                <Button
-                  type="button"
-                  variant="primary"
-                  onClick={() => exportMutation.mutate()}
-                  isLoading={exportMutation.isPending}
-                  disabled={!canExport}
-                >
-                  <FileSpreadsheet size={16} className="me-1" />
-                  {exportMutation.isPending ? 'جاري التصدير...' : 'تصدير إلى Excel'}
-                </Button>
-              )}
+                )}
+              </div>
             </div>
           </>
         )}
