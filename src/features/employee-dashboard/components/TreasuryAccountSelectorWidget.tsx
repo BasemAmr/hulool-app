@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Card, CardContent } from '@/shared/ui/shadcn/card';
-import { Wallet, ExternalLink, ChevronDown, ArrowLeftRight } from 'lucide-react';
+import { Wallet, ExternalLink, ChevronDown } from 'lucide-react';
 import { useGetMyTreasuryAccounts } from '@/features/financials/api/treasuryQueries';
 import { useModalStore } from '@/shared/stores/modalStore';
 import { useAuthStore } from '@/features/auth/store/authStore';
@@ -94,7 +94,6 @@ export const TreasuryAccountSelectorWidget: React.FC = () => {
 
   const openUnified = (overrides: Record<string, any>) => {
     openModal('unifiedTransaction', {
-      lockDirection: true,
       ...overrides,
     });
   };
@@ -137,7 +136,7 @@ export const TreasuryAccountSelectorWidget: React.FC = () => {
 
             <button
               onClick={() => navigate(`/employee/treasury-accounts/${selectedAccount.id}`)}
-              className="flex items-center gap-1 px-2 h-8 text-[11px] font-bold rounded-md border border-border-default bg-bg-surface text-text-secondary hover:text-text-brand hover:border-text-brand transition-colors shrink-0"
+              className="flex items-center gap-1 px-2 h-8 text-[11px] font-bold rounded-md border border-border-default bg-bg-surface text-text-secondary hover:text-text-brand hover:border-text-brand transition-colors shrink-0 cursor-pointer"
               title="عرض تفاصيل الحساب"
             >
               <ExternalLink size={12} />
@@ -153,9 +152,12 @@ export const TreasuryAccountSelectorWidget: React.FC = () => {
               onClick={() =>
                 openModal('unifiedTransaction', {
                   title: 'سند قبض',
+                  defaultFromCardType: 'client',
+                  defaultToCardType: 'treasury',
+                  defaultToAccountId: String(selectedAccount.id),
                 })
               }
-              className="flex-1 py-2 text-[11px] font-bold rounded-md bg-status-success-bg text-status-success-text border border-status-success-border hover:opacity-80 transition-opacity text-center"
+              className="flex-1 py-2 text-[11px] font-bold rounded-md bg-status-success-bg text-status-success-text border border-status-success-border hover:opacity-80 transition-opacity text-center cursor-pointer"
             >
               سند قبض
             </button>
@@ -163,9 +165,12 @@ export const TreasuryAccountSelectorWidget: React.FC = () => {
               onClick={() =>
                 openModal('unifiedTransaction', {
                   title: 'سند صرف',
+                  defaultFromCardType: 'treasury',
+                  defaultFromAccountId: String(selectedAccount.id),
+                  defaultToCardType: 'client',
                 })
               }
-              className="flex-1 py-2 text-[11px] font-bold rounded-md bg-status-danger-bg text-status-danger-text border border-status-danger-border hover:opacity-80 transition-opacity text-center"
+              className="flex-1 py-2 text-[11px] font-bold rounded-md bg-status-danger-bg text-status-danger-text border border-status-danger-border hover:opacity-80 transition-opacity text-center cursor-pointer"
             >
               سند صرف
             </button>
@@ -174,7 +179,7 @@ export const TreasuryAccountSelectorWidget: React.FC = () => {
             <div ref={settlementRef} className="flex-1 relative">
               <button
                 onClick={() => setSettlementOpen((prev) => !prev)}
-                className="w-full flex items-center justify-center gap-1 py-2 text-[11px] font-bold rounded-md bg-bg-surface text-text-primary border border-border-default hover:bg-bg-surface-muted transition-colors text-center"
+                className="w-full flex items-center justify-center gap-1 py-2 text-[11px] font-bold rounded-md bg-bg-surface text-text-primary border border-border-default hover:bg-bg-surface-muted transition-colors text-center cursor-pointer"
               >
                 <span>سند تسوية</span>
                 <ChevronDown size={12} className="opacity-70" />
@@ -183,11 +188,12 @@ export const TreasuryAccountSelectorWidget: React.FC = () => {
                 <div className="absolute right-0 top-full mt-1 z-50 w-full min-w-[120px] rounded-lg border border-border-default bg-bg-surface shadow-xl py-1">
                   <button
                     type="button"
-                    className="flex w-full items-center justify-start px-3 py-2 text-xs font-bold text-text-primary hover:bg-bg-surface-muted transition-colors text-right"
+                    className="flex w-full items-center justify-start px-3 py-2 text-xs font-bold text-text-primary hover:bg-bg-surface-muted transition-colors text-right cursor-pointer"
                     onClick={() => {
                       setSettlementOpen(false);
                       openUnified({
-                        defaultFromCardType: 'settlement',
+                        defaultFromCardType: 'client',
+                        defaultToCardType: 'settlement',
                         title: 'تسوية قبض',
                       });
                     }}
@@ -197,11 +203,12 @@ export const TreasuryAccountSelectorWidget: React.FC = () => {
                   <div className="border-t border-border-default" />
                   <button
                     type="button"
-                    className="flex w-full items-center justify-start px-3 py-2 text-xs font-bold text-text-primary hover:bg-bg-surface-muted transition-colors text-right"
+                    className="flex w-full items-center justify-start px-3 py-2 text-xs font-bold text-text-primary hover:bg-bg-surface-muted transition-colors text-right cursor-pointer"
                     onClick={() => {
                       setSettlementOpen(false);
                       openUnified({
-                        defaultToCardType: 'settlement',
+                        defaultFromCardType: 'settlement',
+                        defaultToCardType: 'client',
                         title: 'تسوية صرف',
                       });
                     }}

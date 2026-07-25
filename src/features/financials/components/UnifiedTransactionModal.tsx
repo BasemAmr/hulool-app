@@ -2,9 +2,8 @@
  * UnifiedTransactionModal
  *
  * Single-screen transaction entry between any two account types.
- * - Direction toggle (قبض / صرف) at the top swaps from/to
- * - Settlement side renders nothing (clean, hidden)
- * - Account pickers: من (right in RTL) → إلى (left in RTL)
+ * - Account pickers: من حساب → إلى حساب
+ * - Settlement side renders target account picker card row-wide
  */
 
 import { useState, useEffect, useMemo } from 'react';
@@ -12,7 +11,6 @@ import BaseModal from '@/shared/ui/layout/BaseModal';
 import Button from '@/shared/ui/primitives/Button';
 import { NumberInput } from '@/shared/ui/primitives/NumberInput';
 import { DateInput } from '@/shared/ui/primitives/DateInput';
-import { Card, CardContent } from '@/shared/ui/shadcn/card';
 import { useModalStore } from '@/shared/stores/modalStore';
 import {
   useGetAccountsByType,
@@ -22,14 +20,10 @@ import { useGetTreasuryAccounts, useGetCategoryMetadata } from '@/features/finan
 import { useToast } from '@/shared/hooks/useToast';
 import AccountPickerCard from './AccountPickerCard';
 import type { PickerValue, PickerKind } from './AccountPickerCard';
-// PickerKind: 'client' | 'employee' | 'cashbox' | 'bank'
-// PickerValue: { kind, accountId, categorySlug }
 import {
-  ArrowLeftRight,
   Loader2,
   CheckCircle2,
   CircleDashed,
-  RotateCcw,
 } from 'lucide-react';
 import type { AccountType } from '@/api/types';
 
@@ -37,12 +31,6 @@ import type { AccountType } from '@/api/types';
 // Types
 // ========================================
 
-type Step = 1 | 2 | 3;
-
-/**
- * Direction: 'qabdh' = incoming (قبض), 'sarf' = outgoing (صرف)
- * When settlement is involved: 'qabdh' = تسوية قبض, 'sarf' = تسوية صرف
- */
 type Direction = 'qabdh' | 'sarf';
 
 // ========================================
@@ -79,9 +67,7 @@ const UnifiedTransactionModal = () => {
   // ---- State ----
   const [direction, setDirection] = useState<Direction>(() => {
     const modalTitle = (props?.title as string | undefined) || '';
-    // settlement as FROM = money leaves settlement = صرف
     if (defaultFromCardType === 'settlement') return 'sarf';
-    // settlement as TO = money enters settlement = قبض
     if (defaultToCardType === 'settlement') return 'qabdh';
     if (defaultToCardType === 'treasury' || defaultToCardType === 'cashbox') return 'qabdh';
     if (modalTitle.includes('قبض')) return 'qabdh';
@@ -98,7 +84,6 @@ const UnifiedTransactionModal = () => {
     accountId: defaultToAccountId,
     categorySlug: null,
   });
-  // Preset kind locks — travel with the picker on swaps
   const [fromPresetKind, setFromPresetKind] = useState<PickerKind | null>(null);
   const [toPresetKind, setToPresetKind] = useState<PickerKind | null>(null);
   const [amount, setAmount] = useState<string>('');
@@ -167,19 +152,15 @@ const UnifiedTransactionModal = () => {
       const fKind = resolveKind(fType, resolvedFromId);
       const tKind = resolveKind(tType, resolvedToId);
 
-      // Determine initial direction from props: card types, or modal title parameter
       const modalTitle = (props?.title as string | undefined) || '';
       const initDir: Direction =
-        // settlement as FROM = money leaves settlement = صرف
         fType === 'settlement' ? 'sarf'
-        // settlement as TO = money enters settlement = قبض
         : tType === 'settlement' ? 'qabdh'
         : (tType === 'treasury' || tType === 'cashbox') ? 'qabdh'
         : modalTitle.includes('قبض') ? 'qabdh'
         : modalTitle.includes('صرف') ? 'sarf'
         : 'sarf';
 
-      // Preset kind = the resolved kind only when that side has a pre-selected account id
       const fPreset: PickerKind | null = resolvedFromId ? fKind : null;
       const tPreset: PickerKind | null = resolvedToId ? tKind : null;
 
@@ -195,18 +176,6 @@ const UnifiedTransactionModal = () => {
       setInitialized(true);
     }
   }, [isVisible, initialized, props, treasuryData]);
-
-  // ---- Direction toggle: swap from ↔ to (presets travel with their pickers) ----
-  const handleDirectionToggle = (newDir: Direction) => {
-    if (newDir === direction) return;
-    setDirection(newDir);
-    // Swap pickers
-    setFromPicker(toPicker);
-    setToPicker(fromPicker);
-    // Swap their associated preset locks
-    setFromPresetKind(toPresetKind);
-    setToPresetKind(fromPresetKind);
-  };
 
   // ---- Resolve account type from PickerValue ----
   const resolvePickerType = (pv: PickerValue): AccountType | null => {
@@ -256,7 +225,7 @@ const UnifiedTransactionModal = () => {
     }
   };
 
-  // ---- Save & New: submit, then immediately reopen fresh with same from/to ----
+  // ---- Save & New ----
   const handleSaveAndNew = async () => {
     if (!resolvedFromType || !resolvedToType || !fromPicker.accountId || !toPicker.accountId || !amount || !displayDescription.trim()) {
       return;
@@ -274,7 +243,6 @@ const UnifiedTransactionModal = () => {
       });
 
       success('تم التسجيل — جاهز للمعاملة التالية');
-      // Keep from/to pair, clear the rest for rapid repeat entry
       setAmount('');
       setDescription('');
       setAutoDescription('');
@@ -357,63 +325,19 @@ const UnifiedTransactionModal = () => {
     }
   };
 
-  // ---- Settlement / presetKind helpers ----
   const fromIsSettlement = fromPicker.kind === 'settlement';
-  const toIsSettlement = toPicker.kind === 'settlement';
 
-  const resolvePresetKind = (cardType: string | undefined, accountId: string): PickerKind | null => {
-    if (cardType === 'treasury' && accountId && treasuryData?.length) {
-      const acc = treasuryData.find((t) => String(t.id) === accountId);
-      if (acc?.sub_type === 'cashbox') return 'cashbox';
-      if (acc?.sub_type === 'bank') return 'bank';
-    }
-    return presetToPickerKind(cardType);
-  };
-
+  const modalTitleProp = (props?.title as string | undefined);
   const dirQabdhLabel = isSettlement ? 'تسوية قبض' : 'سند قبض';
   const dirSarfLabel = isSettlement ? 'تسوية صرف' : 'سند صرف';
+  const activeTitle = modalTitleProp || (direction === 'qabdh' ? dirQabdhLabel : dirSarfLabel);
 
-  // ---- Active modal title follows direction ----
-  const activeTitle = direction === 'qabdh' ? dirQabdhLabel : dirSarfLabel;
-
-  // ---- Direction tabs — welded into modal header ----
-  const directionTabs = (
-    <div dir="rtl" className="flex gap-0 -mb-px">
-      <button
-        type="button"
-        onClick={() => handleDirectionToggle('qabdh')}
-        className={`
-          cursor-pointer px-5 py-3 text-sm font-bold border-b-2 transition-all duration-150
-          ${direction === 'qabdh'
-            ? 'border-status-success-text text-status-success-text'
-            : 'border-transparent text-text-muted hover:text-text-primary hover:border-border-strong'}
-        `}
-      >
-        {dirQabdhLabel}
-      </button>
-      <button
-        type="button"
-        onClick={() => handleDirectionToggle('sarf')}
-        className={`
-          cursor-pointer px-5 py-3 text-sm font-bold border-b-2 transition-all duration-150
-          ${direction === 'sarf'
-            ? 'border-status-danger-text text-status-danger-text'
-            : 'border-transparent text-text-muted hover:text-text-primary hover:border-border-strong'}
-        `}
-      >
-        {dirSarfLabel}
-      </button>
-    </div>
-  );
-
-
-  // ---- Main render ----
   return (
     <BaseModal
       isOpen={isVisible}
       onClose={handleClose}
       title={activeTitle}
-      headerContent={directionTabs}
+      titleClassName="text-center w-full ms-6"
     >
       <div dir="rtl" className="space-y-5">
 
@@ -428,52 +352,48 @@ const UnifiedTransactionModal = () => {
             <span className="text-sm font-bold text-text-primary">الحسابات</span>
           </div>
 
-          {/* من حساب (right) → إلى حساب (left) — settlement side is empty, counterparty always in col 1 */}
-          <div className="grid grid-cols-2 gap-3">
-            {isSettlement ? (
-              <>
-                {/* Counterparty picker — always first column, no kind lock */}
-                <AccountPickerCard
-                  label={fromIsSettlement ? 'إلى حساب' : 'من حساب'}
-                  value={fromIsSettlement ? toPicker : fromPicker}
-                  onChange={fromIsSettlement ? setToPicker : setFromPicker}
-                  clients={clients}
-                  employees={employees}
-                  treasuryData={treasuryData ?? []}
-                  categoryMetadata={categoryMetadata ?? []}
-                  presetKind={null}
-                  isVisible={isVisible}
-                />
-                {/* Empty second column */}
-                <div />
-              </>
-            ) : (
-              <>
-                <AccountPickerCard
-                  label="من حساب"
-                  value={fromPicker}
-                  onChange={setFromPicker}
-                  clients={clients}
-                  employees={employees}
-                  treasuryData={treasuryData ?? []}
-                  categoryMetadata={categoryMetadata ?? []}
-                  presetKind={fromPresetKind}
-                  isVisible={isVisible}
-                />
-                <AccountPickerCard
-                  label="إلى حساب"
-                  value={toPicker}
-                  onChange={setToPicker}
-                  clients={clients}
-                  employees={employees}
-                  treasuryData={treasuryData ?? []}
-                  categoryMetadata={categoryMetadata ?? []}
-                  presetKind={toPresetKind}
-                  isVisible={isVisible}
-                />
-              </>
-            )}
-          </div>
+          {/* من حساب → إلى حساب — In settlement mode, target account picker spans full row */}
+          {isSettlement ? (
+            <div className="w-full">
+              <AccountPickerCard
+                label={fromIsSettlement ? 'إلى حساب' : 'من حساب'}
+                value={fromIsSettlement ? toPicker : fromPicker}
+                onChange={fromIsSettlement ? setToPicker : setFromPicker}
+                clients={clients}
+                employees={employees}
+                treasuryData={treasuryData ?? []}
+                categoryMetadata={categoryMetadata ?? []}
+                presetKind={null}
+                isVisible={isVisible}
+                isRowWide={true}
+              />
+            </div>
+          ) : (
+            <div className="grid grid-cols-2 gap-3">
+              <AccountPickerCard
+                label="من حساب"
+                value={fromPicker}
+                onChange={setFromPicker}
+                clients={clients}
+                employees={employees}
+                treasuryData={treasuryData ?? []}
+                categoryMetadata={categoryMetadata ?? []}
+                presetKind={fromPresetKind}
+                isVisible={isVisible}
+              />
+              <AccountPickerCard
+                label="إلى حساب"
+                value={toPicker}
+                onChange={setToPicker}
+                clients={clients}
+                employees={employees}
+                treasuryData={treasuryData ?? []}
+                categoryMetadata={categoryMetadata ?? []}
+                presetKind={toPresetKind}
+                isVisible={isVisible}
+              />
+            </div>
+          )}
         </section>
 
         <div className="border-t border-border" />
@@ -490,7 +410,7 @@ const UnifiedTransactionModal = () => {
           </div>
 
           <div className="space-y-3.5">
-            {/* Amount + Date — same row, half/half */}
+            {/* Amount + Date — same row */}
             <div className="grid grid-cols-2 gap-3">
               <div>
                 <label className="block text-xs font-bold text-text-secondary mb-1.5">
@@ -498,98 +418,55 @@ const UnifiedTransactionModal = () => {
                 </label>
                 <div className="relative">
                   <NumberInput
-                    name="amount"
-                    label=""
                     value={amount}
-                    onChange={(e) => setAmount(e.target.value)}
+                    onChange={(val: any) => setAmount(typeof val === 'string' ? val : val?.target?.value ?? '')}
                     placeholder="0.00"
-                    className="text-lg font-extrabold h-11 pl-14"
+                    min={0}
+                    step="0.01"
+                    className="w-full text-left font-mono font-bold"
                   />
-                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs font-bold text-text-secondary pointer-events-none">
-                    SAR
+                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs font-bold text-text-secondary/60">
+                    ر.س
                   </span>
                 </div>
               </div>
-              <DateInput
-                name="effectiveDate"
-                label="تاريخ التنفيذ"
-                value={effectiveDate}
-                onChange={(e) => setEffectiveDate(e.target.value)}
-              />
+
+              <div>
+                <label className="block text-xs font-bold text-text-secondary mb-1.5">
+                  التاريخ <span className="text-status-danger-text">*</span>
+                </label>
+                <DateInput
+                  name="effective_date"
+                  value={effectiveDate}
+                  onChange={(val: any) => setEffectiveDate(typeof val === 'string' ? val : val?.target?.value ?? '')}
+                  className="w-full"
+                />
+              </div>
             </div>
 
-            {/* Description — full width */}
+            {/* Description */}
             <div>
               <label className="block text-xs font-bold text-text-secondary mb-1.5">
-                الوصف <span className="text-status-danger-text">*</span>
+                البيان / الوصف <span className="text-status-danger-text">*</span>
               </label>
               <textarea
                 value={displayDescription}
                 onChange={handleDescriptionChange}
-                maxLength={255}
-                rows={4}
-                className="w-full rounded-lg border border-input bg-background px-3.5 py-2.5 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-primary-500/25 focus:border-primary-500 resize-none"
-                placeholder="مثال: دفعة راتب، تحويل عمولة..."
-                required
+                placeholder="اكتب بيان المعاملة هنا..."
+                rows={3}
+                className="w-full rounded-lg border border-border-default bg-background p-2.5 text-xs font-medium text-text-primary placeholder:text-text-secondary/40 focus:outline-none focus:ring-1 focus:ring-primary-500/20 focus:border-primary-500/40 transition-all resize-none"
               />
             </div>
           </div>
         </section>
 
-        {/* ============ LIVE SUMMARY STRIP ============ */}
-        {(fromName || toName || fromIsSettlement || toIsSettlement || amount) && (
-          <Card className="border-2 border-primary-500/20 bg-primary-500/[0.03] overflow-hidden">
-            <CardContent className="p-3.5">
-              <div className="flex items-center gap-3">
-                <div className="flex-1 min-w-0 text-right">
-                  <div className="text-[10px] font-bold text-text-secondary uppercase tracking-wide">
-                    {fromKindLabel || 'من'}
-                  </div>
-                  <div className="text-sm font-bold text-text-primary truncate">
-                    {fromIsSettlement ? 'تسوية' : (fromName || '—')}
-                  </div>
-                </div>
-                <ArrowLeftRight className="h-4 w-4 text-primary-500 shrink-0" />
-                <div className="flex-1 min-w-0 text-right">
-                  <div className="text-[10px] font-bold text-text-secondary uppercase tracking-wide">
-                    {toKindLabel || 'إلى'}
-                  </div>
-                  <div className="text-sm font-bold text-text-primary truncate">
-                    {toIsSettlement ? 'تسوية' : (toName || '—')}
-                  </div>
-                </div>
-                <div className="w-px h-9 bg-border shrink-0" />
-                <div className="text-right shrink-0">
-                  <div className="text-[10px] font-bold text-text-secondary uppercase tracking-wide">
-                    المبلغ
-                  </div>
-                  <div className="text-lg font-extrabold text-primary-500 whitespace-nowrap">
-                    {formatCurrency(parseFloat(amount) || 0)}
-                  </div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        )}
-
-        {/* Error message from submission */}
-        {createTransaction.isError && (
-          <div className="rounded-lg border border-status-danger-border bg-status-danger-bg p-3">
-            <p className="text-sm font-semibold text-status-danger-text text-right">
-              {(createTransaction.error as any)?.response?.data?.message ||
-                createTransaction.error?.message ||
-                'حدث خطأ أثناء تسجيل المعاملة.'}
-            </p>
-          </div>
-        )}
-
-        {/* ============ ACTIONS ============ */}
-        <div className="flex items-center justify-between gap-3 pt-3 border-t border-border">
+        {/* ============ FOOTER ============ */}
+        <div className="flex items-center justify-between pt-3 border-t border-border">
           <Button
             type="button"
-            variant="outline-info"
+            variant="outline-secondary"
+            size="sm"
             onClick={handleClose}
-            disabled={createTransaction.isPending}
           >
             إلغاء
           </Button>
@@ -597,30 +474,27 @@ const UnifiedTransactionModal = () => {
           <div className="flex items-center gap-2">
             <Button
               type="button"
-              variant="outline-info"
-              onClick={handleSaveAndNew}
+              variant="outline-primary"
+              size="sm"
               disabled={!canSubmit || createTransaction.isPending}
-              title="حفظ وتسجيل معاملة أخرى بنفس الحسابات"
+              onClick={handleSaveAndNew}
             >
-              <RotateCcw className="h-4 w-4" />
-              حفظ وجديد
+              حفظ وإضافة آخر
             </Button>
-
             <Button
               type="button"
               variant="primary"
-              onClick={handleSubmit}
+              size="sm"
               disabled={!canSubmit || createTransaction.isPending}
-              isLoading={createTransaction.isPending}
-              className="min-w-[140px]"
+              onClick={handleSubmit}
             >
               {createTransaction.isPending ? (
-                <>
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                  جارٍ الإرسال...
-                </>
+                <span className="flex items-center gap-2">
+                  <Loader2 size={14} className="animate-spin" />
+                  جاري الحفظ...
+                </span>
               ) : (
-                'تأكيد المعاملة'
+                'حفظ المعاملة'
               )}
             </Button>
           </div>

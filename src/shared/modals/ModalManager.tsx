@@ -1,14 +1,14 @@
+import React from 'react';
 import { useModalStore } from '@/shared/stores/modalStore';
-import BaseModal from '@/shared/ui/layout/BaseModal';
 import ClientForm from '@/features/clients/components/ClientForm';
 import ClientReportModal from '@/features/clients/components/ClientReportModal';
-import TaskModal from '@/features/tasks/components/creation/TaskModal'; // Import TaskModal
-import RequirementsModal from '@/features/tasks/components/details/RequirementsModal'; // Import RequirementsModal
-import ManualReceivableModal from '@/features/receivables/modals/ManualReceivableModal'; // Import ManualReceivableModal
+import TaskModal from '@/features/tasks/components/creation/TaskModal';
+import RequirementsModal from '@/features/tasks/components/details/RequirementsModal';
+import ManualReceivableModal from '@/features/receivables/modals/ManualReceivableModal';
 import ClientReceivablesModal from '@/features/receivables/modals/ClientReceivablesModal';
 import SelectReceivableForPaymentModal from '@/features/invoices/modals/SelectReceivableForPaymentModal';
-import TagFormModal from '@/features/tags/modals/TagFormModal'; // Import TagFormModal
-import TagManagementModal from '@/features/tags/modals/TagManagementModal'; // Import TagManagementModal
+import TagFormModal from '@/features/tags/modals/TagFormModal';
+import TagManagementModal from '@/features/tags/modals/TagManagementModal';
 
 import ReceivablePaymentModal from '@/features/receivables/modals/ReceivablePaymentModal';
 import PaymentHistoryModal from '@/features/receivables/modals/PaymentHistoryModal';
@@ -33,11 +33,7 @@ import EditEmployeePayoutModal from '@/features/employees/modals/EditEmployeePay
 import EditTaskExpenseModal from '@/features/tasks/modals/EditTaskExpenseModal';
 import TaskAmountEditModal from '@/features/tasks/modals/TaskAmountEditModal';
 
-
-import Button from '@/shared/ui/primitives/Button';
-import { useTranslation } from 'react-i18next';
 import ClientSearchModal from '@/shared/search/ClientSearchModal';
-import { useGetClientReceivables } from '@/features/receivables/api/receivableQueries';
 import ApplyCreditModal from '@/features/receivables/modals/ApplyCreditModal';
 import DeleteReceivableModal from '@/features/receivables/modals/DeleteReceivableModal';
 
@@ -62,542 +58,252 @@ import AccountLedgerModal from '@/features/financials/modals/AccountLedgerModal'
 import ManualTransactionModal from '@/features/financials/modals/ManualTransactionModal';
 import JournalEntryDetailsModal from '@/features/financials/modals/JournalEntryDetailsModal';
 
-// Missing modal imports - Step 1 fix
 import InvoiceEditModal from '@/features/invoices/modals/InvoiceEditModal';
 import InvoiceDeleteModal from '@/features/invoices/modals/InvoiceDeleteModal';
 import TransactionEditModal from '@/features/financials/modals/TransactionEditModal';
 import TransactionDeleteModal from '@/features/employees/modals/TransactionDeleteModal';
 import TaskRestoreModal from '@/features/tasks/modals/TaskRestoreModal';
-import TaskRestoreValidationWrapper from '@/features/tasks/modals/TaskRestoreValidationWrapper';
-import { useRestoreTask } from '@/features/tasks/api/taskQueries';
-import { useToast } from '@/shared/hooks/useToast';
 
-// EMPLOYEE ACCOUNT MANAGEMENT MODALS
-import EmployeeForm from '@/features/employees/forms/EmployeeForm';
-import EmployeeReportModal from '@/features/employees/modals/EmployeeReportModal';
+// EMPLOYEE MANAGEMENT MODALS
 import EmployeeCredentialsModal from '@/features/employees/modals/EmployeeCredentialsModal';
 import EmployeeDeletionPreviewModal from '@/features/employees/modals/EmployeeDeletionPreviewModal';
-
-// CASH BOX MODALS
-import { CreateCashBoxModal } from '@/features/financials/modals/CreateCashBoxModal';
-import UnifiedTransactionModal from '@/features/financials/components/UnifiedTransactionModal';
-import { RecordVoucherModal } from '@/features/financials/modals/RecordVoucherModal';
-import VoucherDetailsModal from '@/features/financials/modals/VoucherDetailsModal';
+import EmployeeReportModal from '@/features/employees/modals/EmployeeReportModal';
+import AccountReportModal from '@/features/financials/modals/AccountReportModal';
 
 // TREASURY MODALS
+import { CreateCashBoxModal } from '@/features/financials/modals/CreateCashBoxModal';
+import { ReassignCashBoxEmployeeModal } from '@/features/financials/modals/ReassignCashBoxEmployeeModal';
+import { RecordVoucherModal } from '@/features/financials/modals/RecordVoucherModal';
+
+import UnifiedTransactionModal from '@/features/financials/components/UnifiedTransactionModal';
 import TreasuryEditAccountModal from '@/features/financials/modals/TreasuryEditAccountModal';
 import TreasuryPermissionsModal from '@/features/financials/modals/TreasuryPermissionsModal';
 import CategoryManagerModal from '@/features/financials/modals/CategoryManagerModal';
-import { ReassignCashBoxEmployeeModal } from '@/features/financials/modals/ReassignCashBoxEmployeeModal';
 import FCAccountLedgerModal from '@/features/financials/modals/FCAccountLedgerModal';
-import AccountReportModal from '@/features/financials/modals/AccountReportModal';
-
-// Separate component for client receivables to avoid re-renders
-const ClientReceivablesFetcher = ({ client }: { client?: any }) => {
-  const { data: receivablesData, isLoading } = useGetClientReceivables(client?.id || 0);
-
-  return (
-    <ClientReceivablesModal
-      receivables={receivablesData?.statementItems || []}
-      isLoading={isLoading}
-      clientName={client?.name || ''}
-    />
-  );
-};
+import TreasuryAccountReportModal from '@/features/financials/modals/TreasuryAccountReportModal';
 
 const ModalManager = () => {
-  // Fix 1: Use individual selectors instead of selecting an object
-  const isOpen = useModalStore((state) => state.isOpen);
   const modalType = useModalStore((state) => state.modalType);
-  const props = useModalStore((state) => state.props);
+  const props: any = useModalStore((state) => state.props) || {};
+  const isOpen = useModalStore((state) => state.isOpen);
   const closeModal = useModalStore((state) => state.closeModal);
 
-  const { t } = useTranslation();
+  if (!isOpen || !modalType) return null;
 
-  if (!isOpen) return null;
-
-  // Memoize the modal content to prevent re-renders
-  const getModalContent = () => {
-    switch (modalType) {
-      case 'clientForm':
-        return (
-          <BaseModal
-            key="clientForm"
-            isOpen={isOpen}
-            onClose={closeModal}
-            title={props.clientToEdit ? t('clients.editClient') : t('clients.addNew')}
-          >
-            <ClientForm clientToEdit={props.clientToEdit} onSuccess={closeModal} />
-          </BaseModal>
-        );
-
-      case 'clientReport':
-        return (
-          <ClientReportModal
-            key="clientReport"
-            isOpen={isOpen}
-            onClose={closeModal}
-          />
-        );
-
-      case 'taskForm':
-        return <TaskModal key="taskForm" />;
-
-      case 'assignTask':
-        return <AssignTaskModal key="assignTask" />;
-
-      case 'approval':
-        return <ApprovalModal key="approval" />;
-
-      case 'requirements':
-        return <RequirementsModal key="requirements" />;
-
-      case 'manualReceivable':
-        return <ManualReceivableModal key="manualReceivable" />;
-      case 'taskDetails':
-        return <TaskDetailsModal key="taskDetails" />;
-
-      case 'taskSubtasks':
-        return <TaskSubtasksModal key="taskSubtasks" />;
-
-      case 'clientReceivables':
-        return (
-          <BaseModal
-            key="clientReceivables"
-            isOpen={isOpen}
-            onClose={closeModal}
-            title={`${t('receivables.title')} - ${props.client?.name || ''}`}
-          >
-            <ClientReceivablesFetcher client={props.client} />
-          </BaseModal>
-        );
-
-      case 'paymentForm':
-        return <ReceivablePaymentModal />;
-      case 'paymentHistory':
-        return <PaymentHistoryModal />;
-      case 'paymentEdit':
-        return <PaymentEditModal />;
-      case 'paymentDelete':
-        return <PaymentDeleteModal />;
-
-      case 'clientSearch':
-        return <ClientSearchModal />;
-
-      case 'tagForm':
-        return <TagFormModal />;
-
-      case 'tagManagement':
-        return <TagManagementModal />;
-
-      case 'selectReceivableForPayment':
-        return (
-          <SelectReceivableForPaymentModal
-            key="selectReceivableForPayment"
-            isOpen={isOpen}
-            onClose={closeModal}
-            clientId={props.clientId}
-          />
-        );
-
-      case 'taskCompletion':
-        return <TaskCompletionModal key="taskCompletion" />;
-
-      case 'amountDetails':
-        return <AmountDetailsModal key="amountDetails" />;
-
-      case 'subtasksModal':
-        return <SubtasksModal key="subtasksModal" />;
-
-      case 'taskSelection':
-        return <TaskSelectionModal key="taskSelection" />;
-
-      case 'recordCreditModal':
-        return <RecordCreditModal key="recordCreditModal" />;
-
-      case 'applyCreditModal':
-        return <ApplyCreditModal key="applyCreditModal" />;
-
-      case 'creditEdit':
-        return <CreditEditModal key="creditEdit" />;
-
-      case 'creditDelete':
-        return <CreditDeleteModal key="creditDelete" />;
-
-      case 'allocationEdit':
-        return <AllocationEditModal key="allocationEdit" />;
-
-      case 'allocationDelete':
-        return <AllocationDeleteModal key="allocationDelete" />;
-
-
-      case 'deleteReceivable':
-        return <DeleteReceivableModal key="deleteReceivable" />;
-
-      case 'urgentAlert':
-        return <UrgentAlertModal key="urgentAlert" />;
-
-      // NEW CONFLICT RESOLUTION MODALS
-      case 'prepaidConflict':
-        return (
-          <PrepaidConflictModal
-            key="prepaidConflict"
-            taskId={props.taskId}
-            conflictData={props.conflictData}
-            newPrepaidAmount={props.newPrepaidAmount}
-            onResolved={props.onResolved}
-          />
-        );
-
-      case 'taskAmountConflict':
-        return (
-          <TaskAmountConflictModal
-            key="taskAmountConflict"
-            taskId={props.taskId}
-            conflictData={props.conflictData}
-            newTaskAmount={props.newTaskAmount}
-            onResolved={props.onResolved}
-          />
-        );
-
-      case 'taskCancellation':
-        return (
-          <TaskCancellationModal
-            key="taskCancellation"
-            taskId={props.taskId}
-            analysisData={props.analysisData}
-            onResolved={props.onResolved}
-          />
-        );
-
-      case 'concurrentModification':
-        return (
-          <ConcurrentModificationModal
-            key="concurrentModification"
-            conflictData={props.conflictData}
-            onRetry={props.onRetry}
-            onCancel={props.onCancel}
-          />
-        );
-
-      case 'confirmDelete':
-        return (
-          <BaseModal
-            key="confirmDelete"
-            isOpen={isOpen}
-            onClose={closeModal}
-            title={props.title}
-          >
-            <p>{props.message}</p>
-            <div className="flex justify-end gap-2 mt-6">
-              <Button variant="secondary" onClick={closeModal}>{t('common.cancel')}</Button>
-              <Button variant="danger" onClick={() => { props.onConfirm(); closeModal(); }}>
-                {t('common.confirm')}
-              </Button>
-            </div>
-          </BaseModal>
-        );
-
-      case 'employeePayout':
-        return <EmployeePayoutModal key="employeePayout" />;
-
-      case 'employeeBorrow':
-        return <EmployeeBorrowModal key="employeeBorrow" />;
-
-      case 'editEmployeePayout':
-        return <EditEmployeePayoutModal key="editEmployeePayout" />;
-
-      case 'editTaskExpense':
-        return <EditTaskExpenseModal key="editTaskExpense" />;
-
-      case 'submitForReview':
-        return <SubmitForReviewModal key="submitForReview" />;
-
-      // NEW INVOICE/LEDGER MODALS
-      case 'invoiceForm':
-        return <InvoiceFormModal key="invoiceForm" />;
-
-      case 'recordPayment':
-        return <RecordPaymentModal key="recordPayment" />;
-
-      case 'recordBatchPayment':
-        return <RecordBatchPaymentModal key="recordBatchPayment" />;
-
-      case 'invoiceDetails':
-        return <InvoiceDetailsModal key="invoiceDetails" />;
-
-      case 'accountLedger':
-        return <AccountLedgerModal key="accountLedger" />;
-
-      // FINANCIAL CENTER MODALS
-      case 'manualTransaction':
-        return (
-          <ManualTransactionModal
-            key="manualTransaction"
-            isOpen={isOpen}
-            onClose={closeModal}
-            preselectedAccount={props?.preselectedAccount}
-            direction={props?.direction}
-            accountType={props?.accountType}
-          />
-        );
-
-      case 'createInvoice':
-        return <InvoiceFormModal key="createInvoice" />;
-
-      case 'journalEntryDetails':
-        return <JournalEntryDetailsModal key="journalEntryDetails" />;
-
-      case 'taskAmountEdit':
-        return (
-          <TaskAmountEditModal
-            key="taskAmountEdit"
-            isOpen={isOpen}
-            onClose={closeModal}
-            task={props.task}
-          />
-        );
-
-      // Step 1: Missing modal registrations
-      case 'invoiceEdit':
-        return (
-          <InvoiceEditModal
-            key="invoiceEdit"
-            isOpen={isOpen}
-            onClose={closeModal}
-            invoice={props.invoice}
-          />
-        );
-
-      case 'invoiceDelete':
-        return (
-          <InvoiceDeleteModal
-            key="invoiceDelete"
-            isOpen={isOpen}
-            onClose={closeModal}
-            invoice={props.invoice}
-          />
-        );
-
-      case 'transactionEdit':
-        return (
-          <TransactionEditModal
-            key="transactionEdit"
-            isOpen={isOpen}
-            onClose={closeModal}
-            transaction={props.transaction}
-          />
-        );
-
-      case 'transactionDelete':
-        return (
-          <TransactionDeleteModal
-            key="transactionDelete"
-            isOpen={isOpen}
-            onClose={closeModal}
-            transaction={props.transaction}
-          />
-        );
-
-      case 'taskRestore':
-        return (
-          <TaskRestoreModal
-            key="taskRestore"
-            isOpen={isOpen}
-            onClose={closeModal}
-            task={props.task}
-          />
-        );
-
-      case 'taskRestoreValidation':
-        return (
-          <TaskRestoreValidationWrapper
-            key="taskRestoreValidation"
-            taskId={Number(props.taskId)}
-            onClose={closeModal}
-          />
-        );
-
-      // EMPLOYEE ACCOUNT MANAGEMENT MODALS
-      case 'createEmployee':
-        return (
-          <BaseModal
-            key="createEmployee"
-            isOpen={isOpen}
-            onClose={closeModal}
-            title="إنشاء موظف جديد"
-          >
-            <EmployeeForm
-              onSubmit={props.onSubmit}
-              isLoading={props.isLoading}
-              onCancel={closeModal}
-              isAdmin={props.isAdmin}
-            />
-          </BaseModal>
-        );
-
-      case 'employeeReport':
-        return (
-          <EmployeeReportModal
-            key="employeeReport"
-            isOpen={isOpen}
-            onClose={closeModal}
-          />
-        );
-
-      case 'employeeCredentials':
-        return (
-          <EmployeeCredentialsModal
-            key="employeeCredentials"
-            isOpen={isOpen}
-            onClose={closeModal}
-            credentials={props.credentials}
-          />
-        );
-
-      case 'deleteEmployee':
-        return (
-          <BaseModal
-            key="deleteEmployee"
-            isOpen={isOpen}
-            onClose={closeModal}
-            title="حذف الموظف"
-          >
-            <div className="space-y-4" dir="rtl">
-              <p className="text-foreground">
-                هل أنت متأكد من حذف الموظف <strong>{props.employee?.display_name}</strong>؟
-              </p>
-              <p className="text-sm text-foreground/60">
-                لا يمكن التراجع عن هذا الإجراء.
-              </p>
-              <div className="flex items-center justify-start gap-3 pt-4 border-t border-border">
-                <Button
-                  variant="danger"
-                  onClick={() => {
-                    props.onConfirm?.();
-                    closeModal();
-                  }}
-                  isLoading={props.isLoading}
-                >
-                  حذف
-                </Button>
-                <Button
-                  variant="outline-info"
-                  onClick={closeModal}
-                >
-                  إلغاء
-                </Button>
-              </div>
-            </div>
-          </BaseModal>
-        );
-
-      case 'employeeDeletionPreview':
-        return (
-          <EmployeeDeletionPreviewModal
-            key="employeeDeletionPreview"
-            isOpen={isOpen}
-            onClose={closeModal}
-            employee={props.employee}
-            onConfirmDelete={props.onConfirmDelete}
-          />
-        );
-
-      case 'cashBoxForm':
-        return (
-          <CreateCashBoxModal
-            key="cashBoxForm"
-            isOpen={isOpen}
-            onClose={closeModal}
-          />
-        );
-
-      case 'recordVoucher':
-        return (
-          <RecordVoucherModal
-            key="recordVoucher"
-            isOpen={isOpen}
-            onClose={closeModal}
-            boxId={props.boxId}
-            defaultType={props.defaultType}
-          />
-        );
-
-      case 'voucherEdit':
-        return (
-          <RecordVoucherModal
-            key="voucherEdit"
-            isOpen={isOpen}
-            onClose={closeModal}
-            boxId={props.boxId}
-            voucherToEdit={props.voucher}
-            isTreasury={props.isTreasury}
-          />
-        );
-
-      case 'voucherDetails':
-        return (
-          <VoucherDetailsModal key="voucherDetails" />
-        );
-
-      // UNIFIED TRANSACTION MODAL (M5)
-      case 'treasuryCreateAccount':
-        return (
-          <CreateAccountModal
-            key="treasuryCreateAccount"
-            isOpen={isOpen}
-            onClose={closeModal}
-            initialSectionId={props.initialSectionId}
-            defaultSubType={props.defaultSubType}
-          />
-        );
-
-      case 'unifiedTransaction':
-        return (
-          <UnifiedTransactionModal
-            key="unifiedTransaction"
-          />
-        );
-
-      // TREASURY MODALS
-      case 'treasuryEditAccount':
-        return <TreasuryEditAccountModal key="treasuryEditAccount" />;
-
-      case 'treasuryPermissions':
-        return <TreasuryPermissionsModal key="treasuryPermissions" />;
-
-      case 'categoryManager':
-        return <CategoryManagerModal key="categoryManager" />;
-
-      case 'reassignCashBoxEmployee':
-        return (
-          <ReassignCashBoxEmployeeModal
-            key="reassignCashBoxEmployee"
-            isOpen={isOpen}
-            onClose={closeModal}
-            cashBox={props.cashBox}
-            onSuccess={props.onSuccess}
-          />
-        );
-
-      case 'fcAccountLedger':
-        return <FCAccountLedgerModal key="fcAccountLedger" />;
-
-      case 'accountReport':
-        return (
-          <AccountReportModal
-            key="accountReport"
-            isOpen={isOpen}
-            onClose={closeModal}
-          />
-        );
-
-      default:
-        return null;
-    }
+  const renderModal = (Component: any, extraProps: Record<string, any> = {}) => {
+    return React.createElement(Component, { key: modalType, ...props, ...extraProps });
   };
 
-  return getModalContent();
+  const currentType = modalType as string;
+
+  switch (currentType) {
+    case 'clientForm':
+      return renderModal(ClientForm, { clientToEdit: props.clientToEdit });
+
+    case 'clientReport':
+      return renderModal(ClientReportModal, { isOpen, onClose: closeModal });
+
+    case 'employeeReport':
+      return renderModal(EmployeeReportModal, { isOpen, onClose: closeModal });
+
+    case 'taskForm':
+      return renderModal(TaskModal);
+
+    case 'requirements':
+      return renderModal(RequirementsModal, { task: props.task });
+
+    case 'manualReceivable':
+      return renderModal(ManualReceivableModal, { client_id: props.client_id, client: props.client });
+
+    case 'clientReceivables':
+      return renderModal(ClientReceivablesModal, { client: props.client });
+
+    case 'paymentForm':
+      return renderModal(ReceivablePaymentModal, { receivable: props.receivable, isRequired: props.isRequired });
+
+    case 'paymentHistory':
+      return renderModal(PaymentHistoryModal, { receivable: props.receivable });
+
+    case 'clientSearch':
+      return renderModal(ClientSearchModal);
+
+    case 'tagForm':
+      return renderModal(TagFormModal, { tagToEdit: props.tagToEdit });
+
+    case 'tagManagement':
+      return renderModal(TagManagementModal);
+
+    case 'selectReceivableForPayment':
+      return renderModal(SelectReceivableForPaymentModal, { clientId: props.clientId, isOpen, onClose: closeModal });
+
+    case 'taskCompletion':
+      return renderModal(TaskCompletionModal, { task: props.task });
+
+    case 'amountDetails':
+      return renderModal(AmountDetailsModal, { task: props.task });
+
+    case 'subtasksModal':
+      return renderModal(SubtasksModal, { subtasks: props.subtasks, onSave: props.onSave });
+
+    case 'taskSelection':
+      return renderModal(TaskSelectionModal, { tagId: props.tagId });
+
+    case 'taskDetails':
+      return renderModal(TaskDetailsModal, { task: props.task });
+
+    case 'taskSubtasks':
+      return renderModal(TaskSubtasksModal, { task: props.task });
+
+    case 'recordCreditModal':
+      return renderModal(RecordCreditModal, { client: props.client });
+
+    case 'applyCreditModal':
+      return renderModal(ApplyCreditModal, { receivable: props.receivable, availableCredit: props.availableCredit, paymentToReplace: props.paymentToReplace });
+
+    case 'creditEdit':
+      return renderModal(CreditEditModal, { credit: props.credit, clientId: props.clientId });
+
+    case 'creditDelete':
+      return renderModal(CreditDeleteModal, { credit: props.credit, clientId: props.clientId });
+
+    case 'allocationEdit':
+      return renderModal(AllocationEditModal, { allocation: props.allocation, clientId: props.clientId });
+
+    case 'allocationDelete':
+      return renderModal(AllocationDeleteModal, { allocation: props.allocation, clientId: props.clientId });
+
+    case 'paymentEdit':
+      return renderModal(PaymentEditModal, { payment: props.payment, receivable: props.receivable });
+
+    case 'paymentDelete':
+      return renderModal(PaymentDeleteModal, { payment: props.payment });
+
+    case 'deleteReceivable':
+      return renderModal(DeleteReceivableModal, { receivable: props.receivable });
+
+    case 'urgentAlert':
+      return renderModal(UrgentAlertModal, { taskId: props.taskId });
+
+    case 'prepaidConflict':
+      return renderModal(PrepaidConflictModal, { taskId: props.taskId, conflictData: props.conflictData, newPrepaidAmount: props.newPrepaidAmount, onResolved: props.onResolved });
+
+    case 'taskAmountConflict':
+      return renderModal(TaskAmountConflictModal, { taskId: props.taskId, conflictData: props.conflictData, newTaskAmount: props.newTaskAmount, onResolved: props.onResolved });
+
+    case 'taskCancellation':
+      return renderModal(TaskCancellationModal, { taskId: props.taskId, analysisData: props.analysisData, onResolved: props.onResolved });
+
+    case 'concurrentModification':
+      return renderModal(ConcurrentModificationModal, { conflictData: props.conflictData, onRetry: props.onRetry, onCancel: props.onCancel });
+
+    case 'assignTask':
+      return renderModal(AssignTaskModal, { task: props.task });
+
+    case 'approval':
+      return renderModal(ApprovalModal, { task: props.task });
+
+    case 'employeePayout':
+      return renderModal(EmployeePayoutModal, { employee: props.employee, onSuccess: props.onSuccess });
+
+    case 'editEmployeePayout':
+      return renderModal(EditEmployeePayoutModal, { payout: props.payout, employee: props.employee, onSuccess: props.onSuccess });
+
+    case 'editTaskExpense':
+      return renderModal(EditTaskExpenseModal, { transaction: props.transaction, onSuccess: props.onSuccess });
+
+    case 'submitForReview':
+      return renderModal(SubmitForReviewModal, { task: props.task });
+
+    case 'employeeBorrow':
+      return renderModal(EmployeeBorrowModal, { employee: props.employee, onSuccess: props.onSuccess });
+
+    case 'invoiceForm':
+      return renderModal(InvoiceFormModal, { invoiceToEdit: props.invoiceToEdit, client: props.client, defaultItems: props.defaultItems });
+
+    case 'recordPayment':
+      return renderModal(RecordPaymentModal, { invoiceId: props.invoiceId, clientId: props.clientId, clientName: props.clientName });
+
+    case 'recordBatchPayment':
+      return renderModal(RecordBatchPaymentModal, { clientId: props.clientId, clientName: props.clientName, selectedInvoices: props.selectedInvoices });
+
+    case 'accountLedger':
+      return renderModal(AccountLedgerModal, { accountId: props.accountId, accountName: props.accountName });
+
+    case 'invoiceDetails':
+      return renderModal(InvoiceDetailsModal, { invoice: props.invoice });
+
+    case 'manualTransaction':
+      return renderModal(ManualTransactionModal, { isOpen, onClose: closeModal });
+
+    case 'journalEntryDetails':
+      return renderModal(JournalEntryDetailsModal, { journalEntryId: props.journalEntryId });
+
+    case 'taskRestore':
+      return renderModal(TaskRestoreModal, { task: props.task, isOpen, onClose: closeModal });
+
+    case 'taskAmountEdit':
+      return renderModal(TaskAmountEditModal, { task: props.task, onSuccess: props.onSuccess });
+
+    case 'invoiceEdit':
+      return renderModal(InvoiceEditModal, { invoice: props.invoice, isOpen, onClose: closeModal });
+
+    case 'invoiceDelete':
+      return renderModal(InvoiceDeleteModal, { invoice: props.invoice, isOpen, onClose: closeModal });
+
+    case 'transactionEdit':
+      return renderModal(TransactionEditModal, { transaction: props.transaction, onSuccess: props.onSuccess, isOpen, onClose: closeModal });
+
+    case 'transactionDelete':
+      return renderModal(TransactionDeleteModal, { transaction: props.transaction, onSuccess: props.onSuccess, isOpen, onClose: closeModal });
+
+    case 'createEmployee':
+      return null;
+
+    case 'employeeCredentials':
+      return renderModal(EmployeeCredentialsModal, { credentials: props.credentials, isOpen, onClose: closeModal });
+
+    case 'deleteEmployee':
+      return null;
+
+    case 'employeeDeletionPreview':
+      return renderModal(EmployeeDeletionPreviewModal, { preview: props.preview, employee: props.employee, onSuccess: props.onSuccess, isOpen, onClose: closeModal });
+
+    case 'cashBoxForm':
+      return renderModal(CreateCashBoxModal, { cashBoxToEdit: props.cashBoxToEdit });
+
+    case 'recordVoucher':
+      return renderModal(RecordVoucherModal, { cashBox: props.cashBox, defaultDirection: props.defaultDirection });
+
+    case 'treasuryCreateAccount':
+      return renderModal(CreateAccountModal, { isOpen, onClose: closeModal, initialSectionId: props.initialSectionId, defaultSubType: props.defaultSubType });
+
+    case 'unifiedTransaction':
+      return renderModal(UnifiedTransactionModal);
+
+    case 'treasuryEditAccount':
+      return renderModal(TreasuryEditAccountModal);
+
+    case 'treasuryPermissions':
+      return renderModal(TreasuryPermissionsModal);
+
+    case 'categoryManager':
+      return renderModal(CategoryManagerModal);
+
+    case 'reassignCashBoxEmployee':
+      return renderModal(ReassignCashBoxEmployeeModal, { isOpen, onClose: closeModal, cashBox: props.cashBox, onSuccess: props.onSuccess });
+
+    case 'fcAccountLedger':
+      return renderModal(FCAccountLedgerModal);
+
+    case 'accountReport':
+      return renderModal(AccountReportModal, { isOpen, onClose: closeModal });
+
+    case 'treasuryAccountReport':
+      return renderModal(TreasuryAccountReportModal, { isOpen, onClose: closeModal, subType: props.subType });
+
+    default:
+      return null;
+  }
 };
 
 export default ModalManager;

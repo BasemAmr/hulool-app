@@ -7,7 +7,7 @@ import ThemeToggleButton from '@/shared/ui/primitives/ThemeToggleButton';
 import {
   Home, ClipboardList, Users, LogOut,
   Search, ChevronDown, Plus, FileSpreadsheet,
-  Settings, TrendingUp, TrendingDown, UserCog
+  Settings, TrendingUp, TrendingDown, UserCog, Wallet, Landmark, CreditCard
 } from 'lucide-react';
 import { useGetMyTreasuryAccounts } from '@/features/financials/api/treasuryQueries';
 import { useModalStore } from '@/shared/stores/modalStore';
@@ -49,7 +49,6 @@ const NavHoverDropdown = ({
 
   const handleMouseLeave = (e: React.MouseEvent) => {
     if (isPinned) return;
-    // Don't trigger leave if mouse moved to another element inside our container (e.g. text span or menu)
     if (ref.current && e.relatedTarget && ref.current.contains(e.relatedTarget as Node)) {
       return;
     }
@@ -73,13 +72,11 @@ const NavHoverDropdown = ({
     }
   };
 
-  // Unpin on ANY click anywhere except trigger itself
   useEffect(() => {
     if (!isPinned) return;
 
     const handleAnyClick = (e: MouseEvent) => {
-      const triggerEl = ref.current?.firstElementChild;
-      if (triggerEl && triggerEl.contains(e.target as Node)) {
+      if (ref.current && ref.current.contains(e.target as Node)) {
         return;
       }
       setIsPinned(false);
@@ -108,14 +105,15 @@ const NavHoverDropdown = ({
           onMouseEnter={handleMouseEnter}
           onMouseLeave={handleMouseLeave}
           onClick={() => {
-            setIsPinned(false);
-            setIsHovered(false);
+            setTimeout(() => {
+              setIsPinned(false);
+              setIsHovered(false);
+            }, 0);
           }}
           className={`absolute ${
             align === 'start' ? 'left-0' : align === 'center' ? 'left-1/2 -translate-x-1/2' : 'right-0'
           } top-full pt-1 z-[9999]`}
         >
-          {/* Invisible hit-bridge bridging gap between trigger and menu */}
           <div className="absolute -top-3 left-0 right-0 h-4" />
 
           <div className={`rounded-md border border-border bg-card p-1 text-card-foreground shadow-xl outline-none ${className}`}>
@@ -185,6 +183,11 @@ const EmployeeNavbar = () => {
     navigate('/login', { replace: true });
   };
 
+  // Shared menuItem style with icon FIRST in JSX
+  const menuItemClass = "flex items-center justify-start gap-2.5 px-3 py-2 text-sm font-bold rounded hover:bg-accent hover:text-accent-foreground cursor-pointer transition-colors text-right";
+  const managementItemClass = "flex items-center justify-start gap-2.5 px-3 py-2 text-sm font-extrabold rounded text-primary hover:underline hover:bg-primary/10 cursor-pointer transition-colors text-right";
+  const listItemClass = "flex items-center justify-start px-3 py-2 text-sm font-bold rounded hover:bg-accent hover:text-accent-foreground cursor-pointer transition-colors text-right";
+
   return (
     <nav className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60" dir="rtl">
       <div className="flex h-16 items-center px-4 gap-4">
@@ -233,39 +236,25 @@ const EmployeeNavbar = () => {
                 </button>
               }
             >
-              <div
-                onClick={() => navigate('/employee/clients')}
-                className="flex items-center gap-2 w-full cursor-pointer flex-row-reverse justify-end px-3 py-2 text-primary hover:underline font-extrabold text-sm rounded hover:bg-primary/10 transition-colors"
-              >
-                <Users size={16} />
+              <div onClick={() => navigate('/employee/clients')} className={managementItemClass}>
+                <Users size={16} className="text-primary flex-shrink-0" />
                 <span>إدارة العملاء</span>
               </div>
-              <div
-                onClick={() => openModal('clientReport', {})}
-                className="cursor-pointer flex flex-row-reverse justify-end gap-2 px-3 py-2 text-sm font-bold rounded hover:bg-accent hover:text-accent-foreground transition-colors"
-              >
-                <FileSpreadsheet size={16} />
+              <div onClick={() => openModal('clientReport', {})} className={menuItemClass}>
+                <FileSpreadsheet size={16} className="text-foreground flex-shrink-0" />
                 <span>كشف حساب العميل</span>
               </div>
-              <div
-                onClick={() => openModal('clientForm', {})}
-                className="cursor-pointer flex flex-row-reverse justify-end gap-2 px-3 py-2 text-sm font-bold rounded hover:bg-accent hover:text-accent-foreground transition-colors"
-              >
-                <Plus size={16} />
+              <div onClick={() => openModal('clientForm', {})} className={menuItemClass}>
+                <Plus size={16} className="text-foreground flex-shrink-0" />
                 <span>إضافة عميل</span>
               </div>
-              <div
-                onClick={() => openModal('taskForm', {})}
-                className="cursor-pointer flex flex-row-reverse justify-end gap-2 px-3 py-2 text-sm font-bold rounded hover:bg-accent hover:text-accent-foreground transition-colors"
-              >
-                <Plus size={16} />
+              <div onClick={() => openModal('taskForm', {})} className={menuItemClass}>
+                <Plus size={16} className="text-foreground flex-shrink-0" />
                 <span>إضافة مهمة</span>
               </div>
               <div className="border-t border-border my-1" />
-              <div
-                onClick={() => navigate('/employee/receivables')}
-                className="flex items-center gap-2 w-full cursor-pointer flex-row-reverse justify-end px-3 py-2 text-sm font-bold rounded hover:bg-accent hover:text-accent-foreground transition-colors"
-              >
+              <div onClick={() => navigate('/employee/receivables')} className={menuItemClass}>
+                <CreditCard size={16} className="text-foreground flex-shrink-0" />
                 <span>مستحقات العملاء</span>
               </div>
             </NavHoverDropdown>
@@ -277,11 +266,17 @@ const EmployeeNavbar = () => {
                 <button className={`flex items-center gap-1.5 px-3 py-2 text-sm font-bold rounded-md transition-colors outline-none cursor-pointer ${
                   isCashboxActive ? 'bg-primary/10 text-primary' : 'text-text-secondary hover:bg-accent hover:text-accent-foreground'
                 }`}>
+                  <Wallet size={16} />
                   <span>الصناديق</span>
                   <ChevronDown size={14} className="text-text-secondary opacity-70" />
                 </button>
               }
             >
+              <div onClick={() => openModal('treasuryAccountReport', { subType: 'cashbox' })} className={menuItemClass}>
+                <FileSpreadsheet size={16} className="text-foreground flex-shrink-0" />
+                <span>كشف حساب الصندوق</span>
+              </div>
+              <div className="border-t border-border my-1" />
               {cashboxAccounts.length === 0 ? (
                 <div className="py-4 px-4 text-center text-xs text-text-secondary">
                   لا توجد صناديق
@@ -291,7 +286,7 @@ const EmployeeNavbar = () => {
                   <div
                     key={account.id}
                     onClick={() => navigate(`/employee/treasury-accounts/${account.id}`)}
-                    className="flex items-center justify-center w-full cursor-pointer px-4 py-2 text-sm font-bold rounded hover:bg-accent hover:text-accent-foreground transition-colors"
+                    className={listItemClass}
                   >
                     <span className="whitespace-nowrap">{account.name}</span>
                   </div>
@@ -306,11 +301,17 @@ const EmployeeNavbar = () => {
                 <button className={`flex items-center gap-1.5 px-3 py-2 text-sm font-bold rounded-md transition-colors outline-none cursor-pointer ${
                   isBankActive ? 'bg-primary/10 text-primary' : 'text-text-secondary hover:bg-accent hover:text-accent-foreground'
                 }`}>
+                  <Landmark size={16} />
                   <span>البنوك</span>
                   <ChevronDown size={14} className="text-text-secondary opacity-70" />
                 </button>
               }
             >
+              <div onClick={() => openModal('treasuryAccountReport', { subType: 'bank' })} className={menuItemClass}>
+                <FileSpreadsheet size={16} className="text-foreground flex-shrink-0" />
+                <span>كشف حساب البنك</span>
+              </div>
+              <div className="border-t border-border my-1" />
               {bankAccounts.length === 0 ? (
                 <div className="py-4 px-4 text-center text-xs text-text-secondary">
                   لا توجد حسابات بنكية
@@ -320,7 +321,7 @@ const EmployeeNavbar = () => {
                   <div
                     key={account.id}
                     onClick={() => navigate(`/employee/treasury-accounts/${account.id}`)}
-                    className="flex items-center justify-center w-full cursor-pointer px-4 py-2 text-sm font-bold rounded hover:bg-accent hover:text-accent-foreground transition-colors"
+                    className={listItemClass}
                   >
                     <span className="whitespace-nowrap">{account.name}</span>
                   </div>
@@ -328,7 +329,7 @@ const EmployeeNavbar = () => {
               )}
             </NavHoverDropdown>
 
-            {/* حسابات أخرى Dropdown (only shows if accounts exist) */}
+            {/* حسابات أخرى Dropdown */}
             {otherAccounts.length > 0 && (
               <NavHoverDropdown
                 className="min-w-48 text-right max-h-80 overflow-y-auto"
@@ -345,7 +346,7 @@ const EmployeeNavbar = () => {
                   <div
                     key={account.id}
                     onClick={() => navigate(`/employee/treasury-accounts/${account.id}`)}
-                    className="flex items-center justify-center w-full cursor-pointer px-4 py-2 text-sm font-bold rounded hover:bg-accent hover:text-accent-foreground transition-colors"
+                    className={listItemClass}
                   >
                     <span className="whitespace-nowrap">{account.name}</span>
                   </div>
@@ -364,18 +365,13 @@ const EmployeeNavbar = () => {
                 </button>
               }
             >
-              <div
-                onClick={() => openModal('taskForm', {})}
-                className="cursor-pointer flex flex-row-reverse justify-end gap-2 px-3 py-2 text-sm font-bold rounded hover:bg-accent hover:text-accent-foreground transition-colors"
-              >
-                <Plus size={16} />
+              <div onClick={() => openModal('taskForm', {})} className={menuItemClass}>
+                <Plus size={16} className="text-foreground flex-shrink-0" />
                 <span>إضافة مهمة</span>
               </div>
               <div className="border-t border-border my-1" />
-              <div
-                onClick={() => navigate('/employee/tasks')}
-                className="flex items-center gap-2 w-full cursor-pointer flex-row-reverse justify-end px-3 py-2 text-sm font-bold rounded hover:bg-accent hover:text-accent-foreground transition-colors"
-              >
+              <div onClick={() => navigate('/employee/tasks')} className={menuItemClass}>
+                <ClipboardList size={16} className="text-foreground flex-shrink-0" />
                 <span>صفحة المهام</span>
               </div>
             </NavHoverDropdown>
@@ -432,7 +428,7 @@ const EmployeeNavbar = () => {
                   }
                 >
                   <div
-                    className="flex items-center gap-2 text-xs font-bold text-status-success-text cursor-pointer hover:bg-status-success-bg/20 py-2 px-2 rounded"
+                    className="flex items-center justify-start gap-2 text-xs font-bold text-status-success-text cursor-pointer hover:bg-status-success-bg/20 py-2 px-2 rounded"
                     onClick={() =>
                       openModal('unifiedTransaction', {
                         title: 'تسوية قبض',
@@ -446,7 +442,7 @@ const EmployeeNavbar = () => {
                     <span>تسوية قبض</span>
                   </div>
                   <div
-                    className="flex items-center gap-2 text-xs font-bold text-status-danger-text cursor-pointer hover:bg-status-danger-bg/20 py-2 px-2 rounded"
+                    className="flex items-center justify-start gap-2 text-xs font-bold text-status-danger-text cursor-pointer hover:bg-status-danger-bg/20 py-2 px-2 rounded"
                     onClick={() =>
                       openModal('unifiedTransaction', {
                         title: 'تسوية صرف',

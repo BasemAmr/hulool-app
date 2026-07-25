@@ -1,7 +1,7 @@
 // AccountPickerCard.tsx
 
 import { useState, useMemo, useEffect } from 'react';
-import { User, Building2, Landmark, Wallet, Search, Lock, LayoutGrid } from 'lucide-react';
+import { User, Building2, Landmark, Wallet, Search, LayoutGrid } from 'lucide-react';
 import ClientSearchCombobox from '@/shared/search/ClientSearchCombobox';
 import type {
   UnifiedAccount,
@@ -15,9 +15,9 @@ import { useGetAccountsByType } from '@/features/financials/api/financialCenterQ
 // Types
 // ========================================
 
-type PickerKind = 'client' | 'employee' | 'cashbox' | 'bank' | 'settlement' | 'other';
+export type PickerKind = 'client' | 'employee' | 'cashbox' | 'bank' | 'settlement' | 'other';
 
-interface PickerValue {
+export interface PickerValue {
   kind: PickerKind | null;
   accountId: string;
   /** For treasury categories: sub_type (cashbox/bank) */
@@ -35,6 +35,7 @@ interface AccountPickerCardProps {
   /** Pre-set kind (locks the type selection) */
   presetKind?: PickerKind | null;
   isVisible: boolean;
+  isRowWide?: boolean;
 }
 
 // ========================================
@@ -81,6 +82,7 @@ export default function AccountPickerCard({
   categoryMetadata,
   presetKind,
   isVisible,
+  isRowWide = false,
 }: AccountPickerCardProps) {
   const [forceShowList, setForceShowList] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
@@ -98,85 +100,54 @@ export default function AccountPickerCard({
   const filteredOtherAccounts = useMemo(() => {
     if (value.kind !== 'other') return [];
     const q = searchQuery.trim().toLowerCase();
-    return treasuryData.filter((t) => {
-      const isSettlement =
-        (typeof t.metadata === 'object' && t.metadata !== null && (t.metadata as any).is_settlement) ||
-        (typeof t.metadata === 'object' && t.metadata !== null && (t.metadata as any).type === 'settlement');
-      const matchesKind = t.sub_type !== 'cashbox' && t.sub_type !== 'bank' && !isSettlement;
-      if (!matchesKind) return false;
-      if (q) {
-        return t.name.toLowerCase().includes(q);
+    const parseMeta = (meta: any) => {
+      if (!meta) return null;
+      if (typeof meta === 'string') {
+        try { return JSON.parse(meta); } catch { return null; }
       }
-      return true;
+      return meta;
+    };
+    return treasuryData.filter((t) => {
+      const meta = parseMeta(t.metadata);
+      const isSettlement =
+        meta?.is_settlement === true ||
+        meta?.is_settlement === 'true' ||
+        meta?.type === 'settlement';
+      const isCashOrBank = t.sub_type === 'cashbox' || t.sub_type === 'bank';
+      if (isCashOrBank || isSettlement) return false;
+      if (!q) return true;
+      return (
+        t.name.toLowerCase().includes(q) ||
+        (t.account_number && t.account_number.toLowerCase().includes(q))
+      );
     });
   }, [treasuryData, value.kind, searchQuery]);
 
-  // ---- Search through ALL treasury accounts (global search) ----
-  const searchResults = useMemo(() => {
-    if (!searchQuery.trim()) return [];
+  // ---- Employees data from query ----
+  const filteredEmployees = useMemo(() => {
+    if (value.kind !== 'employee') return [];
     const q = searchQuery.trim().toLowerCase();
-    return treasuryData.filter(
-      (t) =>
-        (t.coa_section || 'assets') === 'assets' &&
-        t.name.toLowerCase().includes(q),
-    );
-  }, [treasuryData, searchQuery]);
-
-  // ---- Fetch employees list if not already in employees prop ----
-  const { data: employeesRaw } = useGetAccountsByType('employee', {}, isVisible && value.kind === 'employee');
-  const employeeList = value.kind === 'employee' && employees.length === 0
-    ? (employeesRaw?.accounts ?? [])
-    : employees;
-
-  // ---- Check if an account is system default (locked) ----
-  const isSystemDefault = (accountId: string): boolean => {
-    const acc = treasuryData.find((t) => String(t.id) === accountId);
-    return acc?.is_system_default === 1 || acc?.is_system_default === ('1' as any);
-  };
-
-  // ---- Auto-resolve settlement account from treasury data ----
-  useEffect(() => {
-    if (value.kind === 'settlement' && !value.accountId && treasuryData.length > 0) {
-      const settlement = treasuryData.find(
-        (t) => typeof t.metadata === 'object' && t.metadata !== null && (t.metadata as any).is_settlement,
-      );
-      if (settlement) {
-        onChange({ ...value, accountId: String(settlement.id) });
-      }
-    }
-  }, [value.kind, treasuryData]);
-
-  // ---- Settlement account for display ----
-  const settlementAccount = useMemo(() => {
-    if (value.kind !== 'settlement') return null;
-    return treasuryData.find(
-      (t) => typeof t.metadata === 'object' && t.metadata !== null && (t.metadata as any).is_settlement,
-    ) ?? null;
-  }, [value.kind, treasuryData]);
+    if (!q) return employees;
+    return employees.filter((e) => e.name.toLowerCase().includes(q));
+  }, [employees, value.kind, searchQuery]);
 
   // ---- Quick action buttons ----
   const renderQuickActions = () => {
-    const isPreset = Boolean(presetKind);
-    // Only show settlement when it's the preset
+    // Only show settlement when it's the currently selected kind
     const actions = QUICK_ACTIONS.filter((a) => {
-      if (a.kind === 'settlement') return presetKind === 'settlement';
-      // When a preset exists, hide all other kinds entirely
-      if (isPreset) return a.kind === presetKind;
+      if (a.kind === 'settlement') return value.kind === 'settlement';
       return true;
     });
     return (
-      <div className="flex gap-1.5">
+      <div className={isRowWide ? "grid grid-cols-5 gap-2 w-full" : "flex gap-1.5 flex-wrap"}>
         {actions.map((action) => {
           const isActive = value.kind === action.kind;
           const colors = colorMap[action.kind];
-          const presetLocked = isPreset && presetKind === action.kind;
           return (
             <button
               key={action.kind}
               type="button"
-              disabled={presetLocked}
               onClick={() => {
-                if (presetLocked) return;
                 if (isActive) {
                   onChange({ kind: null, accountId: '', categorySlug: null });
                   setForceShowList(false);
@@ -185,12 +156,12 @@ export default function AccountPickerCard({
                 onChange({ kind: action.kind, accountId: '', categorySlug: action.categorySlug });
                 setForceShowList(false);
               }}
-              className={`flex items-center gap-1.5 rounded-lg border px-3 py-2 text-xs font-bold transition-all
+              className={`flex items-center justify-center gap-1.5 rounded-lg border px-3 py-2 text-xs font-bold transition-all text-center cursor-pointer
+                ${isRowWide ? 'w-full py-2.5 text-sm' : ''}
                 ${isActive
                   ? `border-2 ${colors.border} ${colors.activeBg} ${colors.text}`
                   : 'border-border-default text-text-secondary hover:border-border-strong hover:bg-muted/30'
                 }
-                ${presetLocked ? 'cursor-default' : ''}
               `}
             >
               <span>{action.label}</span>
@@ -218,265 +189,218 @@ export default function AccountPickerCard({
   // ---- Treasury account list (cashbox or bank) ----
   const renderTreasuryAccounts = () => {
     const selectedAccount = filteredTreasuryAccounts.find((a) => String(a.id) === value.accountId);
-    const showChip = Boolean(value.accountId) && Boolean(selectedAccount) && !forceShowList;
 
-    if (showChip && selectedAccount) {
-      const colors = colorMap[value.kind!];
+    if (selectedAccount && !forceShowList) {
+      const balance = typeof selectedAccount.balance === 'number' ? selectedAccount.balance : parseFloat(String(selectedAccount.balance ?? 0));
       return (
-        <div className={`flex items-center justify-between gap-2 rounded-lg border-2 ${colors.chipBorder} ${colors.chipBg} px-3 py-2`}>
-          <div className="flex min-w-0 items-center gap-2">
-            <Landmark size={14} className="shrink-0 opacity-60" />
-            <span className="truncate text-sm font-bold text-text-primary">{selectedAccount.name}</span>
-          </div>
-          <div className="flex shrink-0 items-center gap-2">
-            <span className="text-xs font-semibold text-text-secondary">
-              {formatCurrency(selectedAccount.balance)} SAR
+        <div className="flex items-center justify-between rounded-lg border border-border-strong bg-muted/40 p-2.5 text-xs font-bold">
+          <div className="flex items-center gap-2">
+            <span>{selectedAccount.name}</span>
+            <span className="text-text-secondary font-mono">
+              ({formatCurrency(balance)})
             </span>
-            <button
-              type="button"
-              onClick={() => setForceShowList(true)}
-              className="text-[11px] font-bold text-primary-500 hover:underline"
-            >
-              تغيير
-            </button>
           </div>
+          <button
+            type="button"
+            onClick={() => setForceShowList(true)}
+            className="text-primary hover:underline text-[11px] font-bold"
+          >
+            تغيير
+          </button>
         </div>
       );
     }
 
-    return filteredTreasuryAccounts.length === 0 ? (
-      <p className="py-2 text-xs text-text-secondary">
-        لا توجد حسابات متاحة
-      </p>
-    ) : (
-      <div className="max-h-40 space-y-1 overflow-y-auto">
+    if (filteredTreasuryAccounts.length === 0) {
+      return (
+        <div className="text-center py-3 text-xs text-text-secondary">
+          لا توجد حسابات متاحة
+        </div>
+      );
+    }
+
+    return (
+      <div className="space-y-1 max-h-36 overflow-y-auto pr-1">
         {filteredTreasuryAccounts.map((acc) => {
           const isSelected = String(acc.id) === value.accountId;
-          const locked = isSystemDefault(String(acc.id));
+          const balance = typeof acc.balance === 'number' ? acc.balance : parseFloat(String(acc.balance ?? 0));
           return (
-            <button
+            <div
               key={acc.id}
-              type="button"
-              disabled={locked}
               onClick={() => {
-                onChange({ ...value, accountId: isSelected ? '' : String(acc.id) });
+                onChange({ ...value, accountId: String(acc.id) });
                 setForceShowList(false);
               }}
-              className={`w-full rounded-lg border p-2 text-right transition-all
-                ${isSelected
-                  ? 'border-primary-500 bg-primary-500/5 ring-1 ring-primary-500'
-                  : locked
-                    ? 'border-border-default/50 bg-muted/20 opacity-60 cursor-not-allowed'
-                    : 'border-border-default hover:border-border-strong hover:bg-muted/20'
-                }`}
+              className={`flex items-center justify-between p-2 rounded-md border text-xs font-bold cursor-pointer transition-all ${
+                isSelected
+                  ? 'border-primary bg-primary/10 text-primary'
+                  : 'border-border-default hover:border-primary/40 text-text-secondary'
+              }`}
             >
-              <div className="flex items-center justify-between">
-                <div className="text-sm font-bold text-text-primary">{acc.name}</div>
-                {locked && <Lock size={11} className="text-text-secondary/50 shrink-0" />}
-              </div>
-              <div className="mt-0.5 text-xs font-semibold text-text-secondary">
-                {formatCurrency(acc.balance)} SAR
-              </div>
-            </button>
+              <span>{acc.name}</span>
+              <span className="text-text-secondary font-mono text-[11px]">
+                {formatCurrency(balance)}
+              </span>
+            </div>
           );
         })}
       </div>
     );
   };
 
-  // ---- "Other" treasury accounts list ----
-  const renderOtherAccounts = () => {
-    const selectedAccount = filteredOtherAccounts.find((a) => String(a.id) === value.accountId);
-    const showChip = Boolean(value.accountId) && Boolean(selectedAccount) && !forceShowList;
-
-    // COA section label helper
-    const coaLabel = (coa: string | null | undefined): string => {
-      const map: Record<string, string> = {
-        assets: 'أصول',
-        liabilities: 'خصوم',
-        equity: 'حقوق ملكية',
-        income: 'إيرادات',
-        expenses: 'مصروفات',
-      };
-      return coa ? (map[coa] ?? coa) : 'غير محدد';
-    };
-
-    if (showChip && selectedAccount) {
-      const colors = colorMap.other;
-      return (
-        <div className={`flex items-center justify-between gap-2 rounded-lg border-2 ${colors.chipBorder} ${colors.chipBg} px-3 py-2`}>
-          <div className="flex min-w-0 flex-col">
-            <span className="truncate text-sm font-bold text-text-primary">{selectedAccount.name}</span>
-            <span className="text-[10px] text-text-muted">{coaLabel(selectedAccount.coa_section)}</span>
-          </div>
-          <div className="flex shrink-0 items-center gap-2">
-            <span className="text-xs font-semibold text-text-secondary">
-              {formatCurrency(selectedAccount.balance)} SAR
-            </span>
-            <button
-              type="button"
-              onClick={() => setForceShowList(true)}
-              className="text-[11px] font-bold text-primary-500 hover:underline"
-            >
-              تغيير
-            </button>
-          </div>
-        </div>
-      );
-    }
-
-    return filteredOtherAccounts.length === 0 ? (
-      <p className="py-2 text-xs text-text-secondary">لا توجد حسابات أخرى</p>
-    ) : (
-      <div className="max-h-44 space-y-1 overflow-y-auto">
-        {filteredOtherAccounts.map((acc) => {
-          const isSelected = String(acc.id) === value.accountId;
-          return (
-            <button
-              key={acc.id}
-              type="button"
-              onClick={() => {
-                onChange({ ...value, accountId: isSelected ? '' : String(acc.id) });
-                setForceShowList(false);
-              }}
-              className={`w-full rounded-lg border p-2.5 text-right transition-all
-                ${isSelected
-                  ? 'border-primary-500 bg-primary-500/5 ring-1 ring-primary-500'
-                  : 'border-border-default hover:border-border-strong hover:bg-muted/20'
-                }`}
-            >
-              <div className="flex items-start justify-between gap-2">
-                <div className="flex flex-col min-w-0">
-                  <span className="text-sm font-bold text-text-primary truncate">{acc.name}</span>
-                  <span className="text-[10px] text-text-muted mt-0.5">{coaLabel(acc.coa_section)}</span>
-                </div>
-                <span className="text-xs font-semibold text-text-secondary shrink-0 mt-0.5">
-                  {formatCurrency(acc.balance)} SAR
-                </span>
-              </div>
-            </button>
-          );
-        })}
-      </div>
-    );
-  };
-
-  // ---- Search results (global) ----
-  const renderSearchResults = () => {
-    if (!searchQuery.trim()) return null;
-    return searchResults.length === 0 ? (
-      <p className="py-2 text-xs text-text-secondary">لا توجد نتائج</p>
-    ) : (
-      <div className="max-h-40 space-y-1 overflow-y-auto">
-        {searchResults.map((acc) => {
-          const isSelected = String(acc.id) === value.accountId;
-          const kind = acc.sub_type === 'cashbox' ? 'cashbox' : 'bank';
-          const colors = colorMap[kind];
-          return (
-            <button
-              key={acc.id}
-              type="button"
-              onClick={() => {
-                onChange({ kind, accountId: String(acc.id), categorySlug: acc.sub_type });
-                setSearchQuery('');
-                setForceShowList(false);
-              }}
-              className={`w-full rounded-lg border p-2 text-right transition-all
-                ${isSelected
-                  ? 'border-primary-500 bg-primary-500/5 ring-1 ring-primary-500'
-                  : 'border-border-default hover:border-border-strong hover:bg-muted/20'
-                }`}
-            >
-              <div className="flex items-center gap-2">
-                <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded ${colors.activeBg} ${colors.text}`}>
-                  {acc.sub_type === 'cashbox' ? 'صندوق' : 'بنك'}
-                </span>
-                <span className="text-sm font-bold text-text-primary">{acc.name}</span>
-              </div>
-              <div className="mt-0.5 text-xs font-semibold text-text-secondary">
-                {formatCurrency(acc.balance)} SAR
-              </div>
-            </button>
-          );
-        })}
-      </div>
-    );
-  };
-
-  // ---- Client picker ----
-  const renderClientPicker = () => (
+  // ---- Client combobox ----
+  const renderClientSelector = () => (
     <ClientSearchCombobox
       value={value.accountId}
-      onChange={(id) => onChange({ ...value, accountId: id })}
-      placeholder="ابحث عن عميل..."
+      onChange={(clientId) => {
+        onChange({ ...value, accountId: clientId || '' });
+      }}
+      placeholder="ابحث باسم العميل..."
     />
   );
 
-  // ---- Employee picker ----
-  const renderEmployeePicker = () => (
-    <select
-      value={value.accountId}
-      onChange={(e) => onChange({ ...value, accountId: e.target.value })}
-      className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-primary-500/25 focus:border-primary-500"
-      required
-    >
-      <option value="">اختر موظف...</option>
-      {employeeList.map((emp) => (
-        <option key={emp.id} value={emp.id}>
-          {emp.name} ({formatCurrency(emp.balance)} SAR)
-        </option>
-      ))}
-    </select>
-  );
+  // ---- Employee list ----
+  const renderEmployeeSelector = () => {
+    const selectedEmployee = employees.find((e) => String(e.id) === value.accountId);
 
-  // ---- Main account selection area ----
-  const renderAccountSelector = () => {
-    // If searching, show search results (unless selecting 'other', which filters its own list)
-    if (searchQuery.trim() && value.kind !== 'other') return renderSearchResults();
-    if (!value.kind) {
+    if (selectedEmployee && !forceShowList) {
       return (
-        <div className="flex min-h-[36px] items-center justify-center rounded-lg border border-dashed border-border-default bg-muted/10 px-3 py-2">
-          <p className="text-xs font-medium text-text-secondary">اختر نوع الحساب</p>
-        </div>
-      );
-    }
-    if (value.kind === 'client') return renderClientPicker();
-    if (value.kind === 'employee') return renderEmployeePicker();
-    if (value.kind === 'other') return renderOtherAccounts();
-    if (value.kind === 'settlement') {
-      if (!settlementAccount) {
-        return (
-          <p className="py-2 text-center text-xs text-text-secondary">جارٍ تحميل حساب التسوية...</p>
-        );
-      }
-      const colors = colorMap.settlement;
-      return (
-        <div className={`flex items-center justify-between gap-2 rounded-lg border-2 ${colors.chipBorder} ${colors.chipBg} px-3 py-2`}>
-          <div className="flex min-w-0 items-center gap-2">
-            <Lock size={14} className={`shrink-0 ${colors.text}`} />
-            <span className="truncate text-sm font-bold text-text-primary">{settlementAccount.name}</span>
+        <div className="flex items-center justify-between rounded-lg border border-border-strong bg-muted/40 p-2.5 text-xs font-bold">
+          <div className="flex items-center gap-2">
+            <User size={14} className="text-status-danger-text" />
+            <span>{selectedEmployee.name}</span>
           </div>
-          <span className="shrink-0 text-xs font-semibold text-text-secondary">
-            {formatCurrency(settlementAccount.balance)} SAR
-          </span>
+          <button
+            type="button"
+            onClick={() => setForceShowList(true)}
+            className="text-primary hover:underline text-[11px] font-bold"
+          >
+            تغيير
+          </button>
         </div>
       );
     }
-    return renderTreasuryAccounts();
+
+    return (
+      <div className="space-y-1.5">
+        {renderSearch()}
+        <div className="space-y-1 max-h-36 overflow-y-auto pr-1">
+          {filteredEmployees.length === 0 ? (
+            <div className="text-center py-3 text-xs text-text-secondary">
+              لا يطابق أي موظف
+            </div>
+          ) : (
+            filteredEmployees.map((emp) => {
+              const isSelected = String(emp.id) === value.accountId;
+              return (
+                <div
+                  key={emp.id}
+                  onClick={() => {
+                    onChange({ ...value, accountId: String(emp.id) });
+                    setForceShowList(false);
+                  }}
+                  className={`flex items-center justify-between p-2 rounded-md border text-xs font-bold cursor-pointer transition-all ${
+                    isSelected
+                      ? 'border-status-danger-border bg-status-danger-bg text-status-danger-text'
+                      : 'border-border-default hover:border-status-danger-border/40 text-text-secondary'
+                  }`}
+                >
+                  <div className="flex items-center gap-1.5">
+                    <User size={13} />
+                    <span>{emp.name}</span>
+                  </div>
+                </div>
+              );
+            })
+          )}
+        </div>
+      </div>
+    );
   };
 
-  // ---- Main render ----
-  return (
-    <div className="space-y-2">
-      <div className="mb-1 flex items-center gap-2">
-        <div className="h-5 w-1 rounded-full bg-primary-500" />
-        <span className="text-sm font-bold text-text-primary">{label}</span>
+  // ---- Other accounts list ----
+  const renderOtherAccountsSelector = () => {
+    const selectedAccount = treasuryData.find((t) => String(t.id) === value.accountId);
+
+    if (selectedAccount && !forceShowList) {
+      const balance = typeof selectedAccount.balance === 'number' ? selectedAccount.balance : parseFloat(String(selectedAccount.balance ?? 0));
+      return (
+        <div className="flex items-center justify-between rounded-lg border border-border-strong bg-muted/40 p-2.5 text-xs font-bold">
+          <div className="flex items-center gap-2">
+            <span>{selectedAccount.name}</span>
+            <span className="text-text-secondary font-mono text-[11px]">
+              ({formatCurrency(balance)})
+            </span>
+          </div>
+          <button
+            type="button"
+            onClick={() => setForceShowList(true)}
+            className="text-primary hover:underline text-[11px] font-bold"
+          >
+            تغيير
+          </button>
+        </div>
+      );
+    }
+
+    return (
+      <div className="space-y-1.5">
+        {renderSearch()}
+        <div className="space-y-1 max-h-36 overflow-y-auto pr-1">
+          {filteredOtherAccounts.length === 0 ? (
+            <div className="text-center py-3 text-xs text-text-secondary">
+              لا توجد حسابات أخرى
+            </div>
+          ) : (
+            filteredOtherAccounts.map((acc) => {
+              const isSelected = String(acc.id) === value.accountId;
+              const balance = typeof acc.balance === 'number' ? acc.balance : parseFloat(String(acc.balance ?? 0));
+              return (
+                <div
+                  key={acc.id}
+                  onClick={() => {
+                    onChange({ ...value, accountId: String(acc.id) });
+                    setForceShowList(false);
+                  }}
+                  className={`flex items-center justify-between p-2 rounded-md border text-xs font-bold cursor-pointer transition-all ${
+                    isSelected
+                      ? 'border-primary bg-primary/10 text-primary'
+                      : 'border-border-default hover:border-primary/40 text-text-secondary'
+                  }`}
+                >
+                  <span>{acc.name}</span>
+                  <span className="text-text-secondary font-mono text-[11px]">
+                    {formatCurrency(balance)}
+                  </span>
+                </div>
+              );
+            })
+          )}
+        </div>
       </div>
+    );
+  };
+
+  // ---- Main Card Render ----
+  return (
+    <div className="rounded-xl border border-border-default bg-card p-3.5 space-y-3">
+      {/* Label header */}
+      <div className="flex items-center justify-between">
+        <span className="text-xs font-bold text-text-secondary">{label}</span>
+      </div>
+
+      {/* Quick Action buttons */}
       {renderQuickActions()}
-      {((value.kind === 'other' && !value.accountId) || (value.kind === 'other' && forceShowList)) && renderSearch()}
-      <div className="min-h-[36px]">{renderAccountSelector()}</div>
+
+      {/* Account selection list */}
+      {value.kind && (
+        <div className="pt-1">
+          {value.kind === 'client' && renderClientSelector()}
+          {value.kind === 'employee' && renderEmployeeSelector()}
+          {(value.kind === 'cashbox' || value.kind === 'bank') && renderTreasuryAccounts()}
+          {value.kind === 'other' && renderOtherAccountsSelector()}
+        </div>
+      )}
     </div>
   );
 }
-
-export type { PickerValue, PickerKind };

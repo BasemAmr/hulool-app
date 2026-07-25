@@ -8,7 +8,7 @@ import ThemeToggleButton from '@/shared/ui/primitives/ThemeToggleButton';
 import { 
   LayoutDashboard, NotebookText, Users, Settings, 
   Building, Calculator, Home, Briefcase, Plus, Receipt, 
-  CreditCard, AlertTriangle, UserCog, Wallet,
+  CreditCard, AlertTriangle, UserCog, Wallet, Landmark,
   Search, ChevronDown, Loader, TrendingUp, TrendingDown, FolderTree, FileSpreadsheet, LogOut
 } from 'lucide-react';
 import { useModalStore } from '@/shared/stores/modalStore';
@@ -53,7 +53,6 @@ const NavHoverDropdown = ({
 
   const handleMouseLeave = (e: React.MouseEvent) => {
     if (isPinned) return;
-    // Don't trigger leave if mouse moved to another element inside our container (e.g. text span or menu)
     if (ref.current && e.relatedTarget && ref.current.contains(e.relatedTarget as Node)) {
       return;
     }
@@ -77,13 +76,11 @@ const NavHoverDropdown = ({
     }
   };
 
-  // Unpin on ANY click anywhere except trigger itself
   useEffect(() => {
     if (!isPinned) return;
 
     const handleAnyClick = (e: MouseEvent) => {
-      const triggerEl = ref.current?.firstElementChild;
-      if (triggerEl && triggerEl.contains(e.target as Node)) {
+      if (ref.current && ref.current.contains(e.target as Node)) {
         return;
       }
       setIsPinned(false);
@@ -112,14 +109,15 @@ const NavHoverDropdown = ({
           onMouseEnter={handleMouseEnter}
           onMouseLeave={handleMouseLeave}
           onClick={() => {
-            setIsPinned(false);
-            setIsHovered(false);
+            setTimeout(() => {
+              setIsPinned(false);
+              setIsHovered(false);
+            }, 0);
           }}
           className={`absolute ${
             align === 'start' ? 'left-0' : align === 'center' ? 'left-1/2 -translate-x-1/2' : 'right-0'
           } top-full pt-1 z-[9999]`}
         >
-          {/* Invisible hit-bridge bridging gap between trigger and menu */}
           <div className="absolute -top-3 left-0 right-0 h-4" />
 
           <div className={`rounded-md border border-border bg-card p-1 text-card-foreground shadow-xl outline-none ${className}`}>
@@ -170,7 +168,7 @@ const Navbar = () => {
   const isBankActive = activeAccountId ? bankAccounts.some((a: any) => String(a.id) === activeAccountId) : false;
 
   const taskNavigationItems = [
-    { path: '/tasks', icon: NotebookText, label: 'الكل', isMainTasks: true },
+    { path: '/tasks', icon: NotebookText, label: 'الكل' },
     { path: '/tasks?type=Government', icon: Building, label: 'حكومية' },
     { path: '/tasks?type=Accounting', icon: Calculator, label: 'محاسبية' },
     { path: '/tasks?type=RealEstate', icon: Home, label: 'عقارية' },
@@ -179,6 +177,11 @@ const Navbar = () => {
 
   const isFinancialActive = location.pathname.startsWith('/financial-center') && !isCashboxActive && !isBankActive;
   const isTasksActive = location.pathname.startsWith('/tasks');
+
+  // Shared menuItem style with icon FIRST in JSX (renders on the RIGHT edge in RTL)
+  const menuItemClass = "flex items-center justify-start gap-2.5 px-3 py-2 text-sm font-bold rounded hover:bg-accent hover:text-accent-foreground cursor-pointer transition-colors text-right";
+  const managementItemClass = "flex items-center justify-start gap-2.5 px-3 py-2 text-sm font-extrabold rounded text-primary hover:underline hover:bg-primary/10 cursor-pointer transition-colors text-right";
+  const listItemClass = "flex items-center justify-start px-3 py-2 text-sm font-bold rounded hover:bg-accent hover:text-accent-foreground cursor-pointer transition-colors text-right";
 
   return (
     <nav className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60" dir="rtl">
@@ -217,39 +220,25 @@ const Navbar = () => {
               </button>
             }
           >
-            <div
-              onClick={() => navigate('/clients')}
-              className="flex items-center gap-2 w-full cursor-pointer flex-row-reverse justify-end px-3 py-2 text-primary hover:underline font-extrabold text-sm rounded hover:bg-primary/10 transition-colors"
-            >
-              <Users size={16} />
+            <div onClick={() => navigate('/clients')} className={managementItemClass}>
+              <Users size={16} className="text-primary flex-shrink-0" />
               <span>إدارة العملاء</span>
             </div>
-            <div
-              onClick={() => openModal('clientReport', {})}
-              className="cursor-pointer flex flex-row-reverse justify-end gap-2 px-3 py-2 text-sm font-bold rounded hover:bg-accent hover:text-accent-foreground transition-colors"
-            >
-              <FileSpreadsheet size={16} />
+            <div onClick={() => openModal('clientReport', {})} className={menuItemClass}>
+              <FileSpreadsheet size={16} className="text-foreground flex-shrink-0" />
               <span>كشف حساب العميل</span>
             </div>
-            <div
-              onClick={() => openModal('clientForm', {})}
-              className="cursor-pointer flex flex-row-reverse justify-end gap-2 px-3 py-2 text-sm font-bold rounded hover:bg-accent hover:text-accent-foreground transition-colors"
-            >
-              <Plus size={16} />
+            <div onClick={() => openModal('clientForm', {})} className={menuItemClass}>
+              <Plus size={16} className="text-foreground flex-shrink-0" />
               <span>إضافة عميل</span>
             </div>
-            <div
-              onClick={() => openModal('taskForm', {})}
-              className="cursor-pointer flex flex-row-reverse justify-end gap-2 px-3 py-2 text-sm font-bold rounded hover:bg-accent hover:text-accent-foreground transition-colors"
-            >
-              <Plus size={16} />
+            <div onClick={() => openModal('taskForm', {})} className={menuItemClass}>
+              <Plus size={16} className="text-foreground flex-shrink-0" />
               <span>إضافة مهمة</span>
             </div>
             <div className="border-t border-border my-1" />
-            <div
-              onClick={() => navigate('/receivables')}
-              className="flex items-center gap-2 w-full cursor-pointer flex-row-reverse justify-end px-3 py-2 text-sm font-bold rounded hover:bg-accent hover:text-accent-foreground transition-colors"
-            >
+            <div onClick={() => navigate('/receivables')} className={menuItemClass}>
+              <CreditCard size={16} className="text-foreground flex-shrink-0" />
               <span>مستحقات العملاء</span>
             </div>
           </NavHoverDropdown>
@@ -265,25 +254,16 @@ const Navbar = () => {
               </button>
             }
           >
-            <div
-              onClick={() => navigate('/settings')}
-              className="flex items-center gap-2 w-full cursor-pointer flex-row-reverse justify-end px-3 py-2 text-primary hover:underline font-extrabold text-sm rounded hover:bg-primary/10 transition-colors"
-            >
-              <UserCog size={16} />
+            <div onClick={() => navigate('/settings')} className={managementItemClass}>
+              <UserCog size={16} className="text-primary flex-shrink-0" />
               <span>إدارة الموظفين</span>
             </div>
-            <div
-              onClick={() => openModal('employeeReport', {})}
-              className="cursor-pointer flex flex-row-reverse justify-end gap-2 px-3 py-2 text-sm font-bold rounded hover:bg-accent hover:text-accent-foreground transition-colors"
-            >
-              <FileSpreadsheet size={16} />
-              <span>تقرير الموظفين</span>
+            <div onClick={() => openModal('employeeReport', {})} className={menuItemClass}>
+              <FileSpreadsheet size={16} className="text-foreground flex-shrink-0" />
+              <span>كشف حساب الموظف</span>
             </div>
-            <div
-              onClick={() => openModal('createEmployee', { isAdmin: canManageEmployeeType })}
-              className="cursor-pointer flex flex-row-reverse justify-end gap-2 px-3 py-2 text-sm font-bold rounded hover:bg-accent hover:text-accent-foreground transition-colors"
-            >
-              <Plus size={16} />
+            <div onClick={() => openModal('createEmployee', { isAdmin: canManageEmployeeType })} className={menuItemClass}>
+              <Plus size={16} className="text-foreground flex-shrink-0" />
               <span>إضافة موظف</span>
             </div>
             <div className="border-t border-border my-1" />
@@ -301,7 +281,7 @@ const Navbar = () => {
                 <div
                   key={employee.id}
                   onClick={() => navigate(`/employees/${employee.id}/dashboard`)}
-                  className="flex font-bold items-center gap-2 w-full cursor-pointer flex-row-reverse justify-end px-3 py-2 text-sm rounded hover:bg-accent hover:text-accent-foreground transition-colors"
+                  className={listItemClass}
                 >
                   <span>{employee.display_name}</span>
                 </div>
@@ -314,22 +294,22 @@ const Navbar = () => {
             className="min-w-48 text-right max-h-80 overflow-y-auto"
             trigger={
               <button className={`flex items-center gap-2 px-3 py-2 text-sm font-bold rounded-md transition-colors outline-none cursor-pointer ${isCashboxActive ? 'bg-primary/10 text-primary' : 'text-text-secondary hover:bg-accent hover:text-accent-foreground'}`}>
+                <Wallet size={16} />
                 <span>الصندوق</span>
                 <ChevronDown size={14} className="text-text-secondary" />
               </button>
             }
           >
-            <div
-              onClick={() => navigate('/financial-center/treasury-accounts?section=assets&category=cashbox')}
-              className="flex items-center justify-center w-full cursor-pointer px-4 py-2 text-primary hover:underline font-extrabold text-sm border-b border-border/40 rounded hover:bg-primary/10 transition-colors"
-            >
+            <div onClick={() => navigate('/financial-center/treasury-accounts?section=assets&category=cashbox')} className={managementItemClass}>
+              <Wallet size={16} className="text-primary flex-shrink-0" />
               <span>إدارة الصناديق</span>
             </div>
-            <div
-              onClick={() => openModal('treasuryCreateAccount', { initialSectionId: 'assets', defaultSubType: 'cashbox' })}
-              className="cursor-pointer flex flex-row-reverse justify-end gap-2 px-3 py-2 text-sm font-bold rounded hover:bg-accent hover:text-accent-foreground transition-colors"
-            >
-              <Plus size={16} />
+            <div onClick={() => openModal('treasuryAccountReport', { subType: 'cashbox' })} className={menuItemClass}>
+              <FileSpreadsheet size={16} className="text-foreground flex-shrink-0" />
+              <span>كشف حساب الصندوق</span>
+            </div>
+            <div onClick={() => openModal('treasuryCreateAccount', { initialSectionId: 'assets', defaultSubType: 'cashbox' })} className={menuItemClass}>
+              <Plus size={16} className="text-foreground flex-shrink-0" />
               <span>إضافة صندوق</span>
             </div>
             <div className="border-t border-border my-1" />
@@ -342,7 +322,7 @@ const Navbar = () => {
                 <div
                   key={account.id}
                   onClick={() => navigate(`/financial-center/treasury-accounts/${account.id}`)}
-                  className="flex items-center justify-center w-full cursor-pointer px-4 py-2 text-sm font-bold rounded hover:bg-accent hover:text-accent-foreground transition-colors"
+                  className={listItemClass}
                 >
                   <span className="whitespace-nowrap">{account.name}</span>
                 </div>
@@ -355,22 +335,22 @@ const Navbar = () => {
             className="min-w-48 text-right max-h-80 overflow-y-auto"
             trigger={
               <button className={`flex items-center gap-2 px-3 py-2 text-sm font-bold rounded-md transition-colors outline-none cursor-pointer ${isBankActive ? 'bg-primary/10 text-primary' : 'text-text-secondary hover:bg-accent hover:text-accent-foreground'}`}>
+                <Landmark size={16} />
                 <span>البنك</span>
                 <ChevronDown size={14} className="text-text-secondary" />
               </button>
             }
           >
-            <div
-              onClick={() => navigate('/financial-center/treasury-accounts?section=assets&category=bank')}
-              className="flex items-center justify-center w-full cursor-pointer px-4 py-2 text-primary hover:underline font-extrabold text-sm border-b border-border/40 rounded hover:bg-primary/10 transition-colors"
-            >
+            <div onClick={() => navigate('/financial-center/treasury-accounts?section=assets&category=bank')} className={managementItemClass}>
+              <Landmark size={16} className="text-primary flex-shrink-0" />
               <span>إدارة البنوك</span>
             </div>
-            <div
-              onClick={() => openModal('treasuryCreateAccount', { initialSectionId: 'assets', defaultSubType: 'bank' })}
-              className="cursor-pointer flex flex-row-reverse justify-end gap-2 px-3 py-2 text-sm font-bold rounded hover:bg-accent hover:text-accent-foreground transition-colors"
-            >
-              <Plus size={16} />
+            <div onClick={() => openModal('treasuryAccountReport', { subType: 'bank' })} className={menuItemClass}>
+              <FileSpreadsheet size={16} className="text-foreground flex-shrink-0" />
+              <span>كشف حساب البنك</span>
+            </div>
+            <div onClick={() => openModal('treasuryCreateAccount', { initialSectionId: 'assets', defaultSubType: 'bank' })} className={menuItemClass}>
+              <Plus size={16} className="text-foreground flex-shrink-0" />
               <span>إضافة حساب بنكي</span>
             </div>
             <div className="border-t border-border my-1" />
@@ -383,7 +363,7 @@ const Navbar = () => {
                 <div
                   key={account.id}
                   onClick={() => navigate(`/financial-center/treasury-accounts/${account.id}`)}
-                  className="flex items-center justify-center w-full cursor-pointer px-4 py-2 text-sm font-bold rounded hover:bg-accent hover:text-accent-foreground transition-colors"
+                  className={listItemClass}
                 >
                   <span className="whitespace-nowrap">{account.name}</span>
                 </div>
@@ -402,24 +382,21 @@ const Navbar = () => {
               </button>
             }
           >
-            <div onClick={() => openModal('clientReport', {})} className="cursor-pointer flex flex-row-reverse justify-end gap-2 px-3 py-2 text-sm font-bold rounded hover:bg-accent hover:text-accent-foreground transition-colors">
-              <FileSpreadsheet size={16} />
+            <div onClick={() => openModal('clientReport', {})} className={menuItemClass}>
+              <FileSpreadsheet size={16} className="text-foreground flex-shrink-0" />
               <span>كشف حساب العميل</span>
             </div>
-            <div onClick={() => openModal('employeeReport', {})} className="cursor-pointer flex flex-row-reverse justify-end gap-2 px-3 py-2 text-sm font-bold rounded hover:bg-accent hover:text-accent-foreground transition-colors">
-              <FileSpreadsheet size={16} />
-              <span>تقرير الموظفين</span>
+            <div onClick={() => openModal('employeeReport', {})} className={menuItemClass}>
+              <FileSpreadsheet size={16} className="text-foreground flex-shrink-0" />
+              <span>كشف حساب الموظف</span>
             </div>
-            <div onClick={() => openModal('accountReport', {})} className="cursor-pointer flex flex-row-reverse justify-end gap-2 px-3 py-2 text-sm font-bold rounded hover:bg-accent hover:text-accent-foreground transition-colors">
-              <FileSpreadsheet size={16} />
+            <div onClick={() => openModal('accountReport', {})} className={menuItemClass}>
+              <FileSpreadsheet size={16} className="text-foreground flex-shrink-0" />
               <span>تقرير حسابات</span>
             </div>
             <div className="border-t border-border my-1" />
-            <div
-              onClick={() => navigate('/financial-center/treasury-accounts')}
-              className="flex items-center gap-2 w-full cursor-pointer flex-row-reverse justify-end px-3 py-2 text-sm font-bold rounded hover:bg-accent hover:text-accent-foreground transition-colors"
-            >
-              <FolderTree size={16} />
+            <div onClick={() => navigate('/financial-center/treasury-accounts')} className={menuItemClass}>
+              <FolderTree size={16} className="text-foreground flex-shrink-0" />
               <span>شجرة الحسابات</span>
             </div>
           </NavHoverDropdown>
@@ -435,16 +412,19 @@ const Navbar = () => {
               </button>
             }
           >
-            {taskNavigationItems.map((item) => (
-              <div
-                key={item.path}
-                onClick={() => navigate(item.path)}
-                className="flex items-center gap-2 w-full cursor-pointer flex-row-reverse justify-end px-3 py-2 text-sm font-bold rounded hover:bg-accent hover:text-accent-foreground transition-colors"
-              >
-                <span>{item.label}</span>
-                <item.icon size={16} />
-              </div>
-            ))}
+            {taskNavigationItems.map((item) => {
+              const ItemIcon = item.icon;
+              return (
+                <div
+                  key={item.path}
+                  onClick={() => navigate(item.path)}
+                  className={menuItemClass}
+                >
+                  <ItemIcon size={16} className="text-foreground flex-shrink-0" />
+                  <span>{item.label}</span>
+                </div>
+              );
+            })}
           </NavHoverDropdown>
 
           {/* Settings link */}
@@ -512,7 +492,7 @@ const Navbar = () => {
               }
             >
               <div
-                className="flex items-center gap-2 text-xs font-bold text-status-success-text cursor-pointer hover:bg-status-success-bg/20 py-2 px-2 rounded"
+                className="flex items-center justify-start gap-2 text-xs font-bold text-status-success-text cursor-pointer hover:bg-status-success-bg/20 py-2 px-2 rounded"
                 onClick={() =>
                   openModal('unifiedTransaction', {
                     title: 'تسوية قبض',
@@ -526,7 +506,7 @@ const Navbar = () => {
                 <span>تسوية قبض</span>
               </div>
               <div
-                className="flex items-center gap-2 text-xs font-bold text-status-danger-text cursor-pointer hover:bg-status-danger-bg/20 py-2 px-2 rounded"
+                className="flex items-center justify-start gap-2 text-xs font-bold text-status-danger-text cursor-pointer hover:bg-status-danger-bg/20 py-2 px-2 rounded"
                 onClick={() =>
                   openModal('unifiedTransaction', {
                     title: 'تسوية صرف',
