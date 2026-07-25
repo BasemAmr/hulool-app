@@ -47,9 +47,12 @@ const NavHoverDropdown = ({
     setIsHovered(true);
   };
 
-  const handleMouseLeave = () => {
+  const handleMouseLeave = (e: React.MouseEvent) => {
     if (isPinned) return;
-    // 300ms (0.3s) transition buffer so cursor moving to menu keeps it open
+    // Don't trigger leave if mouse moved to another element inside our container (e.g. text span or menu)
+    if (ref.current && e.relatedTarget && ref.current.contains(e.relatedTarget as Node)) {
+      return;
+    }
     timeoutRef.current = setTimeout(() => {
       setIsHovered(false);
     }, 300);
@@ -61,15 +64,22 @@ const NavHoverDropdown = ({
       clearTimeout(timeoutRef.current);
       timeoutRef.current = null;
     }
-    setIsPinned((prev) => !prev);
+    if (isPinned) {
+      setIsPinned(false);
+      setIsHovered(false);
+    } else {
+      setIsPinned(true);
+      setIsHovered(true);
+    }
   };
 
-  // Unpin on ANY click anywhere (outside or on items) except trigger itself
+  // Unpin on ANY click anywhere except trigger itself
   useEffect(() => {
     if (!isPinned) return;
 
     const handleAnyClick = (e: MouseEvent) => {
-      if (ref.current && ref.current.firstElementChild?.contains(e.target as Node)) {
+      const triggerEl = ref.current?.firstElementChild;
+      if (triggerEl && triggerEl.contains(e.target as Node)) {
         return;
       }
       setIsPinned(false);
@@ -89,7 +99,7 @@ const NavHoverDropdown = ({
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
     >
-      <div onClick={handleTriggerClick} className="cursor-pointer">
+      <div onClick={handleTriggerClick} className="cursor-pointer [&>*]:pointer-events-none">
         {trigger}
       </div>
 

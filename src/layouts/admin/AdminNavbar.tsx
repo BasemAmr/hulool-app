@@ -5,18 +5,18 @@ import { useTranslation } from 'react-i18next';
 import Logo from '@/shared/ui/primitives/Logo';
 import NotificationBell from '@/layouts/admin/NotificationBell';
 import ThemeToggleButton from '@/shared/ui/primitives/ThemeToggleButton';
-import {
-  LayoutDashboard, NotebookText, Users, Settings,
-  Building, Calculator, Home, Briefcase, Plus, Receipt,
+import { 
+  LayoutDashboard, NotebookText, Users, Settings, 
+  Building, Calculator, Home, Briefcase, Plus, Receipt, 
   CreditCard, AlertTriangle, UserCog, Wallet,
   Search, ChevronDown, Loader, TrendingUp, TrendingDown, FolderTree, FileSpreadsheet, LogOut
 } from 'lucide-react';
 import { useModalStore } from '@/shared/stores/modalStore';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
+import { 
+  DropdownMenu, 
+  DropdownMenuContent, 
+  DropdownMenuItem, 
+  DropdownMenuSeparator, 
   DropdownMenuTrigger,
 } from '@/shared/ui/shadcn/dropdown-menu';
 import Button from '@/shared/ui/primitives/Button';
@@ -51,9 +51,12 @@ const NavHoverDropdown = ({
     setIsHovered(true);
   };
 
-  const handleMouseLeave = () => {
+  const handleMouseLeave = (e: React.MouseEvent) => {
     if (isPinned) return;
-    // 300ms (0.3s) transition buffer so cursor moving to menu keeps it open
+    // Don't trigger leave if mouse moved to another element inside our container (e.g. text span or menu)
+    if (ref.current && e.relatedTarget && ref.current.contains(e.relatedTarget as Node)) {
+      return;
+    }
     timeoutRef.current = setTimeout(() => {
       setIsHovered(false);
     }, 300);
@@ -65,15 +68,22 @@ const NavHoverDropdown = ({
       clearTimeout(timeoutRef.current);
       timeoutRef.current = null;
     }
-    setIsPinned((prev) => !prev);
+    if (isPinned) {
+      setIsPinned(false);
+      setIsHovered(false);
+    } else {
+      setIsPinned(true);
+      setIsHovered(true);
+    }
   };
 
-  // Unpin on ANY click anywhere (outside or on items) except trigger itself
+  // Unpin on ANY click anywhere except trigger itself
   useEffect(() => {
     if (!isPinned) return;
 
     const handleAnyClick = (e: MouseEvent) => {
-      if (ref.current && ref.current.firstElementChild?.contains(e.target as Node)) {
+      const triggerEl = ref.current?.firstElementChild;
+      if (triggerEl && triggerEl.contains(e.target as Node)) {
         return;
       }
       setIsPinned(false);
@@ -93,7 +103,7 @@ const NavHoverDropdown = ({
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
     >
-      <div onClick={handleTriggerClick} className="cursor-pointer">
+      <div onClick={handleTriggerClick} className="cursor-pointer [&>*]:pointer-events-none">
         {trigger}
       </div>
 
@@ -105,8 +115,9 @@ const NavHoverDropdown = ({
             setIsPinned(false);
             setIsHovered(false);
           }}
-          className={`absolute ${align === 'start' ? 'left-0' : align === 'center' ? 'left-1/2 -translate-x-1/2' : 'right-0'
-            } top-full pt-1 z-[9999]`}
+          className={`absolute ${
+            align === 'start' ? 'left-0' : align === 'center' ? 'left-1/2 -translate-x-1/2' : 'right-0'
+          } top-full pt-1 z-[9999]`}
         >
           {/* Invisible hit-bridge bridging gap between trigger and menu */}
           <div className="absolute -top-3 left-0 right-0 h-4" />
@@ -248,7 +259,7 @@ const Navbar = () => {
             }
           >
             <div
-              onClick={() => navigate('/settings')}
+              onClick={() => navigate('/employees')}
               className="flex items-center gap-2 w-full cursor-pointer flex-row-reverse justify-end px-3 py-2 text-primary hover:underline font-extrabold text-sm rounded hover:bg-primary/10 transition-colors"
             >
               <UserCog size={16} />
