@@ -229,7 +229,7 @@ const Navbar = () => {
               className="cursor-pointer flex flex-row-reverse justify-end gap-2 px-3 py-2 text-sm font-bold rounded hover:bg-accent hover:text-accent-foreground transition-colors"
             >
               <FileSpreadsheet size={16} />
-              <span>تقرير العملاء</span>
+              <span>كشف حساب العميل</span>
             </div>
             <div
               onClick={() => openModal('clientForm', {})}
@@ -237,6 +237,13 @@ const Navbar = () => {
             >
               <Plus size={16} />
               <span>إضافة عميل</span>
+            </div>
+            <div
+              onClick={() => openModal('taskForm', {})}
+              className="cursor-pointer flex flex-row-reverse justify-end gap-2 px-3 py-2 text-sm font-bold rounded hover:bg-accent hover:text-accent-foreground transition-colors"
+            >
+              <Plus size={16} />
+              <span>إضافة مهمة</span>
             </div>
             <div className="border-t border-border my-1" />
             <div
@@ -397,7 +404,7 @@ const Navbar = () => {
           >
             <div onClick={() => openModal('clientReport', {})} className="cursor-pointer flex flex-row-reverse justify-end gap-2 px-3 py-2 text-sm font-bold rounded hover:bg-accent hover:text-accent-foreground transition-colors">
               <FileSpreadsheet size={16} />
-              <span>تقرير العملاء</span>
+              <span>كشف حساب العميل</span>
             </div>
             <div onClick={() => openModal('employeeReport', {})} className="cursor-pointer flex flex-row-reverse justify-end gap-2 px-3 py-2 text-sm font-bold rounded hover:bg-accent hover:text-accent-foreground transition-colors">
               <FileSpreadsheet size={16} />
