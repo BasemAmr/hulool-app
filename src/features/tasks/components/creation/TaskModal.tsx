@@ -495,10 +495,6 @@ const TaskModal = () => {
                       )}
                     </div>
                     <div className="flex items-center gap-2">
-                      <ClientHistoryIcons
-                        onViewTaskHistory={() => setShowTaskHistory(true)}
-                        onViewPaymentHistory={() => setShowPaymentHistory(true)}
-                      />
                       {!isEditMode && (
                         <button
                           type="button"
