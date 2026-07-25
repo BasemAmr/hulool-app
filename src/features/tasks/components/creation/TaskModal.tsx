@@ -235,7 +235,7 @@ const TaskModal = () => {
             updateTaskWithConflictsMutation.mutate({ id: taskToEdit!.id, taskData: forcePayload });
           }
         },
-        onCancel: () => {}
+        onCancel: () => { }
       });
     }
   };
@@ -450,12 +450,9 @@ const TaskModal = () => {
       >
         <div className="max-h-[75vh] overflow-y-auto px-1">
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
-            
+
             {/* Phase 1: 4 Boxes in 1 Row to Choose Task Type (No Icons) */}
             <div>
-              <label className="block text-sm font-bold text-text-primary text-center mb-2.5">
-                اختر نوع المهمة
-              </label>
               <div className="grid grid-cols-4 gap-2">
                 {taskTypes.map((item) => {
                   const isSelected = selectedType === item.type;
@@ -464,11 +461,10 @@ const TaskModal = () => {
                       key={item.type}
                       type="button"
                       onClick={() => setValue('type', item.type)}
-                      className={`py-3 px-2 rounded-xl border-2 text-center transition-all cursor-pointer flex items-center justify-center ${
-                        isSelected
+                      className={`py-3 px-2 rounded-xl border-2 text-center transition-all cursor-pointer flex items-center justify-center ${isSelected
                           ? 'border-primary bg-primary/10 text-primary font-bold shadow-sm'
                           : 'border-border-default hover:border-primary/40 text-text-secondary'
-                      }`}
+                        }`}
                     >
                       <span className="block text-sm font-bold text-text-primary">
                         {item.label}
