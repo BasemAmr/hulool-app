@@ -7,12 +7,13 @@ interface BaseModalProps {
   title: string;
   children: ReactNode;
   className?: string;
+  titleClassName?: string;
   allowOutsideClick?: boolean;
   /** Optional slot rendered below the title row, flush inside the header */
   headerContent?: ReactNode;
 }
 
-const BaseModal = ({ isOpen, onClose, title, children, className, allowOutsideClick = false, headerContent }: BaseModalProps) => {
+const BaseModal = ({ isOpen, onClose, title, children, className, titleClassName, allowOutsideClick = false, headerContent }: BaseModalProps) => {
   useEffect(() => {
     const handleEscape = (event: KeyboardEvent) => {
       if (event.key === 'Escape') {
@@ -47,7 +48,7 @@ const BaseModal = ({ isOpen, onClose, title, children, className, allowOutsideCl
         >
           <header className="border-b border-border bg-background">
             <div className="flex items-center justify-between px-6 py-4">
-              <h5 className="text-lg font-semibold tracking-tight text-text-primary">{title}</h5>
+              <h5 className={`text-lg font-semibold tracking-tight text-text-primary ${titleClassName || ''}`}>{title}</h5>
               <button
                 type="button"
                 className="rounded-lg p-1.5 text-text-secondary transition-colors hover:bg-muted/50 hover:text-text-primary"
@@ -60,16 +61,11 @@ const BaseModal = ({ isOpen, onClose, title, children, className, allowOutsideCl
               <div className="px-6 pb-0">{headerContent}</div>
             )}
           </header>
-
-          <div className="flex w-full justify-center bg-card p-6">
-            <div className="w-full">{children}</div>
-          </div>
+          <div className="p-6">{children}</div>
         </div>
       </div>
     </div>
   );
-
-
 };
 
 export default BaseModal;

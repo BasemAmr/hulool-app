@@ -428,13 +428,13 @@ const UnifiedTransactionModal = () => {
             <span className="text-sm font-bold text-text-primary">الحسابات</span>
           </div>
 
-          {/* من (right) → إلى (left) — settlement side is empty, counterparty always in col 1 */}
+          {/* من حساب (right) → إلى حساب (left) — settlement side is empty, counterparty always in col 1 */}
           <div className="grid grid-cols-2 gap-3">
             {isSettlement ? (
               <>
                 {/* Counterparty picker — always first column, no kind lock */}
                 <AccountPickerCard
-                  label={fromIsSettlement ? 'إلى' : 'من'}
+                  label={fromIsSettlement ? 'إلى حساب' : 'من حساب'}
                   value={fromIsSettlement ? toPicker : fromPicker}
                   onChange={fromIsSettlement ? setToPicker : setFromPicker}
                   clients={clients}
@@ -450,7 +450,7 @@ const UnifiedTransactionModal = () => {
             ) : (
               <>
                 <AccountPickerCard
-                  label="من"
+                  label="من حساب"
                   value={fromPicker}
                   onChange={setFromPicker}
                   clients={clients}
@@ -461,7 +461,7 @@ const UnifiedTransactionModal = () => {
                   isVisible={isVisible}
                 />
                 <AccountPickerCard
-                  label="إلى"
+                  label="إلى حساب"
                   value={toPicker}
                   onChange={setToPicker}
                   clients={clients}

@@ -143,25 +143,12 @@ const ClientReportModal = ({ isOpen, onClose }: ClientReportModalProps) => {
   const canExport = reportType && clientId && clientId !== '0' && clientData;
 
   return (
-    <BaseModal isOpen={isOpen} onClose={onClose} title="تقرير عميل">
+    <BaseModal isOpen={isOpen} onClose={onClose} title="تقرير عميل" titleClassName="text-center w-full ms-6">
       <div className="space-y-5">
         {step === 1 && (
           <>
             <p className="text-sm font-medium text-text-secondary text-center">اختر نوع التقرير</p>
             <div className="grid grid-cols-2 gap-4">
-              <button
-                type="button"
-                onClick={() => { setReportType('tasks'); setStep(2); }}
-                className={`p-6 rounded-xl border-2 text-center transition-all ${
-                  reportType === 'tasks'
-                    ? 'border-primary bg-primary/5'
-                    : 'border-border-default hover:border-primary/40'
-                }`}
-              >
-                <ClipboardList size={36} className="mx-auto mb-3 text-primary" />
-                <span className="block text-lg font-bold text-text-primary">معاملات</span>
-                <span className="block text-xs text-text-secondary mt-1">تصدير المهام المرتبطة بالعميل</span>
-              </button>
               <button
                 type="button"
                 onClick={() => { setReportType('financial'); setStep(2); }}
@@ -174,6 +161,19 @@ const ClientReportModal = ({ isOpen, onClose }: ClientReportModalProps) => {
                 <DollarSign size={36} className="mx-auto mb-3 text-primary" />
                 <span className="block text-lg font-bold text-text-primary">مالي</span>
                 <span className="block text-xs text-text-secondary mt-1">تصدير كشف حساب العميل المالي</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => { setReportType('tasks'); setStep(2); }}
+                className={`p-6 rounded-xl border-2 text-center transition-all ${
+                  reportType === 'tasks'
+                    ? 'border-primary bg-primary/5'
+                    : 'border-border-default hover:border-primary/40'
+                }`}
+              >
+                <ClipboardList size={36} className="mx-auto mb-3 text-primary" />
+                <span className="block text-lg font-bold text-text-primary">معاملات</span>
+                <span className="block text-xs text-text-secondary mt-1">تصدير المهام المرتبطة بالعميل</span>
               </button>
             </div>
           </>
