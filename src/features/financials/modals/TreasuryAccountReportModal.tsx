@@ -56,7 +56,7 @@ const TreasuryAccountReportModal = ({ isOpen, onClose, subType = 'cashbox' }: Tr
       if (isAdmin) {
         navigate(`/financial-center/treasury-accounts?section=assets&category=${subType}`);
       } else {
-        navigate('/employee/dashboard');
+        navigate(`/employee/accounts?category=${subType}`);
       }
       onClose();
     } else if (selectionScope === 'single' && selectedAccountId) {

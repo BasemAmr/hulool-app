@@ -1,10 +1,12 @@
 import React, { useMemo } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { useGetMyTreasuryAccounts, useGetCategoryMetadata } from '@/features/financials/api/treasuryQueries';
 import { coaSections } from '@/features/financials/constants/coaSections';
 import { SUB_TYPE_TO_SECTION } from '@/features/financials/constants/coaSections';
 import { Spinner } from '@/shared/ui/shadcn/spinner';
 import EmployeeCOATree from './EmployeeCOATree';
 import type { TreasuryAccountWithPermission } from '@/api/types';
+import Button from '@/shared/ui/primitives/Button';
 
 interface EmployeeSectionGroup {
   sectionDef: {
@@ -81,13 +83,28 @@ function buildEmployeeCoaTree(
 }
 
 const EmployeeCOAView: React.FC = () => {
+  const [searchParams, setSearchParams] = useSearchParams();
+  const categoryParam = searchParams.get('category');
+
   const { data: accounts, isLoading: isLoadingAccounts, error: accountsError } = useGetMyTreasuryAccounts();
   const { data: categoryMetadata } = useGetCategoryMetadata();
 
-  const coaData = useMemo(() => {
+  const filteredAccounts = useMemo(() => {
     if (!accounts) return [];
-    return buildEmployeeCoaTree(accounts, categoryMetadata);
-  }, [accounts, categoryMetadata]);
+    if (!categoryParam) return accounts;
+    return accounts.filter((a) => a.sub_type === categoryParam);
+  }, [accounts, categoryParam]);
+
+  const coaData = useMemo(() => {
+    if (!filteredAccounts) return [];
+    return buildEmployeeCoaTree(filteredAccounts, categoryMetadata);
+  }, [filteredAccounts, categoryMetadata]);
+
+  const clearCategoryFilter = () => {
+    const newParams = new URLSearchParams(searchParams);
+    newParams.delete('category');
+    setSearchParams(newParams);
+  };
 
   if (isLoadingAccounts) {
     return (
@@ -105,18 +122,35 @@ const EmployeeCOAView: React.FC = () => {
     );
   }
 
-  if (!coaData.length) {
-    return (
-      <div className="text-center py-12 text-text-secondary" dir="rtl">
-        <p>لا يوجد حسابات مالية متاحة لك</p>
-      </div>
-    );
-  }
-
   return (
     <div className="space-y-4" dir="rtl">
-      <h2 className="text-2xl font-bold text-text-primary border-b border-border-default pb-3">الخزينة</h2>
-      <EmployeeCOATree data={coaData} />
+      <div className="flex items-center justify-between border-b border-border-default pb-3">
+        <h2 className="text-2xl font-bold text-text-primary">الخزينة</h2>
+
+        {categoryParam && (
+          <div className="flex items-center gap-2">
+            <span className="text-xs text-text-secondary">
+              تصفية حسب: <strong className="text-text-primary">{categoryParam === 'bank' ? 'البنوك' : categoryParam === 'cashbox' ? 'الصناديق' : categoryParam}</strong>
+            </span>
+            <Button variant="outline-secondary" size="sm" onClick={clearCategoryFilter}>
+              عرض كل الحسابات
+            </Button>
+          </div>
+        )}
+      </div>
+
+      {!coaData.length ? (
+        <div className="text-center py-12 text-text-secondary" dir="rtl">
+          <p>لا توجد حسابات متاحة تنطبق على هذا التصفية</p>
+          {categoryParam && (
+            <Button variant="outline-primary" size="sm" className="mt-3" onClick={clearCategoryFilter}>
+              إلغاء التصفية
+            </Button>
+          )}
+        </div>
+      ) : (
+        <EmployeeCOATree data={coaData} />
+      )}
     </div>
   );
 };

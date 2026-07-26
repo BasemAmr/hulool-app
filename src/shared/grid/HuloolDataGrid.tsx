@@ -103,9 +103,8 @@ function getNestedValue(obj: any, path: string): any {
 /** Format currency in SAR */
 function formatCurrency(value: number): string {
   return new Intl.NumberFormat('en-US', {
-    style: 'currency',
-    currency: 'SAR',
     minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
   }).format(value);
 }
 
@@ -115,7 +114,7 @@ function formatDate(dateString: string | null | undefined): string {
   try {
     const date = new Date(dateString);
     if (isNaN(date.getTime())) return '—';
-    return new Intl.DateTimeFormat('en-GB', {
+    return new Intl.DateTimeFormat('en-US', {
       year: 'numeric',
       month: '2-digit',
       day: '2-digit',

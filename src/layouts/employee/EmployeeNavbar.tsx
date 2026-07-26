@@ -54,7 +54,7 @@ const NavHoverDropdown = ({
     }
     timeoutRef.current = setTimeout(() => {
       setIsHovered(false);
-    }, 300);
+    }, 50);
   };
 
   const handleTriggerClick = (e: React.MouseEvent) => {
@@ -110,9 +110,8 @@ const NavHoverDropdown = ({
               setIsHovered(false);
             }, 0);
           }}
-          className={`absolute ${
-            align === 'start' ? 'left-0' : align === 'center' ? 'left-1/2 -translate-x-1/2' : 'right-0'
-          } top-full pt-1 z-[9999]`}
+          className={`absolute ${align === 'start' ? 'left-0' : align === 'center' ? 'left-1/2 -translate-x-1/2' : 'right-0'
+            } top-full pt-1 z-[9999]`}
         >
           <div className="absolute -top-3 left-0 right-0 h-4" />
 
@@ -211,10 +210,9 @@ const EmployeeNavbar = () => {
             <NavLink
               to="/employee/dashboard"
               className={({ isActive }) =>
-                `flex items-center gap-2 px-3 py-2 text-sm font-bold rounded-md transition-colors whitespace-nowrap ${
-                  isActive
-                    ? 'bg-primary/10 text-primary'
-                    : 'text-text-secondary hover:bg-accent hover:text-accent-foreground'
+                `flex items-center gap-2 px-3 py-2 text-sm font-bold rounded-md transition-colors whitespace-nowrap ${isActive
+                  ? 'bg-primary/10 text-primary'
+                  : 'text-text-secondary hover:bg-accent hover:text-accent-foreground'
                 }`
               }
             >
@@ -225,11 +223,10 @@ const EmployeeNavbar = () => {
             {/* العملاء Dropdown */}
             <NavHoverDropdown
               trigger={
-                <button className={`flex items-center gap-1.5 px-3 py-2 text-sm font-bold rounded-md transition-colors outline-none cursor-pointer ${
-                  location.pathname.startsWith('/employee/clients')
-                    ? 'bg-primary/10 text-primary'
-                    : 'text-text-secondary hover:bg-accent hover:text-accent-foreground'
-                }`}>
+                <button className={`flex items-center gap-1.5 px-3 py-2 text-sm font-bold rounded-md transition-colors outline-none cursor-pointer ${location.pathname.startsWith('/employee/clients')
+                  ? 'bg-primary/10 text-primary'
+                  : 'text-text-secondary hover:bg-accent hover:text-accent-foreground'
+                  }`}>
                   <Users size={16} />
                   <span>العملاء</span>
                   <ChevronDown size={14} className="text-text-secondary opacity-70" />
@@ -263,9 +260,8 @@ const EmployeeNavbar = () => {
             <NavHoverDropdown
               className="min-w-48 text-right max-h-80 overflow-y-auto"
               trigger={
-                <button className={`flex items-center gap-1.5 px-3 py-2 text-sm font-bold rounded-md transition-colors outline-none cursor-pointer ${
-                  isCashboxActive ? 'bg-primary/10 text-primary' : 'text-text-secondary hover:bg-accent hover:text-accent-foreground'
-                }`}>
+                <button className={`flex items-center gap-1.5 px-3 py-2 text-sm font-bold rounded-md transition-colors outline-none cursor-pointer ${isCashboxActive ? 'bg-primary/10 text-primary' : 'text-text-secondary hover:bg-accent hover:text-accent-foreground'
+                  }`}>
                   <Wallet size={16} />
                   <span>الصناديق</span>
                   <ChevronDown size={14} className="text-text-secondary opacity-70" />
@@ -298,9 +294,8 @@ const EmployeeNavbar = () => {
             <NavHoverDropdown
               className="min-w-48 text-right max-h-80 overflow-y-auto"
               trigger={
-                <button className={`flex items-center gap-1.5 px-3 py-2 text-sm font-bold rounded-md transition-colors outline-none cursor-pointer ${
-                  isBankActive ? 'bg-primary/10 text-primary' : 'text-text-secondary hover:bg-accent hover:text-accent-foreground'
-                }`}>
+                <button className={`flex items-center gap-1.5 px-3 py-2 text-sm font-bold rounded-md transition-colors outline-none cursor-pointer ${isBankActive ? 'bg-primary/10 text-primary' : 'text-text-secondary hover:bg-accent hover:text-accent-foreground'
+                  }`}>
                   <Landmark size={16} />
                   <span>البنوك</span>
                   <ChevronDown size={14} className="text-text-secondary opacity-70" />
@@ -334,9 +329,8 @@ const EmployeeNavbar = () => {
               <NavHoverDropdown
                 className="min-w-48 text-right max-h-80 overflow-y-auto"
                 trigger={
-                  <button className={`flex items-center gap-1.5 px-3 py-2 text-sm font-bold rounded-md transition-colors outline-none cursor-pointer ${
-                    isOtherActive ? 'bg-primary/10 text-primary' : 'text-text-secondary hover:bg-accent hover:text-accent-foreground'
-                  }`}>
+                  <button className={`flex items-center gap-1.5 px-3 py-2 text-sm font-bold rounded-md transition-colors outline-none cursor-pointer ${isOtherActive ? 'bg-primary/10 text-primary' : 'text-text-secondary hover:bg-accent hover:text-accent-foreground'
+                    }`}>
                     <span>حسابات أخرى</span>
                     <ChevronDown size={14} className="text-text-secondary opacity-70" />
                   </button>

@@ -74,6 +74,7 @@ import AccountReportModal from '@/features/financials/modals/AccountReportModal'
 import { CreateCashBoxModal } from '@/features/financials/modals/CreateCashBoxModal';
 import { ReassignCashBoxEmployeeModal } from '@/features/financials/modals/ReassignCashBoxEmployeeModal';
 import { RecordVoucherModal } from '@/features/financials/modals/RecordVoucherModal';
+import VoucherDetailsModal from '@/features/financials/modals/VoucherDetailsModal';
 
 import UnifiedTransactionModal from '@/features/financials/components/UnifiedTransactionModal';
 import TreasuryEditAccountModal from '@/features/financials/modals/TreasuryEditAccountModal';
@@ -273,6 +274,12 @@ const ModalManager = () => {
 
     case 'recordVoucher':
       return renderModal(RecordVoucherModal, { cashBox: props.cashBox, defaultDirection: props.defaultDirection });
+
+    case 'voucherDetails':
+      return renderModal(VoucherDetailsModal);
+
+    case 'voucherEdit':
+      return renderModal(RecordVoucherModal, { voucherToEdit: props.voucher, boxId: props.boxId, isTreasury: props.isTreasury, isOpen, onClose: closeModal });
 
     case 'treasuryCreateAccount':
       return renderModal(CreateAccountModal, { isOpen, onClose: closeModal, initialSectionId: props.initialSectionId, defaultSubType: props.defaultSubType });

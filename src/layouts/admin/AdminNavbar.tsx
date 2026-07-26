@@ -5,18 +5,18 @@ import { useTranslation } from 'react-i18next';
 import Logo from '@/shared/ui/primitives/Logo';
 import NotificationBell from '@/layouts/admin/NotificationBell';
 import ThemeToggleButton from '@/shared/ui/primitives/ThemeToggleButton';
-import { 
-  LayoutDashboard, NotebookText, Users, Settings, 
-  Building, Calculator, Home, Briefcase, Plus, Receipt, 
+import {
+  LayoutDashboard, NotebookText, Users, Settings,
+  Building, Calculator, Home, Briefcase, Plus, Receipt,
   CreditCard, AlertTriangle, UserCog, Wallet, Landmark,
   Search, ChevronDown, Loader, TrendingUp, TrendingDown, FolderTree, FileSpreadsheet, LogOut
 } from 'lucide-react';
 import { useModalStore } from '@/shared/stores/modalStore';
-import { 
-  DropdownMenu, 
-  DropdownMenuContent, 
-  DropdownMenuItem, 
-  DropdownMenuSeparator, 
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/shared/ui/shadcn/dropdown-menu';
 import Button from '@/shared/ui/primitives/Button';
@@ -58,7 +58,7 @@ const NavHoverDropdown = ({
     }
     timeoutRef.current = setTimeout(() => {
       setIsHovered(false);
-    }, 300);
+    }, 50);
   };
 
   const handleTriggerClick = (e: React.MouseEvent) => {
@@ -114,9 +114,8 @@ const NavHoverDropdown = ({
               setIsHovered(false);
             }, 0);
           }}
-          className={`absolute ${
-            align === 'start' ? 'left-0' : align === 'center' ? 'left-1/2 -translate-x-1/2' : 'right-0'
-          } top-full pt-1 z-[9999]`}
+          className={`absolute ${align === 'start' ? 'left-0' : align === 'center' ? 'left-1/2 -translate-x-1/2' : 'right-0'
+            } top-full pt-1 z-[9999]`}
         >
           <div className="absolute -top-3 left-0 right-0 h-4" />
 
@@ -211,8 +210,8 @@ const Navbar = () => {
           <NavHoverDropdown
             trigger={
               <button className={`flex items-center gap-2 px-3 py-2 text-sm font-bold rounded-md transition-colors outline-none cursor-pointer ${location.pathname.startsWith('/clients')
-                  ? 'bg-primary/10 text-primary'
-                  : 'text-text-secondary hover:bg-accent hover:text-accent-foreground'
+                ? 'bg-primary/10 text-primary'
+                : 'text-text-secondary hover:bg-accent hover:text-accent-foreground'
                 }`}>
                 <Users size={16} />
                 <span>{t('clients.title') || 'العملاء'}</span>

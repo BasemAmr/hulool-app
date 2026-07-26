@@ -143,6 +143,7 @@ export const TreasuryAccountDetailsPage = () => {
   const { id } = useParams<{ id: string }>();
   const accountId = Number(id);
   const navigate = useNavigate();
+  const isAdmin = useAuthStore((state) => state.isAdmin());
   const [page, setPage] = useState(1);
   const [allTransactions, setAllTransactions] = useState<TransformedVoucherTransaction[]>([]);
   const [isExporting, setIsExporting] = useState(false);
@@ -211,11 +212,6 @@ export const TreasuryAccountDetailsPage = () => {
       });
     }
   }, [historyData, page, account?.name]);
-
-  const resetAndFilter = useCallback((newFilters: FilterState) => {
-    setFilters(newFilters);
-    setPage(1);
-  }, []);
 
   const totalPages = historyData?.pagination?.total_pages || 1;
   const hasMore = page < totalPages;
@@ -299,7 +295,7 @@ export const TreasuryAccountDetailsPage = () => {
   };
 
   const columns: HuloolGridColumn<TransformedVoucherTransaction>[] = [
-    { id: 'transaction_date', title: 'التاريخ', key: 'date', type: 'date', grow: 1 },
+    { id: 'transaction_date', title: 'التاريخ', key: 'date', type: 'date', width: 95, grow: 0 },
     {
       id: 'transaction_type',
       title: 'نوع الحركة',
@@ -311,22 +307,23 @@ export const TreasuryAccountDetailsPage = () => {
       formatter: (_val: string, rowData: any) => {
         return Number(rowData.debit || 0) > 0 ? 'قبض' : 'صرف';
       },
-      grow: 0.8,
+      width: 85,
+      grow: 0,
     },
-    { id: 'description', title: 'البيان', key: 'description', type: 'text', grow: 2.5 },
+    { id: 'description', title: 'البيان', key: 'description', type: 'text', grow: 2 },
     {
-      id: 'debit', title: 'مدين (+)', key: 'debit', type: 'currency', grow: 1,
+      id: 'debit', title: 'مدين (+)', key: 'debit', type: 'currency', width: 100, grow: 0,
       cellClassName: ({ rowData }: any) => Number(rowData.debit) > 0 ? 'cashbox-debit-cell' : '',
     },
     {
-      id: 'credit', title: 'دائن (-)', key: 'credit', type: 'currency', grow: 1,
+      id: 'credit', title: 'دائن (-)', key: 'credit', type: 'currency', width: 100, grow: 0,
       cellClassName: ({ rowData }: any) => Number(rowData.credit) > 0 ? 'cashbox-credit-cell' : '',
     },
-    { id: 'balance', title: 'الرصيد الجاري', key: 'balance', type: 'currency', grow: 1 },
+    { id: 'balance', title: 'الرصيد الجاري', key: 'balance', type: 'currency', width: 115, grow: 0 },
     {
       id: 'actions', title: 'إجراءات', key: 'id', type: 'custom',
       component: ActionsCell as React.ComponentType<CellProps<TransformedVoucherTransaction, any>>,
-      width: 220, grow: 0,
+      width: 180, grow: 0,
     },
   ];
 
@@ -334,15 +331,18 @@ export const TreasuryAccountDetailsPage = () => {
     `تصنيف الحساب: ${categoryLabels[account.sub_type] || account.sub_type} | طبيعة الحساب: ${account.normal_balance === 'debit' ? 'مدين' : 'دائن'}`
   ) : undefined;
 
-  // Settlement account = internal sub_type + is_settlement flag OR known settlement account IDs
-  const isSettlementAccount = account
-    ? account?.sub_type === 'internal' && account?.coa_section === 'assets' && (account.metadata as any)?.is_settlement === true
-    : false;
-
-  const formatCurrencyAr = (amount: number) =>
-    new Intl.NumberFormat('ar-SA', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(amount);
+  const formatNumberOnly = (amount: number) =>
+    new Intl.NumberFormat('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(amount);
 
   const hasActiveFilters = Boolean(filters.start_date || filters.end_date || filters.type || filters.search);
+
+  const handleBack = () => {
+    if (isAdmin) {
+      navigate('/financial-center/treasury-accounts');
+    } else {
+      navigate('/employee/accounts');
+    }
+  };
 
   return (
     <>
@@ -355,8 +355,9 @@ export const TreasuryAccountDetailsPage = () => {
             {/* Right: Back button + Title */}
             <div className="flex items-center gap-3 shrink-0 min-w-0">
               <button
-                onClick={() => navigate('/financial-center/treasury-accounts')}
-                className="shrink-0 p-1.5 rounded-md text-text-secondary hover:text-text-primary hover:bg-bg-surface-muted transition-colors"
+                onClick={handleBack}
+                className="shrink-0 p-1.5 rounded-md text-text-secondary hover:text-text-primary hover:bg-bg-surface-muted transition-colors cursor-pointer"
+                title="الرجوع"
               >
                 <ArrowRight size={20} />
               </button>
@@ -472,7 +473,7 @@ export const TreasuryAccountDetailsPage = () => {
               <div className="text-left">
                 <p className="text-[10px] text-text-secondary leading-none">الرصيد الحالي</p>
                 <p className="text-lg font-black text-text-brand mt-0.5 whitespace-nowrap">
-                  {formatCurrencyAr(account?.balance || 0)} <span className="text-xs font-bold text-text-secondary">ريال</span>
+                  {formatNumberOnly(account?.balance || 0)}
                 </p>
               </div>
             </div>
