@@ -67,8 +67,8 @@ const UnifiedTransactionModal = () => {
   // ---- State ----
   const [direction, setDirection] = useState<Direction>(() => {
     const modalTitle = (props?.title as string | undefined) || '';
-    if (defaultFromCardType === 'settlement') return 'sarf';
-    if (defaultToCardType === 'settlement') return 'qabdh';
+    if (defaultFromCardType === 'settlement') return 'qabdh';
+    if (defaultToCardType === 'settlement') return 'sarf';
     if (defaultToCardType === 'treasury' || defaultToCardType === 'cashbox') return 'qabdh';
     if (modalTitle.includes('قبض')) return 'qabdh';
     if (modalTitle.includes('صرف')) return 'sarf';
@@ -154,8 +154,8 @@ const UnifiedTransactionModal = () => {
 
       const modalTitle = (props?.title as string | undefined) || '';
       const initDir: Direction =
-        fType === 'settlement' ? 'sarf'
-        : tType === 'settlement' ? 'qabdh'
+        fType === 'settlement' ? 'qabdh'
+        : tType === 'settlement' ? 'sarf'
         : (tType === 'treasury' || tType === 'cashbox') ? 'qabdh'
         : modalTitle.includes('قبض') ? 'qabdh'
         : modalTitle.includes('صرف') ? 'sarf'

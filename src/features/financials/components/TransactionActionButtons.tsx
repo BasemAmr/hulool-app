@@ -53,9 +53,9 @@ const TransactionActionButtons: React.FC<TransactionActionButtonsProps> = ({
   const accountIdStr = String(accountId);
 
   // ─── Settlement Account Mode ─────────────────────────────────────────────────
-  // On a settlement account page the two sides are: settlement (this account) ↔ free choice.
-  // سند تسوية قبض  →  settlement is the FROM side (money comes OUT of settlement to treasury)
-  // سند تسوية صرف  →  settlement is the TO side (money goes IN to settlement)
+  // On a settlement account page:
+  // سند تسوية قبض  →  settlement is the TO side (money goes IN to settlement account)
+  // سند تسوية صرف  →  settlement is the FROM side (money comes OUT of settlement account)
   if (isSettlement) {
     return (
       <div className="flex items-center gap-2">
@@ -66,9 +66,9 @@ const TransactionActionButtons: React.FC<TransactionActionButtonsProps> = ({
           disabled={isClosed}
           onClick={() =>
             openUnified({
-              defaultFromCardType: 'settlement',
-              defaultFromAccountId: accountIdStr,
-              defaultToCardType: 'treasury',
+              defaultFromCardType: 'treasury',
+              defaultToCardType: 'settlement',
+              defaultToAccountId: accountIdStr,
               title: 'تسوية قبض',
             })
           }
@@ -84,9 +84,9 @@ const TransactionActionButtons: React.FC<TransactionActionButtonsProps> = ({
           disabled={isClosed}
           onClick={() =>
             openUnified({
-              defaultFromCardType: 'treasury',
-              defaultToCardType: 'settlement',
-              defaultToAccountId: accountIdStr,
+              defaultFromCardType: 'settlement',
+              defaultFromAccountId: accountIdStr,
+              defaultToCardType: 'treasury',
               title: 'تسوية صرف',
             })
           }
@@ -169,6 +169,7 @@ const TransactionActionButtons: React.FC<TransactionActionButtonsProps> = ({
                 setSettlementOpen(false);
                 openUnified({
                   defaultFromCardType: 'settlement',
+                  defaultToCardType: 'cashbox',
                   title: 'تسوية قبض',
                 });
               }}
@@ -182,6 +183,7 @@ const TransactionActionButtons: React.FC<TransactionActionButtonsProps> = ({
               onClick={() => {
                 setSettlementOpen(false);
                 openUnified({
+                  defaultFromCardType: 'cashbox',
                   defaultToCardType: 'settlement',
                   title: 'تسوية صرف',
                 });

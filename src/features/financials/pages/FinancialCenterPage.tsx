@@ -47,6 +47,8 @@ const FinancialCenterPage: React.FC = () => {
             className="font-bold flex items-center gap-1"
             onClick={() => openModal('unifiedTransaction', {
               title: 'سند قبض',
+              defaultFromCardType: 'client',
+              defaultToCardType: 'cashbox',
             })}
           >
             <TrendingUp size={16} />
@@ -60,6 +62,8 @@ const FinancialCenterPage: React.FC = () => {
             className="font-bold flex items-center gap-1"
             onClick={() => openModal('unifiedTransaction', {
               title: 'سند صرف',
+              defaultFromCardType: 'cashbox',
+              defaultToCardType: 'client',
             })}
           >
             <TrendingDown size={16} />
@@ -72,7 +76,9 @@ const FinancialCenterPage: React.FC = () => {
             size="sm"
             className="font-bold flex items-center gap-1"
             onClick={() => openModal('unifiedTransaction', {
-              title: 'سند تسوية',
+              title: 'تسوية قبض',
+              defaultFromCardType: 'settlement',
+              defaultToCardType: 'cashbox',
             })}
           >
             <span>سند تسوية</span>

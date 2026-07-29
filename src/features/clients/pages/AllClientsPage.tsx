@@ -136,7 +136,7 @@ const AllClientsPage = () => {
             className="font-bold flex items-center gap-1"
             onClick={() => openModal('unifiedTransaction', {
               defaultFromCardType: 'client',
-              defaultToCardType: 'treasury',
+              defaultToCardType: 'cashbox',
               lockDirection: true,
               title: 'سند قبض',
             })}
@@ -151,7 +151,7 @@ const AllClientsPage = () => {
             size="sm"
             className="font-bold flex items-center gap-1"
             onClick={() => openModal('unifiedTransaction', {
-              defaultFromCardType: 'treasury',
+              defaultFromCardType: 'cashbox',
               defaultToCardType: 'client',
               lockDirection: true,
               title: 'سند صرف',
@@ -177,8 +177,8 @@ const AllClientsPage = () => {
               <DropdownMenuItem
                 className="cursor-pointer flex flex-row-reverse justify-end gap-2 text-status-success-text font-bold"
                 onClick={() => openModal('unifiedTransaction', {
-                  defaultFromCardType: 'client',
-                  defaultToCardType: 'settlement',
+                  defaultFromCardType: 'settlement',
+                  defaultToCardType: 'cashbox',
                   lockDirection: true,
                   title: 'تسوية قبض',
                 })}
@@ -189,8 +189,8 @@ const AllClientsPage = () => {
               <DropdownMenuItem
                 className="cursor-pointer flex flex-row-reverse justify-end gap-2 text-status-danger-text font-bold"
                 onClick={() => openModal('unifiedTransaction', {
-                  defaultFromCardType: 'settlement',
-                  defaultToCardType: 'client',
+                  defaultFromCardType: 'cashbox',
+                  defaultToCardType: 'settlement',
                   lockDirection: true,
                   title: 'تسوية صرف',
                 })}

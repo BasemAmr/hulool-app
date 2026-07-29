@@ -133,7 +133,7 @@ const ClientProfileHeader = ({
               onClick={() => openUnified({
                 defaultFromCardType: 'client',
                 defaultFromAccountId: String(client.id),
-                defaultToCardType: 'treasury',
+                defaultToCardType: 'cashbox',
                 title: 'سند قبض',
               })}
             >
@@ -147,7 +147,7 @@ const ClientProfileHeader = ({
               variant="outline-danger"
               className="font-bold flex items-center gap-1"
               onClick={() => openUnified({
-                defaultFromCardType: 'treasury',
+                defaultFromCardType: 'cashbox',
                 defaultToCardType: 'client',
                 defaultToAccountId: String(client.id),
                 title: 'سند صرف',
@@ -173,9 +173,9 @@ const ClientProfileHeader = ({
                 <DropdownMenuItem
                   className="cursor-pointer flex flex-row-reverse justify-end gap-2 text-status-success-text font-bold"
                   onClick={() => openUnified({
-                    defaultFromCardType: 'client',
-                    defaultFromAccountId: String(client.id),
-                    defaultToCardType: 'settlement',
+                    defaultFromCardType: 'settlement',
+                    defaultToCardType: 'client',
+                    defaultToAccountId: String(client.id),
                     title: 'تسوية قبض',
                   })}
                 >
@@ -185,9 +185,9 @@ const ClientProfileHeader = ({
                 <DropdownMenuItem
                   className="cursor-pointer flex flex-row-reverse justify-end gap-2 text-status-danger-text font-bold"
                   onClick={() => openUnified({
-                    defaultFromCardType: 'settlement',
-                    defaultToCardType: 'client',
-                    defaultToAccountId: String(client.id),
+                    defaultFromCardType: 'client',
+                    defaultFromAccountId: String(client.id),
+                    defaultToCardType: 'settlement',
                     title: 'تسوية صرف',
                   })}
                 >

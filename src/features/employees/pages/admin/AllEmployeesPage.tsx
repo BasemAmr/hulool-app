@@ -318,14 +318,14 @@ const AllEmployeesPage = () => {
     openModal('unifiedTransaction', {
       defaultFromCardType: 'employee',
       defaultFromAccountId: emp ? String(emp.employee_id) : undefined,
-      defaultToCardType: 'treasury',
+      defaultToCardType: 'cashbox',
       lockDirection: true,
       title: 'سند قبض',
     });
 
   const openSarf = (emp?: EmployeeSummaryRow) =>
     openModal('unifiedTransaction', {
-      defaultFromCardType: 'treasury',
+      defaultFromCardType: 'cashbox',
       defaultToCardType: 'employee',
       defaultToAccountId: emp ? String(emp.employee_id) : undefined,
       lockDirection: true,
@@ -334,18 +334,18 @@ const AllEmployeesPage = () => {
 
   const openTaswiyaQabd = (emp?: EmployeeSummaryRow) =>
     openModal('unifiedTransaction', {
-      defaultFromCardType: 'employee',
-      defaultFromAccountId: emp ? String(emp.employee_id) : undefined,
-      defaultToCardType: 'settlement',
+      defaultFromCardType: 'settlement',
+      defaultToCardType: 'employee',
+      defaultToAccountId: emp ? String(emp.employee_id) : undefined,
       lockDirection: true,
       title: 'تسوية قبض',
     });
 
   const openTaswiyaSarf = (emp?: EmployeeSummaryRow) =>
     openModal('unifiedTransaction', {
-      defaultFromCardType: 'settlement',
-      defaultToCardType: 'employee',
-      defaultToAccountId: emp ? String(emp.employee_id) : undefined,
+      defaultFromCardType: 'employee',
+      defaultFromAccountId: emp ? String(emp.employee_id) : undefined,
+      defaultToCardType: 'settlement',
       lockDirection: true,
       title: 'تسوية صرف',
     });

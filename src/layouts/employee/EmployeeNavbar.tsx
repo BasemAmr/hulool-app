@@ -381,7 +381,7 @@ const EmployeeNavbar = () => {
                     openModal('unifiedTransaction', {
                       title: 'سند قبض',
                       defaultFromCardType: 'client',
-                      defaultToCardType: 'treasury',
+                      defaultToCardType: 'cashbox',
                       lockDirection: false,
                     })
                   }
@@ -397,7 +397,7 @@ const EmployeeNavbar = () => {
                   onClick={() =>
                     openModal('unifiedTransaction', {
                       title: 'سند صرف',
-                      defaultFromCardType: 'treasury',
+                      defaultFromCardType: 'cashbox',
                       defaultToCardType: 'client',
                       lockDirection: false,
                     })
@@ -426,8 +426,8 @@ const EmployeeNavbar = () => {
                     onClick={() =>
                       openModal('unifiedTransaction', {
                         title: 'تسوية قبض',
-                        defaultFromCardType: 'client',
-                        defaultToCardType: 'settlement',
+                        defaultFromCardType: 'settlement',
+                        defaultToCardType: 'cashbox',
                         lockDirection: false,
                       })
                     }
@@ -440,8 +440,8 @@ const EmployeeNavbar = () => {
                     onClick={() =>
                       openModal('unifiedTransaction', {
                         title: 'تسوية صرف',
-                        defaultFromCardType: 'settlement',
-                        defaultToCardType: 'client',
+                        defaultFromCardType: 'cashbox',
+                        defaultToCardType: 'settlement',
                         lockDirection: false,
                       })
                     }

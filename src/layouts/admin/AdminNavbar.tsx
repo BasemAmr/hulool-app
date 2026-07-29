@@ -450,7 +450,7 @@ const Navbar = () => {
                 openModal('unifiedTransaction', {
                   title: 'سند قبض',
                   defaultFromCardType: 'client',
-                  defaultToCardType: 'treasury',
+                  defaultToCardType: 'cashbox',
                   lockDirection: false,
                 })
               }
@@ -466,7 +466,7 @@ const Navbar = () => {
               onClick={() =>
                 openModal('unifiedTransaction', {
                   title: 'سند صرف',
-                  defaultFromCardType: 'treasury',
+                  defaultFromCardType: 'cashbox',
                   defaultToCardType: 'client',
                   lockDirection: false,
                 })
@@ -495,8 +495,8 @@ const Navbar = () => {
                 onClick={() =>
                   openModal('unifiedTransaction', {
                     title: 'تسوية قبض',
-                    defaultFromCardType: 'client',
-                    defaultToCardType: 'settlement',
+                    defaultFromCardType: 'settlement',
+                    defaultToCardType: 'cashbox',
                     lockDirection: false,
                   })
                 }
@@ -509,8 +509,8 @@ const Navbar = () => {
                 onClick={() =>
                   openModal('unifiedTransaction', {
                     title: 'تسوية صرف',
-                    defaultFromCardType: 'settlement',
-                    defaultToCardType: 'client',
+                    defaultFromCardType: 'cashbox',
+                    defaultToCardType: 'settlement',
                     lockDirection: false,
                   })
                 }
@@ -557,15 +557,15 @@ const Navbar = () => {
                 <CreditCard size={16} />
               </DropdownMenuItem>
               <DropdownMenuSeparator />
-              <DropdownMenuItem onClick={() => openModal('unifiedTransaction', { title: 'سند قبض', defaultFromCardType: 'client', lockDirection: false })} className="cursor-pointer flex flex-row-reverse justify-end gap-2 text-status-success-text font-bold py-2 text-sm">
+              <DropdownMenuItem onClick={() => openModal('unifiedTransaction', { title: 'سند قبض', defaultFromCardType: 'client', defaultToCardType: 'cashbox', lockDirection: false })} className="cursor-pointer flex flex-row-reverse justify-end gap-2 text-status-success-text font-bold py-2 text-sm">
                 <span>سند قبض</span>
                 <TrendingUp size={16} className="text-status-success-text" />
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => openModal('unifiedTransaction', { title: 'سند صرف', defaultToCardType: 'client', lockDirection: false })} className="cursor-pointer flex flex-row-reverse justify-end gap-2 text-status-danger-text font-bold py-2 text-sm">
+              <DropdownMenuItem onClick={() => openModal('unifiedTransaction', { title: 'سند صرف', defaultFromCardType: 'cashbox', defaultToCardType: 'client', lockDirection: false })} className="cursor-pointer flex flex-row-reverse justify-end gap-2 text-status-danger-text font-bold py-2 text-sm">
                 <span>سند صرف</span>
                 <TrendingDown size={16} className="text-status-danger-text" />
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => openModal('unifiedTransaction', { title: 'تسوية قبض', defaultFromCardType: 'client', defaultToCardType: 'settlement', lockDirection: false })} className="cursor-pointer flex flex-row-reverse justify-end gap-2 font-bold py-2 text-sm">
+              <DropdownMenuItem onClick={() => openModal('unifiedTransaction', { title: 'تسوية قبض', defaultFromCardType: 'settlement', defaultToCardType: 'cashbox', lockDirection: false })} className="cursor-pointer flex flex-row-reverse justify-end gap-2 font-bold py-2 text-sm">
                 <span>سند تسوية</span>
               </DropdownMenuItem>
               <DropdownMenuSeparator />

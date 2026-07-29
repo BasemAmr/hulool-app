@@ -153,7 +153,7 @@ export const TreasuryAccountSelectorWidget: React.FC = () => {
                 openModal('unifiedTransaction', {
                   title: 'سند قبض',
                   defaultFromCardType: 'client',
-                  defaultToCardType: 'treasury',
+                  defaultToCardType: 'cashbox',
                   defaultToAccountId: String(selectedAccount.id),
                 })
               }
@@ -165,7 +165,7 @@ export const TreasuryAccountSelectorWidget: React.FC = () => {
               onClick={() =>
                 openModal('unifiedTransaction', {
                   title: 'سند صرف',
-                  defaultFromCardType: 'treasury',
+                  defaultFromCardType: 'cashbox',
                   defaultFromAccountId: String(selectedAccount.id),
                   defaultToCardType: 'client',
                 })
@@ -192,8 +192,8 @@ export const TreasuryAccountSelectorWidget: React.FC = () => {
                     onClick={() => {
                       setSettlementOpen(false);
                       openUnified({
-                        defaultFromCardType: 'client',
-                        defaultToCardType: 'settlement',
+                        defaultFromCardType: 'settlement',
+                        defaultToCardType: 'client',
                         title: 'تسوية قبض',
                       });
                     }}
@@ -207,8 +207,8 @@ export const TreasuryAccountSelectorWidget: React.FC = () => {
                     onClick={() => {
                       setSettlementOpen(false);
                       openUnified({
-                        defaultFromCardType: 'settlement',
-                        defaultToCardType: 'client',
+                        defaultFromCardType: 'client',
+                        defaultToCardType: 'settlement',
                         title: 'تسوية صرف',
                       });
                     }}

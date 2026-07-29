@@ -201,7 +201,7 @@ const EmployeeProfilePage = () => {
   const handleSarf = () => {
     if (!employee) return;
     openModal('unifiedTransaction', {
-      defaultFromCardType: 'treasury',
+      defaultFromCardType: 'cashbox',
       defaultToCardType: 'employee',
       defaultToAccountId: String(employeeTableId),
       lockDirection: true,
@@ -214,7 +214,7 @@ const EmployeeProfilePage = () => {
     openModal('unifiedTransaction', {
       defaultFromCardType: 'employee',
       defaultFromAccountId: String(employeeTableId),
-      defaultToCardType: 'treasury',
+      defaultToCardType: 'cashbox',
       lockDirection: true,
       title: 'سند قبض',
     });
@@ -223,9 +223,9 @@ const EmployeeProfilePage = () => {
   const handleSettlementQabd = () => {
     if (!employee) return;
     openModal('unifiedTransaction', {
-      defaultFromCardType: 'employee',
-      defaultFromAccountId: String(employee.id),
-      defaultToCardType: 'settlement',
+      defaultFromCardType: 'settlement',
+      defaultToCardType: 'employee',
+      defaultToAccountId: String(employee.id),
       lockDirection: true,
       title: 'تسوية قبض',
     });
@@ -234,9 +234,9 @@ const EmployeeProfilePage = () => {
   const handleSettlementSarf = () => {
     if (!employee) return;
     openModal('unifiedTransaction', {
-      defaultFromCardType: 'settlement',
-      defaultToCardType: 'employee',
-      defaultToAccountId: String(employee.id),
+      defaultFromCardType: 'employee',
+      defaultFromAccountId: String(employee.id),
+      defaultToCardType: 'settlement',
       lockDirection: true,
       title: 'تسوية صرف',
     });

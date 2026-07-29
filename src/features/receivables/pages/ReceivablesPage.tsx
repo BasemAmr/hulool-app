@@ -122,7 +122,7 @@ const ReceivablesPage = () => {
             className="font-bold"
             onClick={() => openModal('unifiedTransaction', {
               defaultFromCardType: 'client',
-              defaultToCardType: 'treasury',
+              defaultToCardType: 'cashbox',
               lockDirection: true,
               title: 'سند قبض',
             })}
@@ -135,7 +135,7 @@ const ReceivablesPage = () => {
             size="sm"
             className="font-bold"
             onClick={() => openModal('unifiedTransaction', {
-              defaultFromCardType: 'treasury',
+              defaultFromCardType: 'cashbox',
               defaultToCardType: 'client',
               lockDirection: true,
               title: 'سند صرف',
@@ -161,8 +161,8 @@ const ReceivablesPage = () => {
                   onClick={() => {
                     setSettlementOpen(false);
                     openModal('unifiedTransaction', {
-                      defaultFromCardType: 'client',
-                      defaultToCardType: 'settlement',
+                      defaultFromCardType: 'settlement',
+                      defaultToCardType: 'cashbox',
                       lockDirection: true,
                       title: 'تسوية قبض',
                     });
@@ -177,8 +177,8 @@ const ReceivablesPage = () => {
                   onClick={() => {
                     setSettlementOpen(false);
                     openModal('unifiedTransaction', {
-                      defaultFromCardType: 'settlement',
-                      defaultToCardType: 'client',
+                      defaultFromCardType: 'cashbox',
+                      defaultToCardType: 'settlement',
                       lockDirection: true,
                       title: 'تسوية صرف',
                     });
