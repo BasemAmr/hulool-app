@@ -1,5 +1,7 @@
 import React from 'react';
 import { useModalStore } from '@/shared/stores/modalStore';
+import BaseModal from '@/shared/ui/layout/BaseModal';
+import Button from '@/shared/ui/primitives/Button';
 import ClientForm from '@/features/clients/components/ClientForm';
 import ClientReportModal from '@/features/clients/components/ClientReportModal';
 import TaskModal from '@/features/tasks/components/creation/TaskModal';
@@ -196,6 +198,24 @@ const ModalManager = () => {
 
     case 'concurrentModification':
       return renderModal(ConcurrentModificationModal, { conflictData: props.conflictData, onRetry: props.onRetry, onCancel: props.onCancel });
+
+    case 'confirmDelete':
+      return (
+        <BaseModal
+          key="confirmDelete"
+          isOpen={isOpen}
+          onClose={closeModal}
+          title={props.title}
+        >
+          <p>{props.message}</p>
+          <div className="flex justify-end gap-2 mt-6">
+            <Button variant="secondary" onClick={closeModal}>إلغاء</Button>
+            <Button variant="danger" onClick={() => { props.onConfirm?.(); closeModal(); }}>
+              تأكيد
+            </Button>
+          </div>
+        </BaseModal>
+      );
 
     case 'assignTask':
       return renderModal(AssignTaskModal, { task: props.task });

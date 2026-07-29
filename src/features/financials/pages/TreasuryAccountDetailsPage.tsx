@@ -351,7 +351,7 @@ export const TreasuryAccountDetailsPage = () => {
         {/* Unified Compact Header and Filter Card */}
         <div className="bg-bg-surface border border-border-default rounded-xl p-4 shadow-sm">
           <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
-            
+
             {/* Right: Back button + Title */}
             <div className="flex items-center gap-3 shrink-0 min-w-0">
               <button
