@@ -76,7 +76,7 @@ const TaskRow = ({
       style={isEmployeeTask ? { border: '2px solid var(--token-border-strong)' } : undefined}
     >
       {/* Task Name */}
-      <td className="text-[0.82em] px-2 py-2 text-text-primary border-0 font-bold dark:text-white">
+      <td className="text-[0.82em] px-2 py-2 text-text-primary border-0 font-bold">
         <div className="flex items-center gap-1">
           <span className="truncate max-w-[180px] inline-block">
             {taskDisplayName}
@@ -128,7 +128,7 @@ const TaskRow = ({
               onClick={() => actions.onOpenFollowUp?.(task)}
               title="التعليقات"
             >
-              <MessageSquare size={12} className="text-text-secondary dark:text-white" />
+              <MessageSquare size={12} className="text-text-secondary" />
             </button>
           )}
 
