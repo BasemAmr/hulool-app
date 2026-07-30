@@ -4,6 +4,7 @@ import { useAuthStore } from '@/features/auth/store/authStore';
 import Logo from '@/shared/ui/primitives/Logo';
 import NotificationBell from '@/layouts/admin/NotificationBell';
 import ThemeToggleButton from '@/shared/ui/primitives/ThemeToggleButton';
+import FontSizeToggleButton from '@/shared/ui/primitives/FontSizeToggleButton';
 import {
   Home, ClipboardList, Users, LogOut,
   Search, ChevronDown, Plus, FileSpreadsheet,
@@ -487,6 +488,8 @@ const EmployeeNavbar = () => {
               </div>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-56 text-right z-[9999]">
+              <FontSizeToggleButton variant="menu-item" />
+              <DropdownMenuSeparator />
               <DropdownMenuItem asChild className="cursor-pointer flex flex-row-reverse justify-end gap-2 py-2 text-sm font-bold">
                 <Link to="/employee/settings">
                   <span>الإعدادات</span>

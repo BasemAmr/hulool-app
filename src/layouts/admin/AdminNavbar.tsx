@@ -5,6 +5,7 @@ import { useTranslation } from 'react-i18next';
 import Logo from '@/shared/ui/primitives/Logo';
 import NotificationBell from '@/layouts/admin/NotificationBell';
 import ThemeToggleButton from '@/shared/ui/primitives/ThemeToggleButton';
+import FontSizeToggleButton from '@/shared/ui/primitives/FontSizeToggleButton';
 import {
   LayoutDashboard, NotebookText, Users, Settings,
   Building, Calculator, Home, Briefcase, Plus, Receipt,
@@ -576,7 +577,7 @@ const Navbar = () => {
             </DropdownMenuContent>
           </DropdownMenu>
 
-          {/* Notifications */}
+          {/* Notifications & Theme */}
           <ThemeToggleButton />
           <NotificationBell />
 
@@ -594,6 +595,8 @@ const Navbar = () => {
               </div>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-56 text-right z-[9999]">
+              <FontSizeToggleButton variant="menu-item" />
+              <DropdownMenuSeparator />
               <DropdownMenuItem onClick={() => navigate('/settings')} className="cursor-pointer flex flex-row-reverse justify-end gap-2 py-2 text-sm font-bold">
                 <span>الإعدادات</span>
                 <Settings size={16} />

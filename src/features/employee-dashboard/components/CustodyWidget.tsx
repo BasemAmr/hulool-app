@@ -18,11 +18,11 @@ export const CustodyWidget: React.FC = () => {
   const box = cashBoxes[0];
 
   return (
-    <Card className="mb-4 bg-gradient-to-br from-teal-50 to-teal-100 border-teal-200">
+    <Card className="mb-4 bg-status-info-bg border-status-info-border">
       <CardContent className="p-4 flex items-center justify-between">
-        <div className="flex items-center gap-3 text-teal-900">
-          <div className="p-2 bg-teal-200 rounded-lg shadow-sm">
-            <Wallet size={24} className="text-teal-700" />
+        <div className="flex items-center gap-3 text-status-info-text">
+          <div className="p-2 bg-status-info-bg border border-status-info-border rounded-lg shadow-sm">
+            <Wallet size={24} className="text-status-info-text" />
           </div>
           <div>
             <h3 className="text-sm font-bold opacity-80">{box.name}</h3>
@@ -38,7 +38,7 @@ export const CustodyWidget: React.FC = () => {
             variant="outline-primary" 
             size="sm"
             onClick={() => openModal('recordVoucher', { boxId: box.id, defaultType: 'receipt' })}
-            className="border-teal-300 text-teal-800 hover:bg-teal-200 gap-1 bg-white"
+            className="border-status-info-border text-status-info-text hover:bg-bg-surface-hover gap-1 bg-bg-surface"
           >
             <TrendingUp size={14} />
             إيداع سريع
@@ -47,7 +47,7 @@ export const CustodyWidget: React.FC = () => {
             variant="outline-danger" 
             size="sm"
             onClick={() => openModal('recordVoucher', { boxId: box.id, defaultType: 'payment' })}
-            className="border-teal-300 text-teal-800 hover:bg-teal-200 gap-1 bg-white"
+            className="border-status-info-border text-status-info-text hover:bg-bg-surface-hover gap-1 bg-bg-surface"
           >
             <TrendingDown size={14} />
             صرف سريع

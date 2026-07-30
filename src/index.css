@@ -46,6 +46,17 @@
   --primitive-blue-200: #bfdbfe;
   --primitive-blue-700: #1d4ed8;
 
+  /* Sky & Ice Blue Spectrum (Premium Bluish Design System) */
+  --primitive-sky-25: #f0f9ff;
+  --primitive-sky-50: #e0f2fe;
+  --primitive-sky-100: #bae6fd;
+  --primitive-sky-200: #7dd3fc;
+  --primitive-sky-400: #38bdf8;
+  --primitive-sky-500: #0284c7;
+  --primitive-sky-600: #0369a1;
+  --primitive-sky-700: #075985;
+  --primitive-sky-900: #0c4a6e;
+
   /* Third-party brand (SVG icons only) */
   --color-whatsapp: #25d366;
 }
@@ -116,6 +127,17 @@
   --token-status-neutral-bg: var(--primitive-gray-100);
   --token-status-neutral-text: var(--primitive-gray-600);
   --token-status-neutral-border: var(--primitive-gray-200);
+
+  /* --- Premium Bluish Card System Tokens --- */
+  --token-card-bg-gradient: linear-gradient(180deg, rgba(224, 242, 254, 0.75) 0%, rgba(186, 230, 253, 0.45) 100%);
+  --token-card-header-bg: linear-gradient(180deg, rgba(240, 249, 255, 0.95) 0%, rgba(224, 242, 254, 0.8) 100%);
+  --token-card-border: rgba(56, 189, 248, 0.35);
+  --token-card-border-hover: rgba(2, 132, 199, 0.55);
+  --token-card-shadow: 0 10px 25px -5px rgba(14, 165, 233, 0.12), inset 0 1px 0 rgba(255, 255, 255, 0.9);
+  --token-card-shadow-hover: 0 18px 35px -5px rgba(14, 165, 233, 0.22), inset 0 1px 0 rgba(255, 255, 255, 1);
+  --token-card-text-title: var(--primitive-sky-900);
+  --token-card-text-body: var(--primitive-gray-600);
+  --token-card-accent: var(--primitive-sky-500);
 
   /* Primary gradient (replaces legacy gold headers / clip-text) */
   --gradient-primary: linear-gradient(135deg,
@@ -189,6 +211,17 @@ html[data-theme='dark'] {
   --token-status-neutral-bg: #1e293b;
   --token-status-neutral-text: #cbd5e1;
   --token-status-neutral-border: #334155;
+
+  /* --- Premium Bluish Card System Tokens — Dark Overrides --- */
+  --token-card-bg-gradient: linear-gradient(180deg, color-mix(in srgb, var(--token-bg-surface) 90%, var(--primitive-brand-500) 10%) 0%, color-mix(in srgb, var(--token-bg-surface) 76%, black 24%) 100%);
+  --token-card-header-bg: rgba(255, 255, 255, 0.05);
+  --token-card-border: rgba(255, 255, 255, 0.12);
+  --token-card-border-hover: rgba(255, 255, 255, 0.25);
+  --token-card-shadow: 0 18px 42px color-mix(in srgb, #000 34%, transparent);
+  --token-card-shadow-hover: 0 24px 50px color-mix(in srgb, #000 45%, transparent);
+  --token-card-text-title: #f8fafc;
+  --token-card-text-body: #cbd5e1;
+  --token-card-accent: var(--primitive-brand-500);
 
   --gradient-primary: linear-gradient(135deg,
       var(--primitive-brand-500) 0%,
@@ -277,6 +310,12 @@ html[data-theme='dark'] {
   --color-status-neutral-bg: var(--token-status-neutral-bg);
   --color-status-neutral-text: var(--token-status-neutral-text);
   --color-status-neutral-border: var(--token-status-neutral-border);
+
+  /* Premium Card Token Mappings */
+  --color-card-bg-gradient: var(--token-card-bg-gradient);
+  --color-card-header-bg: var(--token-card-header-bg);
+  --color-card-border-theme: var(--token-card-border);
+  --color-card-text-title: var(--token-card-text-title);
 }
 
 @layer base {
@@ -474,26 +513,48 @@ html[dir="rtl"],
 .client-card-shell {
   position: relative;
   isolation: isolate;
+  background: var(--token-card-bg-gradient);
+  border: 1px solid var(--token-card-border);
+  border-radius: 0.75rem;
+  box-shadow: var(--token-card-shadow);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.25s cubic-bezier(0.4, 0, 0.2, 1), border-color 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.client-card-shell:hover {
+  box-shadow: var(--token-card-shadow-hover);
+  border-color: var(--token-card-border-hover);
 }
 
 .client-card-header {
   position: relative;
+  background: var(--token-card-header-bg);
+  border-bottom: 1px solid var(--token-card-border);
+  border-top-left-radius: 0.75rem;
+  border-top-right-radius: 0.75rem;
 }
 
 .client-card-body {
-  background: var(--token-bg-surface);
+  background: transparent;
 }
 
 .client-card-table-head {
-  background: var(--token-bg-surface);
+  background: color-mix(in srgb, var(--primitive-sky-100) 45%, transparent);
+  color: var(--token-card-text-title);
 }
 
 .client-card-row {
-  background: var(--token-bg-surface);
+  background: transparent;
+  transition: background-color 0.15s ease;
+}
+
+.client-card-row:hover {
+  background: color-mix(in srgb, var(--primitive-sky-50) 75%, var(--primitive-white));
 }
 
 .client-card-row--even {
-  background: var(--token-bg-surface-hover);
+  background: color-mix(in srgb, var(--primitive-sky-50) 45%, transparent);
 }
 
 .client-card-row--urgent {
@@ -508,9 +569,9 @@ html[dir="rtl"],
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  border: 1px solid var(--token-border-default);
-  background: var(--token-bg-surface);
-  color: var(--token-text-primary);
+  border: 1px solid var(--token-card-border);
+  background: color-mix(in srgb, var(--primitive-white) 80%, var(--primitive-sky-50));
+  color: var(--token-card-text-title);
   transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease, transform 0.15s ease, box-shadow 0.15s ease;
 }
 
@@ -525,7 +586,8 @@ html[dir="rtl"],
 }
 
 .client-card-action-button:hover {
-  background: var(--token-bg-surface-hover);
+  background: var(--primitive-sky-100);
+  border-color: var(--token-card-border-hover);
 }
 
 .client-card-action-button--ghost {
@@ -544,10 +606,10 @@ html[dir="rtl"],
 }
 
 .client-card-dropdown-panel {
-  border: 1px solid var(--token-border-default);
-  background: var(--token-bg-surface);
+  border: 1px solid var(--token-card-border);
+  background: var(--primitive-white);
   color: var(--token-text-primary);
-  box-shadow: var(--token-shadow-md);
+  box-shadow: var(--token-card-shadow);
 }
 
 .client-card-dropdown-item {
@@ -556,7 +618,11 @@ html[dir="rtl"],
 }
 
 .client-card-drag-handle {
-  background: var(--token-bg-surface);
+  background: var(--token-card-header-bg);
+  border-bottom: 1px solid var(--token-card-border);
+  color: var(--token-card-text-title);
+  border-top-left-radius: 0.75rem;
+  border-top-right-radius: 0.75rem;
 }
 
 html.dark .client-card-shell,
@@ -673,9 +739,37 @@ html[data-theme='dark'] .client-card-table th {
   box-shadow: 0 8px 25px color-mix(in srgb, var(--token-border-strong) 40%, transparent);
 }
 
+/* ============================================================
+   FONT-SIZE-ONLY SCALING (100% – 200%)
+   We override Tailwind v4's --text-* variables so ONLY font sizes
+   grow. Padding, margins, gaps, widths, heights stay untouched
+   because they use rem directly against the fixed root font-size.
+   ============================================================ */
 :root {
-  font-size: 75%;
-  /* Scales everything using rem units */
+  font-size: 75%;  /* Fixed 12px base — never changes */
+  --font-scale: 1;
+
+  /* Base text sizes (Tailwind v4 defaults) */
+  --text-xs-base:   0.75rem;
+  --text-sm-base:   0.875rem;
+  --text-base-base: 1rem;
+  --text-lg-base:   1.125rem;
+  --text-xl-base:   1.25rem;
+  --text-2xl-base:  1.5rem;
+  --text-3xl-base:  1.875rem;
+  --text-4xl-base:  2.25rem;
+  --text-5xl-base:  3rem;
+
+  /* Scaled text sizes — consumed by Tailwind text-xs/sm/base/lg/xl/2xl/3xl/4xl/5xl */
+  --text-xs:   calc(var(--text-xs-base)   * var(--font-scale));
+  --text-sm:   calc(var(--text-sm-base)   * var(--font-scale));
+  --text-base: calc(var(--text-base-base) * var(--font-scale));
+  --text-lg:   calc(var(--text-lg-base)   * var(--font-scale));
+  --text-xl:   calc(var(--text-xl-base)   * var(--font-scale));
+  --text-2xl:  calc(var(--text-2xl-base)  * var(--font-scale));
+  --text-3xl:  calc(var(--text-3xl-base)  * var(--font-scale));
+  --text-4xl:  calc(var(--text-4xl-base)  * var(--font-scale));
+  --text-5xl:  calc(var(--text-5xl-base)  * var(--font-scale));
 }
 
 .task-modal-compact {
