@@ -67,6 +67,7 @@ import TransactionDeleteModal from '@/features/employees/modals/TransactionDelet
 import TaskRestoreModal from '@/features/tasks/modals/TaskRestoreModal';
 
 // EMPLOYEE MANAGEMENT MODALS
+import CreateEmployeeModal from '@/features/employees/modals/CreateEmployeeModal';
 import EmployeeCredentialsModal from '@/features/employees/modals/EmployeeCredentialsModal';
 import EmployeeDeletionPreviewModal from '@/features/employees/modals/EmployeeDeletionPreviewModal';
 import EmployeeReportModal from '@/features/employees/modals/EmployeeReportModal';
@@ -278,7 +279,16 @@ const ModalManager = () => {
       return renderModal(TransactionDeleteModal, { transaction: props.transaction, onSuccess: props.onSuccess, isOpen, onClose: closeModal });
 
     case 'createEmployee':
-      return null;
+      return (
+        <CreateEmployeeModal
+          key="createEmployee"
+          isOpen={isOpen}
+          onClose={closeModal}
+          isAdmin={props.isAdmin}
+          onSubmit={props.onSubmit}
+          isLoading={props.isLoading}
+        />
+      );
 
     case 'employeeCredentials':
       return renderModal(EmployeeCredentialsModal, { credentials: props.credentials, isOpen, onClose: closeModal });
