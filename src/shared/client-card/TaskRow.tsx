@@ -11,8 +11,8 @@ import { useTranslation } from 'react-i18next';
 // SAR currency icon component
 const SARIcon = () => (
   <svg
-    width={10}
-    height={10}
+    width={7.5}
+    height={8.5}
     viewBox="0 0 1124.14 1256.39"
     className="mr-0.5 align-middle flex-shrink-0"
   >
@@ -76,9 +76,9 @@ const TaskRow = ({
       style={isEmployeeTask ? { border: '2px solid var(--token-border-strong)' } : undefined}
     >
       {/* Task Name */}
-      <td className="text-[0.82em] px-2 py-2 text-text-primary border-0 font-bold">
+      <td className="text-[0.92em] px-2 py-2 text-text-primary border-0 font-bold">
         <div className="flex items-center gap-1">
-          <span className="truncate max-w-[180px] inline-block">
+          <span className="truncate max-w-[190px] inline-block">
             {taskDisplayName}
           </span>
           {isUrgent && (
@@ -88,18 +88,18 @@ const TaskRow = ({
       </td>
 
       {/* Date */}
-      <td className="client-card-secondary text-[0.77em] px-2 py-2 border-0 font-medium">
+      <td className="client-card-secondary text-[0.88em] px-2 py-2 border-0 font-medium">
         {formatShortDate(task.start_date)}
       </td>
 
       {/* Days Elapsed */}
-      <td className="client-card-secondary text-[0.77em] px-2 py-2 border-0 font-medium">
+      <td className="client-card-secondary text-[0.88em] px-2 py-2 border-0 font-medium">
         {formatDaysElapsed(task.start_date)}
       </td>
 
       {/* Amount */}
       {showAmount && (
-        <td className="text-[0.77em] px-2 py-2 border-0 font-medium">
+        <td className="text-[0.88em] px-2 py-2 border-0 font-bold">
           <div className="flex items-center text-status-danger-text">
             <SARIcon />
             {Number(task.amount).toLocaleString()}
@@ -109,9 +109,9 @@ const TaskRow = ({
 
       {/* Status */}
       {showStatus && (
-        <td className="text-[0.77em] px-2 py-2 border-0 text-center font-medium">
+        <td className="text-[0.85em] px-2 py-2 border-0 text-center font-medium">
           <span className={cn(
-            "inline-block px-2 py-0.5 rounded-full text-[0.7em] font-semibold border",
+            "inline-block px-2 py-0.5 rounded-full text-[0.78em] font-semibold border",
             getStatusVariant(task.status)
           )}>
             {t(`status.${task.status}`)}

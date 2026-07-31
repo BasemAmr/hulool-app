@@ -30,7 +30,7 @@ const CardHeader = ({
   };
 
   return (
-    <div className={`client-card-header border-0 py-2 rounded-none ${isUrgent ? 'bg-status-danger-bg border-b border-status-danger-border' : 'bg-background border-b border-border-default'}`}>
+    <div className={`client-card-header border-0 py-2 rounded-none ${isUrgent ? 'bg-status-danger-bg border-b border-status-danger-border' : 'bg-transparent'}`}>
       <div className="flex justify-between items-center px-2">
         {/* Left: WhatsApp with phone number */}
         <div className="flex items-center gap-2">

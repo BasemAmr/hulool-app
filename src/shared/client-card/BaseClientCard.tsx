@@ -52,7 +52,7 @@ const BaseClientCard = ({
     <div
       ref={cardRef}
       className={cn(
-        "client-card-shell h-full shadow-sm rounded-none overflow-visible relative transition-all duration-300 bg-bg-surface",
+        "client-card-shell h-full shadow-sm rounded-none overflow-visible relative transition-all duration-300",
         isClientUrgent
           ? "border-l-4 border-status-danger-border"
           : "border-l-4 border-border-default",
@@ -76,26 +76,26 @@ const BaseClientCard = ({
           <table className="client-card-table w-full text-sm">
             <thead className="sticky top-0 z-[2]">
               <tr className="client-card-table-head">
-                <th className="text-[0.8em] px-2 py-1.5 border-0 text-text-secondary font-semibold">
+                <th className="text-[0.88em] px-2 py-1.5 border-0 text-text-secondary font-bold">
                   المهمة
                 </th>
-                <th className="text-[0.8em] px-2 py-1.5 border-0 text-text-secondary font-semibold">
+                <th className="text-[0.88em] px-2 py-1.5 border-0 text-text-secondary font-bold">
                   تاريخ
                 </th>
-                <th className="text-[0.8em] px-2 py-1.5 border-0 text-text-secondary font-semibold">
+                <th className="text-[0.88em] px-2 py-1.5 border-0 text-text-secondary font-bold">
                   اليوم
                 </th>
                 {showAmountColumn && (
-                  <th className="text-[0.8em] px-2 py-1.5 border-0 text-text-secondary font-semibold">
+                  <th className="text-[0.88em] px-2 py-1.5 border-0 text-text-secondary font-bold">
                     المبلغ
                   </th>
                 )}
                 {showStatus && (
-                  <th className="text-[0.8em] px-2 py-1.5 border-0 text-text-secondary font-semibold">
+                  <th className="text-[0.88em] px-2 py-1.5 border-0 text-text-secondary font-bold">
                     الحالة
                   </th>
                 )}
-                <th className="text-[0.8em] px-2 py-1.5 border-0 w-20 min-w-[80px] text-text-secondary font-semibold">
+                <th className="text-[0.88em] px-2 py-1.5 border-0 w-20 min-w-[80px] text-text-secondary font-bold">
                   إجراءات
                 </th>
               </tr>
