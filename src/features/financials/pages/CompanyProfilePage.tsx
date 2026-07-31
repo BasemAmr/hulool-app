@@ -82,7 +82,7 @@ const CompanyProfilePage = () => {
 
   // Handle new transaction
   const handleNewTransaction = () => {
-    openModal('manualTransaction');
+    openModal('unifiedTransaction');
   };
 
   // Format date

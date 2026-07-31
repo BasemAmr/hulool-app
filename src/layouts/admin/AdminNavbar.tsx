@@ -25,7 +25,7 @@ import { useGetEmployeesForSelection } from '@/features/employees/api/employeeQu
 import { useGetTreasuryAccounts } from '@/features/financials/api/treasuryQueries';
 import type { TreasuryAccount } from '@/api/types';
 
-// ─── Smooth 0.3s Hover & Unpin-on-Any-Click Dropdown Component ──────────────
+// ─── Smooth Hover Dropdown Component (No Pinning) ──────────────
 const NavHoverDropdown = ({
   trigger,
   children,
@@ -38,11 +38,8 @@ const NavHoverDropdown = ({
   className?: string;
 }) => {
   const [isHovered, setIsHovered] = useState(false);
-  const [isPinned, setIsPinned] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
-
-  const isOpen = isHovered || isPinned;
 
   const handleMouseEnter = () => {
     if (timeoutRef.current) {
@@ -53,46 +50,11 @@ const NavHoverDropdown = ({
   };
 
   const handleMouseLeave = (e: React.MouseEvent) => {
-    if (isPinned) return;
     if (ref.current && e.relatedTarget && ref.current.contains(e.relatedTarget as Node)) {
       return;
     }
-    timeoutRef.current = setTimeout(() => {
-      setIsHovered(false);
-    }, 50);
+    setIsHovered(false);
   };
-
-  const handleTriggerClick = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    if (timeoutRef.current) {
-      clearTimeout(timeoutRef.current);
-      timeoutRef.current = null;
-    }
-    if (isPinned) {
-      setIsPinned(false);
-      setIsHovered(false);
-    } else {
-      setIsPinned(true);
-      setIsHovered(true);
-    }
-  };
-
-  useEffect(() => {
-    if (!isPinned) return;
-
-    const handleAnyClick = (e: MouseEvent) => {
-      if (ref.current && ref.current.contains(e.target as Node)) {
-        return;
-      }
-      setIsPinned(false);
-      setIsHovered(false);
-    };
-
-    document.addEventListener('click', handleAnyClick, true);
-    return () => {
-      document.removeEventListener('click', handleAnyClick, true);
-    };
-  }, [isPinned]);
 
   return (
     <div
@@ -101,19 +63,16 @@ const NavHoverDropdown = ({
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
     >
-      <div onClick={handleTriggerClick} className="cursor-pointer [&>*]:pointer-events-none">
+      <div className="cursor-pointer">
         {trigger}
       </div>
 
-      {isOpen && (
+      {isHovered && (
         <div
           onMouseEnter={handleMouseEnter}
           onMouseLeave={handleMouseLeave}
           onClick={() => {
-            setTimeout(() => {
-              setIsPinned(false);
-              setIsHovered(false);
-            }, 0);
+            setIsHovered(false);
           }}
           className={`absolute ${align === 'start' ? 'left-0' : align === 'center' ? 'left-1/2 -translate-x-1/2' : 'right-0'
             } top-full pt-1 z-[9999]`}

@@ -40,19 +40,12 @@ const FCClientsTable = ({
   };
 
   const handleRepayment = (client: FCClientSummary) => {
-    openModal('manualTransaction', {
-      direction: 'repayment',
-      accountType: 'client',
-      preselectedAccount: {
-        id: client.client_id,
-        name: client.client_name,
-        type: 'client' as const,
-        balance: client.total_outstanding,
-        email: null,
-        last_activity: null,
-        pending_count: 0,
-        pending_amount: 0,
-      },
+    openModal('unifiedTransaction', {
+      title: 'سند قبض',
+      defaultFromCardType: 'client',
+      defaultFromAccountId: String(client.client_id),
+      defaultToCardType: 'cashbox',
+      lockDirection: false,
     });
   };
 

@@ -339,9 +339,11 @@ const AccountsOverviewPage = () => {
                                       size="sm"
                                       onClick={(e) => {
                                         e.stopPropagation();
-                                        openModal('manualTransaction', {
-                                          preselectedAccount: account,
-                                          direction: 'payout'
+                                        openModal('unifiedTransaction', {
+                                          title: 'سند صرف',
+                                          defaultFromCardType: 'cashbox',
+                                          defaultToCardType: account.type === 'client' ? 'client' : 'employee',
+                                          defaultToAccountId: String(account.id),
                                         });
                                       }}
                                     >
@@ -353,9 +355,11 @@ const AccountsOverviewPage = () => {
                                       size="sm"
                                       onClick={(e) => {
                                         e.stopPropagation();
-                                        openModal('manualTransaction', {
-                                          preselectedAccount: account,
-                                          direction: 'repayment'
+                                        openModal('unifiedTransaction', {
+                                          title: 'سند قبض',
+                                          defaultFromCardType: account.type === 'client' ? 'client' : 'employee',
+                                          defaultFromAccountId: String(account.id),
+                                          defaultToCardType: 'cashbox',
                                         });
                                       }}
                                     >
