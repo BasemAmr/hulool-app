@@ -267,15 +267,41 @@ export const TreasuryAccountDetailsPage = () => {
     }
   };
 
+  const fetchAllHistoryPages = async (extraParams: { start_date?: string; end_date?: string } = {}) => {
+    let allTxns: any[] = [];
+    let pageNum = 1;
+    let totalPages = 1;
+    const PER_PAGE_LIMIT = 100;
+
+    do {
+      const { data } = await apiClient.get<any>(`/accounts/treasury/${accountId}/history`, {
+        params: {
+          page: pageNum,
+          per_page: PER_PAGE_LIMIT,
+          ...extraParams,
+        },
+      });
+
+      let rawTxns: any[] = [];
+      if (data?.data?.transactions) rawTxns = data.data.transactions;
+      else if (data?.data?.data) rawTxns = data.data.data;
+      else if (data?.transactions) rawTxns = data.transactions;
+      else if (Array.isArray(data?.data)) rawTxns = data.data;
+
+      allTxns = [...allTxns, ...rawTxns];
+
+      const pagination = data?.pagination || data?.data?.pagination;
+      totalPages = pagination?.total_pages || 1;
+      pageNum++;
+    } while (pageNum <= totalPages);
+
+    return allTxns;
+  };
+
   const handleExportFull = async () => {
     try {
       setIsExporting(true);
-      const { data } = await apiClient.get<any>(`/accounts/treasury/${accountId}/history`, { params: { page: 1, per_page: 100000 } });
-      let allTxns: any[] = [];
-      if (data?.data?.transactions) allTxns = data.data.transactions;
-      else if (data?.data?.data) allTxns = data.data.data;
-      else if (data?.transactions) allTxns = data.transactions;
-      else if (Array.isArray(data?.data)) allTxns = data.data;
+      const allTxns = await fetchAllHistoryPages();
 
       const exportItems = allTxns.map((txn: any) => ({
         transaction_date: txn.transaction_date || txn.created_at || '',
@@ -287,6 +313,44 @@ export const TreasuryAccountDetailsPage = () => {
       }));
       await exportService.exportTreasuryAccount({ title: `كشف حركة الحساب كامل - ${account.name}`, items: exportItems });
       toast.success('تم تصدير كامل التاريخ بنجاح');
+    } catch (err: any) {
+      toast.error('فشل التصدير', err.message || '');
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
+  const handleExportDateRange = async (startDateStr?: string, endDateStr?: string) => {
+    try {
+      setIsExporting(true);
+      const extraParams: { start_date?: string; end_date?: string } = {};
+      if (startDateStr) extraParams.start_date = startDateStr;
+      if (endDateStr) extraParams.end_date = endDateStr;
+
+      const allTxns = await fetchAllHistoryPages(extraParams);
+      const exportItems = allTxns.map((txn: any) => ({
+        transaction_date: txn.transaction_date || txn.created_at || '',
+        transaction_type: txn.transaction_type,
+        description: txn.description,
+        debit: Number(txn.debit || (txn.direction === 'debit' ? txn.amount : 0)),
+        credit: Number(txn.credit || (txn.direction === 'credit' ? txn.amount : 0)),
+        balance: Number(txn.balance || txn.balance_after || 0),
+      }));
+
+      let dateTitlePart = '';
+      if (startDateStr && endDateStr) {
+        dateTitlePart = ` (${startDateStr.split(' ')[0]} إلى ${endDateStr.split(' ')[0]})`;
+      } else if (startDateStr) {
+        dateTitlePart = ` (منذ ${startDateStr.split(' ')[0]})`;
+      } else if (endDateStr) {
+        dateTitlePart = ` (حتى ${endDateStr.split(' ')[0]})`;
+      }
+
+      await exportService.exportTreasuryAccount({
+        title: `كشف حركة الحساب${dateTitlePart} - ${account.name}`,
+        items: exportItems,
+      });
+      toast.success('تم تصدير الحركة بنجاح');
     } catch (err: any) {
       toast.error('فشل التصدير', err.message || '');
     } finally {
@@ -519,6 +583,7 @@ export const TreasuryAccountDetailsPage = () => {
         onClose={() => setShowExportChoice(false)}
         onExportFiltered={handleExportFiltered}
         onExportFull={handleExportFull}
+        onExportDateRange={handleExportDateRange}
         title="تصدير كشف الحساب"
       />
     </>
