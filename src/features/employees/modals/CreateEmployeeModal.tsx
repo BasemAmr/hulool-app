@@ -4,7 +4,7 @@ import EmployeeForm from '@/features/employees/forms/EmployeeForm';
 import { useCreateEmployee } from '@/features/employees/api/employeeQueries';
 import { useModalStore } from '@/shared/stores/modalStore';
 import type { CreateEmployeeAccountRequest } from '@/api/types';
-import toast from 'react-hot-toast';
+import { useToast } from '@/shared/hooks/useToast';
 
 interface CreateEmployeeModalProps {
   isOpen: boolean;
@@ -21,6 +21,7 @@ export const CreateEmployeeModal: React.FC<CreateEmployeeModalProps> = ({
   onSubmit,
   isLoading: propIsLoading = false,
 }) => {
+  const toast = useToast();
   const openModal = useModalStore((state) => state.openModal);
   const createEmployeeMutation = useCreateEmployee();
 
