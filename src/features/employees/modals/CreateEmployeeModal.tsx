@@ -1,7 +1,7 @@
 import React from 'react';
 import BaseModal from '@/shared/ui/layout/BaseModal';
 import EmployeeForm from '@/features/employees/forms/EmployeeForm';
-import { useCreateEmployee } from '@/features/employees/api/employeeQueries';
+import { useCreateEmployee } from '@/features/employees/api/userQueries';
 import { useModalStore } from '@/shared/stores/modalStore';
 import type { CreateEmployeeAccountRequest } from '@/api/types';
 import { useToast } from '@/shared/hooks/useToast';
