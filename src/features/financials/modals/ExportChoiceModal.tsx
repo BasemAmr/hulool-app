@@ -149,10 +149,6 @@ export const ExportChoiceModal: React.FC<ExportChoiceModalProps> = ({
                 </div>
               </div>
 
-              <p className="text-[11px] text-text-secondary leading-relaxed bg-bg-surface-muted p-2 rounded border border-border-default">
-                💡 عند تحديد تاريخ البداية فقط تبدأ الفلترة من 12:00 ص لذلك اليوم، وعند تحديد تاريخ النهاية فقط تنتهي عند 11:59 م.
-              </p>
-
               <Button
                 variant="primary"
                 className="w-full justify-center gap-2 py-2.5"
