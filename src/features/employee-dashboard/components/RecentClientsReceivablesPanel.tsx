@@ -147,16 +147,16 @@ const RecentClientsReceivablesPanel: React.FC<RecentClientsReceivablesPanelProps
             <table className="w-full text-sm mb-0 border-collapse">
               <thead className="sticky top-0 z-10 bg-background">
                 <tr>
-                  <th className="px-2 py-2 border border-border-strong text-start font-bold text-base text-text-primary">
+                  <th className="px-2.5 py-2.5 border border-border-strong text-start font-extrabold text-lg text-text-primary">
                     العميل
                   </th>
-                  <th className="px-2 py-2 border border-border-strong text-start font-bold text-base text-text-primary">
+                  <th className="px-2.5 py-2.5 border border-border-strong text-start font-extrabold text-lg text-text-primary">
                     الوصف
                   </th>
-                  <th className="px-2 py-2 border border-border-strong text-center font-bold text-base text-text-primary">
+                  <th className="px-2.5 py-2.5 border border-border-strong text-center font-extrabold text-lg text-text-primary">
                     المستحق
                   </th>
-                  <th className="px-2 py-2 border border-border-strong text-center font-bold text-base text-text-primary" style={{ minWidth: '120px' }}>
+                  <th className="px-2.5 py-2.5 border border-border-strong text-center font-extrabold text-lg text-text-primary" style={{ minWidth: '120px' }}>
                     إجراءات
                   </th>
                 </tr>
@@ -166,16 +166,16 @@ const RecentClientsReceivablesPanel: React.FC<RecentClientsReceivablesPanelProps
                   const rowBg = index % 2 === 0 ? 'bg-bg-surface' : 'bg-bg-surface-hover';
                   return (
                     <tr key={invoice.id} className={`${rowBg} hover:bg-background transition-colors`}>
-                      <td className="px-2 py-1.5 border border-border-default text-start font-semibold text-sm text-text-primary overflow-hidden text-ellipsis whitespace-nowrap" style={{ maxWidth: '120px' }} title={invoice.client_name}>
+                      <td className="px-2.5 py-2.5 border border-border-default text-start font-extrabold text-base text-text-primary overflow-hidden text-ellipsis whitespace-nowrap" style={{ maxWidth: '140px' }} title={invoice.client_name}>
                         {invoice.client_name}
                       </td>
-                      <td className="px-2 py-1.5 border border-border-default text-start text-sm text-text-secondary overflow-hidden text-ellipsis whitespace-nowrap">
+                      <td className="px-2.5 py-2.5 border border-border-default text-start font-bold text-base text-text-secondary overflow-hidden text-ellipsis whitespace-nowrap">
                         {invoice.description || invoice.task_name}
                       </td>
-                      <td className="px-2 py-1.5 border border-border-default text-center font-semibold text-sm text-text-primary">
+                      <td className="px-2.5 py-2.5 border border-border-default text-center font-extrabold text-base text-status-danger-text">
                         {formatCurrency(invoice.remaining_amount)} ر.س
                       </td>
-                      <td className="px-2 py-1.5 border border-border-default text-center">
+                      <td className="px-2.5 py-2.5 border border-border-default text-center">
                         <div className="flex justify-center gap-0.5">
 
                           {/* Record Payment */}

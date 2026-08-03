@@ -214,48 +214,83 @@ export const setupWorksheet = (worksheet: Worksheet) => {
 };
 
 // Add a report header spanning multiple columns
-export const addReportHeader = (worksheet: Worksheet, title: string, columnSpan: number) => {
-  const titleRow = worksheet.addRow([title]);
+export const addReportHeader = (
+  worksheet: Worksheet,
+  title: string,
+  columnSpan: number,
+  options?: { includeDateInTitle?: boolean; skipSpacer?: boolean }
+) => {
+  const todayStr = new Date().toLocaleDateString('en-GB');
+  const displayTitle = options?.includeDateInTitle
+    ? `${title}  |  تاريخ التقرير: ${todayStr}`
+    : title;
+
+  const titleRow = worksheet.addRow([displayTitle]);
   worksheet.mergeCells(1, 1, 1, columnSpan);
   titleRow.getCell(1).style = styles.reportTitle;
-  titleRow.height = 35;
+  titleRow.height = 38;
 
-  // Add date/time stamp
-  const dateRow = worksheet.addRow([`تاريخ التقرير: ${new Date().toLocaleDateString('en-US')}`]);
-  worksheet.mergeCells(2, 1, 2, columnSpan);
-  dateRow.getCell(1).style = {
-    font: { ...FONTS.default, italic: true },
-    alignment: { horizontal: 'center', vertical: 'middle' },
-  };
+  if (!options?.includeDateInTitle) {
+    const dateRow = worksheet.addRow([`تاريخ التقرير: ${todayStr}`]);
+    worksheet.mergeCells(2, 1, 2, columnSpan);
+    dateRow.getCell(1).style = {
+      font: { ...FONTS.default, italic: true },
+      alignment: { horizontal: 'center', vertical: 'middle' },
+    };
+  }
 
-  worksheet.addRow([]); // Spacer row
-  return 3; // Return the row number where content should start
+  if (!options?.skipSpacer) {
+    worksheet.addRow([]);
+  }
+
+  return worksheet.lastRow ? worksheet.lastRow.number : 1;
+};
+
+// Apply standard balance formatting across reports:
+// - If balance < 0 (negative): display absolute positive value (remove '-' sign), soft red bg (#FFFFC7CE), reddish text (#FF9C0006).
+// - If balance > 0 (positive): display positive value, soft green bg (#FFC6EFCE), greenish text (#FF006100).
+// - If balance === 0: display 0.00, neutral bg (#FFEAEAEA), dark text.
+export const applyStandardBalanceFormatting = (
+  cell: Cell,
+  balance: number,
+  customBorder?: any
+) => {
+  const numBalance = Number(balance || 0);
+  const currentBorder = customBorder || cell.border;
+
+  if (numBalance < 0) {
+    cell.value = Math.abs(numBalance);
+    cell.style = {
+      font: { name: 'Calibri', size: 11, bold: true, color: { argb: 'FF9C0006' } },
+      fill: { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFFC7CE' } },
+      numFmt: '#,##0.00',
+      alignment: { horizontal: 'center', vertical: 'middle' },
+      border: currentBorder,
+    };
+  } else if (numBalance > 0) {
+    cell.value = numBalance;
+    cell.style = {
+      font: { name: 'Calibri', size: 11, bold: true, color: { argb: 'FF006100' } },
+      fill: { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFC6EFCE' } },
+      numFmt: '#,##0.00',
+      alignment: { horizontal: 'center', vertical: 'middle' },
+      border: currentBorder,
+    };
+  } else {
+    cell.value = 0;
+    cell.style = {
+      font: { name: 'Calibri', size: 11, bold: true, color: { argb: 'FF333333' } },
+      fill: { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFEAEAEA' } },
+      numFmt: '#,##0.00',
+      alignment: { horizontal: 'center', vertical: 'middle' },
+      border: currentBorder,
+    };
+  }
 };
 
 // Apply conditional formatting for receivables balance
 export const applyReceivablesConditionalFormatting = (cell: Cell, balance: number) => {
-  let fillColor: string;
-  let textColor: string;
-
-  if (balance > 0) {
-    // Debt (positive balance = client owes money)
-    fillColor = COLORS.debitBg;
-    textColor = 'FF9C0006';
-  } else if (balance === 0) {
-    // Balanced
-    fillColor = COLORS.balancedBg;
-    textColor = 'FF006100';
-  } else {
-    // Credit (negative balance = we owe client)
-    fillColor = COLORS.creditBg;
-    textColor = 'FF0C4594';
-  }
-
-  cell.style = {
-    ...cell.style,
-    fill: { type: 'pattern', pattern: 'solid', fgColor: { argb: fillColor } },
-    font: { ...cell.font, color: { argb: textColor } },
-  };
+  applyStandardBalanceFormatting(cell, balance);
 };
 
 // Apply conditional formatting for overdue dates

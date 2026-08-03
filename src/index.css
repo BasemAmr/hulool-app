@@ -128,6 +128,13 @@
   --token-status-neutral-text: var(--primitive-gray-600);
   --token-status-neutral-border: var(--primitive-gray-200);
 
+  /* --- Report Chart Tokens --- */
+  --token-chart-1: #2dd4bf;
+  --token-chart-2: #475569;
+  --token-chart-3: #f59e0b;
+  --token-chart-4: #f43f5e;
+  --token-chart-5: #38bdf8;
+
   /* --- Premium Bluish Card System Tokens --- */
   --token-card-bg-gradient: linear-gradient(180deg, rgba(224, 242, 254, 0.75) 0%, rgba(186, 230, 253, 0.45) 100%);
   --token-card-header-bg: linear-gradient(180deg, rgba(240, 249, 255, 0.95) 0%, rgba(224, 242, 254, 0.8) 100%);
@@ -211,6 +218,13 @@ html[data-theme='dark'] {
   --token-status-neutral-bg: #1e293b;
   --token-status-neutral-text: #cbd5e1;
   --token-status-neutral-border: #334155;
+
+  /* --- Report Chart Tokens — Dark Overrides --- */
+  --token-chart-1: #2dd4bf;
+  --token-chart-2: #94a3b8;
+  --token-chart-3: #fcd34d;
+  --token-chart-4: #fda4af;
+  --token-chart-5: #7dd3fc;
 
   /* --- Premium Bluish Card System Tokens — Dark Overrides --- */
   --token-card-bg-gradient: linear-gradient(180deg, color-mix(in srgb, var(--token-bg-surface) 90%, var(--primitive-brand-500) 10%) 0%, color-mix(in srgb, var(--token-bg-surface) 76%, black 24%) 100%);

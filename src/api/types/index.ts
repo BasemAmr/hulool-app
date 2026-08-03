@@ -408,6 +408,7 @@ export interface TaskPayload {
   task_name: string;
   type: TaskType;
   amount: number;
+  expense_amount?: number;
   amount_details?: AmountDetail[];
   subtasks?: any[];
   start_date: string;
@@ -425,6 +426,7 @@ export interface UpdateTaskPayload {
   task_name?: string;
   type?: TaskType;
   amount?: number;
+  expense_amount?: number;
   amount_details?: AmountDetail[];
   subtasks?: any[];
   start_date?: string;

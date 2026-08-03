@@ -101,6 +101,7 @@ const TaskModal = () => {
       task_name: taskToEdit?.task_name || '',
       type: taskToEdit?.type || undefined,
       amount: taskToEdit?.amount || 0,
+      expense_amount: taskToEdit?.expense_amount || 0,
       start_date: taskToEdit?.start_date || new Date().toISOString().split('T')[0],
       end_date: taskToEdit?.end_date || undefined,
       prepaid_amount: taskToEdit?.prepaid_amount || 0,
@@ -113,6 +114,8 @@ const TaskModal = () => {
 
   const selectedType = watch('type');
   const selectedClientId = watch('client_id');
+  const watchAmount = watch('amount');
+  const watchExpenseAmount = watch('expense_amount');
 
   const createTaskMutation = useCreateTask();
   const updateTaskMutation = useUpdateTask();
@@ -134,6 +137,7 @@ const TaskModal = () => {
       setValue('task_name', taskToEdit.task_name || '');
       setValue('type', taskToEdit.type);
       setValue('amount', taskToEdit.amount);
+      setValue('expense_amount', taskToEdit.expense_amount || 0);
       setValue('start_date', taskToEdit.start_date);
       setValue('end_date', taskToEdit.end_date || undefined);
       setValue('prepaid_amount', taskToEdit.prepaid_amount || 0);
@@ -145,10 +149,6 @@ const TaskModal = () => {
       if (existingSubtasks.length > 0) {
         setValue('subtasks', existingSubtasks);
         setLocalSubtasks(existingSubtasks);
-      } else if (taskToEdit.amount && Number(taskToEdit.amount) > 0) {
-        const virtual = [{ description: taskToEdit.task_name || 'المهمة الرئيسية', amount: Number(taskToEdit.amount), is_completed: false }];
-        setValue('subtasks', virtual);
-        setLocalSubtasks(virtual);
       } else {
         setValue('subtasks', []);
         setLocalSubtasks([]);
@@ -158,25 +158,21 @@ const TaskModal = () => {
       setValue('client_id', client.id);
       setValue('tags', []);
       setLocalRequirements([]);
-      setLocalSubtasks([{ description: '', amount: 0, is_completed: false }]);
+      setLocalSubtasks([]);
       setSearchedClient(client);
     } else {
       setValue('tags', []);
-      setLocalSubtasks([{ description: '', amount: 0, is_completed: false }]);
+      setLocalRequirements([]);
+      setLocalSubtasks([]);
       setSearchedClient(undefined);
     }
   }, [taskToEdit, client, setValue]);
 
-  // Effect to update amount when subtasks change
+  // Effect to update amount dynamically when subtasks change
   useEffect(() => {
-    if (localSubtasks?.length > 0) {
-      const validSubtasks = localSubtasks.filter(subtask =>
-        subtask.description && subtask.description.trim() && subtask.amount >= 0
-      );
-      if (validSubtasks?.length > 0) {
-        const total = calculateTotal();
-        setValue('amount', total);
-      }
+    if (localSubtasks && localSubtasks.length > 0) {
+      const total = localSubtasks.reduce((sum, subtask) => sum + (Number(subtask.amount) || 0), 0);
+      setValue('amount', total);
     }
   }, [localSubtasks, setValue]);
 
@@ -253,41 +249,27 @@ const TaskModal = () => {
     }
   };
 
+  const calculateTotal = (subtasksList = localSubtasks) => {
+    return subtasksList.reduce((sum, subtask) => sum + (Number(subtask.amount) || 0), 0);
+  };
+
   const onSubmit = (data: TaskPayload) => {
-    const validSubtasks = localSubtasks.filter(subtask =>
-      subtask.description && subtask.description.trim() && subtask.amount >= 0
-    );
-    const finalAmount = validSubtasks?.length > 0 ? calculateTotal() : Number(data.amount);
+    const validSubtasks = localSubtasks
+      .filter(subtask => subtask.description && String(subtask.description).trim() !== '')
+      .map(subtask => ({
+        description: String(subtask.description).trim(),
+        amount: Number(subtask.amount) || 0,
+        is_completed: Boolean(subtask.is_completed)
+      }));
+    const finalAmount = validSubtasks.length > 0
+      ? validSubtasks.reduce((sum, s) => sum + s.amount, 0)
+      : Number(data.amount) || 0;
 
     if (isEditMode && taskToEdit) {
-      const newAssignment = data.assigned_to_id;
-      const oldAssignment = taskToEdit.assigned_to_id;
-      const assignmentChanged = newAssignment !== oldAssignment;
-
-      const taskNameChanged = data.task_name !== taskToEdit.task_name;
-      const amountChanged = Number(data.amount) !== Number(taskToEdit.amount);
-      const notesChanged = (data.notes || '') !== (taskToEdit.notes || '');
-      const typeChanged = data.type !== taskToEdit.type;
-
-      if (assignmentChanged && !taskNameChanged && !amountChanged && !notesChanged && !typeChanged && isAdmin()) {
-        assignTaskMutation.mutate({
-          id: taskToEdit.id,
-          assigned_to_id: newAssignment !== undefined ? newAssignment : null
-        }, {
-          onSuccess: () => {
-            toast.success(TOAST_MESSAGES.TASK_UPDATED, 'تم تحديث المسؤول عن المهمة');
-            closeModal();
-          },
-          onError: (error: any) => {
-            toast.error(TOAST_MESSAGES.ERROR, error?.message || 'فشل تعيين المهمة');
-          }
-        });
-        return;
-      }
-
       const updatePayload: UpdateTaskPayload = {
         ...data,
         amount: finalAmount,
+        expense_amount: data.expense_amount !== undefined ? Number(data.expense_amount) : undefined,
         end_date: data.end_date || undefined,
         prepaid_amount: data.prepaid_amount ? Number(data.prepaid_amount) : undefined,
         tags: data.tags || [],
@@ -328,6 +310,7 @@ const TaskModal = () => {
         task_name: data.task_name,
         type: data.type,
         amount: finalAmount,
+        expense_amount: data.expense_amount ? Number(data.expense_amount) : undefined,
         start_date: data.start_date,
         end_date: data.end_date || undefined,
         prepaid_amount: data.prepaid_amount ? Number(data.prepaid_amount) : undefined,
@@ -377,26 +360,27 @@ const TaskModal = () => {
   };
 
   const addSubtask = () => {
-    setLocalSubtasks([...localSubtasks, { description: '', amount: 0, is_completed: false }]);
+    const updated = [...localSubtasks, { description: '', amount: 0, is_completed: false }];
+    setLocalSubtasks(updated);
+    setValue('amount', calculateTotal(updated));
   };
 
   const removeSubtask = (index: number) => {
     const updated = localSubtasks.filter((_, i) => i !== index);
     setLocalSubtasks(updated);
-    const newTotal = updated.reduce((sum, subtask) => sum + (subtask.amount || 0), 0);
-    setValue('amount', newTotal);
+    setValue('amount', calculateTotal(updated));
   };
 
   const handleSubtaskChange = (index: number, field: string, value: any) => {
     const updatedSubtasks = [...localSubtasks];
     if (field === 'amount') {
-      updatedSubtasks[index] = { ...updatedSubtasks[index], [field]: Number(value) };
+      const rawVal = value && typeof value === 'object' && 'target' in value ? value.target.value : value;
+      updatedSubtasks[index] = { ...updatedSubtasks[index], [field]: Number(rawVal) || 0 };
     } else {
       updatedSubtasks[index] = { ...updatedSubtasks[index], [field]: value };
     }
     setLocalSubtasks(updatedSubtasks);
-    const newTotal = updatedSubtasks.reduce((sum, subtask) => sum + (subtask.amount || 0), 0);
-    setValue('amount', newTotal);
+    setValue('amount', calculateTotal(updatedSubtasks));
   };
 
   const addRequirementField = () => {
@@ -426,10 +410,6 @@ const TaskModal = () => {
     }));
   };
 
-  const calculateTotal = () => {
-    return localSubtasks.reduce((sum, subtask) => sum + (subtask.amount || 0), 0);
-  };
-
   const taskTypes: { type: TaskType; label: string }[] = [
     { type: 'Government', label: 'حكومية' },
     { type: 'Accounting', label: 'محاسبية' },
@@ -439,6 +419,7 @@ const TaskModal = () => {
 
   const currentClientDisplay = searchedClient || client || taskToEdit?.client;
   const isClientReady = Boolean(selectedClientId || currentClientDisplay?.id);
+  const showPrepaidField = isEditMode && Boolean(taskToEdit?.prepaid_amount && Number(taskToEdit.prepaid_amount) > 0);
 
   return (
     <>
@@ -451,7 +432,7 @@ const TaskModal = () => {
         <div className="max-h-[75vh] overflow-y-auto px-1">
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
 
-            {/* Phase 1: 4 Boxes in 1 Row to Choose Task Type (No Icons) */}
+            {/* Phase 1: 4 Boxes in 1 Row to Choose Task Type */}
             <div>
               <div className="grid grid-cols-4 gap-2">
                 {taskTypes.map((item) => {
@@ -572,7 +553,164 @@ const TaskModal = () => {
                   )}
                 </div>
 
-                {/* Subtasks Section */}
+                {/* Row 2: Amounts & Start Date IN ONE ROW */}
+                <div className={`grid grid-cols-1 ${showPrepaidField ? 'md:grid-cols-4' : 'md:grid-cols-3'} gap-3`}>
+                  <div>
+                    <label className="font-semibold text-text-primary text-sm block mb-1">المبلغ الإجمالي</label>
+                    <Controller
+                      name="amount"
+                      control={control}
+                      render={({ field }) => (
+                        <NumberInput
+                          value={field.value}
+                          onChange={field.onChange}
+                          disabled={localSubtasks.length > 0}
+                          className="w-full text-sm"
+                        />
+                      )}
+                    />
+                    {localSubtasks.length > 0 && (
+                      <span className="text-[10px] text-text-secondary block mt-0.5">محسوب من المهام الفرعية</span>
+                    )}
+                  </div>
+
+                  <div>
+                    <label className="font-semibold text-text-primary text-sm block mb-1">مبلغ المصاريف</label>
+                    <Controller
+                      name="expense_amount"
+                      control={control}
+                      render={({ field }) => (
+                        <NumberInput
+                          value={field.value || 0}
+                          onChange={field.onChange}
+                          className="w-full text-sm"
+                        />
+                      )}
+                    />
+                  </div>
+
+                  {showPrepaidField && (
+                    <div>
+                      <label className="font-semibold text-text-primary text-sm block mb-1">الدفعة المقدمة</label>
+                      <Controller
+                        name="prepaid_amount"
+                        control={control}
+                        render={({ field }) => (
+                          <NumberInput
+                            value={field.value || 0}
+                            onChange={field.onChange}
+                            className="w-full text-sm"
+                          />
+                        )}
+                      />
+                    </div>
+                  )}
+
+                  <div>
+                    <label className="font-semibold text-text-primary text-sm block mb-1">تاريخ البدء</label>
+                    <Controller
+                      name="start_date"
+                      control={control}
+                      render={({ field }) => (
+                        <DateInput
+                          name="start_date"
+                          value={field.value}
+                          onChange={field.onChange}
+                          className="w-full text-sm"
+                        />
+                      )}
+                    />
+                  </div>
+                </div>
+
+                {/* Net Earning Preview Badge */}
+                <div className={`w-full px-3 py-2 rounded-lg border ${
+                  (Number(watchAmount) || 0) - (Number(watchExpenseAmount) || 0) >= 0
+                    ? 'border-emerald-200 bg-emerald-50 dark:border-emerald-800 dark:bg-emerald-950/30'
+                    : 'border-red-200 bg-red-50 dark:border-red-800 dark:bg-red-950/30'
+                }`}>
+                  <div className="flex justify-between items-center">
+                    <span className="text-xs font-semibold text-text-secondary">صافي الربح المتوقع</span>
+                    <span className={`text-sm font-bold ${
+                      (Number(watchAmount) || 0) - (Number(watchExpenseAmount) || 0) >= 0
+                        ? 'text-emerald-600 dark:text-emerald-400'
+                        : 'text-red-600 dark:text-red-400'
+                    }`}>
+                      {((Number(watchAmount) || 0) - (Number(watchExpenseAmount) || 0)).toFixed(2)} ر.س
+                    </span>
+                  </div>
+                </div>
+
+                {/* Notes */}
+                <div>
+                  <label className="font-semibold text-text-primary text-sm block mb-1">ملاحظات</label>
+                  <textarea
+                    className="w-full px-3 py-2 border border-border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-primary min-h-[70px]"
+                    {...register('notes')}
+                    placeholder="ملاحظات تفصيلية..."
+                  />
+                </div>
+
+                {/* Requirements Accordion - Only shown if editing and has prefilled requirements */}
+                {isEditMode && localRequirements.length > 0 && (
+                  <Accordion type="single" collapsible className="w-full border border-border rounded-md px-3">
+                    <AccordionItem value="requirements" className="border-b-0">
+                      <AccordionTrigger className="text-sm font-semibold text-text-primary hover:no-underline py-2">
+                        <span>المتطلبات ({localRequirements.length})</span>
+                      </AccordionTrigger>
+                      <AccordionContent className="pt-2 pb-3">
+                        <div className="space-y-2">
+                          <div className="flex justify-between items-center mb-2">
+                            <span className="text-xs text-text-secondary">قائمة المستندات أو الإجراءات المطلوبة</span>
+                            <Button
+                              type="button"
+                              variant="outline-primary"
+                              size="sm"
+                              onClick={addRequirementField}
+                              className="text-xs py-0.5 h-6"
+                            >
+                              <PlusCircle size={13} className="me-1" /> إضافة متطلب
+                            </Button>
+                          </div>
+
+                          <div className="space-y-2">
+                            {localRequirements.map((req, index) => {
+                              const reqId = req.temp_id || req.id || String(index);
+                              return (
+                                <div key={reqId} className="flex items-center gap-2">
+                                  <input
+                                    type="checkbox"
+                                    className="rounded"
+                                    checked={req.is_provided}
+                                    onChange={() => toggleRequirementProvided(reqId)}
+                                  />
+                                  <input
+                                    type="text"
+                                    className="flex-1 px-3 py-1 border border-border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+                                    value={req.requirement_text}
+                                    onChange={(e) => updateRequirementText(reqId, e.target.value)}
+                                    placeholder={`متطلب ${index + 1}`}
+                                  />
+                                  <Button
+                                    type="button"
+                                    variant="danger"
+                                    size="sm"
+                                    onClick={() => removeRequirementField(reqId)}
+                                    className="h-7 w-7 p-0 flex items-center justify-center"
+                                  >
+                                    <XCircle size={14} />
+                                  </Button>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      </AccordionContent>
+                    </AccordionItem>
+                  </Accordion>
+                )}
+
+                {/* Subtasks Section - AT THE VERY BOTTOM */}
                 <div className="subtasks-section border border-border-default rounded-xl p-3 bg-muted/20">
                   <div className="flex justify-between items-center mb-3">
                     <label className="font-semibold text-text-primary text-sm flex items-center gap-1.5">
@@ -611,160 +749,21 @@ const TaskModal = () => {
                               className="text-sm"
                             />
                           </div>
-                          {localSubtasks.length > 1 && (
-                            <Button
-                              type="button"
-                              variant="danger"
-                              size="sm"
-                              onClick={() => removeSubtask(index)}
-                              className="h-8 w-8 p-0 flex items-center justify-center"
-                              title="حذف"
-                            >
-                              <Trash2 size={14} />
-                            </Button>
-                          )}
+                          <Button
+                            type="button"
+                            variant="danger"
+                            size="sm"
+                            onClick={() => removeSubtask(index)}
+                            className="h-8 w-8 p-0 flex items-center justify-center"
+                            title="حذف"
+                          >
+                            <Trash2 size={14} />
+                          </Button>
                         </div>
                       ))}
                     </div>
                   )}
                 </div>
-
-                {/* Row: Amounts & Dates */}
-                <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
-                  <div>
-                    <label className="font-semibold text-text-primary text-sm block mb-1">المبلغ الإجمالي</label>
-                    <Controller
-                      name="amount"
-                      control={control}
-                      render={({ field }) => (
-                        <NumberInput
-                          value={field.value}
-                          onChange={field.onChange}
-                          disabled={localSubtasks.some(s => s.description && s.description.trim())}
-                          className="w-full text-sm"
-                        />
-                      )}
-                    />
-                  </div>
-
-                  <div>
-                    <label className="font-semibold text-text-primary text-sm block mb-1">الدفعة المقدمة</label>
-                    <Controller
-                      name="prepaid_amount"
-                      control={control}
-                      render={({ field }) => (
-                        <NumberInput
-                          value={field.value || 0}
-                          onChange={field.onChange}
-                          className="w-full text-sm"
-                        />
-                      )}
-                    />
-                  </div>
-
-                  <div>
-                    <label className="font-semibold text-text-primary text-sm block mb-1">تاريخ البدء</label>
-                    <Controller
-                      name="start_date"
-                      control={control}
-                      render={({ field }) => (
-                        <DateInput
-                          name="start_date"
-                          value={field.value}
-                          onChange={field.onChange}
-                          className="w-full text-sm"
-                        />
-                      )}
-                    />
-                  </div>
-
-                  <div>
-                    <label className="font-semibold text-text-primary text-sm block mb-1">تاريخ الانتهاء المتوقع</label>
-                    <Controller
-                      name="end_date"
-                      control={control}
-                      render={({ field }) => (
-                        <DateInput
-                          name="end_date"
-                          value={field.value || ''}
-                          onChange={field.onChange}
-                          className="w-full text-sm"
-                        />
-                      )}
-                    />
-                  </div>
-                </div>
-
-                {/* Notes */}
-                <div>
-                  <label className="font-semibold text-text-primary text-sm block mb-1">ملاحظات</label>
-                  <textarea
-                    className="w-full px-3 py-2 border border-border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-primary min-h-[70px]"
-                    {...register('notes')}
-                    placeholder="ملاحظات تفصيلية..."
-                  />
-                </div>
-
-                {/* Requirements Accordion */}
-                <Accordion type="single" collapsible className="w-full border border-border rounded-md px-3">
-                  <AccordionItem value="requirements" className="border-b-0">
-                    <AccordionTrigger className="text-sm font-semibold text-text-primary hover:no-underline py-2">
-                      <span>المتطلبات ({localRequirements.length})</span>
-                    </AccordionTrigger>
-                    <AccordionContent className="pt-2 pb-3">
-                      <div className="space-y-2">
-                        <div className="flex justify-between items-center mb-2">
-                          <span className="text-xs text-text-secondary">قائمة المستندات أو الإجراءات المطلوبة</span>
-                          <Button
-                            type="button"
-                            variant="outline-primary"
-                            size="sm"
-                            onClick={addRequirementField}
-                            className="text-xs py-0.5 h-6"
-                          >
-                            <PlusCircle size={13} className="me-1" /> إضافة متطلب
-                          </Button>
-                        </div>
-
-                        {localRequirements.length === 0 ? (
-                          <p className="text-xs text-text-secondary text-center py-2">لا توجد متطلبات</p>
-                        ) : (
-                          <div className="space-y-2">
-                            {localRequirements.map((req, index) => {
-                              const reqId = req.temp_id || req.id || String(index);
-                              return (
-                                <div key={reqId} className="flex items-center gap-2">
-                                  <input
-                                    type="checkbox"
-                                    className="rounded"
-                                    checked={req.is_provided}
-                                    onChange={() => toggleRequirementProvided(reqId)}
-                                  />
-                                  <input
-                                    type="text"
-                                    className="flex-1 px-3 py-1 border border-border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-primary"
-                                    value={req.requirement_text}
-                                    onChange={(e) => updateRequirementText(reqId, e.target.value)}
-                                    placeholder={`متطلب ${index + 1}`}
-                                  />
-                                  <Button
-                                    type="button"
-                                    variant="danger"
-                                    size="sm"
-                                    onClick={() => removeRequirementField(reqId)}
-                                    className="h-7 w-7 p-0 flex items-center justify-center"
-                                  >
-                                    <XCircle size={14} />
-                                  </Button>
-                                </div>
-                              );
-                            })}
-                          </div>
-                        )}
-                      </div>
-                    </AccordionContent>
-                  </AccordionItem>
-                </Accordion>
               </div>
             )}
 

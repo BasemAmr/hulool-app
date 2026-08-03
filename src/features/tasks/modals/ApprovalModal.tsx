@@ -33,7 +33,7 @@ const ApprovalModal = () => {
 
   const { register, handleSubmit, formState: { errors }, watch } = useForm<ApprovalFormData>({
     defaultValues: {
-      expense_amount: 0,
+      expense_amount: task.expense_amount || 0,
       notes: ''
     }
   });

@@ -178,3 +178,57 @@ export const useUpdateEmployeeSortOrder = () => {
     },
   });
 };
+
+export type ReportPeriod = 'current_month' | 'all';
+
+export interface TreasuryAccountReport {
+  id: number;
+  name: string;
+  sub_type: string;
+  balance: number;
+  spent: number;
+  remaining: number;
+}
+
+export interface TreasuryReport {
+  period: ReportPeriod;
+  accounts: TreasuryAccountReport[];
+  totals: { balance: number; spent: number; remaining: number };
+}
+
+export interface TaskBucket {
+  count: number;
+  amount: number;
+}
+
+export interface TasksReport {
+  period: ReportPeriod;
+  processing: TaskBucket;
+  completed_paid: TaskBucket;
+  completed_unpaid: TaskBucket;
+  total: TaskBucket;
+}
+
+export interface EmployeeReportsData {
+  treasury: TreasuryReport;
+  tasks: TasksReport;
+}
+
+export const useEmployeeReports = (
+  treasuryPeriod: ReportPeriod = 'current_month',
+  tasksPeriod: ReportPeriod = 'current_month'
+) => {
+  return useQuery({
+    queryKey: ['employee', 'reports', treasuryPeriod, tasksPeriod],
+    queryFn: async (): Promise<EmployeeReportsData> => {
+      const response = await apiClient.get<EmployeeReportsData>('/employees/me/reports', {
+        params: {
+          treasury_period: treasuryPeriod,
+          tasks_period: tasksPeriod,
+        },
+      });
+      return response.data;
+    },
+    staleTime: 30 * 1000,
+  });
+};

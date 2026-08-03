@@ -76,30 +76,30 @@ const TaskRow = ({
       style={isEmployeeTask ? { border: '2px solid var(--token-border-strong)' } : undefined}
     >
       {/* Task Name */}
-      <td className="text-[0.92em] px-2 py-2 text-text-primary border-0 font-bold">
+      <td className="text-[1.15em] px-2 py-2.5 text-text-primary border-0 font-extrabold">
         <div className="flex items-center gap-1">
-          <span className="truncate max-w-[190px] inline-block">
+          <span className="truncate max-w-[210px] inline-block">
             {taskDisplayName}
           </span>
           {isUrgent && (
-            <AlertTriangle size={10} className="text-status-danger-text flex-shrink-0" />
+            <AlertTriangle size={12} className="text-status-danger-text flex-shrink-0" />
           )}
         </div>
       </td>
 
       {/* Date */}
-      <td className="client-card-secondary text-[0.88em] px-2 py-2 border-0 font-medium">
+      <td className="client-card-secondary text-[1.1em] px-2 py-2.5 border-0 font-bold">
         {formatShortDate(task.start_date)}
       </td>
 
       {/* Days Elapsed */}
-      <td className="client-card-secondary text-[0.88em] px-2 py-2 border-0 font-medium">
+      <td className="client-card-secondary text-[1.1em] px-2 py-2.5 border-0 font-bold">
         {formatDaysElapsed(task.start_date)}
       </td>
 
       {/* Amount */}
       {showAmount && (
-        <td className="text-[0.88em] px-2 py-2 border-0 font-bold">
+        <td className="text-[1.1em] px-2 py-2.5 border-0 font-extrabold">
           <div className="flex items-center text-status-danger-text">
             <SARIcon />
             {Number(task.amount).toLocaleString()}

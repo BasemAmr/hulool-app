@@ -1,12 +1,25 @@
-import type { Workbook } from 'exceljs';
+import type { Workbook, BorderStyle } from 'exceljs';
 import {
   setupWorksheet,
   addReportHeader,
   styles,
-  autoSizeColumns,
+  applyStandardBalanceFormatting,
   COLORS
 } from './excelStyles';
 import type { TreasuryAccountExportReportData, ExportOptions } from './exportTypes';
+
+function formatDateDDMMYYYY(dateStr: string): string {
+  if (!dateStr) return '';
+  const cleanDate = dateStr.split(' ')[0].split('T')[0];
+  const parts = cleanDate.split('-');
+  if (parts.length === 3) {
+    const [year, month, day] = parts;
+    if (year && month && day) {
+      return `${day.padStart(2, '0')}/${month.padStart(2, '0')}/${year}`;
+    }
+  }
+  return cleanDate;
+}
 
 export function generateTreasuryAccountExcel(
   workbook: Workbook,
@@ -14,19 +27,24 @@ export function generateTreasuryAccountExcel(
   options?: ExportOptions
 ) {
   const { title, items, period } = data;
-  const worksheet = workbook.addWorksheet(title.substring(0, 31));
+  const sheetName = title.replace(/[\\/*?:\[\]]/g, '').substring(0, 31);
+  const worksheet = workbook.addWorksheet(sheetName);
 
   setupWorksheet(worksheet);
 
   // Add report header
   const numColumns = 6;
-  const contentStartRow = addReportHeader(worksheet, title, numColumns);
+  const contentStartRow = addReportHeader(worksheet, title, numColumns, {
+    includeDateInTitle: true,
+    skipSpacer: true,
+  });
 
   // Add period info if available
   if (period && (period.from || period.to)) {
     const periodStr = `الفترة: ${period.from ? `من ${period.from}` : ''} ${period.to ? `إلى ${period.to}` : ''}`;
     const periodRow = worksheet.addRow([periodStr]);
-    worksheet.mergeCells(contentStartRow + 1, 1, contentStartRow + 1, numColumns);
+    const periodRowIndex = worksheet.lastRow ? worksheet.lastRow.number : contentStartRow + 1;
+    worksheet.mergeCells(periodRowIndex, 1, periodRowIndex, numColumns);
     periodRow.getCell(1).style = {
       font: { bold: true, size: 12 },
       alignment: { horizontal: 'center' },
@@ -34,12 +52,10 @@ export function generateTreasuryAccountExcel(
     };
   }
 
-  worksheet.addRow([]); // Spacer
+  // Table headers start directly on the next row without empty spacer rows
+  const tableStartRow = worksheet.lastRow ? worksheet.lastRow.number + 1 : 2;
 
-  // Define table columns start row
-  const tableStartRow = worksheet.lastRow ? worksheet.lastRow.number + 1 : 5;
-
-  // Table headers (Arabic / Right-to-Left context)
+  // Table headers (Right-to-Left Arabic context)
   const headerRow = worksheet.getRow(tableStartRow);
   headerRow.values = [
     'التاريخ',
@@ -54,52 +70,109 @@ export function generateTreasuryAccountExcel(
   });
   headerRow.height = 30;
 
+  const thinStyle: BorderStyle = 'thin';
+  const mediumStyle: BorderStyle = 'medium';
+
   // Add items
   let currentRowNum = tableStartRow + 1;
   items.forEach(item => {
+    const debitVal = Number(item.debit || 0);
+    const creditVal = Number(item.credit || 0);
+    const balanceVal = Number(item.balance || 0);
+
+    const isReceipt = debitVal > 0 || item.transaction_type === 'قبض' || item.transaction_type === 'CASHBOX_RECEIPT';
+    const typeLabel = isReceipt ? 'قبض' : 'صرف';
+
     const row = worksheet.addRow([
-      item.transaction_date ? item.transaction_date.split(' ')[0] : '',
-      item.transaction_type,
-      item.description,
-      item.debit,
-      item.credit,
-      item.balance
+      formatDateDDMMYYYY(item.transaction_date),
+      typeLabel,
+      item.description || '—',
+      debitVal,
+      creditVal,
+      balanceVal
     ]);
 
     row.height = 22;
 
     const isEvenRow = (currentRowNum - tableStartRow) % 2 === 0;
+    const baseCellBorder = {
+      top: { style: thinStyle, color: { argb: COLORS.border } },
+      left: { style: thinStyle, color: { argb: COLORS.border } },
+      bottom: { style: thinStyle, color: { argb: COLORS.border } },
+      right: { style: thinStyle, color: { argb: COLORS.border } },
+    };
 
-    row.eachCell((cell, colNumber) => {
-      // Default body styling from excelStyles
-      cell.style = styles.dataCell(isEvenRow);
-
-      // Centered styling for date and type
-      if (colNumber === 1 || colNumber === 2) {
-        cell.style = styles.dataCellCenter(isEvenRow);
-      }
-
-      // Left-aligned numbers and custom color codes
-      if (colNumber >= 4) {
+    row.eachCell({ includeEmpty: true }, (cell, colNumber) => {
+      if (colNumber === 1) {
+        // Date column: DD/MM/YYYY centered
         cell.style = {
-          ...styles.dataCell(isEvenRow),
-          alignment: { horizontal: 'left', vertical: 'middle' },
-          numFmt: '#,##0.00'
+          font: { name: 'Calibri', size: 11 },
+          alignment: { horizontal: 'center', vertical: 'middle' },
+          fill: isEvenRow ? { type: 'pattern', pattern: 'solid', fgColor: { argb: COLORS.rowLight } } : undefined,
+          border: baseCellBorder
         };
-      }
-
-      // Apply font color alerts
-      if (colNumber === 4 && item.debit > 0) {
+      } else if (colNumber === 2) {
+        // Type column: "قبض" (green bg, dark green text) or "صرف" (red bg, dark red text)
+        if (isReceipt) {
+          cell.style = {
+            font: { name: 'Calibri', size: 11, bold: true, color: { argb: 'FF006100' } },
+            fill: { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFC6EFCE' } },
+            alignment: { horizontal: 'center', vertical: 'middle' },
+            border: baseCellBorder
+          };
+        } else {
+          cell.style = {
+            font: { name: 'Calibri', size: 11, bold: true, color: { argb: 'FF9C0006' } },
+            fill: { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFFC7CE' } },
+            alignment: { horizontal: 'center', vertical: 'middle' },
+            border: baseCellBorder
+          };
+        }
+      } else if (colNumber === 3) {
+        // Description column: Right aligned for Arabic text
         cell.style = {
-          ...cell.style,
-          font: { bold: true, color: { argb: 'FF006100' } },
+          font: { name: 'Calibri', size: 11 },
+          alignment: { horizontal: 'right', vertical: 'middle', wrapText: true },
+          fill: isEvenRow ? { type: 'pattern', pattern: 'solid', fgColor: { argb: COLORS.rowLight } } : undefined,
+          border: baseCellBorder
         };
-      }
-      if (colNumber === 5 && item.credit > 0) {
+      } else if (colNumber === 4) {
+        // Debit column: Amount only (no currency formatter)
+        const hasDebit = debitVal > 0;
         cell.style = {
-          ...cell.style,
-          font: { bold: true, color: { argb: 'FF9C0006' } },
+          font: {
+            name: 'Calibri',
+            size: 11,
+            bold: hasDebit,
+            color: hasDebit ? { argb: 'FF006100' } : undefined
+          },
+          numFmt: '#,##0.00',
+          alignment: { horizontal: 'center', vertical: 'middle' },
+          fill: hasDebit
+            ? { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFC6EFCE' } }
+            : (isEvenRow ? { type: 'pattern', pattern: 'solid', fgColor: { argb: COLORS.rowLight } } : undefined),
+          border: baseCellBorder
         };
+      } else if (colNumber === 5) {
+        // Credit column: Amount only (no currency formatter)
+        const hasCredit = creditVal > 0;
+        cell.style = {
+          font: {
+            name: 'Calibri',
+            size: 11,
+            bold: hasCredit,
+            color: hasCredit ? { argb: 'FF9C0006' } : undefined
+          },
+          numFmt: '#,##0.00',
+          alignment: { horizontal: 'center', vertical: 'middle' },
+          fill: hasCredit
+            ? { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFFC7CE' } }
+            : (isEvenRow ? { type: 'pattern', pattern: 'solid', fgColor: { argb: COLORS.rowLight } } : undefined),
+          border: baseCellBorder
+        };
+      } else if (colNumber === 6) {
+        // Balance column: Red bg/text if negative (remove '-' sign), Green bg/text if positive
+        applyStandardBalanceFormatting(cell, balanceVal, baseCellBorder);
       }
     });
 
@@ -110,7 +183,7 @@ export function generateTreasuryAccountExcel(
   if (items.length > 0) {
     const totalDebit = items.reduce((sum, item) => sum + (item.debit || 0), 0);
     const totalCredit = items.reduce((sum, item) => sum + (item.credit || 0), 0);
-    const finalBalance = items[0]?.balance ?? 0;
+    const finalBalance = items[items.length - 1]?.balance ?? 0;
 
     const totalsRow = worksheet.addRow([
       'الإجمالي',
@@ -123,30 +196,74 @@ export function generateTreasuryAccountExcel(
 
     worksheet.mergeCells(currentRowNum, 1, currentRowNum, 3);
     totalsRow.getCell(1).style = {
-      font: { bold: true, size: 11 },
-      alignment: { horizontal: 'center' },
+      font: { name: 'Calibri', bold: true, size: 11 },
+      alignment: { horizontal: 'center', vertical: 'middle' },
       fill: { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFEAEAEA' } },
+      border: {
+        top: { style: thinStyle, color: { argb: COLORS.border } },
+        left: { style: thinStyle, color: { argb: COLORS.border } },
+        bottom: { style: mediumStyle, color: { argb: COLORS.border } },
+        right: { style: thinStyle, color: { argb: COLORS.border } },
+      }
     };
 
-    totalsRow.eachCell((cell, colNumber) => {
-      if (colNumber >= 4) {
-        cell.style = {
-          font: { bold: true, size: 11 },
-          alignment: { horizontal: 'left' },
-          fill: { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFEAEAEA' } },
-          numFmt: '#,##0.00'
-        };
+    // Style Totals cells
+    const col4Cell = totalsRow.getCell(4);
+    col4Cell.style = {
+      font: { name: 'Calibri', bold: true, size: 11, color: { argb: 'FF006100' } },
+      alignment: { horizontal: 'center', vertical: 'middle' },
+      fill: { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFC6EFCE' } },
+      numFmt: '#,##0.00',
+      border: {
+        top: { style: thinStyle, color: { argb: COLORS.border } },
+        left: { style: thinStyle, color: { argb: COLORS.border } },
+        bottom: { style: mediumStyle, color: { argb: COLORS.border } },
+        right: { style: thinStyle, color: { argb: COLORS.border } },
       }
-      cell.border = {
-        top: { style: 'thin', color: { argb: COLORS.border } },
-        left: { style: 'thin', color: { argb: COLORS.border } },
-        bottom: { style: 'medium', color: { argb: COLORS.border } },
-        right: { style: 'thin', color: { argb: COLORS.border } },
-      };
+    };
+
+    const col5Cell = totalsRow.getCell(5);
+    col5Cell.style = {
+      font: { name: 'Calibri', bold: true, size: 11, color: { argb: 'FF9C0006' } },
+      alignment: { horizontal: 'center', vertical: 'middle' },
+      fill: { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFFC7CE' } },
+      numFmt: '#,##0.00',
+      border: {
+        top: { style: thinStyle, color: { argb: COLORS.border } },
+        left: { style: thinStyle, color: { argb: COLORS.border } },
+        bottom: { style: mediumStyle, color: { argb: COLORS.border } },
+        right: { style: thinStyle, color: { argb: COLORS.border } },
+      }
+    };
+
+    const col6Cell = totalsRow.getCell(6);
+    applyStandardBalanceFormatting(col6Cell, finalBalance, {
+      top: { style: thinStyle, color: { argb: COLORS.border } },
+      left: { style: thinStyle, color: { argb: COLORS.border } },
+      bottom: { style: mediumStyle, color: { argb: COLORS.border } },
+      right: { style: thinStyle, color: { argb: COLORS.border } },
     });
-    totalsRow.height = 25;
+
+    totalsRow.height = 26;
   }
 
-  autoSizeColumns(worksheet);
+  // Calculate dynamic width for description column while keeping other columns tight
+  let maxDescLen = 30;
+  items.forEach(item => {
+    if (item.description && item.description.length > maxDescLen) {
+      maxDescLen = item.description.length;
+    }
+  });
+  const descWidth = Math.min(Math.max(maxDescLen + 4, 45), 75);
+
+  worksheet.columns = [
+    { width: 14 }, // Date (DD/MM/YYYY)
+    { width: 12 }, // Type (قبض/صرف)
+    { width: descWidth }, // Description (WIDER)
+    { width: 15 }, // Debit
+    { width: 15 }, // Credit
+    { width: 16 }, // Balance
+  ];
+
   return worksheet;
 }

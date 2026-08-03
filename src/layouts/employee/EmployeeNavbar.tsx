@@ -330,6 +330,21 @@ const EmployeeNavbar = () => {
               </div>
             </NavHoverDropdown>
 
+            {/* معاملاتي / سجل المعاملات */}
+            <NavLink
+              to="/employee/financials?tab=history"
+              className={({ isActive }) =>
+                `flex items-center gap-2 px-3 py-2 text-sm font-bold rounded-md transition-colors whitespace-nowrap ${
+                  isActive || location.pathname.startsWith('/employee/financials')
+                    ? 'bg-primary/10 text-primary'
+                    : 'text-text-secondary hover:bg-accent hover:text-accent-foreground'
+                }`
+              }
+            >
+              <FileSpreadsheet size={16} />
+              <span>سجل المعاملات</span>
+            </NavLink>
+
             {/* ── Quick Transactions Bar (Center AFTER all menu links) ───────────── */}
             {canMakeTransactions && (
               <div className="flex items-center gap-1.5 ms-2 px-2 py-0.5 rounded-lg border border-border/60 bg-muted/30">

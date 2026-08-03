@@ -4,18 +4,17 @@ import { useAuthStore } from '@/features/auth/store/authStore';
 import { useEmployeeDashboard } from '@/features/employee-dashboard/api/employeeDashboardQueries';
 import RecentTasksPanel from '../components/RecentTasksPanel';
 import RecentClientsReceivablesPanel from '../components/RecentClientsReceivablesPanel';
-import RecentTransactionsPanel from '../components/RecentTransactionsPanel';
-import { useModalStore } from '@/shared/stores/modalStore';
+import EmployeeReportsPanel from '../components/EmployeeReportsPanel';
 import { Spinner } from '@/shared/ui/shadcn/spinner';
 import { Alert, AlertDescription, AlertTitle } from '@/shared/ui/shadcn/alert';
-import { TreasuryAccountSelectorWidget } from '../components/TreasuryAccountSelectorWidget';
 
 /**
- * EmployeeDashboardPage - Main dashboard for employee users
+ * EmployeeDashboardPage - Redesigned 3-column dashboard for employee users
  * 
- * Features:
- * - 3-panel layout: Recent Tasks (0.25), Recent Receivables (0.25), Recent Transactions (0.5)
- * - Quick actions for task management
+ * Layout:
+ * - Column 1: Employee Reporting Panel (Treasury Accounts & Tasks Reports with Pie Charts & Filters)
+ * - Column 2: Recent Tasks Column (1.25x typography scaling, without TreasuryAccountSelectorWidget)
+ * - Column 3: Client Receivables Column (1.25x typography scaling)
  */
 const EmployeeDashboardPage = () => {
   const user = useAuthStore((state) => state.user);
@@ -52,38 +51,30 @@ const EmployeeDashboardPage = () => {
 
   return (
     <div className="w-full px-2 pb-2" style={{ height: '100vh', overflow: 'visible' }}>
-      {/* Main Dashboard Panels - no header */}
+      {/* Main Dashboard Panels - 3 Columns */}
       <div
-        className="grid gap-2"
+        className="grid grid-cols-1 md:grid-cols-3 gap-3"
         style={{
           height: 'calc(100vh - 80px)',
           overflow: 'visible',
-          position: 'relative',
-          gridTemplateColumns: '4fr 4fr 5fr'
+          position: 'relative'
         }}
       >
-        {/* Recent Tasks Panel - 1 fraction */}
+        {/* Column 1: Reporting Features Panel (Treasury & Tasks Reports) */}
+        <div className="mb-2" style={{ height: '100%', overflow: 'hidden' }}>
+          <EmployeeReportsPanel />
+        </div>
+
+        {/* Column 2: Recent Tasks Column */}
         <div className="mb-2 flex flex-col gap-2" style={{ height: '100%', overflow: 'visible', position: 'relative', zIndex: 10 }}>
-          <TreasuryAccountSelectorWidget />
           {ledgerData && (
             <RecentTasksPanel tasks={ledgerData.recent_tasks || []} />
           )}
         </div>
 
-        {/* Recent Receivables Panel - 1 fraction */}
+        {/* Column 3: Recent Receivables Column */}
         <div className="mb-2" style={{ height: '100%', overflow: 'hidden' }}>
           <RecentClientsReceivablesPanel />
-        </div>
-
-        {/* Recent Transactions Panel - 2 fractions */}
-        <div className="mb-2" style={{ height: '100%', overflow: 'hidden' }}>
-          {ledgerData && (
-            <RecentTransactionsPanel
-              ledgerData={ledgerData}
-              onMonthChange={setSelectedMonth}
-              onYearChange={setSelectedYear}
-            />
-          )}
         </div>
       </div>
     </div>
