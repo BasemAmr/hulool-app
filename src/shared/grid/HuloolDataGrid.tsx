@@ -21,6 +21,8 @@ import { DataSheetGrid } from 'react-datasheet-grid';
 import type { Column, CellProps, ContextMenuItem } from 'react-datasheet-grid';
 import 'react-datasheet-grid/dist/style.css';
 
+export type { CellProps };
+
 // ================================
 // TYPE DEFINITIONS
 // ================================
@@ -393,7 +395,7 @@ function CopyOnlyContextMenu({ clientX, clientY, items, close }: ContextMenuComp
 // ================================
 
 function HuloolDataGrid<T extends Record<string, any>>({
-  data,
+  data = [],
   columns,
   isLoading = false,
   emptyMessage = 'لا توجد بيانات',
@@ -410,21 +412,23 @@ function HuloolDataGrid<T extends Record<string, any>>({
   // Ref to the grid wrapper for direct DOM manipulation
   const containerRef = useRef<HTMLDivElement>(null);
 
+  const safeData = useMemo(() => Array.isArray(data) ? data : [], [data]);
+
   // Calculate actual height
   const calculatedHeight = useMemo(() => {
     if (height === 'auto' || height === 'fill') {
-      const contentHeight = (data.length * rowHeight) + 48;
+      const contentHeight = (safeData.length * rowHeight) + 48;
       return Math.max(contentHeight, minHeight);
     }
     return height;
-  }, [height, data.length, rowHeight, minHeight]);
+  }, [height, safeData.length, rowHeight, minHeight]);
 
   // Filter hidden columns and add ID column if needed
   const processedColumns = useMemo(() => {
     let cols = columns.filter(c => !c.hidden);
 
     // Auto-add ID column if data has id and showId is true
-    const hasId = data.length > 0 && data[0]?.[idField] !== undefined;
+    const hasId = safeData.length > 0 && safeData[0]?.[idField] !== undefined;
     if (showId && hasId && !cols.find(c => c.key === idField)) {
       cols = [
         { id: 'id', title: '#', type: 'text', key: idField as string, width: 60, grow: 0 },
@@ -433,7 +437,7 @@ function HuloolDataGrid<T extends Record<string, any>>({
     }
 
     return cols;
-  }, [columns, data, showId, idField]);
+  }, [columns, safeData, showId, idField]);
 
   // REVERSE columns for RTL - first column in definition = rightmost in display
   const reversedColumns = useMemo(() => {

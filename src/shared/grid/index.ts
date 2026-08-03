@@ -5,7 +5,7 @@
  */
 
 export { default as HuloolDataGrid } from './HuloolDataGrid';
-export type { HuloolGridColumn, HuloolGridProps } from './HuloolDataGrid';
+export type { HuloolGridColumn, HuloolGridProps, CellProps } from './HuloolDataGrid';
 export {
   TextCell,
   ClientNameCell,

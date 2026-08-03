@@ -1,462 +1,393 @@
 import React, { useMemo } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { useGetEmployeeOwnTasksInfinite, useSubmitTaskForReview, useUnassignTask } from '@/features/tasks/api/employeeTasksQueries';
+import HuloolDataGrid, { type HuloolGridColumn, type CellProps } from '@/shared/grid/HuloolDataGrid';
+import GridActionBar from '@/shared/grid/GridActionBar';
+import type { GridAction } from '@/shared/grid/GridActionBar';
+import { useSubmitTaskForReview, useGetEmployeeOwnTasks } from '@/features/tasks/api/employeeTasksQueries';
 import { useModalStore } from '@/shared/stores/modalStore';
+import { useDrawerStore } from '@/shared/stores/drawerStore';
 import { useToast } from '@/shared/hooks/useToast';
-import { formatDate } from '@/shared/utils/dateUtils';
 import { translateTaskType } from '@/shared/constants/taskTypes';
 import type { Task } from '@/api/types';
-import { useInView } from 'react-intersection-observer';
+import WhatsAppIcon from '@/shared/ui/icons/WhatsAppIcon';
+import { sendWhatsAppMessage } from '@/shared/utils/whatsappUtils';
 import {
   Eye,
   Edit2,
-  X,
   CheckCircle,
-  FileText,
-  AlertCircle,
-  Calendar,
-  MessageCircle,
-  RotateCcw,
-  UserMinus,
-  Clock,
-  AlertTriangle
+  MessageSquare,
+  ChevronLeft,
+  ChevronRight
 } from 'lucide-react';
-import { useCancelTask, useDeferTask, useMarkTaskUrgent, useRemoveTaskUrgent } from '@/features/tasks/api/taskQueries';
-
-const neutralActionButtonClass = 'inline-flex items-center justify-center rounded p-1.5 text-text-secondary hover:text-text-primary cursor-pointer transition-colors duration-150';
-const destructiveActionButtonClass = 'inline-flex items-center justify-center rounded p-1.5 text-text-secondary hover:text-text-danger cursor-pointer transition-colors duration-150';
+import { useTranslation } from 'react-i18next';
 
 interface EmployeeOwnTasksTableProps {
+  tasks?: Task[];
+  isLoading?: boolean;
+  pagination?: {
+    total: number;
+    per_page: number;
+    current_page: number;
+    total_pages: number;
+    has_next: boolean;
+    has_prev: boolean;
+  };
+  onPageChange?: (page: number) => void;
+  onEdit?: (task: Task) => void;
+  clientId?: number;
   searchTerm?: string;
   statusFilter?: string;
-  clientId?: number;
-  highlightTaskId?: string;
-  getTypeRowStyle?: (type: string) => { backgroundColor: string };
-  getStatusBadgeStyle?: (status: string) => { backgroundColor: string; color: string; border: string };
 }
 
-const EmployeeOwnTasksTable: React.FC<EmployeeOwnTasksTableProps> = ({
-  searchTerm,
-  statusFilter,
-  clientId,
-  highlightTaskId,
-  getTypeRowStyle,
-  getStatusBadgeStyle,
-}) => {
-  const navigate = useNavigate();
-  const { openModal } = useModalStore();
-  const { success, error: showError } = useToast();
+// ----------------------------------------------------
+// Helper Functions for Dynamic CSS Cell Class Matching
+// ----------------------------------------------------
 
-  const handleHighlightClick = () => {
-    navigate('/employee/tasks');
-  };
+const getTaskTypeCellClass = (type: string | undefined | null): string => {
+  const t = String(type || '').trim().toLowerCase();
 
-  const {
-    data,
-    isLoading,
-    error,
-    fetchNextPage,
-    hasNextPage,
-    isFetchingNextPage,
-  } = useGetEmployeeOwnTasksInfinite({
-    search: searchTerm,
-    status: statusFilter,
-    client_id: clientId,
-    per_page: 20,
-  });
+  if (t === 'government' || t === 'حكومية' || t === 'حكومي') {
+    return 'task-type-government-cell';
+  }
+  if (t === 'realestate' || t === 'real_estate' || t === 'عقارية' || t === 'عقاري') {
+    return 'task-type-realestate-cell';
+  }
+  if (t === 'accounting' || t === 'محاسبية' || t === 'محاسبي') {
+    return 'task-type-accounting-cell';
+  }
+  return 'task-type-general-cell';
+};
 
-  const submitForReviewMutation = useSubmitTaskForReview();
-  const cancelTaskMutation = useCancelTask();
-  const unassignTaskMutation = useUnassignTask();
-  const deferTaskMutation = useDeferTask();
-  const markUrgentMutation = useMarkTaskUrgent();
-  const removeUrgentMutation = useRemoveTaskUrgent();
+const getTaskStatusCellClass = (status: string | undefined | null): string => {
+  const s = String(status || '').trim().toLowerCase();
 
-  const tasks = useMemo(() => data?.pages.flatMap(page => page.tasks) || [], [data]);
-  const sortedTasks = useMemo(() => {
-    return [...tasks].sort((a, b) => {
-      let statusOrder = ['New', 'Deferred', 'Pending Review', 'Completed', 'Cancelled'];
-      return statusOrder.indexOf(a.status) - statusOrder.indexOf(b.status);
-    });
-  }, [tasks]);
+  if (s === 'new' || s === 'جديد' || s === 'جديدة') {
+    return 'task-status-new-cell';
+  }
+  if (s === 'in progress' || s === 'in_progress' || s === 'قيد العمل' || s === 'قيد التنفيذ') {
+    return 'task-status-progress-cell';
+  }
+  if (s === 'pending review' || s === 'pending_review' || s === 'في المراجعة') {
+    return 'task-status-pending-cell';
+  }
+  if (s === 'completed' || s === 'مكتمل' || s === 'مكتملة') {
+    return 'task-status-completed-cell';
+  }
+  if (s === 'deferred' || s === 'مؤجل' || s === 'مؤجلة') {
+    return 'task-status-deferred-cell';
+  }
+  if (s === 'cancelled' || s === 'ملغي' || s === 'ملغاة') {
+    return 'task-status-cancelled-cell';
+  }
+  return 'task-status-new-cell';
+};
 
-  const { ref } = useInView({
-    threshold: 1,
-    onChange: (inView) => {
-      if (inView && hasNextPage && !isFetchingNextPage) {
-        fetchNextPage();
-      }
-    },
-  });
+// ----------------------------------------------------
+// Custom Cell Components for HuloolDataGrid
+// ----------------------------------------------------
 
-  const handleEditTask = (task: Task) => {
-    openModal('taskForm', { taskToEdit: task });
-  };
+// 1. Client Link Cell
+const ClientLinkCell = React.memo(({ rowData }: CellProps<Task>) => {
+  const clientName = rowData.client?.name || 'عميل غير محدد';
+  const clientId = rowData.client_id;
 
-  const handleSubmitForReview = (task: Task) => {
-    submitForReviewMutation.mutate(task.id, {
-      onSuccess: () => {
-        success('تم الإرسال', `تم إرسال المهمة "${task.task_name || 'مهمة'}" للمراجعة بنجاح`);
-      },
-      onError: (err: any) => {
-        showError('خطأ', err.message || 'حدث خطأ أثناء إرسال المهمة للمراجعة');
-      }
-    });
-  };
+  return (
+    <div className="flex items-center min-w-0" style={{ fontSize: '0.95rem', fontWeight: 700 }}>
+      {clientId ? (
+        <Link
+          to={`/employee/clients/${clientId}`}
+          className="text-primary hover:underline truncate"
+          title={clientName}
+        >
+          {clientName}
+        </Link>
+      ) : (
+        <span className="text-text-primary truncate" title={clientName}>
+          {clientName}
+        </span>
+      )}
+    </div>
+  );
+});
+ClientLinkCell.displayName = 'ClientLinkCell';
 
-  const handleViewAmountDetails = (task: Task) => {
-    openModal('amountDetails', { task });
-  };
+// 2. Phone WhatsApp Cell — 1.25x bigger bold font size
+const PhoneWhatsAppCell = React.memo(({ rowData }: CellProps<Task>) => {
+  const phone = rowData.client?.phone;
 
-  const handleDeleteTask = (task: Task) => {
-    if (confirm(`هل أنت متأكد من إلغاء المهمة "${task.task_name}"؟`)) {
-      cancelTaskMutation.mutate({
-        id: task.id,
-        decisions: { task_action: 'cancel' }
-      }, {
-        onSuccess: () => {
-          success('تم الإلغاء', 'تم إلغاء المهمة بنجاح');
-        },
-        onError: (err: any) => {
-          showError('خطأ', err.message || 'حدث خطأ أثناء إلغاء المهمة');
-        }
-      });
-    }
-  };
-
-  const handleUnassign = (task: Task) => {
-    if (confirm(`هل أنت متأكد من إلغاء تعيينك للمهمة "${task.task_name}"؟`)) {
-      // Comment 2: Toast notifications are now handled in useUnassignTask mutation
-      unassignTaskMutation.mutate(task.id);
-    }
-  };
-
-  const handleDefer = (task: Task) => {
-    if (confirm(`هل أنت متأكد من تأجيل المهمة "${task.task_name}"؟`)) {
-      deferTaskMutation.mutate({ id: task.id }, {
-        onSuccess: () => {
-          success('تم التأجيل', 'تم تأجيل المهمة بنجاح');
-        },
-        onError: (err: any) => {
-          showError('خطأ', err.message || 'حدث خطأ أثناء تأجيل المهمة');
-        }
-      });
-    }
-  };
-
-  const isUrgent = (task: Task) => {
-    return task.tags?.some(tag => tag.name === 'قصوى');
-  };
-
-  const handleToggleUrgent = (task: Task) => {
-    if (isUrgent(task)) {
-      removeUrgentMutation.mutate(task.id);
-    } else {
-      markUrgentMutation.mutate(task.id);
-    }
-  };
-
-  const handleShowRequirements = (task: Task) => {
-    openModal('requirements', { task });
-  };
-
-  const getStatusBadge = (status: string) => {
-    const statusConfig = {
-      'New': { color: 'primary', text: 'جديد' },
-      'Pending Review': { color: 'info', text: 'في المراجعة' },
-      'Completed': { color: 'success', text: 'مكتمل' },
-      'Deferred': { color: 'secondary', text: 'مؤجل' },
-      'Cancelled': { color: 'danger', text: 'ملغي' }
-    };
-    const config = statusConfig[status as keyof typeof statusConfig] || { color: 'secondary', text: status };
-    return (
-      <span className={`badge bg-${config.color} text-white`} style={{ fontSize: '0.75rem' }}>
-        {config.text}
-      </span>
-    );
-  };
-
-  const getStatusText = (status: string) => {
-    const statusConfig = {
-      'New': 'جديد',
-      'In Progress': 'قيد العمل',
-      'Pending Review': 'في المراجعة',
-      'Completed': 'مكتمل',
-      'Deferred': 'مؤجل',
-      'Cancelled': 'ملغي'
-    };
-    return statusConfig[status as keyof typeof statusConfig] || status;
-  };
-
-  if (isLoading) {
-    return (
-      <div className="flex justify-center items-center p-5">
-        <div className="spinner-border text-primary" role="status">
-          <span className="visually-hidden">جاري التحميل...</span>
-        </div>
-      </div>
-    );
+  if (!phone) {
+    return <span className="text-text-secondary text-xs">—</span>;
   }
 
-  if (error) {
-    return (
-      <div className="rounded-lg border border-destructive bg-destructive/10 p-4" role="alert">
-        <div className="flex items-center gap-2">
-          <AlertCircle size={20} className="text-destructive" />
-          <span className="text-destructive">خطأ في تحميل المهام. يرجى المحاولة مرة أخرى.</span>
-        </div>
-      </div>
-    );
-  }
-
-  if (tasks.length === 0) {
-    return (
-      <div className="text-center p-5">
-        <FileText size={48} className="text-text-primary mb-3" />
-        <h5 className="text-text-primary font-bold">لا توجد مهام</h5>
-        <p className="text-text-primary text-sm">لم يتم العثور على أي مهام بناءً على المعايير المحددة.</p>
-      </div>
-    );
-  }
-
-  // Define common logic for cell style
-  const CELL_STYLE: React.CSSProperties = {
-    padding: '8px',
-    fontSize: 'var(--font-size-sm)',
-    border: '1px solid var(--token-border-default)', // Bordered grid style
-    verticalAlign: 'middle',
-    backgroundColor: 'inherit' // Inherit from row
+  const handleWhatsApp = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    sendWhatsAppMessage(phone, '');
   };
 
   return (
-    <div className="rounded-lg border bg-card shadow-sm overflow-hidden">
-      <div className="overflow-x-auto">
-        <table className="w-full border-collapse">
-          <thead className="bg-background">
-            <tr>
-              {['اسم المهمة', 'الملاحظات', 'العميل', 'النوع', 'الحالة', 'تاريخ البداية', 'تاريخ الانتهاء', 'الإجراءات'].map((header, idx) => (
-                <th key={idx} style={{
-                  ...CELL_STYLE,
-                  fontWeight: 'bold',
-                  color: 'var(--token-text-primary)',
-                  textAlign: header === 'الإجراءات' ? 'center' : 'start'
-                }}>
-                  {header}
-                </th>
-              ))}
-            </tr>
-          </thead>
-          <tbody>
-            {sortedTasks.map((task) => {
-              const isHighlighted = highlightTaskId && task.id.toString() === highlightTaskId;
-              const rowStyle = getTypeRowStyle ? getTypeRowStyle(task.type) : { backgroundColor: 'transparent' };
+    <div
+      className="flex items-center gap-1.5 cursor-pointer group"
+      onClick={handleWhatsApp}
+      style={{ fontSize: '1.05rem', fontWeight: 800, color: 'var(--token-text-primary)' }}
+    >
+      <WhatsAppIcon size={16} className="text-emerald-600 flex-shrink-0 group-hover:scale-110 transition-transform" />
+      <span className="font-mono dir-ltr group-hover:text-primary transition-colors">{phone}</span>
+    </div>
+  );
+});
+PhoneWhatsAppCell.displayName = 'PhoneWhatsAppCell';
 
-              return (
-                <tr
-                  key={task.id}
-                  className="hover:bg-background transition-colors"
-                  style={{
-                    backgroundColor: isHighlighted ? 'color-mix(in srgb, var(--primitive-amber-600) 12%, var(--token-bg-page))' : rowStyle.backgroundColor,
-                  }}
-                >
-                  <td style={{ ...CELL_STYLE, fontWeight: 600 }}>
-                    <div className="flex flex-col">
-                      <div className="flex items-center gap-1">
-                        {isUrgent(task) && <AlertTriangle size={14} className="text-status-danger-text fill-red-100" />}
-                        <span className="text-text-primary">{task.task_name || 'مهمة بدون اسم'}</span>
-                      </div>
-                      {isHighlighted && (
-                        <span className="text-xs text-status-warning-text font-bold mt-1">
-                          ⭐ محددة من الإشعار
-                        </span>
-                      )}
-                    </div>
-                  </td>
-                  <td style={CELL_STYLE}>
-                    {task.notes ? (
-                      <div className="text-text-primary text-xs" title={task.notes}>
-                        {task.notes.length > 40 ? `${task.notes.substring(0, 40)}...` : task.notes}
-                      </div>
-                    ) : (
-                      <span className="text-text-muted">—</span>
-                    )}
-                  </td>
-                  <td style={CELL_STYLE}>
-                    <div className="flex items-center gap-2">
-                      {task.client?.id ? (
-                        <Link
-                          to={`/employee/clients/${task.client.id}`}
-                          className="font-medium no-underline text-text-primary hover:text-primary transition-colors"
-                        >
-                          {task.client.name}
-                        </Link>
-                      ) : (
-                        <span className="font-medium">{task.client?.name || 'غير محدد'}</span>
-                      )}
+// 3. Service / Task Name Cell — Bigger font size
+const ServiceCell = React.memo(({ rowData }: CellProps<Task>) => {
+  const { t } = useTranslation();
+  const taskName = rowData.task_name || t(`type.${rowData.type}`);
 
-                      {task.client?.phone && (
-                        <a
-                          href={`https://wa.me/${task.client.phone.replace(/[^\d]/g, '')}`}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="p-0 hover:scale-110 transition-transform"
-                          title="إرسال رسالة واتساب"
-                        >
-                          <MessageCircle size={14} className="text-status-success-text" />
-                        </a>
-                      )}
-                    </div>
-                  </td>
-                  <td style={CELL_STYLE}>
-                    <span className="px-2.5 py-1 bg-primary/10 text-primary rounded-full text-xs font-medium border border-primary/20">
-                      {translateTaskType(task.type)}
-                    </span>
-                  </td>
-                  <td style={CELL_STYLE}>
-                    {getStatusBadgeStyle ? (
-                      <span
-                        className="inline-block px-2 py-1 rounded-md text-xs font-medium border"
-                        style={getStatusBadgeStyle(task.status)}
-                      >
-                        {getStatusText(task.status)}
-                      </span>
-                    ) : (
-                      getStatusBadge(task.status)
-                    )}
-                  </td>
-                  <td style={{ ...CELL_STYLE, whiteSpace: 'nowrap' }}>
-                    <div className="flex items-center text-text-primary text-xs">
-                      <Calendar size={14} className="me-1 text-text-muted" />
-                      {formatDate(task.start_date)}
-                    </div>
-                  </td>
-                  <td style={{ ...CELL_STYLE, whiteSpace: 'nowrap' }}>
-                    <div className="flex items-center text-text-primary text-xs">
-                      <Calendar size={14} className="me-1 text-text-muted" />
-                      {formatDate(task.end_date)}
-                    </div>
-                  </td>
-                  <td style={CELL_STYLE}>
-                    <div className="flex justify-center gap-0.5 flex-wrap">
-                      {/* View Amount Details */}
-                      <button
-                        onClick={() => handleViewAmountDetails(task)}
-                        className={neutralActionButtonClass}
-                        title="تفاصيل المبلغ"
-                      >
-                        <Eye size={14} />
-                      </button>
+  return (
+    <div className="truncate min-w-0" style={{ fontSize: '1rem', fontWeight: 800, color: 'var(--token-text-primary)' }} title={taskName}>
+      {taskName}
+    </div>
+  );
+});
+ServiceCell.displayName = 'ServiceCell';
 
-                      {/* Edit */}
-                      <button
-                        onClick={() => handleEditTask(task)}
-                        className={neutralActionButtonClass}
-                        title="تعديل"
-                      >
-                        <Edit2 size={14} />
-                      </button>
+// 4. Notes Cell — Compact width
+const NotesCell = React.memo(({ rowData }: CellProps<Task>) => {
+  const notes = rowData.notes;
 
-                      {/* Defer */}
-                      {task.status === 'New' && (
-                        <button
-                          onClick={() => handleDefer(task)}
-                          className={neutralActionButtonClass}
-                          title="تأجيل"
-                        >
-                          <Clock size={14} />
-                        </button>
-                      )}
+  return (
+    <div
+      className="text-xs text-text-secondary truncate"
+      style={{ maxWidth: '140px' }}
+      title={notes || ''}
+    >
+      {notes || '—'}
+    </div>
+  );
+});
+NotesCell.displayName = 'NotesCell';
 
-                      {/* Submit for Review */}
-                      {['New', 'Deferred'].includes(task.status) && (
-                        <button
-                          onClick={() => handleSubmitForReview(task)}
-                          className={neutralActionButtonClass}
-                          title="تقديم للمراجعة"
-                          disabled={submitForReviewMutation.isPending}
-                        >
-                          <CheckCircle size={14} />
-                        </button>
-                      )}
+// 5. Actions Cell
+const ActionsCell = React.memo(({ rowData: task, rowIndex }: CellProps<Task>) => {
+  const { openModal } = useModalStore();
+  const { openDrawer } = useDrawerStore();
+  const submitForReviewMutation = useSubmitTaskForReview();
+  const { success, error } = useToast();
 
-                      {/* Unassign */}
-                      {task.status === 'New' && (
-                        <button
-                          onClick={() => handleUnassign(task)}
-                          className={neutralActionButtonClass}
-                          title="إلغاء التعيين"
-                        >
-                          <UserMinus size={14} />
-                        </button>
-                      )}
+  const actions: GridAction<Task>[] = [
+    // Follow up messages
+    {
+      type: 'message',
+      onClick: () => openDrawer('taskFollowUp', {
+        taskId: task.id,
+        taskName: task.task_name || undefined,
+        clientName: task.client?.name || 'عميل غير محدد',
+      }),
+      title: 'المراسلات',
+      icon: <MessageSquare size={14} />,
+      variant: 'outline-secondary',
+    },
+    // View Subtasks
+    {
+      type: 'custom',
+      onClick: () => openModal('subtasksModal', { task }),
+      title: 'المهام الفرعية',
+      icon: <Eye size={14} />,
+      variant: 'outline-info',
+    },
+  ];
 
-                      {/* Mark / Remove Urgent */}
-                      <button
-                        onClick={() => handleToggleUrgent(task)}
-                        className={neutralActionButtonClass}
-                        title={isUrgent(task) ? "إزالة علامة هام جداً" : "تمييز كـ هام جداً"}
-                      >
-                        <AlertTriangle size={14} />
-                      </button>
+  // Submit for Review
+  if (task.status === 'New' || task.status === 'Deferred') {
+    actions.push({
+      type: 'custom',
+      onClick: () => {
+        submitForReviewMutation.mutate(task.id, {
+          onSuccess: () => {
+            success('تم الإرسال', `تم إرسال المهمة "${task.task_name || 'مهمة'}" للمراجعة بنجاح`);
+          },
+          onError: (err: any) => {
+            error('خطأ', err.message || 'فشل إرسال المهمة للمراجعة');
+          }
+        });
+      },
+      title: 'إرسال للمراجعة',
+      icon: <CheckCircle size={14} className="text-emerald-600" />,
+      variant: 'outline-success',
+    });
+  }
 
-                      {/* Requirements */}
-                      {task.requirements && task.requirements.length > 0 && (
-                        <button
-                          onClick={() => handleShowRequirements(task)}
-                          className={neutralActionButtonClass}
-                          title="المتطلبات"
-                        >
-                          <FileText size={14} />
-                        </button>
-                      )}
+  // Edit task
+  actions.push({
+    type: 'edit',
+    onClick: () => openModal('taskForm', { taskToEdit: task }),
+    title: 'تعديل المهمة',
+    icon: <Edit2 size={14} />,
+  });
 
-                      {/* Cancel */}
-                      <button
-                        onClick={() => handleDeleteTask(task)}
-                        className={destructiveActionButtonClass}
-                        title="إلغاء المهمة"
-                      >
-                        <X size={14} />
-                      </button>
+  return (
+    <div className="flex items-center justify-start h-full">
+      <GridActionBar
+        item={task}
+        index={rowIndex}
+        actions={actions}
+        compact
+      />
+    </div>
+  );
+});
+ActionsCell.displayName = 'ActionsCell';
 
-                      {/* Restore */}
-                      {task.status === 'Completed' && (
-                        <button
-                          onClick={() => openModal('taskRestore', { task })}
-                          className={neutralActionButtonClass}
-                          title="استرداد"
-                        >
-                          <RotateCcw size={14} />
-                        </button>
-                      )}
-                    </div>
-                  </td>
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
+// ----------------------------------------------------
+// MAIN TABLE COMPONENT
+// ----------------------------------------------------
+
+export const EmployeeOwnTasksTable: React.FC<EmployeeOwnTasksTableProps> = ({
+  tasks: tasksFromProps,
+  isLoading: isLoadingFromProps,
+  pagination: paginationFromProps,
+  onPageChange,
+  clientId,
+  searchTerm,
+  statusFilter,
+}) => {
+  const { t } = useTranslation();
+  const [internalPage, setInternalPage] = React.useState(1);
+
+  // Check if props passed data directly (e.g. from EmployeeTasksPage)
+  const isDirectMode = tasksFromProps !== undefined;
+
+  // Fallback query for embedded usage (e.g. in EmployeeClientProfilePage)
+  const fallbackQuery = useGetEmployeeOwnTasks({
+    client_id: clientId,
+    search: searchTerm,
+    status: statusFilter,
+    page: internalPage,
+  });
+
+  const tasks = isDirectMode ? (tasksFromProps || []) : (fallbackQuery.data?.tasks || []);
+  const isLoading = isDirectMode ? (isLoadingFromProps || false) : fallbackQuery.isLoading;
+  const pagination = isDirectMode ? paginationFromProps : fallbackQuery.data?.pagination;
+
+  const handlePageChange = (newPage: number) => {
+    if (isDirectMode && onPageChange) {
+      onPageChange(newPage);
+    } else {
+      setInternalPage(newPage);
+    }
+  };
+
+  // Column definitions for HuloolDataGrid (NO 'assigned' column!)
+  const columns = useMemo((): HuloolGridColumn<Task>[] => [
+    {
+      id: 'client',
+      key: 'client.name',
+      title: 'العميل',
+      type: 'custom',
+      component: ClientLinkCell,
+      grow: 1,
+    },
+    {
+      id: 'phone',
+      key: 'client.phone',
+      title: 'رقم الجوال',
+      type: 'custom',
+      component: PhoneWhatsAppCell,
+      grow: 1,
+    },
+    {
+      id: 'service',
+      key: 'task_name',
+      title: 'اسم الخدمة / المهمة',
+      type: 'custom',
+      component: ServiceCell,
+      grow: 2,
+    },
+    {
+      id: 'type',
+      key: 'type',
+      title: 'النوع',
+      width: 120,
+      grow: 0,
+      cellClassName: ({ rowData }) => getTaskTypeCellClass(rowData.type),
+      formatter: (_val: string, rowData: Task) => translateTaskType(rowData.type),
+    },
+    {
+      id: 'notes',
+      key: 'notes',
+      title: 'الملاحظات',
+      type: 'custom',
+      component: NotesCell,
+      width: 140,
+      grow: 0,
+    },
+    {
+      id: 'status',
+      key: 'status',
+      title: 'الحالة',
+      width: 130,
+      grow: 0,
+      cellClassName: ({ rowData }) => getTaskStatusCellClass(rowData.status),
+      formatter: (_val: string, rowData: Task) => {
+        const s = rowData.status;
+        const translated = t(`status.${s}`);
+        return translated !== `status.${s}` ? translated : (s || 'جديد');
+      },
+    },
+    {
+      id: 'actions',
+      key: 'id',
+      title: 'الإجراءات',
+      type: 'custom',
+      component: ActionsCell as React.ComponentType<CellProps<Task>>,
+      width: 220,
+      grow: 0,
+    },
+  ], [t]);
+
+  return (
+    <div className="space-y-3">
+      {/* HuloolDataGrid Container */}
+      <div className="rounded-lg border border-border bg-card shadow-sm overflow-hidden">
+        <HuloolDataGrid
+          data={tasks}
+          columns={columns}
+          isLoading={isLoading}
+          emptyMessage="لا توجد مهام مطابقة للشروط"
+          height="auto"
+          minHeight={350}
+        />
       </div>
 
-      {(hasNextPage || isFetchingNextPage) && (
-        <div ref={ref} className="text-center p-3 border-t">
-          {isFetchingNextPage ? (
-            <div className="spinner-border spinner-border-sm text-primary" role="status">
-              <span className="visually-hidden">جاري تحميل المزيد...</span>
-            </div>
-          ) : (
-            <div className="text-muted-foreground text-xs">
-              عرض {tasks.length} مهمة
-            </div>
-          )}
-        </div>
-      )}
+      {/* Offset Pagination Controls Bar */}
+      {pagination && pagination.total_pages > 1 && (
+        <div className="flex items-center justify-between px-3 py-2 bg-card border border-border rounded-lg text-xs">
+          <div className="text-text-secondary font-medium">
+            عرض الصفحة <span className="font-bold text-text-primary">{pagination.current_page}</span> من <span className="font-bold text-text-primary">{pagination.total_pages}</span> (إجمالي {pagination.total} مهمة)
+          </div>
 
-      {!hasNextPage && tasks.length > 0 && (
-        <div className="px-4 py-3 bg-bg-surface-muted/50 border-t text-center">
-          <small className="text-muted-foreground">
-            تم عرض جميع المهام ({tasks.length} مهمة)
-          </small>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => handlePageChange(pagination.current_page - 1)}
+              disabled={!pagination.has_prev || isLoading}
+              className="flex items-center gap-1 px-3 py-1.5 rounded-md border border-border bg-background text-text-primary hover:bg-muted font-bold disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+            >
+              <ChevronRight size={14} />
+              <span>السابق</span>
+            </button>
+
+            <span className="px-2 font-bold text-primary">
+              {pagination.current_page} / {pagination.total_pages}
+            </span>
+
+            <button
+              onClick={() => handlePageChange(pagination.current_page + 1)}
+              disabled={!pagination.has_next || isLoading}
+              className="flex items-center gap-1 px-3 py-1.5 rounded-md border border-border bg-background text-text-primary hover:bg-muted font-bold disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+            >
+              <span>التالي</span>
+              <ChevronLeft size={14} />
+            </button>
+          </div>
         </div>
       )}
     </div>

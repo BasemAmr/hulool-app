@@ -21,8 +21,9 @@ export interface EmployeeTasksParams {
   page?: number;
   per_page?: number;
   status?: string;
+  type?: string;
   search?: string;
-  client_id?: number; // NEW: Optional client filter
+  client_id?: number; // Optional client filter
 }
 
 /**
@@ -30,16 +31,17 @@ export interface EmployeeTasksParams {
  * Uses the /tasks/employee/me endpoint
  */
 export const useGetEmployeeOwnTasks = (params: EmployeeTasksParams = {}) => {
-  const { page = 1, per_page = 20, status, search, client_id } = params;
+  const { page = 1, per_page = 20, status, type, search, client_id } = params;
 
   return useQuery({
-    queryKey: ['employee', 'tasks', 'own', { page, per_page, status, search, client_id }],
+    queryKey: ['employee', 'tasks', 'own', { page, per_page, status, type, search, client_id }],
     queryFn: async (): Promise<EmployeeTasksResponse> => {
       const queryParams = new URLSearchParams();
       queryParams.append('page', page.toString());
       queryParams.append('per_page', per_page.toString());
 
       if (status) queryParams.append('status', status);
+      if (type) queryParams.append('type', type);
       if (search) queryParams.append('search', search);
       if (client_id) queryParams.append('client_id', client_id.toString());
 

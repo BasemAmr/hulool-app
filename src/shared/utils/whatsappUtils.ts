@@ -137,5 +137,17 @@ export const sendPaymentReminder = (phone: string, clientName: string, formatted
   });
 };
 
+/**
+ * Send WhatsApp message directly
+ */
+export const sendWhatsAppMessage = (phone: string, message: string = ''): void => {
+  openWhatsAppWithMessage({
+    phone,
+    message,
+    showConfirmation: false,
+    fallbackToClipboard: false,
+  });
+};
+
 
 

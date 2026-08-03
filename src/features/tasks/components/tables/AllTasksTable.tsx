@@ -190,11 +190,14 @@ NotesCell.displayName = 'NotesCell';
 
 // Assigned Employee Cell
 const AssignedCell = React.memo(({ rowData, columnData }: CellProps<Task, { getEmployeeName: (id: number | null) => string }>) => {
-  const getEmployeeName = columnData?.getEmployeeName || (() => '—');
+  const getEmployeeName = columnData?.getEmployeeName || (() => 'غير مكلف');
+  const nameFromTask = (rowData as any).assigned_to?.display_name || (rowData as any).assigned_to_name;
+  const displayName = nameFromTask || getEmployeeName(rowData.assigned_to_id);
+  const finalName = (!displayName || displayName === 'Unknown Employee' || displayName === '—') ? 'غير مكلف' : displayName;
 
   return (
-    <div style={{ fontSize: '0.875rem', fontWeight: 500, color: 'var(--token-text-secondary)' }}>
-      {getEmployeeName(rowData.assigned_to_id)}
+    <div style={{ fontSize: '0.875rem', fontWeight: 600, color: 'var(--token-text-primary)' }}>
+      {finalName}
     </div>
   );
 });
@@ -450,9 +453,10 @@ const AllTasksTable: React.FC<AllTasksTableProps> = ({
 
   // Helper functions
   const getEmployeeName = (assignedToId: number | null) => {
-    if (!assignedToId) return '—';
+    if (!assignedToId) return 'غير مكلف';
     const employee = employees.find(emp => emp.user_id === assignedToId);
-    return employee ? employee.display_name : 'Unknown Employee';
+    if (employee && employee.display_name) return employee.display_name;
+    return 'غير مكلف';
   };
 
   const isUserEmployee = (userId: number | null) => {
