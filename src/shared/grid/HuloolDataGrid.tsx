@@ -155,8 +155,18 @@ const ClientNameCell = React.memo(({ rowData, columnData, active }: CellProps<an
 ClientNameCell.displayName = 'ClientNameCell';
 
 /** Currency Cell */
-const CurrencyCell = React.memo(({ rowData, columnData, active }: CellProps<any, { key: string; color?: string }>) => {
+const CurrencyCell = React.memo(({ rowData, columnData, active }: CellProps<any, { key: string; color?: string; formatter?: (val: any, row: any) => any }>) => {
   const value = columnData?.key ? getNestedValue(rowData, columnData.key) : 0;
+  if (columnData?.formatter) {
+    const customDisplay = columnData.formatter(value, rowData);
+    if (customDisplay !== undefined) {
+      return (
+        <span className="hulool-cell-content hulool-currency" style={{ color: columnData?.color || 'var(--token-text-primary)', fontWeight: active ? 700 : 500 }}>
+          {customDisplay}
+        </span>
+      );
+    }
+  }
   const numValue = Number(value) || 0;
   return (
     <span className="hulool-cell-content hulool-currency" style={{ color: columnData?.color || 'var(--token-text-primary)', fontWeight: active ? 700 : 500 }}>
@@ -167,8 +177,18 @@ const CurrencyCell = React.memo(({ rowData, columnData, active }: CellProps<any,
 CurrencyCell.displayName = 'CurrencyCell';
 
 /** Debit Cell */
-const DebitCell = React.memo(({ rowData, columnData, active }: CellProps<any, { key: string }>) => {
+const DebitCell = React.memo(({ rowData, columnData, active }: CellProps<any, { key: string; formatter?: (val: any, row: any) => any }>) => {
   const value = columnData?.key ? getNestedValue(rowData, columnData.key) : 0;
+  if (columnData?.formatter) {
+    const customDisplay = columnData.formatter(value, rowData);
+    if (customDisplay !== undefined) {
+      return (
+        <span className="hulool-cell-content hulool-debit" style={{ fontWeight: active ? 700 : 500 }}>
+          {customDisplay}
+        </span>
+      );
+    }
+  }
   const numValue = Number(value) || 0;
   return (
     <span className="hulool-cell-content hulool-debit" style={{ fontWeight: active ? 700 : 500 }}>
@@ -179,8 +199,18 @@ const DebitCell = React.memo(({ rowData, columnData, active }: CellProps<any, { 
 DebitCell.displayName = 'DebitCell';
 
 /** Credit Cell */
-const CreditCell = React.memo(({ rowData, columnData, active }: CellProps<any, { key: string }>) => {
+const CreditCell = React.memo(({ rowData, columnData, active }: CellProps<any, { key: string; formatter?: (val: any, row: any) => any }>) => {
   const value = columnData?.key ? getNestedValue(rowData, columnData.key) : 0;
+  if (columnData?.formatter) {
+    const customDisplay = columnData.formatter(value, rowData);
+    if (customDisplay !== undefined) {
+      return (
+        <span className="hulool-cell-content hulool-credit" style={{ fontWeight: active ? 700 : 500 }}>
+          {customDisplay}
+        </span>
+      );
+    }
+  }
   const numValue = Number(value) || 0;
   return (
     <span className="hulool-cell-content hulool-credit" style={{ fontWeight: active ? 700 : 500 }}>
@@ -203,8 +233,18 @@ const DueCell = React.memo(({ rowData, columnData, active }: CellProps<any, { ke
 DueCell.displayName = 'DueCell';
 
 /** Date Cell */
-const DateCell = React.memo(({ rowData, columnData, active }: CellProps<any, { key: string }>) => {
+const DateCell = React.memo(({ rowData, columnData, active }: CellProps<any, { key: string; formatter?: (val: any, row: any) => any }>) => {
   const value = columnData?.key ? getNestedValue(rowData, columnData.key) : '';
+  if (columnData?.formatter) {
+    const customDisplay = columnData.formatter(value, rowData);
+    if (customDisplay !== undefined) {
+      return (
+        <span className="hulool-cell-content hulool-date" style={{ fontWeight: active ? 700 : 500 }}>
+          {customDisplay}
+        </span>
+      );
+    }
+  }
   return (
     <span className="hulool-cell-content hulool-date" style={{ fontWeight: active ? 700 : 500 }}>
       {formatDate(value)}

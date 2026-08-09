@@ -81,9 +81,12 @@ export const PieChartWidget: React.FC<PieChartWidgetProps> = ({
                 />
                 <span className="text-text-primary font-bold truncate">{seg.label}</span>
               </div>
-              <span className="text-text-secondary font-semibold ms-3 text-[11px]">
-                {seg.formattedPct}
-              </span>
+              <div className="flex items-center gap-2 ms-3 text-[11px] flex-shrink-0">
+                {seg.formattedValue && (
+                  <span className="font-bold text-text-primary dir-ltr">{seg.formattedValue}</span>
+                )}
+                <span className="text-text-secondary font-semibold">({seg.formattedPct})</span>
+              </div>
             </div>
           ))}
         </div>

@@ -37,7 +37,7 @@ const NavHoverDropdown = ({
   align?: 'start' | 'end' | 'center';
   className?: string;
 }) => {
-  const [isHovered, setIsHovered] = useState(false);
+  const [isOpen, setIsOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
 
@@ -46,40 +46,62 @@ const NavHoverDropdown = ({
       clearTimeout(timeoutRef.current);
       timeoutRef.current = null;
     }
-    setIsHovered(true);
+    setIsOpen(true);
   };
 
   const handleMouseLeave = (e: React.MouseEvent) => {
     if (ref.current && e.relatedTarget && ref.current.contains(e.relatedTarget as Node)) {
       return;
     }
-    setIsHovered(false);
+    setIsOpen(false);
   };
+
+  const handleToggleClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setIsOpen((prev) => !prev);
+  };
+
+  const handleContentClick = () => {
+    setTimeout(() => {
+      setIsOpen(false);
+    }, 50);
+  };
+
+  useEffect(() => {
+    const handleOutsideClick = (e: MouseEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) {
+        setIsOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleOutsideClick);
+    return () => {
+      document.removeEventListener('mousedown', handleOutsideClick);
+      if (timeoutRef.current) clearTimeout(timeoutRef.current);
+    };
+  }, []);
 
   return (
     <div
       ref={ref}
-      className="relative inline-block"
+      className="relative inline-block cursor-pointer select-none"
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
     >
-      <div className="cursor-pointer">
+      <div className="cursor-pointer inline-flex items-center" onClick={handleToggleClick}>
         {trigger}
       </div>
 
-      {isHovered && (
+      {isOpen && (
         <div
           onMouseEnter={handleMouseEnter}
           onMouseLeave={handleMouseLeave}
-          onClick={() => {
-            setIsHovered(false);
-          }}
+          onClick={handleContentClick}
           className={`absolute ${align === 'start' ? 'left-0' : align === 'center' ? 'left-1/2 -translate-x-1/2' : 'right-0'
-            } top-full pt-1 z-[9999]`}
+            } top-full pt-1 z-[9999] cursor-pointer`}
         >
           <div className="absolute -top-3 left-0 right-0 h-4" />
 
-          <div className={`rounded-md border border-border bg-card p-1 text-card-foreground shadow-xl outline-none ${className}`}>
+          <div className={`rounded-md border border-border bg-card p-1 text-card-foreground shadow-xl outline-none cursor-pointer ${className}`}>
             {children}
           </div>
         </div>

@@ -184,16 +184,17 @@ export type ReportPeriod = 'current_month' | 'all';
 export interface TreasuryAccountReport {
   id: number;
   name: string;
-  sub_type: string;
-  balance: number;
-  spent: number;
-  remaining: number;
+  sub_type: 'cashbox' | 'bank';
+  balance: number;  // all-time ledger balance
+  qabdh: number;   // inflows (debit) in period
+  sarf: number;    // outflows (credit) in period
 }
 
 export interface TreasuryReport {
-  period: ReportPeriod;
-  accounts: TreasuryAccountReport[];
-  totals: { balance: number; spent: number; remaining: number };
+  cashbox_period: ReportPeriod;
+  bank_period: ReportPeriod;
+  cashbox_accounts: TreasuryAccountReport[];
+  bank_accounts: TreasuryAccountReport[];
 }
 
 export interface TaskBucket {
@@ -204,9 +205,12 @@ export interface TaskBucket {
 export interface TasksReport {
   period: ReportPeriod;
   processing: TaskBucket;
-  completed_paid: TaskBucket;
-  completed_unpaid: TaskBucket;
+  completed_paid: TaskBucket;   // المهام المنجزة (completed + fully paid)
+  completed_unpaid: TaskBucket; // المهام مكتملة (completed but not fully paid)
   total: TaskBucket;
+  commission_rate: number;
+  total_task_cost: number;
+  estimated_profit: number;
 }
 
 export interface EmployeeReportsData {
@@ -215,15 +219,17 @@ export interface EmployeeReportsData {
 }
 
 export const useEmployeeReports = (
-  treasuryPeriod: ReportPeriod = 'current_month',
+  cashboxPeriod: ReportPeriod = 'current_month',
+  bankPeriod: ReportPeriod = 'current_month',
   tasksPeriod: ReportPeriod = 'current_month'
 ) => {
   return useQuery({
-    queryKey: ['employee', 'reports', treasuryPeriod, tasksPeriod],
+    queryKey: ['employee', 'reports', cashboxPeriod, bankPeriod, tasksPeriod],
     queryFn: async (): Promise<EmployeeReportsData> => {
       const response = await apiClient.get<EmployeeReportsData>('/employees/me/reports', {
         params: {
-          treasury_period: treasuryPeriod,
+          cashbox_period: cashboxPeriod,
+          bank_period: bankPeriod,
           tasks_period: tasksPeriod,
         },
       });

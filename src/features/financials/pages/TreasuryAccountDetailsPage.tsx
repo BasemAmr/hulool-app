@@ -1,4 +1,4 @@
-import React, { useState, useRef, useCallback, useEffect } from 'react';
+import React, { useState, useRef, useCallback, useEffect, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useGetTreasuryAccount } from '../api/treasuryQueries';
 import { useGetAccountHistory, useDeleteTransaction } from '../api/accountQueries';
@@ -38,6 +38,7 @@ interface TransformedVoucherTransaction extends FinancialTransaction {
   credit_account_name?: string;
   creator_name?: string;
   creator_role_label?: string;
+  is_summary?: boolean;
 }
 
 function toCashBoxVoucher(txn: TransformedVoucherTransaction): CashBoxVoucher {
@@ -64,7 +65,7 @@ function toCashBoxVoucher(txn: TransformedVoucherTransaction): CashBoxVoucher {
   };
 }
 
-const ActionsCell = React.memo(({ rowData }: CellProps<TransformedVoucherTransaction, any>) => {
+const ActionsCell = React.memo(({ rowData }: { rowData: TransformedVoucherTransaction }) => {
   const openModal = useModalStore((state) => state.openModal);
   const toast = useToast();
   const deleteMutation = useDeleteTransaction();
@@ -232,6 +233,30 @@ export const TreasuryAccountDetailsPage = () => {
     return () => observer.disconnect();
   }, [hasMore, isLoadingHistory, loadMore]);
 
+  const totalDebits = Number(historyData?.total_debits ?? 0);
+  const totalCredits = Number(historyData?.total_credits ?? 0);
+
+  const summaryRow = useMemo(() => {
+    return {
+      id: -999999,
+      account_id: accountId,
+      account_type: 'treasury',
+      date: '',
+      transaction_type: 'SUMMARY',
+      description: 'اجمالي الصرف والجمالي القبض',
+      debit: totalDebits,
+      credit: totalCredits,
+      balance: 0,
+      type: 'CASHBOX_RECEIPT',
+      category: '',
+      is_summary: true,
+    } as any;
+  }, [accountId, totalDebits, totalCredits]);
+
+  const gridData = useMemo(() => {
+    return [summaryRow, ...allTransactions];
+  }, [summaryRow, allTransactions]);
+
   const transactions = allTransactions;
   const isInitialLoad = isLoadingAccount;
 
@@ -358,45 +383,103 @@ export const TreasuryAccountDetailsPage = () => {
     }
   };
 
+  const formatNumberOnly = (amount: number) =>
+    new Intl.NumberFormat('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(amount);
+
   const columns: HuloolGridColumn<TransformedVoucherTransaction>[] = [
-    { id: 'transaction_date', title: 'التاريخ', key: 'date', type: 'date', width: 95, grow: 0 },
+    {
+      id: 'transaction_date',
+      title: 'التاريخ',
+      key: 'date',
+      type: 'date',
+      width: 95,
+      grow: 0,
+      cellClassName: ({ rowData }: any) => (rowData.is_summary ? 'bg-muted/40 font-bold' : ''),
+      formatter: (_val: string, rowData: any) => (rowData.is_summary ? '' : undefined),
+    },
     {
       id: 'transaction_type',
       title: 'نوع الحركة',
       key: 'transaction_type',
       cellClassName: ({ rowData }: any) => {
+        if (rowData.is_summary) return 'bg-muted/40 text-center font-bold';
         if (Number(rowData.debit || 0) > 0) return 'cashbox-debit-cell text-center font-bold';
         return 'cashbox-credit-cell text-center font-bold';
       },
       formatter: (_val: string, rowData: any) => {
+        if (rowData.is_summary) return '';
         return Number(rowData.debit || 0) > 0 ? 'قبض' : 'صرف';
       },
       width: 85,
       grow: 0,
     },
-    { id: 'description', title: 'البيان', key: 'description', type: 'text', grow: 2 },
     {
-      id: 'debit', title: 'مدين (+)', key: 'debit', type: 'currency', width: 100, grow: 0,
-      cellClassName: ({ rowData }: any) => Number(rowData.debit) > 0 ? 'cashbox-debit-cell' : '',
+      id: 'description',
+      title: 'البيان',
+      key: 'description',
+      type: 'text',
+      grow: 2,
+      cellClassName: ({ rowData }: any) => (rowData.is_summary ? 'font-black text-center text-text-primary bg-muted/40 text-sm' : ''),
     },
     {
-      id: 'credit', title: 'دائن (-)', key: 'credit', type: 'currency', width: 100, grow: 0,
-      cellClassName: ({ rowData }: any) => Number(rowData.credit) > 0 ? 'cashbox-credit-cell' : '',
+      id: 'debit',
+      title: 'مدين (+)',
+      key: 'debit',
+      type: 'currency',
+      width: 100,
+      grow: 0,
+      cellClassName: ({ rowData }: any) => {
+        if (rowData.is_summary) return 'font-black text-center text-status-success-text bg-muted/40 text-sm';
+        return Number(rowData.debit) > 0 ? 'cashbox-debit-cell' : '';
+      },
+      formatter: (val: number, rowData: any) => {
+        if (rowData.is_summary) return val > 0 ? formatNumberOnly(val) : '0.00';
+        return undefined;
+      },
     },
-    { id: 'balance', title: 'الرصيد الجاري', key: 'balance', type: 'currency', width: 115, grow: 0 },
     {
-      id: 'actions', title: 'إجراءات', key: 'id', type: 'custom',
-      component: ActionsCell as React.ComponentType<CellProps<TransformedVoucherTransaction, any>>,
-      width: 180, grow: 0,
+      id: 'credit',
+      title: 'دائن (-)',
+      key: 'credit',
+      type: 'currency',
+      width: 100,
+      grow: 0,
+      cellClassName: ({ rowData }: any) => {
+        if (rowData.is_summary) return 'font-black text-center text-status-danger-text bg-muted/40 text-sm';
+        return Number(rowData.credit) > 0 ? 'cashbox-credit-cell' : '';
+      },
+      formatter: (val: number, rowData: any) => {
+        if (rowData.is_summary) return val > 0 ? formatNumberOnly(val) : '0.00';
+        return undefined;
+      },
+    },
+    {
+      id: 'balance',
+      title: 'الرصيد الجاري',
+      key: 'balance',
+      type: 'currency',
+      width: 115,
+      grow: 0,
+      cellClassName: ({ rowData }: any) => (rowData.is_summary ? 'bg-muted/40 text-center' : ''),
+      formatter: (_val: number, rowData: any) => (rowData.is_summary ? '' : undefined),
+    },
+    {
+      id: 'actions',
+      title: 'إجراءات',
+      key: 'id',
+      type: 'custom',
+      component: (props: CellProps<TransformedVoucherTransaction, any>) => {
+        if (props.rowData?.is_summary) return <div className="bg-muted/40 h-full w-full" />;
+        return <ActionsCell rowData={props.rowData} />;
+      },
+      width: 180,
+      grow: 0,
     },
   ];
 
   const subtitle = account ? (
     `تصنيف الحساب: ${categoryLabels[account.sub_type] || account.sub_type} | طبيعة الحساب: ${account.normal_balance === 'debit' ? 'مدين' : 'دائن'}`
   ) : undefined;
-
-  const formatNumberOnly = (amount: number) =>
-    new Intl.NumberFormat('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(amount);
 
   const hasActiveFilters = Boolean(filters.start_date || filters.end_date || filters.type || filters.search);
 
@@ -547,7 +630,7 @@ export const TreasuryAccountDetailsPage = () => {
 
         <div className="bg-bg-surface rounded-lg border border-border-default overflow-hidden">
           <HuloolDataGrid
-            data={transactions}
+            data={gridData}
             columns={columns}
             isLoading={isLoadingHistory && page === 1 && transactions.length === 0}
           />

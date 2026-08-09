@@ -105,77 +105,76 @@ const UnifiedTransactionModal = () => {
 
   // ---- Re-initialize when modal opens with new props ----
   useEffect(() => {
-    if (isVisible && !initialized) {
-      const fType = (props?.defaultFromCardType as string | undefined) ?? '';
-      const tType = (props?.defaultToCardType as string | undefined) ?? '';
-      const fId = (props?.defaultFromAccountId as string | undefined) ?? '';
-      const tId = (props?.defaultToAccountId as string | undefined) ?? '';
+    if (!isVisible) return;
 
-      const needsTreasuryData =
-        fType === 'treasury' || tType === 'treasury' ||
-        fType === 'settlement' || tType === 'settlement';
-      if (needsTreasuryData && (!treasuryData || treasuryData.length === 0)) return;
+    const fType = (props?.defaultFromCardType as string | undefined) ?? '';
+    const tType = (props?.defaultToCardType as string | undefined) ?? '';
+    const fId = (props?.defaultFromAccountId as string | undefined) ?? '';
+    const tId = (props?.defaultToAccountId as string | undefined) ?? '';
 
-      const resolveKind = (type: string, id: string): PickerKind | null => {
-        if (type === 'treasury' && id && treasuryData?.length) {
-          const acc = treasuryData.find((t) => String(t.id) === id);
-          if (acc?.sub_type === 'cashbox') return 'cashbox';
-          if (acc?.sub_type === 'bank') return 'bank';
-        }
-        return presetToPickerKind(type);
-      };
+    const needsTreasuryData =
+      fType === 'treasury' || tType === 'treasury' ||
+      fType === 'settlement' || tType === 'settlement';
+    if (needsTreasuryData && (!treasuryData || treasuryData.length === 0)) return;
 
-      const resolveCategory = (kind: PickerKind | null, id: string) => {
-        if ((kind === 'cashbox' || kind === 'bank') && id && treasuryData?.length) {
-          const acc = treasuryData.find((t) => String(t.id) === id);
-          if (acc) return acc.sub_type || null;
-        }
-        return null;
-      };
+    const resolveKind = (type: string, id: string): PickerKind | null => {
+      if (type === 'treasury' && id && treasuryData?.length) {
+        const acc = treasuryData.find((t) => String(t.id) === id);
+        if (acc?.sub_type === 'cashbox') return 'cashbox';
+        if (acc?.sub_type === 'bank') return 'bank';
+      }
+      return presetToPickerKind(type);
+    };
 
-      // Helper to find settlement account id
-      const getSettlementId = (): string => {
-        const settlementAcc = treasuryData?.find(
-          (t) =>
-            typeof t.metadata === 'object' &&
-            t.metadata !== null &&
-            ((t.metadata as any).is_settlement === true ||
-              (t.metadata as any).is_settlement === 'true' ||
-              (t.metadata as any).type === 'settlement')
-        );
-        return settlementAcc ? String(settlementAcc.id) : '';
-      };
+    const resolveCategory = (kind: PickerKind | null, id: string) => {
+      if ((kind === 'cashbox' || kind === 'bank') && id && treasuryData?.length) {
+        const acc = treasuryData.find((t) => String(t.id) === id);
+        if (acc) return acc.sub_type || null;
+      }
+      return null;
+    };
 
-      const resolvedFromId = fType === 'settlement' ? getSettlementId() : fId;
-      const resolvedToId = tType === 'settlement' ? getSettlementId() : tId;
+    // Helper to find settlement account id
+    const getSettlementId = (): string => {
+      const settlementAcc = treasuryData?.find(
+        (t) =>
+          typeof t.metadata === 'object' &&
+          t.metadata !== null &&
+          ((t.metadata as any).is_settlement === true ||
+            (t.metadata as any).is_settlement === 'true' ||
+            (t.metadata as any).type === 'settlement')
+      );
+      return settlementAcc ? String(settlementAcc.id) : '';
+    };
 
-      const fKind = resolveKind(fType, resolvedFromId);
-      const tKind = resolveKind(tType, resolvedToId);
+    const resolvedFromId = fType === 'settlement' ? getSettlementId() : fId;
+    const resolvedToId = tType === 'settlement' ? getSettlementId() : tId;
 
-      const modalTitle = (props?.title as string | undefined) || '';
-      const initDir: Direction =
-        fType === 'settlement' ? 'qabdh'
-        : tType === 'settlement' ? 'sarf'
-        : (tType === 'treasury' || tType === 'cashbox') ? 'qabdh'
-        : modalTitle.includes('قبض') ? 'qabdh'
-        : modalTitle.includes('صرف') ? 'sarf'
-        : 'sarf';
+    const fKind = resolveKind(fType, resolvedFromId);
+    const tKind = resolveKind(tType, resolvedToId);
 
-      const fPreset: PickerKind | null = resolvedFromId ? fKind : null;
-      const tPreset: PickerKind | null = resolvedToId ? tKind : null;
+    const modalTitle = (props?.title as string | undefined) || '';
+    const initDir: Direction =
+      fType === 'settlement' ? 'qabdh'
+      : tType === 'settlement' ? 'sarf'
+      : (tType === 'treasury' || tType === 'cashbox') ? 'qabdh'
+      : modalTitle.includes('قبض') ? 'qabdh'
+      : modalTitle.includes('صرف') ? 'sarf'
+      : 'sarf';
 
-      setDirection(initDir);
-      setFromPicker({ kind: fKind, accountId: resolvedFromId, categorySlug: resolveCategory(fKind, resolvedFromId) });
-      setToPicker({ kind: tKind, accountId: resolvedToId, categorySlug: resolveCategory(tKind, resolvedToId) });
-      setFromPresetKind(fPreset);
-      setToPresetKind(tPreset);
-      setAmount('');
-      setDescription('');
-      setAutoDescription('');
-      setEffectiveDate(new Date().toISOString().split('T')[0]);
-      setInitialized(true);
-    }
-  }, [isVisible, initialized, props, treasuryData]);
+    const fPreset: PickerKind | null = resolvedFromId ? fKind : null;
+    const tPreset: PickerKind | null = resolvedToId ? tKind : null;
+
+    setDirection(initDir);
+    setFromPicker({ kind: fKind, accountId: resolvedFromId, categorySlug: resolveCategory(fKind, resolvedFromId) });
+    setToPicker({ kind: tKind, accountId: resolvedToId, categorySlug: resolveCategory(tKind, resolvedToId) });
+    setFromPresetKind(fPreset);
+    setToPresetKind(tPreset);
+    setAmount('');
+    setDescription('');
+    setAutoDescription('');
+    setEffectiveDate(new Date().toISOString().split('T')[0]);
+  }, [isVisible, props, treasuryData]);
 
   // ---- Resolve account type from PickerValue ----
   const resolvePickerType = (pv: PickerValue): AccountType | null => {

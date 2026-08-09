@@ -1,15 +1,22 @@
-import React, { useState } from 'react';
-import TreasuryReportSection from './TreasuryReportSection';
+﻿import React, { useState } from 'react';
+import { TreasurySubReportSection } from './TreasurySubReportSection';
 import TasksReportSection from './TasksReportSection';
 import { Alert, AlertDescription } from '@/shared/ui/shadcn/alert';
-import { useEmployeeReports } from '@/features/employee-dashboard/api/employeeDashboardQueries';
-import type { ReportPeriod } from '@/features/employee-dashboard/api/employeeDashboardQueries';
+import { useEmployeeReports } from '../api/employeeDashboardQueries';
+import type { ReportPeriod } from '../api/employeeDashboardQueries';
 
+/**
+ * EmployeeReportsPanel — 3 vertical sections with independent filter states:
+ * 1. Cashbox Report  (TreasurySubReportSection - cashboxPeriod)
+ * 2. Banks Report    (TreasurySubReportSection - bankPeriod)
+ * 3. Tasks Report    (TasksReportSection - tasksPeriod)
+ */
 export const EmployeeReportsPanel: React.FC = () => {
-  const [treasuryPeriod, setTreasuryPeriod] = useState<ReportPeriod>('current_month');
-  const [tasksPeriod, setTasksPeriod] = useState<ReportPeriod>('current_month');
+  const [cashboxPeriod, setCashboxPeriod] = useState<ReportPeriod>('current_month');
+  const [bankPeriod,    setBankPeriod]    = useState<ReportPeriod>('current_month');
+  const [tasksPeriod,   setTasksPeriod]   = useState<ReportPeriod>('current_month');
 
-  const { data, isLoading, error } = useEmployeeReports(treasuryPeriod, tasksPeriod);
+  const { data, isLoading, error } = useEmployeeReports(cashboxPeriod, bankPeriod, tasksPeriod);
 
   return (
     <div className="flex flex-col gap-3 h-full overflow-y-auto pr-0.5">
@@ -21,15 +28,27 @@ export const EmployeeReportsPanel: React.FC = () => {
         </Alert>
       )}
 
-      {/* Section 1: Cashbox & Bank Treasury Accounts Report */}
-      <TreasuryReportSection
-        report={data?.treasury}
+      {/* Section 1: Cashbox Accounts Report */}
+      <TreasurySubReportSection
+        title="تقرير الصندوق"
+        storageKey="employee-dashboard-selected-cashbox-id"
+        accounts={data?.treasury.cashbox_accounts ?? []}
         isLoading={isLoading}
-        filterMode={treasuryPeriod}
-        onFilterChange={setTreasuryPeriod}
+        filterMode={cashboxPeriod}
+        onFilterChange={setCashboxPeriod}
       />
 
-      {/* Section 2: Tasks Status Report (with standalone filter) */}
+      {/* Section 2: Bank Accounts Report */}
+      <TreasurySubReportSection
+        title="تقرير البنوك"
+        storageKey="employee-dashboard-selected-bank-id"
+        accounts={data?.treasury.bank_accounts ?? []}
+        isLoading={isLoading}
+        filterMode={bankPeriod}
+        onFilterChange={setBankPeriod}
+      />
+
+      {/* Section 3: Tasks Report */}
       <TasksReportSection
         report={data?.tasks}
         isLoading={isLoading}

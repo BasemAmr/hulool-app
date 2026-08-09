@@ -410,11 +410,31 @@ const TaskModal = () => {
     }));
   };
 
-  const taskTypes: { type: TaskType; label: string }[] = [
-    { type: 'Government', label: 'حكومية' },
-    { type: 'Accounting', label: 'محاسبية' },
-    { type: 'RealEstate', label: 'عقارية' },
-    { type: 'Other', label: 'أخرى' },
+  const taskTypes: { type: TaskType; label: string; activeClasses: string; inactiveClasses: string }[] = [
+    {
+      type: 'Government',
+      label: 'حكومية',
+      activeClasses: 'border-status-info-border bg-status-info-bg text-status-info-text shadow-sm',
+      inactiveClasses: 'border-border-default hover:border-status-info-border hover:bg-status-info-bg/30 text-text-secondary',
+    },
+    {
+      type: 'Accounting',
+      label: 'محاسبية',
+      activeClasses: 'border-status-success-border bg-status-success-bg text-status-success-text shadow-sm',
+      inactiveClasses: 'border-border-default hover:border-status-success-border hover:bg-status-success-bg/30 text-text-secondary',
+    },
+    {
+      type: 'RealEstate',
+      label: 'عقارية',
+      activeClasses: 'border-status-warning-border bg-status-warning-bg text-status-warning-text shadow-sm',
+      inactiveClasses: 'border-border-default hover:border-status-warning-border hover:bg-status-warning-bg/30 text-text-secondary',
+    },
+    {
+      type: 'Other',
+      label: 'أخرى',
+      activeClasses: 'border-status-danger-border bg-status-danger-bg text-status-danger-text shadow-sm',
+      inactiveClasses: 'border-border-default hover:border-status-danger-border hover:bg-status-danger-bg/30 text-text-secondary',
+    },
   ];
 
   const currentClientDisplay = searchedClient || client || taskToEdit?.client;
@@ -442,12 +462,11 @@ const TaskModal = () => {
                       key={item.type}
                       type="button"
                       onClick={() => setValue('type', item.type)}
-                      className={`py-3 px-2 rounded-xl border-2 text-center transition-all cursor-pointer flex items-center justify-center ${isSelected
-                          ? 'border-primary bg-primary/10 text-primary font-bold shadow-sm'
-                          : 'border-border-default hover:border-primary/40 text-text-secondary'
-                        }`}
+                      className={`py-3 px-2 rounded-xl border-2 text-center transition-all cursor-pointer flex items-center justify-center ${
+                        isSelected ? item.activeClasses : item.inactiveClasses
+                      }`}
                     >
-                      <span className="block text-sm font-bold text-text-primary">
+                      <span className="block text-sm font-bold">
                         {item.label}
                       </span>
                     </button>
@@ -575,7 +594,7 @@ const TaskModal = () => {
                   </div>
 
                   <div>
-                    <label className="font-semibold text-text-primary text-sm block mb-1">مبلغ المصاريف</label>
+                    <label className="font-semibold text-text-primary text-sm block mb-1">تكلفة المهمة</label>
                     <Controller
                       name="expense_amount"
                       control={control}
@@ -643,7 +662,7 @@ const TaskModal = () => {
 
                 {/* Notes */}
                 <div>
-                  <label className="font-semibold text-text-primary text-sm block mb-1">ملاحظات</label>
+                  <label className="font-semibold text-text-primary text-sm block mb-1 text-center">الملاحظات</label>
                   <textarea
                     className="w-full px-3 py-2 border border-border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-primary min-h-[70px]"
                     {...register('notes')}
