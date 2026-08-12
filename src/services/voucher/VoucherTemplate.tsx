@@ -75,7 +75,7 @@ export const VoucherTemplate: React.FC<Props> = ({ data, id = 'voucher-template-
             مكتب حلول
           </div>
           <div style={{ fontSize: '11pt', color: '#374151', marginTop: '2px' }}>
-            0500000000
+            0552052277
           </div>
         </div>
 
@@ -167,7 +167,7 @@ export const VoucherTemplate: React.FC<Props> = ({ data, id = 'voucher-template-
 
       {/* Form Fields Stack */}
       <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', fontSize: '11pt', lineHeight: '1.8' }}>
-        
+
         {/* Row 1: Received From / Paid To */}
         <div style={{ display: 'flex', alignItems: 'center' }}>
           <div style={{ fontWeight: 'bold', whiteSpace: 'nowrap', width: '110px' }}>
