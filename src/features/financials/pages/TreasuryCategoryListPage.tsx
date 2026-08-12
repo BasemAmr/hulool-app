@@ -18,14 +18,11 @@ const ActionsCell = React.memo(({ rowData }: CellProps<TreasuryAccount, any>) =>
       variant="outline-primary"
       size="sm"
       onClick={() => {
-        if (rowData.sub_type === 'cashbox') {
-          navigate(`/financial-center/cash-boxes/${rowData.id}`);
-        } else {
-          navigate(`/financial-center/treasury-accounts/${rowData.id}`);
-        }
+        navigate(`/financial-center/treasury-accounts/${rowData.id}`);
       }}
     >
       عرض كشف الحساب
+
     </Button>
   );
 });

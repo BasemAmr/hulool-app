@@ -7,7 +7,7 @@ import HuloolDataGrid from '@/shared/grid/HuloolDataGrid';
 import type { HuloolGridColumn } from '@/shared/grid/HuloolDataGrid';
 import type { CellProps } from 'react-datasheet-grid';
 import Button from '@/shared/ui/primitives/Button';
-import { Landmark, FileSpreadsheet, ArrowRight, Search, X, RotateCcw } from 'lucide-react';
+import { Landmark, FileSpreadsheet, ArrowRight, Search, X, RotateCcw, Printer } from 'lucide-react';
 import type { FinancialTransaction, CashBoxVoucher } from '@/api/types';
 import { useModalStore } from '@/shared/stores/modalStore';
 import { useAuthStore } from '@/features/auth/store/authStore';
@@ -15,7 +15,12 @@ import { useToast } from '@/shared/hooks/useToast';
 import { exportService } from '@/services/export/ExportService';
 import { ExportChoiceModal } from '../modals/ExportChoiceModal';
 import apiClient from '@/api/client';
-import type { FilterState } from '../components/TransactionFilters';
+export interface FilterState {
+  start_date: string;
+  end_date: string;
+  type: string;
+  search: string;
+}
 import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
 import { arSA } from 'date-fns/locale';
@@ -89,8 +94,13 @@ const ActionsCell = React.memo(({ rowData }: { rowData: TransformedVoucherTransa
     });
   };
 
+  const handlePrint = () => openModal('voucherPreview', { transactionId: rowData.id });
+
   return (
-    <div className="flex gap-1.5">
+    <div className="flex gap-1.5 items-center">
+      <Button variant="outline-primary" size="sm" onClick={handlePrint} className="px-2" title="طباعة السند">
+        <Printer size={16} />
+      </Button>
       <Button variant="outline-primary" size="sm" onClick={handleView}>عرض</Button>
       {isAdmin() && (
         <>

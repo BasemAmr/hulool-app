@@ -85,6 +85,7 @@ import TreasuryPermissionsModal from '@/features/financials/modals/TreasuryPermi
 import CategoryManagerModal from '@/features/financials/modals/CategoryManagerModal';
 import FCAccountLedgerModal from '@/features/financials/modals/FCAccountLedgerModal';
 import TreasuryAccountReportModal from '@/features/financials/modals/TreasuryAccountReportModal';
+import { VoucherPreviewModal } from '@/services/voucher/VoucherPreviewModal';
 
 const ModalManager = () => {
   const modalType = useModalStore((state) => state.modalType);
@@ -337,6 +338,9 @@ const ModalManager = () => {
 
     case 'treasuryAccountReport':
       return renderModal(TreasuryAccountReportModal, { isOpen, onClose: closeModal, subType: props.subType });
+
+    case 'voucherPreview':
+      return renderModal(VoucherPreviewModal, { onClose: closeModal, transactionId: props.transactionId });
 
     default:
       return null;

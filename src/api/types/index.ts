@@ -1857,6 +1857,27 @@ export interface UnifiedTransactionResponse {
   message?: string;
 }
 
+export interface VoucherData {
+  id: number;
+  voucher_number: string;
+  voucher_type: 'receipt' | 'expense';
+  date: string;
+  amount: number;
+  debit?: number;
+  credit?: number;
+  amount_words_ar: string;
+  counterparty_name: string;
+  description: string;
+  account_name: string;
+  creator_name: string;
+}
+
+export interface VoucherCompanyInfo {
+  name_ar: string;
+  name_en: string;
+  phone: string;
+}
+
 // ========================================
 // TREASURY TYPES
 // ========================================

@@ -34,8 +34,6 @@ import EmployeeReceivablesPage from '@/features/employees/pages/employee/Employe
 import EmployeeSettingsPage from '@/features/employees/pages/employee/EmployeeSettingsPage';
 import EmployeeOnboardingPage from '@/features/employees/pages/employee/EmployeeOnboardingPage';
 import EmployeeAccountsPage from '@/features/employees/pages/employee/EmployeeAccountsPage';
-import { CashBoxDetailsPage } from '@/features/financials/pages/CashBoxDetailsPage';
-import { CashBoxesListPage } from '@/features/financials/pages/CashBoxesListPage';
 import { TreasuryAccountsPage } from '@/features/financials/pages/TreasuryAccountsPage';
 import { TreasuryCategoryListPage } from '@/features/financials/pages/TreasuryCategoryListPage';
 import { TreasuryAccountDetailsPage } from '@/features/financials/pages/TreasuryAccountDetailsPage';
@@ -105,8 +103,6 @@ const routes: RouteObject[] = [
             { path: 'treasury-accounts', element: <FinancialCenterPage /> },
             { path: 'pending', element: <PendingCommissionsPage /> },
             { path: 'invoices', element: <InvoicesHubPage /> },
-            { path: "cash-boxes", element: <CashBoxesListPage /> },
-            { path: "cash-boxes/:id", element: <CashBoxDetailsPage /> },
             { path: "treasury/:subType", element: <TreasuryCategoryListPage /> },
             { path: "treasury-accounts/:id", element: <TreasuryAccountDetailsPage /> },
 

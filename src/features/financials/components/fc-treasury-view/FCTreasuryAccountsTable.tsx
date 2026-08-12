@@ -24,11 +24,7 @@ const FCTreasuryAccountsTable: React.FC<FCTreasuryAccountsTableProps> = ({ accou
   const categoryLabels = useCategoryLabels();
 
   const handleView = (account: TreasuryAccount) => {
-    const path =
-      account.sub_type === 'cashbox'
-        ? `/financial-center/cash-boxes/${account.id}`
-        : `/financial-center/treasury-accounts/${account.id}`;
-    navigate(path);
+    navigate(`/financial-center/treasury-accounts/${account.id}`);
   };
 
   const handleEdit = (account: TreasuryAccount) => {

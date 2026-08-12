@@ -121,10 +121,7 @@ export const TreasuryAccountsPage = () => {
 
   // Action handlers
   const handleView = (account: TreasuryAccount) => {
-    const detailsPath = account.sub_type === 'cashbox'
-      ? `/financial-center/cash-boxes/${account.id}`
-      : `/financial-center/treasury-accounts/${account.id}`;
-    navigate(detailsPath);
+    navigate(`/financial-center/treasury-accounts/${account.id}`);
   };
 
   const handleEdit = (account: TreasuryAccount) => {
