@@ -1870,7 +1870,10 @@ export interface VoucherData {
   counterparty_name: string;
   description: string;
   account_name: string;
+  account_type?: string;
+  counterparty_account_type?: string;
   creator_name: string;
+  metadata?: any;
 }
 
 export interface VoucherCompanyInfo {
