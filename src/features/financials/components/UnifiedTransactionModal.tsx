@@ -92,6 +92,7 @@ const UnifiedTransactionModal = () => {
   const [effectiveDate, setEffectiveDate] = useState<string>(
     new Date().toISOString().split('T')[0],
   );
+  const [voucherTypeOverride, setVoucherTypeOverride] = useState<'receipt' | 'expense' | ''>('');
   const [initialized, setInitialized] = useState<boolean>(false);
 
   // ---- Fetch accounts ----
@@ -212,6 +213,7 @@ const UnifiedTransactionModal = () => {
         amount: parseFloat(amount),
         description: displayDescription.trim(),
         effective_date: effectiveDate ? `${effectiveDate}T${new Date().toTimeString().split(' ')[0]}` : undefined,
+        voucher_type_override: voucherTypeOverride ? voucherTypeOverride : undefined,
       });
 
       success('تم تسجيل المعاملة بنجاح');
@@ -239,6 +241,7 @@ const UnifiedTransactionModal = () => {
         amount: parseFloat(amount),
         description: displayDescription.trim(),
         effective_date: effectiveDate ? `${effectiveDate}T${new Date().toTimeString().split(' ')[0]}` : undefined,
+        voucher_type_override: voucherTypeOverride ? voucherTypeOverride : undefined,
       });
 
       success('تم التسجيل — جاهز للمعاملة التالية');
@@ -246,6 +249,7 @@ const UnifiedTransactionModal = () => {
       setDescription('');
       setAutoDescription('');
       setEffectiveDate(new Date().toISOString().split('T')[0]);
+      setVoucherTypeOverride('');
     } catch (err: any) {
       toastError(
         'فشلت العملية',
@@ -264,6 +268,7 @@ const UnifiedTransactionModal = () => {
     setDescription('');
     setAutoDescription('');
     setEffectiveDate(new Date().toISOString().split('T')[0]);
+    setVoucherTypeOverride('');
     setInitialized(false);
     setDirection('sarf');
     closeModal();
@@ -456,6 +461,43 @@ const UnifiedTransactionModal = () => {
                 className="w-full rounded-lg border border-border-default bg-background p-2.5 text-xs font-medium text-text-primary placeholder:text-text-secondary/40 focus:outline-none focus:ring-1 focus:ring-primary-500/20 focus:border-primary-500/40 transition-all resize-none"
               />
             </div>
+
+            {/* Document Template / Print Mask for Treasury <-> Client transactions */}
+            {((resolvedFromType === 'treasury' && resolvedToType === 'client') ||
+              (resolvedFromType === 'client' && resolvedToType === 'treasury')) && (
+              <div className="flex items-center justify-between p-2.5 bg-surface-subtle/50 rounded-lg border border-border/60 text-xs">
+                <div className="flex flex-col">
+                  <span className="font-semibold text-text-primary">نوع السند المطبوع للعميل</span>
+                  <span className="text-[11px] text-text-secondary/80">تحديد صيغة السند المطبوع في الـ PDF دون التأثير على القيد المحاسبي</span>
+                </div>
+                <div className="flex items-center gap-1 bg-background p-0.5 rounded-md border border-border">
+                  <button
+                    type="button"
+                    onClick={() => setVoucherTypeOverride('')}
+                    className={`px-2.5 py-1 rounded text-xs font-medium transition-all ${
+                      voucherTypeOverride === ''
+                        ? 'bg-primary-50 text-primary-700 font-bold shadow-xs border border-primary-200'
+                        : 'text-text-secondary hover:text-text-primary'
+                    }`}
+                  >
+                    {resolvedFromType === 'treasury' ? 'سند صرف (افتراضي)' : 'سند قبض (افتراضي)'}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setVoucherTypeOverride(resolvedFromType === 'treasury' ? 'receipt' : 'expense')}
+                    className={`px-2.5 py-1 rounded text-xs font-medium transition-all ${
+                      (resolvedFromType === 'treasury' ? voucherTypeOverride === 'receipt' : voucherTypeOverride === 'expense')
+                        ? (resolvedFromType === 'treasury'
+                            ? 'bg-status-success-bg text-status-success-text font-bold shadow-xs border border-status-success-border'
+                            : 'bg-status-danger-bg text-status-danger-text font-bold shadow-xs border border-status-danger-border')
+                        : 'text-text-secondary hover:text-text-primary'
+                    }`}
+                  >
+                    {resolvedFromType === 'treasury' ? 'سند قبض / إقرار استلام' : 'سند صرف للعميل'}
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
         </section>
 

@@ -292,6 +292,7 @@ export const TreasuryAccountDetailsPage = () => {
         debit: Number(txn.debit),
         credit: Number(txn.credit),
         balance: Number(txn.balance),
+        metadata: (txn as any).metadata,
       }));
       await exportService.exportTreasuryAccount({ title: `كشف حركة الحساب - ${account.name}`, items: exportItems });
       toast.success('تم التصدير بنجاح');
@@ -345,6 +346,7 @@ export const TreasuryAccountDetailsPage = () => {
         debit: Number(txn.debit || (txn.direction === 'debit' ? txn.amount : 0)),
         credit: Number(txn.credit || (txn.direction === 'credit' ? txn.amount : 0)),
         balance: Number(txn.balance || txn.balance_after || 0),
+        metadata: txn.metadata,
       }));
       await exportService.exportTreasuryAccount({ title: `كشف حركة الحساب كامل - ${account.name}`, items: exportItems });
       toast.success('تم تصدير كامل التاريخ بنجاح');
@@ -363,6 +365,7 @@ export const TreasuryAccountDetailsPage = () => {
       if (endDateStr) extraParams.end_date = endDateStr;
 
       const allTxns = await fetchAllHistoryPages(extraParams);
+
       const exportItems = allTxns.map((txn: any) => ({
         transaction_date: txn.transaction_date || txn.created_at || '',
         transaction_type: txn.transaction_type,
@@ -370,6 +373,7 @@ export const TreasuryAccountDetailsPage = () => {
         debit: Number(txn.debit || (txn.direction === 'debit' ? txn.amount : 0)),
         credit: Number(txn.credit || (txn.direction === 'credit' ? txn.amount : 0)),
         balance: Number(txn.balance || txn.balance_after || 0),
+        metadata: txn.metadata,
       }));
 
       let dateTitlePart = '';
@@ -413,12 +417,35 @@ export const TreasuryAccountDetailsPage = () => {
       key: 'transaction_type',
       cellClassName: ({ rowData }: any) => {
         if (rowData.is_summary) return 'bg-muted/40 text-center font-bold';
+        let meta = rowData.metadata;
+        if (typeof meta === 'string') {
+          try { meta = JSON.parse(meta); } catch {}
+        }
+        if (meta?.voucher_type_override === 'receipt') {
+          return 'cashbox-debit-cell text-center font-bold';
+        }
         if (Number(rowData.debit || 0) > 0) return 'cashbox-debit-cell text-center font-bold';
         return 'cashbox-credit-cell text-center font-bold';
       },
       formatter: (_val: string, rowData: any) => {
         if (rowData.is_summary) return '';
-        return Number(rowData.debit || 0) > 0 ? 'قبض' : 'صرف';
+        const isDebit = Number(rowData.debit || 0) > 0;
+        let meta = rowData.metadata;
+        if (typeof meta === 'string') {
+          try { meta = JSON.parse(meta); } catch {}
+        }
+
+        const isOverriddenToReceipt = meta?.voucher_type_override === 'receipt' && !isDebit;
+        if (isOverriddenToReceipt) {
+          return 'قبض ✦'; // Labeled as receipt per user request, marked with ✦ to denote special client voucher
+        }
+
+        const isOverriddenToExpense = meta?.voucher_type_override === 'expense' && isDebit;
+        if (isOverriddenToExpense) {
+          return 'صرف ✦';
+        }
+
+        return isDebit ? 'قبض' : 'صرف';
       },
       width: 85,
       grow: 0,

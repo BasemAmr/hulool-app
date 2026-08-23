@@ -240,6 +240,7 @@ export interface TreasuryAccountExportItem {
   debit: number;
   credit: number;
   balance: number;
+  metadata?: any;
 }
 
 export interface TreasuryAccountExportReportData {

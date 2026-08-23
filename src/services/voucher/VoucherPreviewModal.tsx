@@ -16,14 +16,28 @@ export const VoucherPreviewModal: React.FC<Props> = ({ transactionId, onClose })
   const { data: voucherData, isLoading, error } = useGetTransactionVoucher(transactionId);
   const [step, setStep] = useState<1 | 2>(1);
   const [descriptionOverride, setDescriptionOverride] = useState('');
+  const [voucherTypeState, setVoucherTypeState] = useState<'receipt' | 'expense' | null>(null);
   const [pdfBlob, setPdfBlob] = useState<Blob | null>(null);
   const [pdfUrl, setPdfUrl] = useState<string | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
   const toast = useToast();
 
   useEffect(() => {
-    if (voucherData && !descriptionOverride) {
-      setDescriptionOverride(voucherData.description);
+    if (voucherData) {
+      if (!descriptionOverride) {
+        // Clean default description of redundant internal tags
+        let cleanDesc = voucherData.description || '';
+        if (cleanDesc.startsWith('سند صرف (') || cleanDesc.startsWith('سند قبض (')) {
+          const match = cleanDesc.match(/^(?:سند صرف|سند قبض)\s*\((.*?)\)$/);
+          if (match && match[1]) {
+            cleanDesc = match[1];
+          }
+        }
+        setDescriptionOverride(cleanDesc);
+      }
+      if (voucherTypeState === null) {
+        setVoucherTypeState(voucherData.voucher_type);
+      }
     }
   }, [voucherData]);
 
@@ -34,28 +48,10 @@ export const VoucherPreviewModal: React.FC<Props> = ({ transactionId, onClose })
     };
   }, [pdfUrl]);
 
-  const handleGenerate = async () => {
-    if (!voucherData) return;
-    setIsGenerating(true);
-    try {
-      // Temporarily render the template in a hidden div to capture it
-      const container = document.createElement('div');
-      container.style.position = 'absolute';
-      container.style.left = '-9999px';
-      container.style.top = '-9999px';
-      document.body.appendChild(container);
-
-      // Render the template using a portal would be cleaner, but React 19 might need root.render.
-      // A simpler way for html2canvas is to have the template always rendered but visually hidden 
-      // when in Step 1, or just rendered within the modal DOM tree but off-screen.
-      // Since it's easier, let's keep it in the DOM of step 1 but absolute positioned.
-    } catch (err) {
-      toast.error('حدث خطأ أثناء إنشاء السند');
-      console.error(err);
-    } finally {
-      setIsGenerating(false);
-    }
-  };
+  const activeVoucherData = voucherData ? {
+    ...voucherData,
+    voucher_type: voucherTypeState ?? voucherData.voucher_type,
+  } : null;
 
   return (
     <Dialog.Root open={true} onOpenChange={onClose}>
@@ -80,23 +76,77 @@ export const VoucherPreviewModal: React.FC<Props> = ({ transactionId, onClose })
             <div className="flex-1 flex items-center justify-center">
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600"></div>
             </div>
-          ) : error || !voucherData ? (
+          ) : error || !voucherData || !activeVoucherData ? (
             <div className="text-red-500 text-center py-8">
               فشل تحميل بيانات السند. تأكد من أن المعاملة موجودة.
             </div>
           ) : step === 1 ? (
             // Step 1: Edit Form
             <div className="flex flex-col gap-4">
+              {/* Voucher Format / Template Toggle */}
+              {(() => {
+                let meta = voucherData.metadata;
+                if (typeof meta === 'string') {
+                  try { meta = JSON.parse(meta); } catch {}
+                }
+                const hasExplicitOverride = Boolean(meta?.voucher_type_override);
+
+                if (hasExplicitOverride) {
+                  return (
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1.5">نوع السند المعتمد</label>
+                      <div className={`py-2 px-3 rounded-md text-xs font-bold border text-center ${
+                        voucherTypeState === 'receipt'
+                          ? 'bg-emerald-50 border-emerald-500 text-emerald-700'
+                          : 'bg-red-50 border-red-500 text-red-700'
+                      }`}>
+                        {voucherTypeState === 'receipt' ? 'سند قبض (Receipt Voucher)' : 'سند صرف (Expense Voucher)'}
+                      </div>
+                    </div>
+                  );
+                }
+
+                return (
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1.5">نوع السند</label>
+                    <div className="grid grid-cols-2 gap-2">
+                      <button
+                        type="button"
+                        onClick={() => setVoucherTypeState('expense')}
+                        className={`py-2 px-3 rounded-md text-xs font-bold border transition-all ${
+                          voucherTypeState === 'expense'
+                            ? 'bg-red-50 border-red-500 text-red-700 shadow-xs'
+                            : 'border-gray-200 text-gray-600 hover:bg-gray-50'
+                        }`}
+                      >
+                        سند صرف (Expense)
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setVoucherTypeState('receipt')}
+                        className={`py-2 px-3 rounded-md text-xs font-bold border transition-all ${
+                          voucherTypeState === 'receipt'
+                            ? 'bg-emerald-50 border-emerald-500 text-emerald-700 shadow-xs'
+                            : 'border-gray-200 text-gray-600 hover:bg-gray-50'
+                        }`}
+                      >
+                        سند قبض (Receipt)
+                      </button>
+                    </div>
+                  </div>
+                );
+              })()}
+
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">وذلك مقابل (سبب السند)</label>
                 <textarea
                   value={descriptionOverride}
                   onChange={(e) => setDescriptionOverride(e.target.value)}
-                  className="w-full border border-gray-300 rounded-md p-2 focus:ring-primary-500 focus:border-primary-500"
+                  className="w-full border border-gray-300 rounded-md p-2 text-xs focus:ring-primary-500 focus:border-primary-500"
                   rows={4}
                 />
               </div>
-              <div className="flex justify-end gap-2 mt-4">
+              <div className="flex justify-end gap-2 mt-2">
                 <Button variant="outline-secondary" onClick={onClose}>إلغاء</Button>
                 <Button 
                   onClick={async () => {
@@ -115,7 +165,7 @@ export const VoucherPreviewModal: React.FC<Props> = ({ transactionId, onClose })
                   }} 
                   isLoading={isGenerating}
                 >
-                  إنشاء السند
+                  إنشاء ومعاينة السند
                 </Button>
               </div>
 
@@ -123,7 +173,7 @@ export const VoucherPreviewModal: React.FC<Props> = ({ transactionId, onClose })
               <div style={{ position: 'absolute', left: '-9999px', top: '-9999px' }}>
                 <VoucherTemplate 
                   id="hidden-voucher-template"
-                  data={voucherData} 
+                  data={activeVoucherData} 
                   descriptionOverride={descriptionOverride} 
                 />
               </div>

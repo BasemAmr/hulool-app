@@ -17,7 +17,35 @@ export const VoucherTemplate: React.FC<Props> = ({ data, id = 'voucher-template-
   const description = descriptionOverride ?? data.description ?? '';
   const displayAmount = (data.amount || data.debit || data.credit || 0).toFixed(2);
   const displayDate = data.date || (data as any).transaction_date?.split(' ')[0] || '';
-  const counterpartyName = data.counterparty_name || data.account_name || '';
+
+  // Determine actual physical money flow:
+  // Is money leaving Treasury/Bank (Payout / Bank -> Client) or entering Treasury/Bank (Repayment / Client -> Bank)?
+  const isCurrentAccountTreasury = ['treasury', 'cashbox', 'company'].includes((data as any).account_type);
+  
+  // In our double-entry ledger:
+  // If Treasury account is CREDITED (credit > 0), money physically flowed OUT: Bank -> Client.
+  // If Treasury account is DEBITED (debit > 0), money physically flowed IN: Client -> Bank.
+  const isTreasuryDisbursement = isCurrentAccountTreasury 
+    ? (Number(data.credit || 0) > 0) 
+    : (Number(data.debit || 0) > 0);
+
+  const partyName = isCurrentAccountTreasury
+    ? (data.counterparty_name || data.account_name || '')
+    : (data.account_name || data.counterparty_name || '');
+  const bankOrTreasuryName = isCurrentAccountTreasury
+    ? (data.account_name || '')
+    : (data.counterparty_name || '');
+
+  // Fixed Real-World Wordings:
+  // 1) When money goes from Bank/Treasury -> Client:
+  //    Row 1: "دفعنا إلى :" / "Paid To Mr." [Client Name] (We paid to client)
+  //    Row 3: "من حساب / خزينة:" [Bank/Treasury Name] (Out of Bank/Treasury)
+  // 2) When money goes from Client -> Bank/Treasury:
+  //    Row 1: "استلمنا من :" / "Received From Mr." [Client Name] (We received from client)
+  //    Row 3: "إلى حساب / خزينة:" [Bank/Treasury Name] (Into Bank/Treasury)
+  const partyLabelAr = isTreasuryDisbursement ? 'دفعنا إلى :' : 'استلمنا من :';
+  const partyLabelEn = isTreasuryDisbursement ? 'Paid To Mr.' : 'Received From Mr.';
+  const bankFieldLabelAr = isTreasuryDisbursement ? 'من حساب / خزينة:' : 'إلى حساب / خزينة:';
 
   return (
     <div
@@ -171,7 +199,7 @@ export const VoucherTemplate: React.FC<Props> = ({ data, id = 'voucher-template-
         {/* Row 1: Received From / Paid To */}
         <div style={{ display: 'flex', alignItems: 'center' }}>
           <div style={{ fontWeight: 'bold', whiteSpace: 'nowrap', width: '110px' }}>
-            {isReceipt ? 'استلمنا من :' : 'دفعنا إلى :'}
+            {partyLabelAr}
           </div>
           <div
             style={{
@@ -183,10 +211,10 @@ export const VoucherTemplate: React.FC<Props> = ({ data, id = 'voucher-template-
               paddingBottom: '2px',
             }}
           >
-            {counterpartyName}
+            {partyName}
           </div>
           <div style={{ fontWeight: 'bold', whiteSpace: 'nowrap', width: '130px', textAlign: 'left', direction: 'ltr' }}>
-            {isReceipt ? 'Received From Mr.' : 'Paid To Mr.'}
+            {partyLabelEn}
           </div>
         </div>
 
@@ -248,7 +276,9 @@ export const VoucherTemplate: React.FC<Props> = ({ data, id = 'voucher-template-
 
           {/* Bank / Treasury */}
           <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-            <span style={{ fontWeight: 'bold', whiteSpace: 'nowrap' }}>على خزينة / بنك:</span>
+            <span style={{ fontWeight: 'bold', whiteSpace: 'nowrap' }}>
+              {bankFieldLabelAr}
+            </span>
             <span
               style={{
                 flex: 1,
@@ -258,7 +288,7 @@ export const VoucherTemplate: React.FC<Props> = ({ data, id = 'voucher-template-
                 fontWeight: 'bold',
               }}
             >
-              {data.account_name || ''}
+              {bankOrTreasuryName}
             </span>
           </div>
         </div>

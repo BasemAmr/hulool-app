@@ -81,7 +81,20 @@ export function generateTreasuryAccountExcel(
     const balanceVal = Number(item.balance || 0);
 
     const isReceipt = debitVal > 0 || item.transaction_type === 'قبض' || item.transaction_type === 'CASHBOX_RECEIPT';
-    const typeLabel = isReceipt ? 'قبض' : 'صرف';
+    
+    // Check for explicit voucher override in metadata (e.g. Bank payout formatted as Client Receipt)
+    let typeLabel = isReceipt ? 'قبض' : 'صرف';
+    let meta = item.metadata;
+    if (typeof meta === 'string') {
+      try { meta = JSON.parse(meta); } catch {}
+    }
+    if (meta && typeof meta === 'object') {
+      if (meta.voucher_type_override === 'receipt') {
+        typeLabel = 'صرف (سند قبض)';
+      } else if (meta.voucher_type_override === 'expense') {
+        typeLabel = 'قبض (سند صرف)';
+      }
+    }
 
     const row = worksheet.addRow([
       formatDateDDMMYYYY(item.transaction_date),

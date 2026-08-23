@@ -1839,6 +1839,7 @@ export interface CreateUnifiedTransactionPayload {
   effective_date?: string;
   category?: 'salary' | 'commission' | 'loan' | 'expense' | 'advance_repayment' | 'loan_repayment' | 'other';
   notes?: string;
+  voucher_type_override?: 'receipt' | 'expense';
 }
 
 /**
