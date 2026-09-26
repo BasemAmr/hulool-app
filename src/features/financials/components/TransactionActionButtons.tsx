@@ -2,6 +2,10 @@ import { useRef, useState, useEffect } from 'react';
 import { FileSpreadsheet } from 'lucide-react';
 import { useModalStore } from '@/shared/stores/modalStore';
 import Button from '@/shared/ui/primitives/Button';
+import {
+  buildSettlementQabdPreset,
+  buildSettlementSarfPreset,
+} from '@/features/financials/utils/settlementPresets';
 
 interface TransactionActionButtonsProps {
   accountId: number;
@@ -167,11 +171,8 @@ const TransactionActionButtons: React.FC<TransactionActionButtonsProps> = ({
               className="flex w-full items-center gap-2 px-4 py-2.5 text-sm font-semibold text-text-primary hover:bg-muted/50 transition-colors rounded-t-lg"
               onClick={() => {
                 setSettlementOpen(false);
-                openUnified({
-                  defaultFromCardType: 'settlement',
-                  defaultToCardType: 'cashbox',
-                  title: 'تسوية قبض',
-                });
+                // Standard تسوية preset: قبض = FROM settlement TO cashbox (debit cash up).
+                openUnified(buildSettlementQabdPreset({ kind: 'cashbox' }));
               }}
             >
               تسوية قبض
@@ -182,11 +183,8 @@ const TransactionActionButtons: React.FC<TransactionActionButtonsProps> = ({
               className="flex w-full items-center gap-2 px-4 py-2.5 text-sm font-semibold text-text-primary hover:bg-muted/50 transition-colors rounded-b-lg"
               onClick={() => {
                 setSettlementOpen(false);
-                openUnified({
-                  defaultFromCardType: 'cashbox',
-                  defaultToCardType: 'settlement',
-                  title: 'تسوية صرف',
-                });
+                // Standard تسوية preset: صرف = FROM cashbox TO settlement.
+                openUnified(buildSettlementSarfPreset({ kind: 'cashbox' }));
               }}
             >
               تسوية صرف

@@ -14,6 +14,10 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
 } from '@/shared/ui/shadcn/dropdown-menu';
+import {
+  buildSettlementQabdPreset,
+  buildSettlementSarfPreset,
+} from '@/features/financials/utils/settlementPresets';
 
 type ProfileViewMode = 'general' | 'tasks' | 'receivables';
 
@@ -172,24 +176,18 @@ const ClientProfileHeader = ({
               <DropdownMenuContent align="end" className="text-right">
                 <DropdownMenuItem
                   className="cursor-pointer flex flex-row-reverse justify-end gap-2 text-status-success-text font-bold"
-                  onClick={() => openUnified({
-                    defaultFromCardType: 'settlement',
-                    defaultToCardType: 'client',
-                    defaultToAccountId: String(client.id),
-                    title: 'تسوية قبض',
-                  })}
+                  onClick={() => openUnified(
+                    // Standard تسوية preset: قبض for a client = FROM client (credit, debt down) TO settlement.
+                    buildSettlementQabdPreset({ kind: 'client', id: String(client.id) }))}
                 >
                   <span>تسوية قبض</span>
                   <TrendingUp size={16} className="text-status-success-text" />
                 </DropdownMenuItem>
                 <DropdownMenuItem
                   className="cursor-pointer flex flex-row-reverse justify-end gap-2 text-status-danger-text font-bold"
-                  onClick={() => openUnified({
-                    defaultFromCardType: 'client',
-                    defaultFromAccountId: String(client.id),
-                    defaultToCardType: 'settlement',
-                    title: 'تسوية صرف',
-                  })}
+                  onClick={() => openUnified(
+                    // Standard تسوية preset: صرف for a client = FROM settlement TO client (debit, debt up).
+                    buildSettlementSarfPreset({ kind: 'client', id: String(client.id) }))}
                 >
                   <span>تسوية صرف</span>
                   <TrendingDown size={16} className="text-status-danger-text" />

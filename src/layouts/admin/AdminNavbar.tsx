@@ -24,6 +24,10 @@ import Button from '@/shared/ui/primitives/Button';
 import { useGetEmployeesForSelection } from '@/features/employees/api/employeeQueries';
 import { useGetTreasuryAccounts } from '@/features/financials/api/treasuryQueries';
 import type { TreasuryAccount } from '@/api/types';
+import {
+  buildSettlementQabdPreset,
+  buildSettlementSarfPreset,
+} from '@/features/financials/utils/settlementPresets';
 
 // ─── Smooth Hover Dropdown Component (No Pinning) ──────────────
 const NavHoverDropdown = ({
@@ -475,12 +479,8 @@ const Navbar = () => {
               <div
                 className="flex items-center justify-start gap-2 text-xs font-bold text-status-success-text cursor-pointer hover:bg-status-success-bg/20 py-2 px-2 rounded"
                 onClick={() =>
-                  openModal('unifiedTransaction', {
-                    title: 'تسوية قبض',
-                    defaultFromCardType: 'settlement',
-                    defaultToCardType: 'cashbox',
-                    lockDirection: false,
-                  })
+                  // Standard تسوية preset: قبض = FROM settlement TO cashbox (debit cash up).
+                  openModal('unifiedTransaction', buildSettlementQabdPreset({ kind: 'cashbox' }))
                 }
               >
                 <TrendingUp size={13} />
@@ -489,12 +489,8 @@ const Navbar = () => {
               <div
                 className="flex items-center justify-start gap-2 text-xs font-bold text-status-danger-text cursor-pointer hover:bg-status-danger-bg/20 py-2 px-2 rounded"
                 onClick={() =>
-                  openModal('unifiedTransaction', {
-                    title: 'تسوية صرف',
-                    defaultFromCardType: 'cashbox',
-                    defaultToCardType: 'settlement',
-                    lockDirection: false,
-                  })
+                  // Standard تسوية preset: صرف = FROM cashbox TO settlement.
+                  openModal('unifiedTransaction', buildSettlementSarfPreset({ kind: 'cashbox' }))
                 }
               >
                 <TrendingDown size={13} />
@@ -547,7 +543,7 @@ const Navbar = () => {
                 <span>سند صرف</span>
                 <TrendingDown size={16} className="text-status-danger-text" />
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => openModal('unifiedTransaction', { title: 'تسوية قبض', defaultFromCardType: 'settlement', defaultToCardType: 'cashbox', lockDirection: false })} className="cursor-pointer flex flex-row-reverse justify-end gap-2 font-bold py-2 text-sm">
+              <DropdownMenuItem onClick={() => openModal('unifiedTransaction', buildSettlementQabdPreset({ kind: 'cashbox' }))} className="cursor-pointer flex flex-row-reverse justify-end gap-2 font-bold py-2 text-sm">
                 <span>سند تسوية</span>
               </DropdownMenuItem>
               <DropdownMenuSeparator />

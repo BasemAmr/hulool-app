@@ -6,6 +6,10 @@ import { useGetMyTreasuryAccounts } from '@/features/financials/api/treasuryQuer
 import { useModalStore } from '@/shared/stores/modalStore';
 import { useAuthStore } from '@/features/auth/store/authStore';
 import {
+  buildSettlementQabdPreset,
+  buildSettlementSarfPreset,
+} from '@/features/financials/utils/settlementPresets';
+import {
   ShadcnSelect as Select,
   ShadcnSelectContent as SelectContent,
   ShadcnSelectItem as SelectItem,
@@ -191,11 +195,8 @@ export const TreasuryAccountSelectorWidget: React.FC = () => {
                     className="flex w-full items-center justify-start px-3 py-2 text-xs font-bold text-text-primary hover:bg-bg-surface-muted transition-colors text-right cursor-pointer"
                     onClick={() => {
                       setSettlementOpen(false);
-                      openUnified({
-                        defaultFromCardType: 'settlement',
-                        defaultToCardType: 'client',
-                        title: 'تسوية قبض',
-                      });
+                      // Standard تسوية preset: قبض for a client = FROM client (credit, debt down) TO settlement.
+                      openUnified(buildSettlementQabdPreset({ kind: 'client' }));
                     }}
                   >
                     تسوية قبض
@@ -206,11 +207,8 @@ export const TreasuryAccountSelectorWidget: React.FC = () => {
                     className="flex w-full items-center justify-start px-3 py-2 text-xs font-bold text-text-primary hover:bg-bg-surface-muted transition-colors text-right cursor-pointer"
                     onClick={() => {
                       setSettlementOpen(false);
-                      openUnified({
-                        defaultFromCardType: 'client',
-                        defaultToCardType: 'settlement',
-                        title: 'تسوية صرف',
-                      });
+                      // Standard تسوية preset: صرف for a client = FROM settlement TO client (debit, debt up).
+                      openUnified(buildSettlementSarfPreset({ kind: 'client' }));
                     }}
                   >
                     تسوية صرف

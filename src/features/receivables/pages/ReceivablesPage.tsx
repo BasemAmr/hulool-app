@@ -13,6 +13,10 @@ import { exportService } from '@/services/export/ExportService';
 import { useToast } from '@/shared/hooks/useToast';
 import type { AllReceivablesReportData } from '@/services/export/exportTypes';
 import { useInView } from 'react-intersection-observer';
+import {
+  buildSettlementQabdPreset,
+  buildSettlementSarfPreset,
+} from '@/features/financials/utils/settlementPresets';
 
 const ReceivablesPage = () => {
   const { t } = useTranslation();
@@ -160,12 +164,8 @@ const ReceivablesPage = () => {
                   className="flex w-full items-center gap-2 px-4 py-2.5 text-sm font-semibold text-text-primary hover:bg-muted/50 transition-colors rounded-t-lg"
                   onClick={() => {
                     setSettlementOpen(false);
-                    openModal('unifiedTransaction', {
-                      defaultFromCardType: 'settlement',
-                      defaultToCardType: 'cashbox',
-                      lockDirection: true,
-                      title: 'تسوية قبض',
-                    });
+                    // Standard تسوية preset: قبض = FROM settlement TO cashbox (debit cash up).
+                    openModal('unifiedTransaction', buildSettlementQabdPreset({ kind: 'cashbox' }));
                   }}
                 >
                   تسوية قبض
@@ -176,12 +176,8 @@ const ReceivablesPage = () => {
                   className="flex w-full items-center gap-2 px-4 py-2.5 text-sm font-semibold text-text-primary hover:bg-muted/50 transition-colors rounded-b-lg"
                   onClick={() => {
                     setSettlementOpen(false);
-                    openModal('unifiedTransaction', {
-                      defaultFromCardType: 'cashbox',
-                      defaultToCardType: 'settlement',
-                      lockDirection: true,
-                      title: 'تسوية صرف',
-                    });
+                    // Standard تسوية preset: صرف = FROM cashbox TO settlement.
+                    openModal('unifiedTransaction', buildSettlementSarfPreset({ kind: 'cashbox' }));
                   }}
                 >
                   تسوية صرف

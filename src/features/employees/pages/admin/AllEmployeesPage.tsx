@@ -16,6 +16,10 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
 } from '@/shared/ui/shadcn/dropdown-menu';
+import {
+  buildSettlementQabdPreset,
+  buildSettlementSarfPreset,
+} from '@/features/financials/utils/settlementPresets';
 
 // ─── Data Shape ───────────────────────────────────────────────────────────────
 export interface EmployeeSummaryRow {
@@ -332,23 +336,19 @@ const AllEmployeesPage = () => {
       title: 'سند صرف',
     });
 
+  // Standard تسوية preset: قبض for an employee = FROM employee (credit) TO settlement.
   const openTaswiyaQabd = (emp?: EmployeeSummaryRow) =>
-    openModal('unifiedTransaction', {
-      defaultFromCardType: 'settlement',
-      defaultToCardType: 'employee',
-      defaultToAccountId: emp ? String(emp.employee_id) : undefined,
-      lockDirection: true,
-      title: 'تسوية قبض',
-    });
+    openModal('unifiedTransaction', buildSettlementQabdPreset({
+      kind: 'employee',
+      ...(emp ? { id: String(emp.employee_id) } : {}),
+    }));
 
+  // Standard تسوية preset: صرف for an employee = FROM settlement TO employee (debit).
   const openTaswiyaSarf = (emp?: EmployeeSummaryRow) =>
-    openModal('unifiedTransaction', {
-      defaultFromCardType: 'employee',
-      defaultFromAccountId: emp ? String(emp.employee_id) : undefined,
-      defaultToCardType: 'settlement',
-      lockDirection: true,
-      title: 'تسوية صرف',
-    });
+    openModal('unifiedTransaction', buildSettlementSarfPreset({
+      kind: 'employee',
+      ...(emp ? { id: String(emp.employee_id) } : {}),
+    }));
 
   // Calculate Totals
   const displayTotals = useMemo(() => {

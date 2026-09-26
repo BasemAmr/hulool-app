@@ -9,6 +9,7 @@ import FCClientsView from '@/features/financials/components/fc-clients-view/FCCl
 import Button from '@/shared/ui/primitives/Button';
 import { useModalStore } from '@/shared/stores/modalStore';
 import { TrendingUp, TrendingDown } from 'lucide-react';
+import { buildSettlementQabdPreset } from '@/features/financials/utils/settlementPresets';
 
 const FinancialCenterPage: React.FC = () => {
   const [searchParams] = useSearchParams();
@@ -75,11 +76,9 @@ const FinancialCenterPage: React.FC = () => {
             variant="outline-secondary"
             size="sm"
             className="font-bold flex items-center gap-1"
-            onClick={() => openModal('unifiedTransaction', {
-              title: 'تسوية قبض',
-              defaultFromCardType: 'settlement',
-              defaultToCardType: 'cashbox',
-            })}
+            onClick={() => openModal('unifiedTransaction',
+              // Standard تسوية preset: قبض = FROM settlement TO cashbox (debit cash up).
+              buildSettlementQabdPreset({ kind: 'cashbox' }))}
           >
             <span>سند تسوية</span>
           </Button>

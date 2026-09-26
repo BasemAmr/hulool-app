@@ -128,7 +128,8 @@ TransactionIconCell.displayName = 'TransactionIconCell';
 
 // Description Cell
 const DescriptionCell = React.memo(({ rowData, active }: CellProps<FinancialTransaction>) => {
-  if ((rowData as any).is_summary) return <span className="hulool-cell-content">الإجماليات</span>;
+  // Summary label mirrors the header row: Cairo, extra-bold, larger, inverse text.
+  if ((rowData as any).is_summary) return <span className="hulool-cell-content" style={{ fontWeight: 800, fontSize: '1rem', color: 'var(--token-text-inverse)' }}>الإجماليات</span>;
   return (
     <span className="hulool-cell-content" style={{ fontWeight: active ? 700 : 500, color: 'var(--token-text-primary)' }}>
       {rowData.description}
@@ -141,7 +142,7 @@ DescriptionCell.displayName = 'DescriptionCell';
 const DebitCell = React.memo(({ rowData, columnData, active }: CellProps<FinancialTransaction, { hideAmounts: boolean }>) => {
   if ((rowData as any).is_summary) {
     return (
-      <span className="hulool-cell-content font-bold text-text-primary" style={{ justifyContent: 'center', fontSize: '0.875rem' }}>
+      <span className="hulool-cell-content font-extrabold" style={{ justifyContent: 'center', fontSize: '1rem', fontWeight: 800, color: 'var(--token-text-inverse)' }}>
         {columnData?.hideAmounts ? '***' : `${formatCurrency(getDebitAmount(rowData))}`}
       </span>
     );
@@ -159,7 +160,7 @@ DebitCell.displayName = 'DebitCell';
 const CreditCell = React.memo(({ rowData, columnData, active }: CellProps<FinancialTransaction, { hideAmounts: boolean }>) => {
   if ((rowData as any).is_summary) {
     return (
-      <span className="hulool-cell-content font-bold text-text-primary" style={{ justifyContent: 'center', fontSize: '0.875rem' }}>
+      <span className="hulool-cell-content font-extrabold" style={{ justifyContent: 'center', fontSize: '1rem', fontWeight: 800, color: 'var(--token-text-inverse)' }}>
         {columnData?.hideAmounts ? '***' : `${formatCurrency(getCreditAmount(rowData))}`}
       </span>
     );
@@ -178,7 +179,7 @@ const BalanceCell = React.memo(({ rowData, columnData, active }: CellProps<Finan
   if ((rowData as any).is_summary) {
     const balance = getBalance(rowData);
     return (
-      <span className="hulool-cell-content font-bold text-text-primary" style={{ justifyContent: 'center', fontSize: '0.875rem' }}>
+      <span className="hulool-cell-content font-extrabold" style={{ justifyContent: 'center', fontSize: '1rem', fontWeight: 800, color: 'var(--token-text-inverse)' }}>
         {columnData?.hideAmounts ? '***' : `${formatCurrency(balance)}`}
       </span>
     );
@@ -630,14 +631,31 @@ const AccountLedgerTable: React.FC<AccountLedgerTableProps> = ({
           animation: highlightPulse 1.5s ease-in-out 3;
         }
         
-        /* Summary row styling */
-        .hulool-data-grid .dsg-row.ledger-summary-row {
-          background-color: var(--token-bg-surface-muted) !important;
-          font-weight: bold;
-          border-top: 2px solid var(--token-border-default);
+        /* Totals row mirrors the header row (same bg, font, dividers) but larger.
+           Scoped under .account-ledger-wrapper plus an explicit :hover variant so the
+           grid's zebra/hover rules (which use !important) can never wash it out. */
+        .account-ledger-wrapper .hulool-data-grid .dsg-row.ledger-summary-row {
+          background-color: var(--token-action-primary-bg) !important;
+          min-height: 54px;
+          border-top: 3px solid color-mix(in srgb, var(--primitive-white) 30%, transparent);
         }
-        .hulool-data-grid .dsg-row.ledger-summary-row .dsg-cell {
-          background-color: var(--token-bg-surface-muted) !important;
+        .account-ledger-wrapper .hulool-data-grid .dsg-row.ledger-summary-row .dsg-cell,
+        .account-ledger-wrapper .hulool-data-grid .dsg-row.ledger-summary-row:hover .dsg-cell {
+          background-color: var(--token-action-primary-bg) !important;
+          color: var(--token-text-inverse) !important;
+          font-family: 'Cairo', sans-serif !important;
+          font-weight: 800 !important;
+          font-size: 1rem !important;
+          justify-content: center;
+          text-align: center;
+          border-left: 1px solid color-mix(in srgb, var(--primitive-white) 22%, transparent);
+          min-height: 54px;
+        }
+        .account-ledger-wrapper .hulool-data-grid .dsg-row.ledger-summary-row .dsg-cell *,
+        .account-ledger-wrapper .hulool-data-grid .dsg-row.ledger-summary-row .hulool-cell-content {
+          color: var(--token-text-inverse) !important;
+          font-weight: 800 !important;
+          font-size: 1rem !important;
         }
 
         @keyframes highlightPulse {

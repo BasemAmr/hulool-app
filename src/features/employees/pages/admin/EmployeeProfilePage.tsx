@@ -7,6 +7,10 @@ import { useGetEmployee, useGetEmployeeLedger, type EmployeeLedgerResponse } fro
 import { formatCurrency } from '@/shared/utils/formatUtils';
 import { Card, CardHeader, CardContent } from '@/shared/ui/shadcn/card';
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from '@/shared/ui/shadcn/dropdown-menu';
+import {
+  buildSettlementQabdPreset,
+  buildSettlementSarfPreset,
+} from '@/features/financials/utils/settlementPresets';
 
 // Import table components (to be created)
 import EmployeeTransactionsTable from '../../components/management/EmployeeTransactionsTable';
@@ -222,24 +226,14 @@ const EmployeeProfilePage = () => {
 
   const handleSettlementQabd = () => {
     if (!employee) return;
-    openModal('unifiedTransaction', {
-      defaultFromCardType: 'settlement',
-      defaultToCardType: 'employee',
-      defaultToAccountId: String(employee.id),
-      lockDirection: true,
-      title: 'تسوية قبض',
-    });
+    // Standard تسوية preset: قبض for an employee = FROM employee (credit) TO settlement.
+    openModal('unifiedTransaction', buildSettlementQabdPreset({ kind: 'employee', id: String(employee.id) }));
   };
 
   const handleSettlementSarf = () => {
     if (!employee) return;
-    openModal('unifiedTransaction', {
-      defaultFromCardType: 'employee',
-      defaultFromAccountId: String(employee.id),
-      defaultToCardType: 'settlement',
-      lockDirection: true,
-      title: 'تسوية صرف',
-    });
+    // Standard تسوية preset: صرف for an employee = FROM settlement TO employee (debit).
+    openModal('unifiedTransaction', buildSettlementSarfPreset({ kind: 'employee', id: String(employee.id) }));
   };
 
   const handleModeChange = (mode: ViewMode) => {

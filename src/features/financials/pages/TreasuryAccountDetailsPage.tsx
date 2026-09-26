@@ -113,6 +113,31 @@ const ActionsCell = React.memo(({ rowData }: { rowData: TransformedVoucherTransa
 });
 ActionsCell.displayName = 'ActionsCell';
 
+// Final-balance cell: custom component (not the built-in currency type) because the
+// grid's unlayered base styles + the currency cell's inline fontWeight beat any
+// Tailwind class. Inline styles here always win: red below zero, green at/above
+// zero, larger + bolder, and never a minus sign (color carries the direction).
+const formatAbsNumber = (amount: number) =>
+  new Intl.NumberFormat('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(Math.abs(amount || 0));
+
+const FinalBalanceCell = React.memo(({ rowData }: { rowData: TransformedVoucherTransaction }) => {
+  const bal = Number((rowData as any)?.balance ?? 0);
+  return (
+    <span
+      className="hulool-cell-content"
+      style={{
+        justifyContent: 'center',
+        fontWeight: 800,
+        fontSize: '1.05rem',
+        color: bal < 0 ? 'var(--token-text-danger)' : 'var(--token-text-success)',
+      }}
+    >
+      {formatAbsNumber(bal)}
+    </span>
+  );
+});
+FinalBalanceCell.displayName = 'FinalBalanceCell';
+
 const ALL_TYPES_VALUE = '__all__';
 
 function parseDate(value: string): Date | null {
@@ -245,6 +270,8 @@ export const TreasuryAccountDetailsPage = () => {
 
   const totalDebits = Number(historyData?.total_debits ?? 0);
   const totalCredits = Number(historyData?.total_credits ?? 0);
+  // Full final balance shown in the totals row next to the debit/credit totals.
+  const finalBalance = totalDebits - totalCredits;
 
   const summaryRow = useMemo(() => {
     return {
@@ -256,12 +283,12 @@ export const TreasuryAccountDetailsPage = () => {
       description: 'اجمالي الصرف والجمالي القبض',
       debit: totalDebits,
       credit: totalCredits,
-      balance: 0,
+      balance: finalBalance,
       type: 'CASHBOX_RECEIPT',
       category: '',
       is_summary: true,
     } as any;
-  }, [accountId, totalDebits, totalCredits]);
+  }, [accountId, totalDebits, totalCredits, finalBalance]);
 
   const gridData = useMemo(() => {
     return [summaryRow, ...allTransactions];
@@ -492,13 +519,18 @@ export const TreasuryAccountDetailsPage = () => {
     },
     {
       id: 'balance',
-      title: 'الرصيد الجاري',
+      title: 'الرصيد النهائي',
       key: 'balance',
-      type: 'currency',
-      width: 115,
+      type: 'custom',
+      component: FinalBalanceCell as React.ComponentType<CellProps<TransformedVoucherTransaction>>,
+      width: 135,
       grow: 0,
-      cellClassName: ({ rowData }: any) => (rowData.is_summary ? 'bg-muted/40 text-center' : ''),
-      formatter: (_val: number, rowData: any) => (rowData.is_summary ? '' : undefined),
+      // Color lives on the CELL (not the span): the global
+      // `.hulool-cell-content { color: inherit !important }` rule forces the
+      // text to inherit from here, and only unlayered !important CSS beats
+      // the grid's own base cell color. Rules are in the style block below.
+      cellClassName: ({ rowData }: any) =>
+        Number((rowData as any)?.balance ?? 0) < 0 ? 'final-balance-neg' : 'final-balance-pos',
     },
     {
       id: 'actions',
@@ -665,11 +697,29 @@ export const TreasuryAccountDetailsPage = () => {
           </div>
         </div>
 
-        <div className="bg-bg-surface rounded-lg border border-border-default overflow-hidden">
+        <div className="treasury-ledger-wrap mx-auto w-[96%] bg-bg-surface rounded-lg border border-border-default overflow-hidden">
+          <style>{`
+            /* Totals row backdrop. Scoped + !important so the grid's zebra/hover
+               rules (unlayered) can never wash it back to white. */
+            .treasury-ledger-wrap .hulool-data-grid .dsg-row.treasury-summary-row .dsg-cell,
+            .treasury-ledger-wrap .hulool-data-grid .dsg-row.treasury-summary-row:hover .dsg-cell {
+              background-color: var(--token-bg-surface-muted) !important;
+            }
+            /* Final-balance text color on the CELL: the span inherits it via the
+               global hulool-cell-content inherit-important rule.
+               Red below zero, green at/above zero. */
+            .treasury-ledger-wrap .hulool-data-grid .dsg-cell.final-balance-pos {
+              color: var(--token-text-success) !important;
+            }
+            .treasury-ledger-wrap .hulool-data-grid .dsg-cell.final-balance-neg {
+              color: var(--token-text-danger) !important;
+            }
+          `}</style>
           <HuloolDataGrid
             data={gridData}
             columns={columns}
             isLoading={isLoadingHistory && page === 1 && transactions.length === 0}
+            rowClassName={(row: any) => (row.is_summary ? 'treasury-summary-row' : '')}
           />
 
           {hasMore && (

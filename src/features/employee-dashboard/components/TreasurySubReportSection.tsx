@@ -4,6 +4,10 @@ import { Spinner } from '@/shared/ui/shadcn/spinner';
 import Button from '@/shared/ui/primitives/Button';
 import { useModalStore } from '@/shared/stores/modalStore';
 import type { TreasuryAccountReport, ReportPeriod } from '../api/employeeDashboardQueries';
+import {
+  buildSettlementQabdPreset,
+  buildSettlementSarfPreset,
+} from '@/features/financials/utils/settlementPresets';
 
 // Color convention: مقبوضات=أخضر, مصروفات=أحمر, رصيد=أزرق
 const COLOR_QABDH   = 'var(--token-chart-1)'; // teal/green
@@ -175,13 +179,8 @@ export const TreasurySubReportSection: React.FC<TreasurySubReportSectionProps> =
             size="sm"
             className="h-5.5 px-0.5 text-[9px] font-bold cursor-pointer whitespace-nowrap"
             onClick={() =>
-              openModal('unifiedTransaction', {
-                title: 'تسوية قبض',
-                defaultFromCardType: 'settlement',
-                defaultToCardType: 'treasury',
-                defaultToAccountId: accountIdStr,
-                lockDirection: false,
-              })
+              // Standard تسوية preset: قبض = FROM settlement TO this treasury account (debit cash up).
+              openModal('unifiedTransaction', buildSettlementQabdPreset({ kind: 'treasury', id: accountIdStr }))
             }
           >
             <span>تسوية قبض</span>
@@ -193,13 +192,8 @@ export const TreasurySubReportSection: React.FC<TreasurySubReportSectionProps> =
             size="sm"
             className="h-5.5 px-0.5 text-[9px] font-bold cursor-pointer whitespace-nowrap"
             onClick={() =>
-              openModal('unifiedTransaction', {
-                title: 'تسوية صرف',
-                defaultFromCardType: 'treasury',
-                defaultFromAccountId: accountIdStr,
-                defaultToCardType: 'settlement',
-                lockDirection: false,
-              })
+              // Standard تسوية preset: صرف = FROM this treasury account TO settlement.
+              openModal('unifiedTransaction', buildSettlementSarfPreset({ kind: 'treasury', id: accountIdStr }))
             }
           >
             <span>تسوية صرف</span>

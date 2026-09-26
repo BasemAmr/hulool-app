@@ -21,6 +21,10 @@ import { useToast } from '@/shared/hooks/useToast';
 import AccountPickerCard from './AccountPickerCard';
 import type { PickerValue, PickerKind } from './AccountPickerCard';
 import {
+  getSettlementMismatch,
+  type SettlementAction,
+} from '@/features/financials/utils/settlementPresets';
+import {
   Loader2,
   CheckCircle2,
   CircleDashed,
@@ -196,11 +200,33 @@ const UnifiedTransactionModal = () => {
     resolvedFromType !== null && resolvedToType !== null;
   const detailsReady =
     amount !== '' && parseFloat(amount) > 0 && displayDescription.trim() !== '';
-  const canSubmit = accountsReady && detailsReady;
+
+  // ---- Settlement guard: single standard rule for every تسوية opener ----
+  // Declared action comes from the explicit preset prop. Legacy title-only
+  // callers fall back to title parsing, but ONLY for تسوية titles — سند
+  // buttons (including settlement-page سند قبض/صرف) are never guarded so
+  // existing cashbox/treasury behavior stays untouched.
+  const modalTitleForGuard = (props?.title as string | undefined) || '';
+  const declaredSettlementAction: SettlementAction | null =
+    (props?.settlementAction as SettlementAction | undefined) ??
+    (isSettlement && modalTitleForGuard.includes('تسوية قبض') ? 'qabd'
+      : isSettlement && modalTitleForGuard.includes('تسوية صرف') ? 'sarf'
+      : null);
+  // Recomputed live on every render so flipping a picker after open is caught.
+  const settlementMismatch = getSettlementMismatch(
+    fromPicker.kind,
+    toPicker.kind,
+    declaredSettlementAction,
+  );
+  // Block save while the live selection contradicts the declared تسوية action.
+  const canSubmit = accountsReady && detailsReady && !settlementMismatch;
 
   // ---- Submit ----
   const handleSubmit = async () => {
     if (!resolvedFromType || !resolvedToType || !fromPicker.accountId || !toPicker.accountId || !amount || !displayDescription.trim()) {
+      return;
+    }
+    if (settlementMismatch) {
       return;
     }
 
@@ -229,6 +255,9 @@ const UnifiedTransactionModal = () => {
   // ---- Save & New ----
   const handleSaveAndNew = async () => {
     if (!resolvedFromType || !resolvedToType || !fromPicker.accountId || !toPicker.accountId || !amount || !displayDescription.trim()) {
+      return;
+    }
+    if (settlementMismatch) {
       return;
     }
 
@@ -331,6 +360,9 @@ const UnifiedTransactionModal = () => {
 
   const fromIsSettlement = fromPicker.kind === 'settlement';
 
+  // Blocking message rendered under the accounts section when mismatched.
+  const settlementGuardMessage = settlementMismatch;
+
   const modalTitleProp = (props?.title as string | undefined);
   const dirQabdhLabel = isSettlement ? 'تسوية قبض' : 'سند قبض';
   const dirSarfLabel = isSettlement ? 'تسوية صرف' : 'سند صرف';
@@ -396,6 +428,13 @@ const UnifiedTransactionModal = () => {
                 presetKind={toPresetKind}
                 isVisible={isVisible}
               />
+            </div>
+          )}
+
+          {/* Settlement direction guard — blocks save while mismatched. */}
+          {settlementGuardMessage && (
+            <div className="mt-3 rounded-lg border border-status-danger-border bg-status-danger-bg/40 p-2.5 text-xs font-bold text-status-danger-text">
+              {settlementGuardMessage}
             </div>
           )}
         </section>

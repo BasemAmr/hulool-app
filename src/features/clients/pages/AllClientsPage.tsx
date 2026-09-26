@@ -18,6 +18,10 @@ import { useToast } from '@/shared/hooks/useToast';
 import { useInView } from 'react-intersection-observer';
 import { TOAST_MESSAGES } from '@/shared/constants/toastMessages';
 // --- MODIFICATIONS END ---
+import {
+  buildSettlementQabdPreset,
+  buildSettlementSarfPreset,
+} from '@/features/financials/utils/settlementPresets';
 
 const AllClientsPage = () => {
   const { t } = useTranslation();
@@ -176,24 +180,18 @@ const AllClientsPage = () => {
             <DropdownMenuContent align="end" className="text-right">
               <DropdownMenuItem
                 className="cursor-pointer flex flex-row-reverse justify-end gap-2 text-status-success-text font-bold"
-                onClick={() => openModal('unifiedTransaction', {
-                  defaultFromCardType: 'settlement',
-                  defaultToCardType: 'cashbox',
-                  lockDirection: true,
-                  title: 'تسوية قبض',
-                })}
+                onClick={() => openModal('unifiedTransaction',
+                  // Standard تسوية preset: قبض = FROM settlement TO cashbox (debit cash up).
+                  buildSettlementQabdPreset({ kind: 'cashbox' }))}
               >
                 <span>تسوية قبض</span>
                 <TrendingUp size={16} className="text-status-success-text" />
               </DropdownMenuItem>
               <DropdownMenuItem
                 className="cursor-pointer flex flex-row-reverse justify-end gap-2 text-status-danger-text font-bold"
-                onClick={() => openModal('unifiedTransaction', {
-                  defaultFromCardType: 'cashbox',
-                  defaultToCardType: 'settlement',
-                  lockDirection: true,
-                  title: 'تسوية صرف',
-                })}
+                onClick={() => openModal('unifiedTransaction',
+                  // Standard تسوية preset: صرف = FROM cashbox TO settlement.
+                  buildSettlementSarfPreset({ kind: 'cashbox' }))}
               >
                 <span>تسوية صرف</span>
                 <TrendingDown size={16} className="text-status-danger-text" />
