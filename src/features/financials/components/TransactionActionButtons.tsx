@@ -13,7 +13,10 @@ interface TransactionActionButtonsProps {
   cardType: 'company_cashbox' | 'treasury' | 'client' | 'employee';
   /**
    * When true the account is a settlement account (sub_type=internal, is_settlement=true).
-   * Renders سند تسوية قبض + سند تسوية صرف instead of the normal 3-button set.
+   * Renders سند قبض + سند صرف instead of the normal 3-button set.
+   * The modal title props below intentionally stay سند (not تسوية) so the
+   * modal title-fallback guard (تسوية titles only) stays null and these
+   * settlement-viewpoint opens can never hit a save block.
    */
   isSettlement?: boolean;
   isClosed?: boolean;
@@ -73,7 +76,9 @@ const TransactionActionButtons: React.FC<TransactionActionButtonsProps> = ({
               defaultFromCardType: 'treasury',
               defaultToCardType: 'settlement',
               defaultToAccountId: accountIdStr,
-              title: 'تسوية قبض',
+              // سند (not تسوية): keeps the modal title-fallback guard null so the
+              // settlement-viewpoint direction (treasury→settlement) never blocks.
+              title: 'سند قبض',
             })
           }
           className="font-bold"
@@ -91,7 +96,9 @@ const TransactionActionButtons: React.FC<TransactionActionButtonsProps> = ({
               defaultFromCardType: 'settlement',
               defaultFromAccountId: accountIdStr,
               defaultToCardType: 'treasury',
-              title: 'تسوية صرف',
+              // سند (not تسوية): keeps the modal title-fallback guard null so the
+              // settlement-viewpoint direction (settlement→treasury) never blocks.
+              title: 'سند صرف',
             })
           }
           className="font-bold"

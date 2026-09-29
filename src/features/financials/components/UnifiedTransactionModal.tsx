@@ -21,7 +21,10 @@ import { useToast } from '@/shared/hooks/useToast';
 import AccountPickerCard from './AccountPickerCard';
 import type { PickerValue, PickerKind } from './AccountPickerCard';
 import {
-  getSettlementMismatch,
+  classifySettlementDirection,
+  isPersonCounterparty,
+  isTreasuryCounterparty,
+  type SettlementDirection,
   type SettlementAction,
 } from '@/features/financials/utils/settlementPresets';
 import {
@@ -192,6 +195,52 @@ const UnifiedTransactionModal = () => {
 
   const resolvedFromType = resolvePickerType(fromPicker);
   const resolvedToType = resolvePickerType(toPicker);
+  // Live settlement orientation — plain const per render (no state/effect).
+  // Feeds the banner + the invalid-only save gate. The title itself NEVER
+  // changes after open (opener's promise); the swap effect below moves the
+  // picker sides instead, so the fixed title stays true.
+  const liveDirection: SettlementDirection = classifySettlementDirection(
+    fromPicker.kind,
+    toPicker.kind,
+  );
+
+  // ---- Declared تسوية action (opener intent; explicit prop wins, تسوية
+  // titles fall back; سند titles declare nothing and never auto-orient) ----
+  const declaredSettlementAction: SettlementAction | null =
+    (props?.settlementAction as SettlementAction | undefined) ??
+    (isSettlement && (props?.title as string | undefined)?.includes('تسوية قبض') ? 'qabd'
+      : isSettlement && (props?.title as string | undefined)?.includes('تسوية صرف') ? 'sarf'
+      : null);
+
+  // ---- Dynamic orientation: the counterparty card follows action × family ----
+  // قبض + person → person is FROM; قبض + treasury → treasury is TO; صرف mirrors.
+  // When the live kinds disagree (user flipped the counterparty family after
+  // open), swap both picker states wholesale — kind+id travel together, so the
+  // fixed title stays true and nothing is ever posted to the wrong side.
+  const liveSettlementSide: 'from' | 'to' | null =
+    fromPicker.kind === 'settlement' ? 'from' : toPicker.kind === 'settlement' ? 'to' : null;
+  const liveCounterpartyKind =
+    liveSettlementSide === 'from' ? toPicker.kind : liveSettlementSide === 'to' ? fromPicker.kind : null;
+  useEffect(() => {
+    if (!declaredSettlementAction || !liveSettlementSide || !liveCounterpartyKind) return;
+    const person = isPersonCounterparty(liveCounterpartyKind);
+    const treasury = isTreasuryCounterparty(liveCounterpartyKind);
+    if (!person && !treasury) return;
+    // Desired side for the COUNTERPARTY under the declared action.
+    const desiredCounterpartySide: 'from' | 'to' =
+      declaredSettlementAction === 'qabd' ? (person ? 'from' : 'to') : (person ? 'to' : 'from');
+    const currentCounterpartySide: 'from' | 'to' =
+      liveSettlementSide === 'from' ? 'to' : 'from';
+    if (currentCounterpartySide !== desiredCounterpartySide) {
+      const nextFrom = { ...toPicker };
+      const nextTo = { ...fromPicker };
+      setFromPicker(nextFrom);
+      setToPicker(nextTo);
+    }
+    // Intentionally keyed on kinds + declared action only: the swap itself
+    // resolves the mismatch, so the effect goes quiet (no loop).
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [fromPicker.kind, toPicker.kind, declaredSettlementAction]);
 
   const displayDescription = description + autoDescription;
 
@@ -201,32 +250,18 @@ const UnifiedTransactionModal = () => {
   const detailsReady =
     amount !== '' && parseFloat(amount) > 0 && displayDescription.trim() !== '';
 
-  // ---- Settlement guard: single standard rule for every تسوية opener ----
-  // Declared action comes from the explicit preset prop. Legacy title-only
-  // callers fall back to title parsing, but ONLY for تسوية titles — سند
-  // buttons (including settlement-page سند قبض/صرف) are never guarded so
-  // existing cashbox/treasury behavior stays untouched.
-  const modalTitleForGuard = (props?.title as string | undefined) || '';
-  const declaredSettlementAction: SettlementAction | null =
-    (props?.settlementAction as SettlementAction | undefined) ??
-    (isSettlement && modalTitleForGuard.includes('تسوية قبض') ? 'qabd'
-      : isSettlement && modalTitleForGuard.includes('تسوية صرف') ? 'sarf'
-      : null);
-  // Recomputed live on every render so flipping a picker after open is caught.
-  const settlementMismatch = getSettlementMismatch(
-    fromPicker.kind,
-    toPicker.kind,
-    declaredSettlementAction,
-  );
-  // Block save while the live selection contradicts the declared تسوية action.
-  const canSubmit = accountsReady && detailsReady && !settlementMismatch;
+  // Live settlement guard — product decision is to silently adopt the derived
+  // direction and block save ONLY when both sides are settlement (invalid).
+  // Viewpoint disagreement never blocks; indeterminate is incomplete, not an error.
+  const canSubmit = accountsReady && detailsReady && liveDirection !== 'invalid';
 
   // ---- Submit ----
   const handleSubmit = async () => {
     if (!resolvedFromType || !resolvedToType || !fromPicker.accountId || !toPicker.accountId || !amount || !displayDescription.trim()) {
       return;
     }
-    if (settlementMismatch) {
+    // Both-settlement is the only settlement selection that blocks save.
+    if (liveDirection === 'invalid') {
       return;
     }
 
@@ -257,7 +292,8 @@ const UnifiedTransactionModal = () => {
     if (!resolvedFromType || !resolvedToType || !fromPicker.accountId || !toPicker.accountId || !amount || !displayDescription.trim()) {
       return;
     }
-    if (settlementMismatch) {
+    // Both-settlement is the only settlement selection that blocks save.
+    if (liveDirection === 'invalid') {
       return;
     }
 
@@ -360,13 +396,31 @@ const UnifiedTransactionModal = () => {
 
   const fromIsSettlement = fromPicker.kind === 'settlement';
 
-  // Blocking message rendered under the accounts section when mismatched.
-  const settlementGuardMessage = settlementMismatch;
+  // Red guard shows ONLY for both-settlement (invalid).
+  const settlementGuardMessage =
+    liveDirection === 'invalid'
+      ? 'لا يمكن التحويل من حساب التسوية إلى نفسه — اختر حساباً مقابلاً مختلفاً.'
+      : null;
 
   const modalTitleProp = (props?.title as string | undefined);
   const dirQabdhLabel = isSettlement ? 'تسوية قبض' : 'سند قبض';
   const dirSarfLabel = isSettlement ? 'تسوية صرف' : 'سند صرف';
-  const activeTitle = modalTitleProp || (direction === 'qabdh' ? dirQabdhLabel : dirSarfLabel);
+  // Fixed title promise: the header ALWAYS shows what the opener passed (or the
+  // direction fallback). Orientation is enforced by swapping the picker sides
+  // above, so the title never needs to change and can never go stale.
+  const isSettlementSideLive =
+    fromPicker.kind === 'settlement' || toPicker.kind === 'settlement';
+  const liveSettlementTitle =
+    liveDirection === 'qabd' ? 'تسوية قبض' : liveDirection === 'sarf' ? 'تسوية صرف' : null;
+  const activeTitle =
+    modalTitleProp || (direction === 'qabdh' ? dirQabdhLabel : dirSarfLabel);
+  // Banner strings mirror the autoDescription convention: settlement side bare
+  // name, other side 'kind: name'.
+  const bannerFromStr =
+    fromPicker.kind === 'settlement' ? fromName : `${fromKindLabel}: ${fromName}`;
+  const bannerToStr =
+    toPicker.kind === 'settlement' ? toName : `${toKindLabel}: ${toName}`;
+  const liveBannerLabel = liveSettlementTitle;
 
   return (
     <BaseModal
@@ -431,7 +485,19 @@ const UnifiedTransactionModal = () => {
             </div>
           )}
 
-          {/* Settlement direction guard — blocks save while mismatched. */}
+          {/* Live settlement banner — derived from liveDirection every render, never stale. */}
+          {isSettlementSideLive && liveDirection === 'indeterminate' && (
+            <div className="mt-3 rounded-lg border border-status-warning-border bg-status-warning-bg/20 p-2.5 text-xs font-bold text-status-warning-text">
+              أكمل اختيار الحسابين لعرض اتجاه التسوية
+            </div>
+          )}
+          {isSettlementSideLive && liveBannerLabel && (liveDirection === 'qabd' || liveDirection === 'sarf') && (
+            <div className="mt-3 rounded-lg border border-status-info-border bg-status-info-bg p-2.5 text-xs font-bold text-status-info-text">
+              {`${liveBannerLabel} — من ${bannerFromStr} إلى ${bannerToStr}`}
+            </div>
+          )}
+
+          {/* Both-settlement guard — the only settlement selection that blocks save. */}
           {settlementGuardMessage && (
             <div className="mt-3 rounded-lg border border-status-danger-border bg-status-danger-bg/40 p-2.5 text-xs font-bold text-status-danger-text">
               {settlementGuardMessage}

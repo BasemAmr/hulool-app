@@ -207,7 +207,9 @@ const EmployeeProfilePage = () => {
     openModal('unifiedTransaction', {
       defaultFromCardType: 'cashbox',
       defaultToCardType: 'employee',
-      defaultToAccountId: String(employeeTableId),
+      // Canonical ledger id is tm_employees.id (employee.id), same source the
+      // تسوية handlers use — never the raw URL param, which can be stale mid-transition.
+      defaultToAccountId: String(employee.id),
       lockDirection: true,
       title: 'سند صرف',
     });
@@ -217,7 +219,9 @@ const EmployeeProfilePage = () => {
     if (!employee) return;
     openModal('unifiedTransaction', {
       defaultFromCardType: 'employee',
-      defaultFromAccountId: String(employeeTableId),
+      // Canonical ledger id is tm_employees.id (employee.id), same source the
+      // تسوية handlers use — never the raw URL param, which can be stale mid-transition.
+      defaultFromAccountId: String(employee.id),
       defaultToCardType: 'cashbox',
       lockDirection: true,
       title: 'سند قبض',
