@@ -65,3 +65,9 @@ export {
   getTransactionColumns,
 } from './gridColumns';
 
+export { LedgerFinalBalanceCell } from './cells/LedgerFinalBalanceCell';
+export type { LedgerFinalBalanceCellProps } from './cells/LedgerFinalBalanceCell';
+
+import HuloolDataGrid from './HuloolDataGrid';
+export default HuloolDataGrid;
+

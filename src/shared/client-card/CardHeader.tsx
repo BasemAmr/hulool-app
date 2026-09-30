@@ -1,11 +1,27 @@
-// Card Header Component - Client information header
+// Card Header Component - Client information header matching reference design
+// Styled for Mostaql Blue Header Theme with RTL alignment and valid Drive link checking
 
 import { Link } from 'react-router-dom';
-import { AlertTriangle } from 'lucide-react';
+import { AlertTriangle, Cloud } from 'lucide-react';
 import WhatsAppIcon from '@/shared/ui/icons/WhatsAppIcon';
-import GoogleDriveIcon from '@/shared/ui/icons/GoogleDriveIcon';
 import ClientHeaderDropdown from './ClientHeaderDropdown';
 import type { CardHeaderProps } from './types';
+
+/**
+ * Validates whether a given URL is a real Google Drive link and not a stub / placeholder.
+ */
+export const isValidGoogleDriveLink = (link?: string | null): boolean => {
+  if (!link || typeof link !== 'string') return false;
+  const trimmed = link.trim();
+  if (!trimmed || trimmed === '#' || trimmed.toLowerCase() === 'stub') return false;
+  try {
+    const url = new URL(trimmed.startsWith('http://') || trimmed.startsWith('https://') ? trimmed : `https://${trimmed}`);
+    const host = url.hostname.toLowerCase();
+    return host.includes('drive.google.com') || (host.includes('google.com') && url.pathname.includes('/drive'));
+  } catch {
+    return false;
+  }
+};
 
 const CardHeader = ({
   client,
@@ -29,51 +45,85 @@ const CardHeader = ({
     }
   };
 
+  const hasValidDriveLink = isValidGoogleDriveLink(client.google_drive_link);
+
   return (
-    <div className={`client-card-header border-0 py-2 rounded-none ${isUrgent ? 'bg-status-danger-bg border-b border-status-danger-border' : 'bg-transparent'}`}>
-      <div className="flex justify-between items-center px-2">
-        {/* Left: WhatsApp with phone number */}
-        <div className="flex items-center gap-2">
+    <div className="px-4 py-2 bg-transparent" dir="rtl">
+      <div className="flex justify-between items-center gap-3">
+        {/* 1. Right (in RTL): Client name & phone (1st child in RTL flex row) */}
+        <div className="flex flex-col items-start text-right min-w-0">
+          <div className="flex items-center gap-2 max-w-full">
+            <Link
+              to={clientLink}
+              className="no-underline font-bold text-base font-['Cairo'] transition-colors truncate drop-shadow-xs"
+              style={{ color: 'var(--token-card-header-text)' }}
+              title={client.name}
+            >
+              {client.name}
+            </Link>
+            {isUrgent && (
+              <span title="قصوى" className="shrink-0 flex items-center">
+                <AlertTriangle size={16} className="text-amber-300 fill-amber-300/30" />
+              </span>
+            )}
+          </div>
+          {client.phone && (
+            <span 
+              className="text-xs font-medium font-['Cairo'] mt-0.5 tracking-wide tabular-nums"
+              style={{ color: 'var(--token-card-header-subtext)' }}
+            >
+              {client.phone}
+            </span>
+          )}
+        </div>
+
+        {/* 2. Left (in RTL): Action buttons group (2nd child in RTL flex row) */}
+        <div className="flex items-center gap-1.5 shrink-0">
+          {/* WhatsApp Button (Green) */}
           <button
             onClick={openWhatsApp}
-            className="client-card-action-button client-card-header-action-button rounded transition-all duration-200 cursor-pointer"
+            className="w-8 h-8 rounded-none flex items-center justify-center shadow-2xs transition-all active:scale-95 cursor-pointer"
+            style={{
+              backgroundColor: 'var(--token-brand-whatsapp)',
+              color: 'var(--token-card-header-btn-text)',
+              borderColor: 'var(--token-brand-whatsapp-hover)',
+              borderWidth: '1px',
+              borderStyle: 'solid',
+            }}
             title="واتساب"
+            type="button"
           >
             <WhatsAppIcon size={16} />
           </button>
-          <span className="client-card-secondary text-sm">{client.phone || ''}</span>
-        </div>
 
-        {/* Center: Client name with Google Drive */}
-        <div className="flex items-center justify-center gap-2">
-          <Link
-            to={clientLink}
-            className="no-underline font-bold text-text-primary text-[0.95em] hover:text-text-brand transition-colors"
-          >
-            {client.name}
-          </Link>
-          {isUrgent && (
-            <AlertTriangle size={14} className="text-status-danger-text" />
+          {/* Cloud Button (Only rendered if valid Google Drive link exists!) */}
+          {hasValidDriveLink && (
+            <button
+              onClick={openGoogleDrive}
+              className="w-8 h-8 rounded-none flex items-center justify-center shadow-2xs transition-all active:scale-95 cursor-pointer"
+              style={{
+                backgroundColor: 'var(--token-card-header-btn-bg)',
+                color: 'var(--token-card-header-btn-text)',
+                borderColor: 'var(--token-card-header-btn-border)',
+                borderWidth: '1px',
+                borderStyle: 'solid',
+              }}
+              title="Google Drive"
+              type="button"
+            >
+              <Cloud size={16} style={{ color: 'var(--token-card-header-btn-text)' }} />
+            </button>
           )}
-          <button
-            onClick={openGoogleDrive}
-            className="client-card-action-button client-card-header-action-button rounded transition-all duration-200 text-text-primary disabled:cursor-not-allowed disabled:opacity-50"
-            title="Google Drive"
-            disabled={!client.google_drive_link}
-            type="button"
-          >
-            <GoogleDriveIcon size={16} className="text-current" />
-          </button>
-        </div>
 
-        {/* Right: Actions Dropdown */}
-        <ClientHeaderDropdown
-          onAddTask={() => actions.onAddTask?.(client)}
-          onAddInvoice={() => actions.onAddInvoice?.(client)}
-          onRecordCredit={() => actions.onRecordCredit?.(client)}
-          role={role}
-          context={context}
-        />
+          {/* 3-dots Dropdown Button */}
+          <ClientHeaderDropdown
+            onAddTask={() => actions.onAddTask?.(client)}
+            onAddInvoice={() => actions.onAddInvoice?.(client)}
+            onRecordCredit={() => actions.onRecordCredit?.(client)}
+            role={role}
+            context={context}
+          />
+        </div>
       </div>
     </div>
   );

@@ -7,7 +7,6 @@ import { BaseClientCard, useClientCardActions } from './index';
 import { FloatingCardWrapper } from '@/shared/ui/layout/FloatingCardWrapper';
 import type { BaseClientCardProps } from './types';
 import type { Task } from '@/api/types';
-import { cn } from '@/shared/utils/cn';
 
 interface SortableBaseClientCardProps extends Omit<BaseClientCardProps, 'taskActions' | 'clientActions'> {
   /** Unique ID for sortable - format: "containerType-clientId" */
@@ -61,24 +60,8 @@ const SortableBaseClientCard = ({
     <div
       ref={setNodeRef}
       style={style}
-      {...attributes}
       className="mb-3"
     >
-      {/* Drag Handle */}
-      {showDragHandle && (
-        <div
-          {...listeners}
-          className={cn(
-            "client-card-drag-handle cursor-grab p-1.5 border-b border-border-default text-xs text-center",
-            "bg-background text-text-primary",
-            "hover:bg-bg-surface-hover active:cursor-grabbing",
-            "select-none"
-          )}
-        >
-          ⋮⋮ اسحب لإعادة الترتيب
-        </div>
-      )}
-
       {/* Floating Wrapper with Card */}
       <FloatingCardWrapper dynamicWidth={dynamicWidth}>
         <BaseClientCard
@@ -88,6 +71,7 @@ const SortableBaseClientCard = ({
           taskActions={mergedTaskActions}
           clientActions={clientActions}
           onWidthCalculated={setDynamicWidth}
+          dragHandleProps={showDragHandle ? { attributes, listeners } : undefined}
           {...cardProps}
         />
       </FloatingCardWrapper>

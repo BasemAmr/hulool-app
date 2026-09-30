@@ -34,24 +34,32 @@ const TaskActionDropdown = ({
 }: ActionDropdownProps) => {
   const available = getAvailableActions(task, role, context, isEmployeeTask);
   const isUrgent = task.tags?.some(tag => tag.name === 'قصوى');
-  const menuItemClassName = 'client-card-dropdown-item cursor-pointer gap-2 justify-end';
+  const menuItemClassName = 'client-card-dropdown-item cursor-pointer gap-2 justify-end font-["Cairo"] text-xs py-1.5 rounded-none';
 
   return (
     <DropdownMenu modal={false}>
       <DropdownMenuTrigger asChild>
         <button
           className={cn(
-            "client-card-action-button client-card-action-button--menu p-1.5 rounded",
-            "transition-all duration-200 cursor-pointer",
-            "focus:outline-none focus:ring-2 focus:ring-primary/20"
+            "w-6 h-6 rounded-none flex items-center justify-center",
+            "transition-colors duration-150 cursor-pointer shadow-2xs",
+            "focus:outline-none focus:ring-1 focus:ring-sky-500/30"
           )}
+          style={{
+            backgroundColor: 'var(--token-card-action-btn-neutral-bg)',
+            color: 'var(--token-card-action-btn-neutral-text)',
+            borderColor: 'var(--token-card-action-btn-neutral-border)',
+            borderWidth: '1px',
+            borderStyle: 'solid',
+          }}
+          title="خيارات المهمة"
         >
-          <MoreVertical size={12} />
+          <MoreVertical size={13} style={{ color: 'inherit' }} />
         </button>
       </DropdownMenuTrigger>
       <DropdownMenuContent 
         align="end" 
-        className="client-card-dropdown-panel min-w-[160px] text-[0.85em]"
+        className="client-card-dropdown-panel min-w-[160px] text-xs font-['Cairo'] shadow-md rounded-none"
         style={{ direction: 'rtl' }}
         sideOffset={5}
       >

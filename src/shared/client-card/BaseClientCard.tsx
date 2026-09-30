@@ -1,6 +1,8 @@
-// BaseClientCard - Unified client card component for all contexts
+// BaseClientCard - Unified client card component matching reference design
+// Features Mostaql Blue Header Theme, RTL hierarchy, and sharp standardized badges
 
 import { useRef, useEffect, useState } from 'react';
+import { GripVertical } from 'lucide-react';
 import CardHeader from './CardHeader';
 import TaskRow from './TaskRow';
 import type { BaseClientCardProps } from './types';
@@ -13,6 +15,7 @@ const BaseClientCard = ({
   taskActions = {},
   clientActions = {},
   onWidthCalculated,
+  dragHandleProps,
   showAmount = true,
   showEmployeePrefix = false,
   compactMode = false,
@@ -52,56 +55,132 @@ const BaseClientCard = ({
     <div
       ref={cardRef}
       className={cn(
-        "client-card-shell h-full shadow-sm rounded-none overflow-visible relative transition-all duration-300",
-        isClientUrgent
-          ? "border-l-4 border-status-danger-border"
-          : "border-l-4 border-border-default",
-        compactMode ? "border-2" : "border border-border-default"
+        "h-full rounded-2xl overflow-hidden relative transition-all duration-200 font-['Cairo'] flex flex-col",
+        compactMode ? "p-0.5" : ""
       )}
+      style={{
+        backgroundImage: 'var(--token-card-shell-bg)',
+        borderWidth: '1px',
+        borderStyle: 'solid',
+        borderColor: isHovered ? 'var(--token-card-shell-border-hover)' : 'var(--token-card-shell-border)',
+        boxShadow: isHovered ? 'var(--token-card-shell-shadow-hover)' : 'var(--token-card-shell-shadow)',
+      }}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
+      dir="rtl"
     >
-      {/* Header */}
-      <CardHeader
-        client={client}
-        isUrgent={isClientUrgent}
-        role={role}
-        context={context}
-        actions={clientActions}
-      />
+      {/* 1. Upper Zone: Solid Header Band (Drag handle, ID, Name, Phone, Actions) */}
+      <div 
+        style={{
+          backgroundColor: 'var(--token-card-header-solid-bg)',
+          color: 'var(--token-card-header-text)',
+        }}
+      >
+        {/* Top Sub-bar: Drag Handle on Right, Client ID on Left */}
+        <div 
+          className="px-4 pt-2.5 pb-1 flex justify-between items-center text-xs border-b select-none"
+          style={{
+            borderBottomColor: 'var(--token-card-header-border)',
+            color: 'var(--token-card-header-subtext)',
+          }}
+        >
+          {/* Right (in RTL): Drag Handle */}
+          {dragHandleProps ? (
+            <div
+              {...dragHandleProps.attributes}
+              {...dragHandleProps.listeners}
+              className="flex items-center gap-1.5 cursor-grab active:cursor-grabbing hover:opacity-100 transition-opacity"
+              style={{ color: 'var(--token-card-header-subtext)' }}
+              title="اسحب لإعادة الترتيب"
+            >
+              <GripVertical size={13} style={{ color: 'inherit' }} />
+              <span className="text-[11px] font-medium font-['Cairo']">اسحب لإعادة الترتيب</span>
+            </div>
+          ) : (
+            <div 
+              className="flex items-center gap-1.5 opacity-60"
+              style={{ color: 'var(--token-card-header-subtext)' }}
+            >
+              <GripVertical size={13} />
+              <span className="text-[11px] font-medium font-['Cairo']">اسحب لإعادة الترتيب</span>
+            </div>
+          )}
 
-      {/* Body - Tasks Table */}
-      <div className="client-card-body p-0 relative overflow-visible">
-        <div className="overflow-hidden relative">
-          <table className="client-card-table w-full text-sm">
-            <thead className="sticky top-0 z-[2]">
-              <tr className="client-card-table-head">
-                <th className="text-[0.88em] px-2 py-1.5 border-0 text-text-secondary font-bold">
-                  المهمة
-                </th>
-                <th className="text-[0.88em] px-2 py-1.5 border-0 text-text-secondary font-bold">
-                  تاريخ
-                </th>
-                <th className="text-[0.88em] px-2 py-1.5 border-0 text-text-secondary font-bold">
-                  اليوم
-                </th>
-                {showAmountColumn && (
-                  <th className="text-[0.88em] px-2 py-1.5 border-0 text-text-secondary font-bold">
-                    المبلغ
-                  </th>
-                )}
-                {showStatus && (
-                  <th className="text-[0.88em] px-2 py-1.5 border-0 text-text-secondary font-bold">
-                    الحالة
-                  </th>
-                )}
-                <th className="text-[0.88em] px-2 py-1.5 border-0 w-20 min-w-[80px] text-text-secondary font-bold">
-                  إجراءات
-                </th>
-              </tr>
-            </thead>
+          {/* Left (in RTL): Client ID */}
+          <span 
+            className="text-[11px] font-mono font-medium tabular-nums"
+            style={{ color: 'var(--token-card-header-subtext)' }}
+          >
+            ID #{client.id}
+          </span>
+        </div>
 
-            <tbody className="overflow-hidden">
+        {/* Card Header: Client Name, Phone, and Action Buttons */}
+        <CardHeader
+          client={client}
+          isUrgent={isClientUrgent}
+          role={role}
+          context={context}
+          actions={clientActions}
+        />
+      </div>
+
+      {/* 2. Card Body: Tasks Table directly filling the card body, edge-to-edge, fully blended */}
+      <div 
+        className="flex-1 overflow-hidden"
+        style={{
+          backgroundImage: 'var(--token-card-body-bg)'
+        }}
+      >
+        <table className="w-full table-fixed text-sm font-['Cairo'] border-collapse">
+          <colgroup>
+            <col />                                      {/* Task Name - fluid flex width */}
+            <col className="w-[84px]" />                 {/* Date */}
+            <col className="w-[72px]" />                 {/* Duration */}
+            {showAmountColumn && <col className="w-[72px]" />}    {/* Amount */}
+            {showStatus && <col className="w-[72px]" />}          {/* Status */}
+            <col className="w-[60px]" />                 {/* Actions */}
+          </colgroup>
+          <thead>
+            <tr 
+              className="border-b font-bold text-xs"
+              style={{
+                backgroundColor: 'var(--token-card-table-head-bg)',
+                color: 'var(--token-card-table-head-text)',
+                borderBottomColor: 'var(--token-card-table-head-border)',
+              }}
+            >
+              <th className="px-3.5 py-2 text-right font-bold" style={{ color: 'inherit' }}>
+                المهمة
+              </th>
+              <th className="px-1.5 py-2 text-center font-bold" style={{ color: 'inherit' }}>
+                التاريخ
+              </th>
+              <th className="px-1.5 py-2 text-center font-bold" style={{ color: 'inherit' }}>
+                المدة
+              </th>
+              {showAmountColumn && (
+                <th className="px-1.5 py-2 text-center font-bold" style={{ color: 'inherit' }}>
+                  المبلغ
+                </th>
+              )}
+              {showStatus && (
+                <th className="px-1.5 py-2 text-center font-bold" style={{ color: 'inherit' }}>
+                  الحالة
+                </th>
+              )}
+              <th className="px-2 py-2 text-left font-bold" style={{ color: 'inherit' }}>
+                إجراءات
+              </th>
+            </tr>
+          </thead>
+
+          <tbody 
+            className="divide-y"
+            style={{
+              borderColor: 'var(--token-card-table-row-border)',
+            }}
+          >
               {tasks.map((task, taskIndex) => {
                 const isTaskUrgent = task.tags?.some(tag => tag.name === 'قصوى');
 
@@ -124,8 +203,7 @@ const BaseClientCard = ({
           </table>
         </div>
       </div>
-    </div>
-  );
-};
+    );
+  };
 
 export default BaseClientCard;

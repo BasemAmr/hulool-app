@@ -457,7 +457,7 @@ function HuloolDataGrid<T extends Record<string, any>>({
   // Calculate actual height
   const calculatedHeight = useMemo(() => {
     if (height === 'auto' || height === 'fill') {
-      const contentHeight = (safeData.length * rowHeight) + 48;
+      const contentHeight = (safeData.length * rowHeight) + 54;
       return Math.max(contentHeight, minHeight);
     }
     return height;
@@ -656,6 +656,10 @@ function HuloolDataGrid<T extends Record<string, any>>({
           --dsg-selection-border-color: var(--token-border-focus);
           --dsg-selection-background-color: color-mix(in srgb, var(--token-border-focus) 10%, transparent);
           direction: ltr; /* Keep LTR internally, we handle RTL via column reversal */
+          overflow-x: auto !important;
+          ${height === 'auto' ? 'overflow-y: hidden !important;' : ''}
+          scrollbar-width: thin;
+          scrollbar-color: var(--token-border-strong) transparent;
         }
         
         /* ================================

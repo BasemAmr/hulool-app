@@ -11,6 +11,7 @@
 import React, { useMemo } from 'react';
 import { Edit3, Trash2 } from 'lucide-react';
 import HuloolDataGrid from '@/shared/grid/HuloolDataGrid';
+import { LedgerFinalBalanceCell } from '@/shared/grid';
 import type { HuloolGridColumn } from '@/shared/grid/HuloolDataGrid';
 import type { CellProps } from 'react-datasheet-grid';
 import { useModalStore } from '@/shared/stores/modalStore';
@@ -160,7 +161,7 @@ DescriptionCell.displayName = 'DescriptionCell';
 const DebitCell = React.memo(({ rowData, active }: CellProps<any>) => {
   const amount = rowData.debit_val;
   return (
-    <span className="hulool-cell-content" style={{ justifyContent: 'center', color: 'inherit', fontWeight: active ? 700 : 500 }}>
+    <span className="hulool-cell-content" style={{ justifyContent: 'center', color: 'var(--token-text-primary)', fontWeight: active ? 700 : 500 }}>
       {amount > 0 ? formatCurrency(amount) : '—'}
     </span>
   );
@@ -171,7 +172,7 @@ DebitCell.displayName = 'DebitCell';
 const CreditCell = React.memo(({ rowData, active }: CellProps<any>) => {
   const amount = rowData.credit_val;
   return (
-    <span className="hulool-cell-content" style={{ justifyContent: 'center', color: 'inherit', fontWeight: active ? 700 : 500 }}>
+    <span className="hulool-cell-content" style={{ justifyContent: 'center', color: 'var(--token-text-primary)', fontWeight: active ? 700 : 500 }}>
       {amount > 0 ? formatCurrency(amount) : '—'}
     </span>
   );
@@ -179,16 +180,8 @@ const CreditCell = React.memo(({ rowData, active }: CellProps<any>) => {
 CreditCell.displayName = 'CreditCell';
 
 // Balance Cell
-const BalanceCell = React.memo(({ rowData, active }: CellProps<any>) => {
-  const balance = rowData.balance_val;
-  if (balance === null || balance === undefined) {
-    return <span className="hulool-cell-content" style={{ justifyContent: 'center', color: 'var(--token-text-secondary)' }}>—</span>;
-  }
-  return (
-    <span className="hulool-cell-content" style={{ justifyContent: 'center', fontWeight: active ? 800 : 700, color: balance < 0 ? 'var(--token-text-danger)' : 'var(--token-text-primary)' }}>
-      {formatCurrency(balance)}
-    </span>
-  );
+const BalanceCell = React.memo(({ rowData }: CellProps<any>) => {
+  return <LedgerFinalBalanceCell balance={rowData.balance_val} />;
 });
 BalanceCell.displayName = 'BalanceCell';
 
@@ -325,7 +318,7 @@ const EmployeeTransactionsTable: React.FC<EmployeeTransactionsTableProps> = ({
     const totalCredit = confirmed.reduce((sum, t) => sum + t.credit_val, 0);
     const finalBalance = summary.balance_due ?? (totalDebit - totalCredit);
 
-    all.push({
+    all.unshift({
       id: 'summary',
       is_summary: true,
       is_pending: false,
@@ -376,8 +369,8 @@ const EmployeeTransactionsTable: React.FC<EmployeeTransactionsTableProps> = ({
       component: DebitCell,
       grow: 1,
       cellClassName: ({ rowData }) => {
-        if (rowData.is_summary) return '';
-        return rowData.debit_val > 0 ? 'employee-debit-cell' : '';
+        if (rowData.is_summary) return 'ledger-summary-debit text-center';
+        return rowData.debit_val > 0 ? 'ledger-debit-cell text-center' : '';
       }
     },
     {
@@ -388,17 +381,25 @@ const EmployeeTransactionsTable: React.FC<EmployeeTransactionsTableProps> = ({
       component: CreditCell,
       grow: 1,
       cellClassName: ({ rowData }) => {
-        if (rowData.is_summary) return '';
-        return rowData.credit_val > 0 ? 'employee-credit-cell' : '';
+        if (rowData.is_summary) return 'ledger-summary-credit text-center';
+        return rowData.credit_val > 0 ? 'ledger-credit-cell text-center' : '';
       }
     },
     {
       id: 'balance',
       key: 'balance_val',
-      title: 'الرصيد',
+      title: 'الرصيد النهائي',
       type: 'custom',
       component: BalanceCell,
       grow: 1,
+      cellClassName: ({ rowData }) => {
+        const val = Number(rowData?.balance_val ?? 0);
+        const isNeg = val < 0;
+        if (rowData.is_summary) {
+          return isNeg ? 'ledger-summary-balance-neg text-center' : 'ledger-summary-balance-pos text-center';
+        }
+        return isNeg ? 'ledger-balance-neg text-center' : 'ledger-balance-pos text-center';
+      }
     },
     {
       id: 'actions',
@@ -421,7 +422,7 @@ const EmployeeTransactionsTable: React.FC<EmployeeTransactionsTableProps> = ({
   }
 
   return (
-    <div className="employee-transactions-wrapper" dir="rtl">
+    <div className="employee-transactions-wrapper mx-auto w-[96%] max-w-[1600px] my-3 bg-bg-surface rounded-xl border border-border-default shadow-xs overflow-hidden" dir="rtl">
       <HuloolDataGrid
         data={combinedData}
         columns={columns}
@@ -430,7 +431,7 @@ const EmployeeTransactionsTable: React.FC<EmployeeTransactionsTableProps> = ({
         showId={false}
         height="auto"
         minHeight={400}
-        rowClassName={(rowData) => {
+        rowClassName={(rowData: any) => {
           if (!rowData) return '';
           if (rowData.is_summary) return 'ledger-summary-row';
           if (rowData.is_pending) return 'bg-amber-50/40 hover:bg-amber-50/70 dark:bg-amber-950/10 dark:hover:bg-amber-950/20';

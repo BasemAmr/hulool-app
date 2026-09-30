@@ -79,6 +79,12 @@ export interface BaseClientCardProps {
   // Dynamic width calculation for hover expansion
   onWidthCalculated?: (width: string) => void;
   
+  // Drag handle attributes & listeners from sortable
+  dragHandleProps?: {
+    attributes?: any;
+    listeners?: any;
+  };
+
   // Optional overrides
   showAmount?: boolean;
   showEmployeePrefix?: boolean;

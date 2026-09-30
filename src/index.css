@@ -156,9 +156,82 @@
   --token-shadow-md: 0 4px 12px color-mix(in srgb, var(--primitive-gray-900) 10%, transparent);
   --token-shadow-lg: 0 -4px 12px color-mix(in srgb, var(--primitive-gray-900) 8%, transparent);
   --token-shadow-xl: 0 -8px 24px color-mix(in srgb, var(--primitive-gray-900) 12%, transparent);
-  --token-shadow-float: 0 14px 28px color-mix(in srgb, var(--primitive-gray-900) 22%,
-      transparent),
+  --token-shadow-float: 0 14px 28px color-mix(in srgb, var(--primitive-gray-900) 22%, transparent),
     0 10px 10px color-mix(in srgb, var(--primitive-gray-900) 18%, transparent);
+  --token-brand-whatsapp: #25d366;
+  --token-brand-whatsapp-hover: #20ba5a;
+
+  /* --- Client Card Header --- */
+  --token-card-header-solid-bg: #0284c7;
+  --token-card-header-text: #ffffff;
+  --token-card-header-subtext: #e0f2fe;
+  --token-card-header-border: rgba(56, 189, 248, 0.3);
+  --token-card-header-btn-bg: #0275b1;
+  --token-card-header-btn-hover: #026ba3;
+  --token-card-header-btn-text: #ffffff;
+  --token-card-header-btn-border: rgba(56, 189, 248, 0.4);
+
+  /* --- Client Card Shell & Body --- */
+  --token-card-shell-border: rgba(56, 189, 248, 0.35);
+  --token-card-shell-border-hover: rgba(2, 132, 199, 0.55);
+  --token-card-shell-shadow: 0 2px 10px rgba(2, 132, 199, 0.06);
+  --token-card-shell-shadow-hover: 0 6px 20px rgba(2, 132, 199, 0.12);
+  --token-card-shell-bg: linear-gradient(180deg, #fbfdff 0%, #f0f7ff 40%, #eaf5fd 100%);
+  --token-card-body-bg: linear-gradient(180deg, #f0f7ff 0%, #e6f2fd 50%, #daf0fc 100%);
+  --token-card-table-head-bg: rgba(255, 255, 255, 0.7);
+  --token-card-table-head-text: #334155;
+  --token-card-table-head-border: rgba(56, 189, 248, 0.35);
+  --token-card-table-row-border: rgba(56, 189, 248, 0.25);
+  --token-card-table-row-even-bg: rgba(255, 255, 255, 0.3);
+  --token-card-table-row-hover-bg: rgba(224, 242, 254, 0.5);
+
+  /* --- Client Card Badges --- */
+  --token-card-badge-date-bg: #f1f5f9;
+  --token-card-badge-date-text: #0f172a;
+  --token-card-badge-date-border: #cbd5e1;
+
+  --token-card-badge-duration-alert-bg: #fffbeb;
+  --token-card-badge-duration-alert-text: #92400e;
+  --token-card-badge-duration-alert-border: #fcd34d;
+
+  --token-card-badge-duration-normal-bg: #f1f5f9;
+  --token-card-badge-duration-normal-text: #334155;
+  --token-card-badge-duration-normal-border: #cbd5e1;
+
+  --token-card-badge-amount-zero-bg: #ecfdf5;
+  --token-card-badge-amount-zero-text: #065f46;
+  --token-card-badge-amount-zero-border: #6ee7b7;
+
+  --token-card-badge-amount-due-bg: #fff1f2;
+  --token-card-badge-amount-due-text: #9f1239;
+  --token-card-badge-amount-due-border: #fda4af;
+
+  /* --- Client Card Action Icons (Tonal Buttons) --- */
+  --token-card-action-btn-blue-bg: #f0f9ff;
+  --token-card-action-btn-blue-hover: #e0f2fe;
+  --token-card-action-btn-blue-text: #0284c7;
+  --token-card-action-btn-blue-border: rgba(56, 189, 248, 0.4);
+
+  --token-card-action-btn-neutral-bg: #f1f5f9;
+  --token-card-action-btn-neutral-hover: #e2e8f0;
+  --token-card-action-btn-neutral-text: #475569;
+  --token-card-action-btn-neutral-border: #e2e8f0;
+
+  /* --- Column Container --- */
+  --token-column-header-bg: #f8fafc;
+  --token-column-header-text: #1e293b;
+  --token-column-header-border: #e2e8f0;
+  --token-column-container-bg: rgba(248, 250, 252, 0.4);
+  --token-column-container-border: #e2e8f0;
+  --token-column-badge-bg: #ffffff;
+  --token-column-badge-text: #334155;
+  --token-column-badge-border: #e2e8f0;
+
+  /* --- Ledger Final Balance Tokens --- */
+  --token-ledger-balance-neg-bg: var(--primitive-red-600);
+  --token-ledger-balance-neg-text: #ffffff;
+  --token-ledger-balance-pos-bg: var(--token-status-success-bg);
+  --token-ledger-balance-pos-text: var(--token-status-success-text);
 }
 
 .dark,
@@ -247,6 +320,82 @@ html[data-theme='dark'] {
   --token-shadow-xl: 0 -8px 24px color-mix(in srgb, #000 38%, transparent);
   --token-shadow-float: 0 14px 28px color-mix(in srgb, #000 45%, transparent),
     0 10px 10px color-mix(in srgb, #000 38%, transparent);
+
+  /* --- Brand & WhatsApp (Dark) --- */
+  --token-brand-whatsapp: #22c55e;
+  --token-brand-whatsapp-hover: #16a34a;
+
+  /* --- Client Card Header (Dark Mode) --- */
+  --token-card-header-solid-bg: #075985;
+  --token-card-header-text: #f8fafc;
+  --token-card-header-subtext: #bae6fd;
+  --token-card-header-border: rgba(255, 255, 255, 0.15);
+  --token-card-header-btn-bg: #0c4a6e;
+  --token-card-header-btn-hover: #0369a1;
+  --token-card-header-btn-text: #f8fafc;
+  --token-card-header-btn-border: rgba(255, 255, 255, 0.2);
+
+  /* --- Client Card Shell & Body (Dark Mode) --- */
+  --token-card-shell-border: rgba(255, 255, 255, 0.12);
+  --token-card-shell-border-hover: rgba(56, 189, 248, 0.4);
+  --token-card-shell-shadow: 0 4px 18px rgba(0, 0, 0, 0.4);
+  --token-card-shell-shadow-hover: 0 8px 24px rgba(0, 0, 0, 0.55);
+  --token-card-shell-bg: linear-gradient(180deg, #111827 0%, #0f172a 100%);
+  --token-card-body-bg: linear-gradient(180deg, #131d31 0%, #0c1424 100%);
+  --token-card-table-head-bg: rgba(255, 255, 255, 0.05);
+  --token-card-table-head-text: #cbd5e1;
+  --token-card-table-head-border: rgba(255, 255, 255, 0.1);
+  --token-card-table-row-border: rgba(255, 255, 255, 0.08);
+  --token-card-table-row-even-bg: rgba(255, 255, 255, 0.03);
+  --token-card-table-row-hover-bg: rgba(56, 189, 248, 0.12);
+
+  /* --- Client Card Badges (Dark Mode) --- */
+  --token-card-badge-date-bg: #1e293b;
+  --token-card-badge-date-text: #f8fafc;
+  --token-card-badge-date-border: #334155;
+
+  --token-card-badge-duration-alert-bg: color-mix(in srgb, var(--primitive-amber-700) 25%, #111827);
+  --token-card-badge-duration-alert-text: #fde68a;
+  --token-card-badge-duration-alert-border: color-mix(in srgb, var(--primitive-amber-700) 45%, #111827);
+
+  --token-card-badge-duration-normal-bg: #1e293b;
+  --token-card-badge-duration-normal-text: #cbd5e1;
+  --token-card-badge-duration-normal-border: #334155;
+
+  --token-card-badge-amount-zero-bg: color-mix(in srgb, var(--primitive-green-700) 25%, #111827);
+  --token-card-badge-amount-zero-text: #bbf7d0;
+  --token-card-badge-amount-zero-border: color-mix(in srgb, var(--primitive-green-700) 45%, #111827);
+
+  --token-card-badge-amount-due-bg: color-mix(in srgb, var(--primitive-red-700) 25%, #111827);
+  --token-card-badge-amount-due-text: #fca5a5;
+  --token-card-badge-amount-due-border: color-mix(in srgb, var(--primitive-red-700) 45%, #111827);
+
+  /* --- Client Card Action Icons (Dark Mode) --- */
+  --token-card-action-btn-blue-bg: rgba(2, 132, 199, 0.2);
+  --token-card-action-btn-blue-hover: rgba(2, 132, 199, 0.35);
+  --token-card-action-btn-blue-text: #38bdf8;
+  --token-card-action-btn-blue-border: rgba(56, 189, 248, 0.3);
+
+  --token-card-action-btn-neutral-bg: #1e293b;
+  --token-card-action-btn-neutral-hover: #334155;
+  --token-card-action-btn-neutral-text: #cbd5e1;
+  --token-card-action-btn-neutral-border: #334155;
+
+  /* --- Column Container (Dark Mode) --- */
+  --token-column-header-bg: #1e293b;
+  --token-column-header-text: #f8fafc;
+  --token-column-header-border: #334155;
+  --token-column-container-bg: rgba(15, 23, 42, 0.5);
+  --token-column-container-border: #334155;
+  --token-column-badge-bg: #111827;
+  --token-column-badge-text: #cbd5e1;
+  --token-column-badge-border: #334155;
+
+  /* --- Ledger Final Balance Tokens (Dark Mode) --- */
+  --token-ledger-balance-neg-bg: #b91c1c;
+  --token-ledger-balance-neg-text: #ffffff;
+  --token-ledger-balance-pos-bg: color-mix(in srgb, var(--primitive-green-700) 25%, var(--token-bg-page));
+  --token-ledger-balance-pos-text: #bbf7d0;
 }
 
 /* ============================================================
@@ -330,6 +479,78 @@ html[data-theme='dark'] {
   --color-card-header-bg: var(--token-card-header-bg);
   --color-card-border-theme: var(--token-card-border);
   --color-card-text-title: var(--token-card-text-title);
+
+  /* Brand Tokens */
+  --color-brand-whatsapp: var(--token-brand-whatsapp);
+  --color-brand-whatsapp-hover: var(--token-brand-whatsapp-hover);
+
+  /* Client Card Header */
+  --color-card-header-solid-bg: var(--token-card-header-solid-bg);
+  --color-card-header-text: var(--token-card-header-text);
+  --color-card-header-subtext: var(--token-card-header-subtext);
+  --color-card-header-border: var(--token-card-header-border);
+  --color-card-header-btn-bg: var(--token-card-header-btn-bg);
+  --color-card-header-btn-hover: var(--token-card-header-btn-hover);
+  --color-card-header-btn-text: var(--token-card-header-btn-text);
+  --color-card-header-btn-border: var(--token-card-header-btn-border);
+
+  /* Client Card Shell & Body */
+  --color-card-shell-border: var(--token-card-shell-border);
+  --color-card-shell-border-hover: var(--token-card-shell-border-hover);
+  --color-card-table-head-bg: var(--token-card-table-head-bg);
+  --color-card-table-head-text: var(--token-card-table-head-text);
+  --color-card-table-head-border: var(--token-card-table-head-border);
+  --color-card-table-row-border: var(--token-card-table-row-border);
+  --color-card-table-row-even-bg: var(--token-card-table-row-even-bg);
+  --color-card-table-row-hover-bg: var(--token-card-table-row-hover-bg);
+
+  /* Client Card Badges */
+  --color-card-badge-date-bg: var(--token-card-badge-date-bg);
+  --color-card-badge-date-text: var(--token-card-badge-date-text);
+  --color-card-badge-date-border: var(--token-card-badge-date-border);
+
+  --color-card-badge-duration-alert-bg: var(--token-card-badge-duration-alert-bg);
+  --color-card-badge-duration-alert-text: var(--token-card-badge-duration-alert-text);
+  --color-card-badge-duration-alert-border: var(--token-card-badge-duration-alert-border);
+
+  --color-card-badge-duration-normal-bg: var(--token-card-badge-duration-normal-bg);
+  --color-card-badge-duration-normal-text: var(--token-card-badge-duration-normal-text);
+  --color-card-badge-duration-normal-border: var(--token-card-badge-duration-normal-border);
+
+  --color-card-badge-amount-zero-bg: var(--token-card-badge-amount-zero-bg);
+  --color-card-badge-amount-zero-text: var(--token-card-badge-amount-zero-text);
+  --color-card-badge-amount-zero-border: var(--token-card-badge-amount-zero-border);
+
+  --color-card-badge-amount-due-bg: var(--token-card-badge-amount-due-bg);
+  --color-card-badge-amount-due-text: var(--token-card-badge-amount-due-text);
+  --color-card-badge-amount-due-border: var(--token-card-badge-amount-due-border);
+
+  /* Client Card Action Icons */
+  --color-card-action-btn-blue-bg: var(--token-card-action-btn-blue-bg);
+  --color-card-action-btn-blue-hover: var(--token-card-action-btn-blue-hover);
+  --color-card-action-btn-blue-text: var(--token-card-action-btn-blue-text);
+  --color-card-action-btn-blue-border: var(--token-card-action-btn-blue-border);
+
+  --color-card-action-btn-neutral-bg: var(--token-card-action-btn-neutral-bg);
+  --color-card-action-btn-neutral-hover: var(--token-card-action-btn-neutral-hover);
+  --color-card-action-btn-neutral-text: var(--token-card-action-btn-neutral-text);
+  --color-card-action-btn-neutral-border: var(--token-card-action-btn-neutral-border);
+
+  /* Column Container */
+  --color-column-header-bg: var(--token-column-header-bg);
+  --color-column-header-text: var(--token-column-header-text);
+  --color-column-header-border: var(--token-column-header-border);
+  --color-column-container-bg: var(--token-column-container-bg);
+  --color-column-container-border: var(--token-column-container-border);
+  --color-column-badge-bg: var(--token-column-badge-bg);
+  --color-column-badge-text: var(--token-column-badge-text);
+  --color-column-badge-border: var(--token-column-badge-border);
+
+  /* Ledger Final Balance */
+  --color-ledger-balance-neg-bg: var(--token-ledger-balance-neg-bg);
+  --color-ledger-balance-neg-text: var(--token-ledger-balance-neg-text);
+  --color-ledger-balance-pos-bg: var(--token-ledger-balance-pos-bg);
+  --color-ledger-balance-pos-text: var(--token-ledger-balance-pos-text);
 }
 
 @layer base {
@@ -941,25 +1162,123 @@ html[data-theme='dark'] .client-card-table th {
 
 
 
-/* Cashbox cells styles */
-/* Cash box debit cell = green background */
-.cashbox-debit-cell {
-  background-color: var(--token-status-success-bg) !important;
-  color: var(--token-status-success-text) !important;
-  font-weight: 600;
+/* Unified Ledger cells styles (Debit = Red / Negative, Credit = Green / Positive)
+   Rule: Black text with faint colored backgrounds only */
+.ledger-debit-cell,
+.client-debit-cell,
+.employee-debit-cell,
+.cashbox-debit-cell,
+.hulool-data-grid .dsg-row:not(.dsg-row-header):hover .dsg-cell.ledger-debit-cell,
+.hulool-data-grid .dsg-row:not(.dsg-row-header):hover .dsg-cell.client-debit-cell,
+.hulool-data-grid .dsg-row:not(.dsg-row-header):hover .dsg-cell.employee-debit-cell,
+.hulool-data-grid .dsg-row:not(.dsg-row-header):hover .dsg-cell.cashbox-debit-cell {
+  background-color: var(--token-status-danger-bg) !important;
+  color: var(--token-text-primary) !important;
+  font-weight: 700 !important;
 }
 
-/* Cash box credit cell = red background */
-.cashbox-credit-cell {
-  background-color: var(--token-status-danger-bg) !important;
-  color: var(--token-status-danger-text) !important;
-  font-weight: 600;
+.ledger-credit-cell,
+.client-credit-cell,
+.employee-credit-cell,
+.cashbox-credit-cell,
+.hulool-data-grid .dsg-row:not(.dsg-row-header):hover .dsg-cell.ledger-credit-cell,
+.hulool-data-grid .dsg-row:not(.dsg-row-header):hover .dsg-cell.client-credit-cell,
+.hulool-data-grid .dsg-row:not(.dsg-row-header):hover .dsg-cell.employee-credit-cell,
+.hulool-data-grid .dsg-row:not(.dsg-row-header):hover .dsg-cell.cashbox-credit-cell {
+  background-color: var(--token-status-success-bg) !important;
+  color: var(--token-text-primary) !important;
+  font-weight: 700 !important;
+}
+
+/* Full-cell Final Balance classes for normal rows */
+.ledger-balance-pos,
+.hulool-data-grid .dsg-row:not(.dsg-row-header):hover .dsg-cell.ledger-balance-pos {
+  background-color: var(--token-status-success-bg) !important;
+  color: var(--token-status-success-text) !important;
+  font-weight: 800 !important;
+}
+
+.ledger-balance-neg,
+.hulool-data-grid .dsg-row:not(.dsg-row-header):hover .dsg-cell.ledger-balance-neg {
+  background-color: var(--token-ledger-balance-neg-bg) !important;
+  color: var(--token-ledger-balance-neg-text) !important;
+  font-weight: 800 !important;
+}
+
+/* Unified Totals / Summary Row - Softer bluish tint like header row */
+.hulool-data-grid .dsg-row.ledger-summary-row,
+.hulool-data-grid .dsg-row.treasury-summary-row {
+  background-color: color-mix(in srgb, var(--token-action-primary-bg) 14%, var(--token-bg-surface)) !important;
+  min-height: 48px;
+  border-top: 2px solid color-mix(in srgb, var(--token-action-primary-bg) 40%, transparent) !important;
+  border-bottom: 2px solid color-mix(in srgb, var(--token-action-primary-bg) 40%, transparent) !important;
+  font-weight: 700;
+}
+
+.hulool-data-grid .dsg-row.ledger-summary-row .dsg-cell,
+.hulool-data-grid .dsg-row.ledger-summary-row:hover .dsg-cell,
+.hulool-data-grid .dsg-row.treasury-summary-row .dsg-cell,
+.hulool-data-grid .dsg-row.treasury-summary-row:hover .dsg-cell {
+  background-color: color-mix(in srgb, var(--token-action-primary-bg) 14%, var(--token-bg-surface)) !important;
+  color: var(--token-text-primary) !important;
+  font-family: 'Cairo', sans-serif !important;
+  font-weight: 800 !important;
+  font-size: 0.95rem !important;
+  justify-content: center;
+  text-align: center;
+  border-left: 1px solid color-mix(in srgb, var(--token-action-primary-bg) 25%, transparent);
+  min-height: 48px;
+}
+
+/* Bluishscale grading for Debit, Credit, and Final Balance in Totals Row */
+.hulool-data-grid .dsg-row.ledger-summary-row .dsg-cell.ledger-summary-debit,
+.hulool-data-grid .dsg-row.ledger-summary-row:hover .dsg-cell.ledger-summary-debit,
+.hulool-data-grid .dsg-row.treasury-summary-row .dsg-cell.ledger-summary-debit,
+.hulool-data-grid .dsg-row.treasury-summary-row:hover .dsg-cell.ledger-summary-debit {
+  background-color: color-mix(in srgb, var(--token-status-danger-bg) 60%, color-mix(in srgb, var(--token-action-primary-bg) 18%, var(--token-bg-surface)) 40%) !important;
+  color: var(--token-text-primary) !important;
+  font-weight: 800 !important;
+}
+
+.hulool-data-grid .dsg-row.ledger-summary-row .dsg-cell.ledger-summary-credit,
+.hulool-data-grid .dsg-row.ledger-summary-row:hover .dsg-cell.ledger-summary-credit,
+.hulool-data-grid .dsg-row.treasury-summary-row .dsg-cell.ledger-summary-credit,
+.hulool-data-grid .dsg-row.treasury-summary-row:hover .dsg-cell.ledger-summary-credit {
+  background-color: color-mix(in srgb, var(--token-status-success-bg) 60%, color-mix(in srgb, var(--token-action-primary-bg) 18%, var(--token-bg-surface)) 40%) !important;
+  color: var(--token-text-primary) !important;
+  font-weight: 800 !important;
+}
+
+.hulool-data-grid .dsg-row.ledger-summary-row .dsg-cell.ledger-summary-balance-pos,
+.hulool-data-grid .dsg-row.ledger-summary-row:hover .dsg-cell.ledger-summary-balance-pos,
+.hulool-data-grid .dsg-row.treasury-summary-row .dsg-cell.ledger-summary-balance-pos,
+.hulool-data-grid .dsg-row.treasury-summary-row:hover .dsg-cell.ledger-summary-balance-pos {
+  background-color: color-mix(in srgb, var(--token-status-success-bg) 60%, color-mix(in srgb, var(--token-action-primary-bg) 18%, var(--token-bg-surface)) 40%) !important;
+  color: var(--token-status-success-text) !important;
+  font-weight: 800 !important;
+}
+
+.hulool-data-grid .dsg-row.ledger-summary-row .dsg-cell.ledger-summary-balance-neg,
+.hulool-data-grid .dsg-row.ledger-summary-row:hover .dsg-cell.ledger-summary-balance-neg,
+.hulool-data-grid .dsg-row.treasury-summary-row .dsg-cell.ledger-summary-balance-neg,
+.hulool-data-grid .dsg-row.treasury-summary-row:hover .dsg-cell.ledger-summary-balance-neg {
+  background-color: color-mix(in srgb, var(--token-ledger-balance-neg-bg) 75%, color-mix(in srgb, var(--token-action-primary-bg) 20%, var(--token-bg-surface)) 25%) !important;
+  color: var(--token-ledger-balance-neg-text) !important;
+  font-weight: 800 !important;
 }
 
 /* Optional: remove the default alternating row background on coloured cells
-     so the full‑cell colour is uniform */
+   so the full‑cell colour is uniform */
+.hulool-data-grid .dsg-row.ledger-debit-cell,
+.hulool-data-grid .dsg-row.ledger-credit-cell,
+.hulool-data-grid .dsg-row.ledger-balance-pos,
+.hulool-data-grid .dsg-row.ledger-balance-neg,
 .hulool-data-grid .dsg-row.cashbox-debit-cell,
-.hulool-data-grid .dsg-row.cashbox-credit-cell {
+.hulool-data-grid .dsg-row.cashbox-credit-cell,
+.hulool-data-grid .dsg-row.client-debit-cell,
+.hulool-data-grid .dsg-row.client-credit-cell,
+.hulool-data-grid .dsg-row.employee-debit-cell,
+.hulool-data-grid .dsg-row.employee-credit-cell {
   background-color: inherit !important;
 }
 
@@ -970,27 +1289,6 @@ html[data-theme='dark'] .client-card-table th {
 .hulool-due,
 .hulool-cell-content {
   color: inherit !important;
-}
-
-.client-debit-cell {
-  background-color: var(--token-status-danger-bg) !important;
-  color: var(--token-status-danger-text) !important;
-}
-
-.client-credit-cell {
-  background-color: var(--token-status-success-bg) !important;
-  color: var(--token-status-success-text) !important;
-}
-
-/* Employee tables: full-cell backgrounds */
-.employee-debit-cell {
-  background-color: var(--token-status-danger-bg) !important;
-  color: var(--token-status-danger-text) !important;
-}
-
-.employee-credit-cell {
-  background-color: var(--token-status-success-bg) !important;
-  color: var(--token-status-success-text) !important;
 }
 
 /* --- Task Grid Cell Status Classes --- */

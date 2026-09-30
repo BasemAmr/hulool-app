@@ -9,6 +9,7 @@ import type { CellProps } from 'react-datasheet-grid';
 import Button from '@/shared/ui/primitives/Button';
 import { Landmark, FileSpreadsheet, ArrowRight, Search, X, RotateCcw, Printer } from 'lucide-react';
 import type { FinancialTransaction, CashBoxVoucher } from '@/api/types';
+import { LedgerFinalBalanceCell } from '@/shared/grid';
 import { useModalStore } from '@/shared/stores/modalStore';
 import { useAuthStore } from '@/features/auth/store/authStore';
 import { useToast } from '@/shared/hooks/useToast';
@@ -97,15 +98,21 @@ const ActionsCell = React.memo(({ rowData }: { rowData: TransformedVoucherTransa
   const handlePrint = () => openModal('voucherPreview', { transactionId: rowData.id });
 
   return (
-    <div className="flex gap-1.5 items-center">
-      <Button variant="outline-primary" size="sm" onClick={handlePrint} className="px-2" title="طباعة السند">
-        <Printer size={16} />
+    <div className="flex gap-1.5 items-center justify-center h-full w-full">
+      <Button variant="outline-primary" size="sm" onClick={handlePrint} className="px-2 h-7" title="طباعة السند">
+        <Printer size={15} />
       </Button>
-      <Button variant="outline-primary" size="sm" onClick={handleView}>عرض</Button>
+      <Button variant="outline-primary" size="sm" onClick={handleView} className="px-2.5 h-7 text-xs">
+        عرض
+      </Button>
       {isAdmin() && (
         <>
-          <Button variant="outline-primary" size="sm" onClick={handleEdit}>تعديل</Button>
-          <Button variant="outline-danger" size="sm" onClick={handleDelete} isLoading={deleteMutation.isPending}>حذف</Button>
+          <Button variant="outline-primary" size="sm" onClick={handleEdit} className="px-2.5 h-7 text-xs">
+            تعديل
+          </Button>
+          <Button variant="outline-danger" size="sm" onClick={handleDelete} isLoading={deleteMutation.isPending} className="px-2.5 h-7 text-xs">
+            حذف
+          </Button>
         </>
       )}
     </div>
@@ -280,7 +287,7 @@ export const TreasuryAccountDetailsPage = () => {
       account_type: 'treasury',
       date: '',
       transaction_type: 'SUMMARY',
-      description: 'اجمالي الصرف والجمالي القبض',
+      description: 'الإجماليات',
       debit: totalDebits,
       credit: totalCredits,
       balance: finalBalance,
@@ -435,7 +442,7 @@ export const TreasuryAccountDetailsPage = () => {
       type: 'date',
       width: 95,
       grow: 0,
-      cellClassName: ({ rowData }: any) => (rowData.is_summary ? 'bg-muted/40 font-bold' : ''),
+      cellClassName: ({ rowData }: any) => (rowData.is_summary ? 'font-bold' : ''),
       formatter: (_val: string, rowData: any) => (rowData.is_summary ? '' : undefined),
     },
     {
@@ -443,7 +450,7 @@ export const TreasuryAccountDetailsPage = () => {
       title: 'نوع الحركة',
       key: 'transaction_type',
       cellClassName: ({ rowData }: any) => {
-        if (rowData.is_summary) return 'bg-muted/40 text-center font-bold';
+        if (rowData.is_summary) return 'text-center font-bold';
         let meta = rowData.metadata;
         if (typeof meta === 'string') {
           try { meta = JSON.parse(meta); } catch {}
@@ -483,18 +490,18 @@ export const TreasuryAccountDetailsPage = () => {
       key: 'description',
       type: 'text',
       grow: 2,
-      cellClassName: ({ rowData }: any) => (rowData.is_summary ? 'font-black text-center text-text-primary bg-muted/40 text-sm' : ''),
+      cellClassName: ({ rowData }: any) => (rowData.is_summary ? 'font-black text-center text-text-primary text-sm' : ''),
     },
     {
       id: 'debit',
-      title: 'مدين (+)',
+      title: 'مدين',
       key: 'debit',
       type: 'currency',
-      width: 100,
+      width: 110,
       grow: 0,
       cellClassName: ({ rowData }: any) => {
-        if (rowData.is_summary) return 'font-black text-center text-status-success-text bg-muted/40 text-sm';
-        return Number(rowData.debit) > 0 ? 'cashbox-debit-cell' : '';
+        if (rowData.is_summary) return 'ledger-summary-debit text-center';
+        return Number(rowData.debit) > 0 ? 'ledger-debit-cell text-center' : '';
       },
       formatter: (val: number, rowData: any) => {
         if (rowData.is_summary) return val > 0 ? formatNumberOnly(val) : '0.00';
@@ -503,14 +510,14 @@ export const TreasuryAccountDetailsPage = () => {
     },
     {
       id: 'credit',
-      title: 'دائن (-)',
+      title: 'دائن',
       key: 'credit',
       type: 'currency',
-      width: 100,
+      width: 110,
       grow: 0,
       cellClassName: ({ rowData }: any) => {
-        if (rowData.is_summary) return 'font-black text-center text-status-danger-text bg-muted/40 text-sm';
-        return Number(rowData.credit) > 0 ? 'cashbox-credit-cell' : '';
+        if (rowData.is_summary) return 'ledger-summary-credit text-center';
+        return Number(rowData.credit) > 0 ? 'ledger-credit-cell text-center' : '';
       },
       formatter: (val: number, rowData: any) => {
         if (rowData.is_summary) return val > 0 ? formatNumberOnly(val) : '0.00';
@@ -522,15 +529,17 @@ export const TreasuryAccountDetailsPage = () => {
       title: 'الرصيد النهائي',
       key: 'balance',
       type: 'custom',
-      component: FinalBalanceCell as React.ComponentType<CellProps<TransformedVoucherTransaction>>,
-      width: 135,
+      component: (props: any) => <LedgerFinalBalanceCell balance={props.rowData?.balance} />,
+      width: 155,
       grow: 0,
-      // Color lives on the CELL (not the span): the global
-      // `.hulool-cell-content { color: inherit !important }` rule forces the
-      // text to inherit from here, and only unlayered !important CSS beats
-      // the grid's own base cell color. Rules are in the style block below.
-      cellClassName: ({ rowData }: any) =>
-        Number((rowData as any)?.balance ?? 0) < 0 ? 'final-balance-neg' : 'final-balance-pos',
+      cellClassName: ({ rowData }: any) => {
+        const val = Number(rowData?.balance ?? 0);
+        const isNeg = val < 0;
+        if (rowData?.is_summary) {
+          return isNeg ? 'ledger-summary-balance-neg text-center' : 'ledger-summary-balance-pos text-center';
+        }
+        return isNeg ? 'ledger-balance-neg text-center' : 'ledger-balance-pos text-center';
+      },
     },
     {
       id: 'actions',
@@ -538,10 +547,10 @@ export const TreasuryAccountDetailsPage = () => {
       key: 'id',
       type: 'custom',
       component: (props: CellProps<TransformedVoucherTransaction, any>) => {
-        if (props.rowData?.is_summary) return <div className="bg-muted/40 h-full w-full" />;
+        if (props.rowData?.is_summary) return <div className="h-full w-full" />;
         return <ActionsCell rowData={props.rowData} />;
       },
-      width: 180,
+      width: 240,
       grow: 0,
     },
   ];
@@ -697,24 +706,7 @@ export const TreasuryAccountDetailsPage = () => {
           </div>
         </div>
 
-        <div className="treasury-ledger-wrap mx-auto w-[96%] bg-bg-surface rounded-lg border border-border-default overflow-hidden">
-          <style>{`
-            /* Totals row backdrop. Scoped + !important so the grid's zebra/hover
-               rules (unlayered) can never wash it back to white. */
-            .treasury-ledger-wrap .hulool-data-grid .dsg-row.treasury-summary-row .dsg-cell,
-            .treasury-ledger-wrap .hulool-data-grid .dsg-row.treasury-summary-row:hover .dsg-cell {
-              background-color: var(--token-bg-surface-muted) !important;
-            }
-            /* Final-balance text color on the CELL: the span inherits it via the
-               global hulool-cell-content inherit-important rule.
-               Red below zero, green at/above zero. */
-            .treasury-ledger-wrap .hulool-data-grid .dsg-cell.final-balance-pos {
-              color: var(--token-text-success) !important;
-            }
-            .treasury-ledger-wrap .hulool-data-grid .dsg-cell.final-balance-neg {
-              color: var(--token-text-danger) !important;
-            }
-          `}</style>
+        <div className="treasury-ledger-wrap mx-auto w-[96%] max-w-[1600px] bg-bg-surface rounded-xl border border-border-default shadow-xs overflow-hidden">
           <HuloolDataGrid
             data={gridData}
             columns={columns}

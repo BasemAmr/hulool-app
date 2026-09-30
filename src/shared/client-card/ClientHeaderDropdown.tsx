@@ -28,24 +28,32 @@ const ClientHeaderDropdown = ({
   // Determine which actions to show based on role and context
   const showAddInvoice = role === 'admin' && context !== 'admin-employee-profile';
   const showRecordCredit = role === 'admin' && context !== 'admin-employee-profile';
-  const menuItemClassName = 'client-card-dropdown-item cursor-pointer gap-2 justify-end';
+  const menuItemClassName = 'client-card-dropdown-item cursor-pointer gap-2 justify-end font-["Cairo"] text-xs py-2 rounded-none';
   
   return (
     <DropdownMenu modal={false}>
       <DropdownMenuTrigger asChild>
         <button
           className={cn(
-            "client-card-action-button client-card-header-action-button rounded",
-            "transition-all duration-200 cursor-pointer",
-            "focus:outline-none focus:ring-2 focus:ring-white/20"
+            "w-8 h-8 rounded-none flex items-center justify-center",
+            "shadow-2xs transition-all active:scale-95 cursor-pointer",
+            "focus:outline-none focus:ring-2 focus:ring-white/30"
           )}
+          style={{
+            backgroundColor: 'var(--token-card-header-btn-bg)',
+            color: 'var(--token-card-header-btn-text)',
+            borderColor: 'var(--token-card-header-btn-border)',
+            borderWidth: '1px',
+            borderStyle: 'solid',
+          }}
+          title="المزيد من الإجراءات"
         >
-          <MoreVertical size={16} />
+          <MoreVertical size={16} style={{ color: 'var(--token-card-header-btn-text)' }} />
         </button>
       </DropdownMenuTrigger>
       <DropdownMenuContent 
         align="end" 
-        className="client-card-dropdown-panel min-w-[140px] text-[0.85em]"
+        className="client-card-dropdown-panel min-w-[140px] text-[0.85em] font-['Cairo'] shadow-md rounded-none"
         style={{ direction: 'rtl' }}
         sideOffset={5}
       >

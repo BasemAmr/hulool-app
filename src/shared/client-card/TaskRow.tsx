@@ -1,31 +1,12 @@
-// Task Row Component - Single task row in the table
+// Task Row Component - Single task row in the table matching reference design
+// Features equal-width sharp badges, single-line sharp black date, and RTL layout
 
-import { AlertTriangle, MessageSquare, Eye } from 'lucide-react';
-import { Badge } from '@/shared/ui/shadcn/badge';
+import { Eye } from 'lucide-react';
 import TaskActionDropdown from './TaskActionDropdown';
-import { formatDaysElapsed, formatShortDate } from './dateUtils';
+import { formatShortDate } from './dateUtils';
 import type { TaskRowProps } from './types';
 import { cn } from '@/shared/utils/cn';
 import { useTranslation } from 'react-i18next';
-
-// SAR currency icon component
-const SARIcon = () => (
-  <svg
-    width={7.5}
-    height={8.5}
-    viewBox="0 0 1124.14 1256.39"
-    className="mr-0.5 align-middle flex-shrink-0"
-  >
-    <path
-      d="M699.62,1113.02h0c-20.06,44.48-33.32,92.75-38.4,143.37l424.51-90.24c20.06-44.47,33.31-92.75,38.4-143.37l-424.51,90.24Z"
-      fill="currentColor"
-    />
-    <path
-      d="M1085.73,895.8c20.06-44.47,33.32-92.75,38.4-143.37l-330.68,70.33v-135.2l292.27-62.11c20.06-44.47,33.32-92.75,38.4-143.37l-330.68,70.27V66.13c-50.67,28.45-95.67,66.32-132.25,110.99v403.35l-132.25,28.11V0c-50.67,28.44-95.67,66.32-132.25,110.99v525.69l-295.91,62.88c-20.06,44.47-33.33,92.75-38.42,143.37l334.33-71.05v170.26l-358.3,76.14c-20.06,44.47-33.32,92.75-38.4,143.37l375.04-79.7c30.53-6.35,56.77-24.4,73.83-49.24l68.78-101.97v-.02c7.14-10.55,11.3-23.27,11.3-36.97v-149.98l132.25-28.11v270.4l424.53-90.28Z"
-      fill="currentColor"
-    />
-  </svg>
-);
 
 interface TaskRowComponentProps extends TaskRowProps {
   rowRef?: React.Ref<HTMLTableRowElement>;
@@ -33,13 +14,33 @@ interface TaskRowComponentProps extends TaskRowProps {
   isUrgent?: boolean;
 }
 
-const getStatusVariant = (status: string) => {
+const getStatusStyle = (status: string): React.CSSProperties => {
   switch (status) {
-    case 'New': return 'bg-status-warning-bg text-status-warning-text border-status-warning-border';
-    case 'Pending Review': return 'bg-status-info-bg text-status-info-text border-status-info-border';
-    case 'Completed': return 'bg-status-success-bg text-status-success-text border-status-success-border';
-    case 'Deferred': return 'bg-status-neutral-bg text-status-neutral-text border-status-neutral-border';
-    default: return 'bg-status-neutral-bg text-status-neutral-text border-status-neutral-border';
+    case 'New':
+      return {
+        backgroundColor: 'var(--token-status-warning-bg)',
+        color: 'var(--token-status-warning-text)',
+        borderColor: 'var(--token-status-warning-border)',
+      };
+    case 'Pending Review':
+      return {
+        backgroundColor: 'var(--token-status-info-bg)',
+        color: 'var(--token-status-info-text)',
+        borderColor: 'var(--token-status-info-border)',
+      };
+    case 'Completed':
+      return {
+        backgroundColor: 'var(--token-status-success-bg)',
+        color: 'var(--token-status-success-text)',
+        borderColor: 'var(--token-status-success-border)',
+      };
+    case 'Deferred':
+    default:
+      return {
+        backgroundColor: 'var(--token-status-neutral-bg)',
+        color: 'var(--token-status-neutral-text)',
+        borderColor: 'var(--token-status-neutral-border)',
+      };
   }
 };
 
@@ -62,6 +63,28 @@ const TaskRow = ({
     ? `${employeeName}: ${task.task_name || t(`type.${task.type}`)}`
     : (task.task_name || t(`type.${task.type}`));
 
+  // Extract non-urgent tags for the secondary sub-line (e.g. بلدي • رخصة محلية)
+  const nonUrgentTags = (task.tags || [])
+    .filter((tg: any) => (typeof tg === 'object' ? tg.name : tg) !== 'قصوى')
+    .map((tg: any) => typeof tg === 'object' ? tg.name : tg)
+    .filter(Boolean);
+
+  const subDetails = nonUrgentTags.length > 0
+    ? nonUrgentTags.join(' • ')
+    : '';
+
+  // Calculate days elapsed for duration badge
+  const startDate = task.start_date ? new Date(task.start_date) : new Date();
+  const now = new Date();
+  const diffTime = Math.abs(now.getTime() - startDate.getTime());
+  const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+  const durationLabel = `${diffDays} يوم`;
+  const isDurationHigh = diffDays > 30 || isUrgent;
+
+  const rawDate = task.start_date ? task.start_date.split(' ')[0] : '';
+  const displayDate = rawDate || formatShortDate(task.start_date);
+
+  const amountNum = Number(task.amount || 0);
   const showStatus = context === 'admin-employee-filter' || context === 'admin-employee-profile';
   const isEvenRow = rowIndex % 2 === 0;
 
@@ -69,79 +92,131 @@ const TaskRow = ({
     <tr
       ref={rowRef}
       className={cn(
-        "client-card-row task-row transition-colors duration-150 border-b border-border-default last:border-b-0",
-        isUrgent ? "client-card-row--urgent" : isEvenRow ? "client-card-row--even" : ""
+        "task-row transition-colors duration-150 border-b last:border-b-0 font-['Cairo']",
+        "hover:bg-[var(--token-card-table-row-hover-bg)]"
       )}
       data-task-id={task.id}
-      style={isEmployeeTask ? { border: '2px solid var(--token-border-strong)' } : undefined}
+      style={{
+        backgroundColor: isEvenRow ? 'var(--token-card-table-row-even-bg)' : 'transparent',
+        borderBottomColor: 'var(--token-card-table-row-border)',
+        ...(isEmployeeTask ? { outline: '1px solid var(--token-border-strong)' } : {}),
+      }}
     >
-      {/* Task Name */}
-      <td className="text-[1.15em] px-2 py-2.5 text-text-primary border-0 font-extrabold">
-        <div className="flex items-center gap-1">
-          <span className="truncate max-w-[210px] inline-block">
+      {/* 1. Task Name & Sub-details (Rightmost in RTL) */}
+      <td className="px-3.5 py-2.5 text-right border-0 align-middle">
+        <div className="flex flex-col text-right">
+          <span 
+            className="font-bold text-sm leading-tight truncate block" 
+            style={{ color: 'var(--token-text-primary)' }}
+            title={taskDisplayName}
+          >
             {taskDisplayName}
           </span>
-          {isUrgent && (
-            <AlertTriangle size={12} className="text-status-danger-text flex-shrink-0" />
+          {subDetails && (
+            <span 
+              className="text-[11px] font-normal leading-normal truncate block mt-0.5" 
+              style={{ color: 'var(--token-text-muted)' }}
+              title={subDetails}
+            >
+              {subDetails}
+            </span>
           )}
         </div>
       </td>
 
-      {/* Date */}
-      <td className="client-card-secondary text-[1.1em] px-2 py-2.5 border-0 font-bold">
-        {formatShortDate(task.start_date)}
+      {/* 2. Date: Single line with clear black text and sharp badge */}
+      <td className="px-1.5 py-2.5 text-center border-0 align-middle">
+        <span 
+          className="inline-flex items-center justify-center w-full h-6 text-[11px] font-semibold rounded-none whitespace-nowrap tabular-nums font-['Cairo'] shadow-2xs border"
+          style={{
+            backgroundColor: 'var(--token-card-badge-date-bg)',
+            color: 'var(--token-card-badge-date-text)',
+            borderColor: 'var(--token-card-badge-date-border)',
+          }}
+        >
+          {displayDate}
+        </span>
       </td>
 
-      {/* Days Elapsed */}
-      <td className="client-card-secondary text-[1.1em] px-2 py-2.5 border-0 font-bold">
-        {formatDaysElapsed(task.start_date)}
+      {/* 3. Duration Badge: strictly rounded-none, fixed equal width, whitespace-nowrap */}
+      <td className="px-1.5 py-2.5 text-center border-0 align-middle">
+        <span
+          className="inline-flex items-center justify-center w-full h-6 text-[11px] font-semibold rounded-none whitespace-nowrap tabular-nums border font-['Cairo'] shadow-2xs"
+          style={
+            isDurationHigh
+              ? {
+                  backgroundColor: 'var(--token-card-badge-duration-alert-bg)',
+                  color: 'var(--token-card-badge-duration-alert-text)',
+                  borderColor: 'var(--token-card-badge-duration-alert-border)',
+                }
+              : {
+                  backgroundColor: 'var(--token-card-badge-duration-normal-bg)',
+                  color: 'var(--token-card-badge-duration-normal-text)',
+                  borderColor: 'var(--token-card-badge-duration-normal-border)',
+                }
+          }
+        >
+          {durationLabel}
+        </span>
       </td>
 
-      {/* Amount */}
+      {/* 4. Amount Badge: strictly rounded-none, fixed equal width to duration badge, whitespace-nowrap */}
       {showAmount && (
-        <td className="text-[1.1em] px-2 py-2.5 border-0 font-extrabold">
-          <div className="flex items-center text-status-danger-text">
-            <SARIcon />
-            {Number(task.amount).toLocaleString()}
-          </div>
+        <td className="px-1.5 py-2.5 text-center border-0 align-middle">
+          <span
+            className="inline-flex items-center justify-center w-full h-6 text-[11px] font-semibold rounded-none whitespace-nowrap tabular-nums border font-['Cairo'] shadow-2xs"
+            style={
+              amountNum === 0
+                ? {
+                    backgroundColor: 'var(--token-card-badge-amount-zero-bg)',
+                    color: 'var(--token-card-badge-amount-zero-text)',
+                    borderColor: 'var(--token-card-badge-amount-zero-border)',
+                  }
+                : {
+                    backgroundColor: 'var(--token-card-badge-amount-due-bg)',
+                    color: 'var(--token-card-badge-amount-due-text)',
+                    borderColor: 'var(--token-card-badge-amount-due-border)',
+                  }
+            }
+          >
+            {amountNum === 0 ? '0 ر.س' : `${amountNum.toLocaleString()} ر.س`}
+          </span>
         </td>
       )}
 
-      {/* Status */}
+      {/* 5. Status (if shown): strictly rounded-none */}
       {showStatus && (
-        <td className="text-[0.85em] px-2 py-2 border-0 text-center font-medium">
-          <span className={cn(
-            "inline-block px-2 py-0.5 rounded-full text-[0.78em] font-semibold border",
-            getStatusVariant(task.status)
-          )}>
+        <td className="px-1.5 py-2.5 border-0 text-center align-middle">
+          <span 
+            className="inline-flex items-center justify-center w-full h-6 rounded-none text-[11px] font-semibold border whitespace-nowrap tabular-nums font-['Cairo'] shadow-2xs"
+            style={getStatusStyle(task.status)}
+          >
             {t(`status.${task.status}`)}
           </span>
         </td>
       )}
 
-      {/* Actions */}
-      <td className="px-2 py-2 static border-0 min-w-[80px] whitespace-nowrap">
-        <div className="flex gap-1.5 justify-start items-center min-w-fit">
-          {actions.onOpenFollowUp && (
-            <button
-              className="client-card-action-button client-card-action-button--ghost p-1.5 rounded transition-colors duration-150 cursor-pointer"
-              onClick={() => actions.onOpenFollowUp?.(task)}
-              title="التعليقات"
-            >
-              <MessageSquare size={12} className="text-text-secondary" />
-            </button>
-          )}
-
+      {/* 6. Actions (Leftmost in RTL): Subtasks, Dropdown */}
+      <td className="px-2 py-2.5 border-0 align-middle text-left whitespace-nowrap">
+        <div className="flex gap-1 justify-start items-center">
+          {/* Subtasks */}
           {actions.onViewSubtasks && (
             <button
               onClick={() => actions.onViewSubtasks?.(task)}
-              className="client-card-action-button client-card-action-button--info p-1.5 rounded transition-colors duration-150 cursor-pointer"
+              className="w-6 h-6 rounded-none flex items-center justify-center transition-colors cursor-pointer shadow-2xs border"
+              style={{
+                backgroundColor: 'var(--token-card-action-btn-blue-bg)',
+                color: 'var(--token-card-action-btn-blue-text)',
+                borderColor: 'var(--token-card-action-btn-blue-border)',
+              }}
               title="المهام الفرعية"
+              type="button"
             >
-              <Eye size={12} />
+              <Eye size={13} style={{ color: 'inherit' }} />
             </button>
           )}
 
+          {/* 3-dots Menu (Leftmost at the card edge) */}
           <TaskActionDropdown
             task={task}
             role={role}

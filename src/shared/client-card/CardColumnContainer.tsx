@@ -1,8 +1,8 @@
 // CardColumnContainer - Standardized container for client card columns
+// Styled with Mostaql Blue Color Theme and sharp square badges (rounded-none)
 
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { Badge } from '@/shared/ui/shadcn/badge';
 import { cn } from '@/shared/utils/cn';
 
 interface CardColumnContainerProps {
@@ -10,16 +10,9 @@ interface CardColumnContainerProps {
   title: string;
   /** Icon element to show next to title */
   icon?: React.ReactNode;
-  /**
-   * Accent color — used ONLY as a 4px left-border strip on the header.
-   * This replaces the old full-background primaryColor.
-   * Pass a CSS color string e.g. 'var(--token-status-info-text)' or a hex.
-   */
+  /** Accent color — used as a 3px top border strip */
   accentColor?: string;
-  /**
-   * @deprecated Use accentColor instead. Kept for backwards compatibility —
-   * will be ignored and NOT applied as a background.
-   */
+  /** @deprecated Kept for backwards compatibility */
   primaryColor?: string;
   /** Number of items to show in badge */
   itemCount?: number;
@@ -41,7 +34,6 @@ const CardColumnContainer = ({
   title,
   icon,
   accentColor,
-  // primaryColor is accepted but deliberately not applied as background
   itemCount,
   moreLink,
   children,
@@ -53,50 +45,67 @@ const CardColumnContainer = ({
   return (
     <div
       className={cn(
-        "rounded-none border border-border-default flex flex-col overflow-visible relative",
+        "rounded-xl border flex flex-col overflow-visible relative shadow-2xs",
         className
       )}
-      style={{ minHeight }}
+      style={{
+        minHeight,
+        borderColor: 'var(--token-column-container-border)',
+        backgroundColor: 'var(--token-column-container-bg)',
+      }}
     >
-      {/* Header — white background, single left-border accent strip */}
-      <div
-        className="flex justify-center items-center py-2 border-b border-border-default flex-shrink-0 bg-bg-surface"
-        style={accentColor ? { borderLeftWidth: '4px', borderLeftColor: accentColor, borderLeftStyle: 'solid' } : undefined}
+      {/* Header — Clean neutral header (no top border, sharp badge) */}
+      <div 
+        className="flex justify-between items-center px-4 py-2.5 border-b flex-shrink-0 rounded-t-xl"
+        style={{
+          backgroundColor: 'var(--token-column-header-bg)',
+          color: 'var(--token-column-header-text)',
+          borderBottomColor: 'var(--token-column-header-border)',
+        }}
       >
-        <div className="flex justify-center items-center font-bold gap-2">
+        <div className="flex items-center font-bold gap-2">
           {icon && (
-            <span className="text-text-secondary">{icon}</span>
+            <span className="flex-shrink-0" style={{ color: 'var(--token-text-secondary)' }}>{icon}</span>
           )}
           {moreLink ? (
             <Link
               to={moreLink}
-              className="no-underline text-center text-text-primary hover:text-text-brand transition-colors"
+              className="no-underline transition-colors"
+              style={{ color: 'var(--token-column-header-text)' }}
             >
-              <h6 className="mb-0 font-medium text-center">{title}</h6>
+              <h6 className="mb-0 font-bold text-sm tracking-wide font-['Cairo']" style={{ color: 'inherit' }}>{title}</h6>
             </Link>
           ) : (
-            <h6 className="mb-0 font-medium text-center text-text-primary">
+            <h6 className="mb-0 font-bold text-sm tracking-wide font-['Cairo']" style={{ color: 'inherit' }}>
               {title}
             </h6>
           )}
-          {typeof itemCount === 'number' && (
-            <Badge className="bg-background border border-border-default rounded-full px-2 py-0.5 text-text-primary text-xs font-semibold">
-              {itemCount}
-            </Badge>
-          )}
         </div>
+
+        {typeof itemCount === 'number' && (
+          <span 
+            className="rounded-none px-2 py-0.5 text-xs font-semibold tabular-nums font-['Cairo'] shadow-2xs border"
+            style={{
+              backgroundColor: 'var(--token-column-badge-bg)',
+              color: 'var(--token-column-badge-text)',
+              borderColor: 'var(--token-column-badge-border)',
+            }}
+          >
+            {itemCount}
+          </span>
+        )}
       </div>
 
       {/* Scrollable Content */}
       <div
         className={cn(
-          "p-0 flex-1 z-0 overflow-visible",
+          "p-2 flex-1 z-0 overflow-visible",
           isEmpty && "min-h-[200px]"
         )}
       >
         {isEmpty ? (
           <div className="py-12 text-center">
-            <p className="text-text-muted mb-0 text-sm">{emptyMessage}</p>
+            <p className="text-text-muted mb-0 text-sm font-['Cairo']">{emptyMessage}</p>
           </div>
         ) : (
           children
@@ -105,10 +114,17 @@ const CardColumnContainer = ({
 
       {/* Fixed Footer - optional */}
       {moreLink && (
-        <div className="py-2 border-t border-border-default flex-shrink-0 bg-background">
+        <div 
+          className="py-2 border-t flex-shrink-0 rounded-b-xl"
+          style={{
+            borderTopColor: 'var(--token-column-container-border)',
+            backgroundColor: 'var(--token-bg-surface)',
+          }}
+        >
           <Link
             to={moreLink}
-            className="block w-full text-center font-medium py-1.5 rounded text-text-secondary hover:text-text-primary transition-colors text-sm"
+            className="block w-full text-center font-medium py-1 rounded transition-colors text-xs font-['Cairo']"
+            style={{ color: 'var(--token-text-secondary)' }}
           >
             عرض المزيد
           </Link>
