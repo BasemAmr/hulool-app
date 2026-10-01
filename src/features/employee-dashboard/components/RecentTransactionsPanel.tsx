@@ -173,7 +173,7 @@ const RecentTransactionsPanel: React.FC<RecentTransactionsPanelProps> = ({
   const yearOptions = Array.from({ length: 11 }, (_, i) => 2020 + i);
 
   return (
-    <div className="rounded-lg border border-border bg-card shadow-sm h-full flex flex-col">
+    <div className="rounded-lg border border-border bg-card shadow-sm h-full flex flex-col" dir="rtl">
       {/* Header — single left-border accent, white background */}
       <div className="px-4 py-3 border-b border-border border-l-4 border-l-primary bg-background flex-shrink-0">
         <div className="flex justify-between items-center">
@@ -227,8 +227,8 @@ const RecentTransactionsPanel: React.FC<RecentTransactionsPanelProps> = ({
             <table ref={tableRef} className="w-full text-sm mb-0 border-collapse">
               <thead className="sticky top-0 z-10 bg-background">
                 <tr>
-                  <th className="px-2 py-2 border border-border-strong text-start font-bold text-base text-text-primary" style={{ width: `${maxClientWidth + 40}px`, minWidth: `${maxClientWidth + 40}px` }}>اسم العميل</th>
-                  <th className="px-2 py-2 border border-border-strong text-start font-bold text-base text-text-primary">البيان</th>
+                  <th className="px-2 py-2 border border-border-strong text-right text-start font-bold text-base text-text-primary" style={{ width: `${maxClientWidth + 40}px`, minWidth: `${maxClientWidth + 40}px` }}>اسم العميل</th>
+                  <th className="px-2 py-2 border border-border-strong text-right text-start font-bold text-base text-text-primary">البيان</th>
                   <th className="px-2 py-2 border border-border-strong text-center font-bold text-base text-text-primary" style={{ width: '70px', minWidth: '70px' }}>المدين</th>
                   <th className="px-2 py-2 border border-border-strong text-center font-bold text-base text-text-primary" style={{ width: '70px', minWidth: '70px' }}>الدائن</th>
                   <th className="px-2 py-2 border border-border-strong text-center font-bold text-base text-text-primary" style={{ width: '80px', minWidth: '80px' }}>الرصيد</th>
@@ -238,8 +238,8 @@ const RecentTransactionsPanel: React.FC<RecentTransactionsPanelProps> = ({
               <tbody>
                 {/* Opening Balance Row */}
                 <tr className="bg-transparent font-bold">
-                  <td className="px-2 py-2 border border-border-strong text-start font-bold text-base text-text-primary" style={{ width: `${maxClientWidth + 40}px`, minWidth: `${maxClientWidth + 40}px` }}>-</td>
-                  <td className="px-2 py-2 border border-border-strong text-start font-bold text-base text-text-primary">
+                  <td className="px-2 py-2 border border-border-strong text-right text-start font-bold text-base text-text-primary" style={{ width: `${maxClientWidth + 40}px`, minWidth: `${maxClientWidth + 40}px` }}>-</td>
+                  <td className="px-2 py-2 border border-border-strong text-right text-start font-bold text-base text-text-primary">
                     {opening_balance.description}
                   </td>
                   <td className="px-2 py-2 border border-border-strong text-center font-bold text-base employee-debit-cell">
@@ -267,12 +267,12 @@ const RecentTransactionsPanel: React.FC<RecentTransactionsPanelProps> = ({
                         ref={(el) => {
                           if (el) clientCellsRef.current.set(transaction.id, el);
                         }}
-                        className="px-2 py-1.5 border border-border-default text-start font-semibold text-sm text-text-primary"
+                        className="px-2 py-1.5 border border-border-default text-right text-start font-semibold text-xs text-text-primary"
                         style={{ width: `${maxClientWidth + 40}px`, minWidth: `${maxClientWidth + 40}px` }}
                       >
                         {clientDisplay}
                       </td>
-                      <td className="px-2 py-1.5 border border-border-default text-start text-sm text-text-secondary">
+                      <td className="px-2 py-1.5 border border-border-default text-right text-start text-sm text-text-secondary">
                         {transaction.description}
                       </td>
                       {/* Debit: money flowing to employee (debit > 0) */}
@@ -313,8 +313,8 @@ const RecentTransactionsPanel: React.FC<RecentTransactionsPanelProps> = ({
                 )}
                 {/* Totals Footer Row */}
                 <tr className="bg-background border-t-2 border-border-strong">
-                  <td className="px-2 py-2 border border-border-default text-center font-semibold text-sm text-text-primary" style={{ width: `${maxClientWidth + 40}px`, minWidth: `${maxClientWidth + 40}px` }}>-</td>
-                  <td className="px-2 py-2 border border-border-default text-center font-semibold text-sm text-text-primary">الإجماليات</td>
+                  <td className="px-2 py-2 border border-border-default text-right text-start font-semibold text-sm text-text-primary" style={{ width: `${maxClientWidth + 40}px`, minWidth: `${maxClientWidth + 40}px` }}>-</td>
+                  <td className="px-2 py-2 border border-border-default text-right text-start font-semibold text-sm text-text-primary">الإجماليات</td>
                   <td className="px-2 py-2 border border-border-default text-center font-semibold text-sm employee-debit-cell">
                     {formatCurrency(summary.total_to_date_debit ?? 0)}
                   </td>

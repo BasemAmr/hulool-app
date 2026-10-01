@@ -176,7 +176,14 @@ export const useAssignTask = () => {
  */
 export const useGetEmployeeTransactions = (
   employeeId: number,
-  params?: { page?: number; per_page?: number }
+  params?: {
+    page?: number;
+    per_page?: number;
+    start_date?: string;
+    end_date?: string;
+    transaction_type?: string;
+    search?: string;
+  }
 ) => {
   return useQuery({
     queryKey: ['employees', employeeId, 'transactions', params],

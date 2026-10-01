@@ -8,12 +8,13 @@
  * balance_after field from the API response.
  */
 
-import React, { useMemo, useEffect, useRef } from 'react';
+import React, { useMemo, useEffect, useRef, useState, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import type {
   FinancialTransaction,
   Client,
-  Invoice
+  Invoice,
+  CashBoxVoucher
 } from '@/api/types';
 import TransactionEditModal from '@/features/financials/modals/TransactionEditModal';
 import TransactionDeleteModal from '@/features/employees/modals/TransactionDeleteModal';
@@ -27,7 +28,11 @@ import {
   FileText,
   Edit3,
   Trash2,
-  MessageSquare
+  MessageSquare,
+  Search,
+  X,
+  RotateCcw,
+  Eye
 } from 'lucide-react';
 import { formatDate } from '@/shared/utils/dateUtils';
 import { useModalStore } from '@/shared/stores/modalStore';
@@ -38,9 +43,63 @@ import HuloolDataGrid from '@/shared/grid/HuloolDataGrid';
 import { LedgerFinalBalanceCell } from '@/shared/grid';
 import type { HuloolGridColumn } from '@/shared/grid';
 import type { CellProps } from 'react-datasheet-grid';
+import DatePicker from 'react-datepicker';
+import 'react-datepicker/dist/react-datepicker.css';
+import { arSA } from 'date-fns/locale';
+import {
+  ShadcnSelect as Select,
+  ShadcnSelectContent as SelectContent,
+  ShadcnSelectItem as SelectItem,
+  ShadcnSelectTrigger as SelectTrigger,
+  ShadcnSelectValue as SelectValue,
+} from '@/shared/ui/shadcn/select';
 
 const neutralActionButtonClass = 'inline-flex items-center justify-center rounded p-1.5 text-text-secondary hover:text-text-primary cursor-pointer transition-colors duration-150';
 const destructiveActionButtonClass = 'inline-flex items-center justify-center rounded p-1.5 text-text-secondary hover:text-text-danger cursor-pointer transition-colors duration-150';
+
+export interface FilterState {
+  start_date: string;
+  end_date: string;
+  type: string;
+  search: string;
+}
+
+const ALL_TYPES_VALUE = '__all__';
+
+function parseDate(value: string): Date | null {
+  if (!value) return null;
+  const d = new Date(value);
+  return isNaN(d.getTime()) ? null : d;
+}
+
+function toISODate(date: Date | null): string {
+  if (!date) return '';
+  return date.toLocaleDateString('en-CA');
+}
+
+const filterDateStyles = `
+  .header-inline-filters .react-datepicker__input-container input {
+    height: 2.25rem;
+    padding-inline: 0.6rem;
+    font-size: 0.85rem;
+    border: 1px solid var(--color-border);
+    border-radius: 0.5rem;
+    background-color: var(--color-background);
+    color: var(--color-foreground);
+    outline: none;
+    width: 105px;
+    box-sizing: border-box;
+    font-family: inherit;
+    direction: rtl;
+    text-align: right;
+  }
+  .header-inline-filters .react-datepicker-wrapper {
+    width: auto;
+  }
+  .header-inline-filters .react-datepicker-popper {
+    z-index: 60 !important;
+  }
+`;
 
 interface AccountLedgerTableProps {
   client: Client;
@@ -92,6 +151,36 @@ const getBalance = (tx: FinancialTransaction): number => {
   const parsed = typeof balance === 'string' ? parseFloat(balance) : balance;
   return isNaN(parsed) ? 0 : parsed;
 };
+
+function toClientLedgerVoucher(tx: FinancialTransaction, client: Client): CashBoxVoucher {
+  const debit = getDebitAmount(tx);
+  const credit = getCreditAmount(tx);
+  const rawDateStr = tx.transaction_date || tx.created_at || '';
+  const date = rawDateStr.includes(' ') ? rawDateStr.replace(' ', 'T') : rawDateStr;
+  const isDebit = debit > 0;
+
+  return {
+    id: tx.id,
+    account_id: client.id,
+    account_type: 'client' as any,
+    transaction_type: tx.transaction_type as any,
+    type: (isDebit ? 'CASHBOX_RECEIPT' : 'CASHBOX_PAYMENT') as any,
+    date,
+    category: tx.transaction_type,
+    description: tx.description,
+    debit,
+    credit,
+    balance: getBalance(tx),
+    related_transaction_id: (tx as any).related_transaction_id ?? 0,
+    related_object_type: tx.related_object_type ?? '',
+    related_object_id: tx.related_object_id ?? 0,
+    created_by: tx.created_by ?? 0,
+    creator_name: (tx as any).creator_name || '',
+    creator_role_label: (tx as any).creator_role_label || '',
+    debit_account_name: (tx as any).debit_account_name || (isDebit ? client.name : '—'),
+    credit_account_name: (tx as any).credit_account_name || (!isDebit ? client.name : '—'),
+  };
+}
 
 // ================================
 // CUSTOM CELL COMPONENTS
@@ -298,6 +387,13 @@ const ActionsCell = React.memo(({ rowData, columnData }: CellProps<FinancialTran
     onEditInv?.(invoice);
   };
 
+  const handleView = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (client) {
+      openModal?.('voucherDetails', { voucher: toClientLedgerVoucher(rowData, client) });
+    }
+  };
+
   return (
     <div
       style={{
@@ -311,6 +407,16 @@ const ActionsCell = React.memo(({ rowData, columnData }: CellProps<FinancialTran
       onMouseDown={(e) => e.stopPropagation()}
       onClick={(e) => e.stopPropagation()}
     >
+      {/* View Details Action - Available for both Employee and Admin */}
+      <button
+        type="button"
+        onClick={handleView}
+        title="عرض تفاصيل الحركة"
+        className={neutralActionButtonClass}
+      >
+        <Eye size={14} />
+      </button>
+
       {isEmployeeView ? (
         <>
           {rowData.is_payable && (
@@ -355,14 +461,14 @@ const ActionsCell = React.memo(({ rowData, columnData }: CellProps<FinancialTran
               <CreditCard size={14} />
             </button>
           )}
-          <button type="button" onClick={handleEditTx} className={neutralActionButtonClass} title="Edit Transaction">
+          <button type="button" onClick={handleEditTx} className={neutralActionButtonClass} title="تعديل الحركة">
             <Edit3 size={14} />
           </button>
-          <button type="button" onClick={handleDeleteTx} className={destructiveActionButtonClass} title="Delete Transaction">
+          <button type="button" onClick={handleDeleteTx} className={destructiveActionButtonClass} title="حذف الحركة">
             <Trash2 size={14} />
           </button>
           {rowData.related_object_type === 'invoice' && (
-            <button type="button" onClick={handleEditInv} className={neutralActionButtonClass} title="Edit Invoice">
+            <button type="button" onClick={handleEditInv} className={neutralActionButtonClass} title="تعديل الفاتورة">
               <FileText size={14} />
             </button>
           )}
@@ -392,44 +498,99 @@ const AccountLedgerTable: React.FC<AccountLedgerTableProps> = ({
   const [selectedInvoice, setSelectedInvoice] = React.useState<any>(null);
   const [modalType, setModalType] = React.useState<'editTx' | 'deleteTx' | 'editInv' | null>(null);
 
-  // Fetch account data
+  const [page, setPage] = useState(1);
+  const [allTransactions, setAllTransactions] = useState<FinancialTransaction[]>([]);
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const [localSearch, setLocalSearch] = useState('');
+  const [filters, setFilters] = useState<FilterState>({
+    start_date: '',
+    end_date: '',
+    type: filter && filter !== 'all' ? filter : '',
+    search: '',
+  });
+
+  // Debounce search by 350ms
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      if (localSearch !== filters.search) {
+        setFilters(prev => ({ ...prev, search: localSearch }));
+        setPage(1);
+      }
+    }, 350);
+    return () => clearTimeout(handler);
+  }, [localSearch, filters.search]);
+
+  // Keep filters.type updated if prop filter changes
+  useEffect(() => {
+    if (filter && filter !== 'all') {
+      setFilters(prev => ({ ...prev, type: filter }));
+      setPage(1);
+    }
+  }, [filter]);
+
+  // Fetch account data with server-side filters
   const {
     data: historyData,
     isLoading: isLoadingHistory,
     error: historyError
-  } = useGetAccountHistory('client', client.id);
+  } = useGetAccountHistory('client', client.id, page, {
+    start_date: filters.start_date,
+    end_date: filters.end_date,
+    transaction_type: filters.type,
+    search: filters.search,
+  });
 
   const {
     data: payableInvoices
   } = useGetPayableInvoices(client.id);
 
-  const isLoading = isLoadingHistory;
+  // Accumulate transactions for pagination / infinite scroll
+  useEffect(() => {
+    if (historyData?.transactions) {
+      const rawTxns = historyData.transactions;
+      setAllTransactions(prev => {
+        if (page === 1) return rawTxns;
+        const existingIds = new Set(prev.map(t => t.id));
+        const newTxns = rawTxns.filter(t => !existingIds.has(t.id));
+        return [...prev, ...newTxns];
+      });
+    }
+  }, [historyData?.transactions, page]);
 
-  // Filter transactions
-  const filteredTransactions = useMemo(() => {
-    if (!historyData?.transactions) return [];
+  const totalPages = historyData?.pagination?.total_pages || 1;
+  const hasMore = page < totalPages;
+  const totalRecords = historyData?.pagination?.total || allTransactions.length;
 
-    return historyData.transactions.filter(tx => {
-      switch (filter) {
-        case 'invoices':
-          return tx.transaction_type === 'INVOICE_CREATED' || tx.transaction_type === 'INVOICE_GENERATED';
-        case 'payments':
-          return tx.transaction_type === 'PAYMENT_RECEIVED';
-        case 'credits':
-          return tx.transaction_type === 'CREDIT_APPLIED' || tx.transaction_type === 'CREDIT_RECEIVED' || tx.transaction_type === 'CREDIT_ALLOCATED';
-        default:
-          return true;
-      }
-    });
-  }, [historyData?.transactions, filter]);
+  const loadMore = useCallback(() => {
+    if (hasMore && !isLoadingHistory) setPage(p => p + 1);
+  }, [hasMore, isLoadingHistory]);
 
-  // Calculate totals
+  useEffect(() => {
+    const sentinel = scrollRef.current;
+    if (!sentinel) return;
+    const observer = new IntersectionObserver(
+      (entries) => { if (entries[0].isIntersecting && hasMore && !isLoadingHistory) loadMore(); },
+      { threshold: 0.1 }
+    );
+    observer.observe(sentinel);
+    return () => observer.disconnect();
+  }, [hasMore, isLoadingHistory, loadMore]);
+
+  const isLoading = isLoadingHistory && page === 1 && allTransactions.length === 0;
+
+  // Calculate totals from backend statistics if available, or fall back to accumulated transactions
   const totals = useMemo(() => {
-    const totalDebit = filteredTransactions.reduce((sum, tx) => sum + getDebitAmount(tx), 0);
-    const totalCredit = filteredTransactions.reduce((sum, tx) => sum + getCreditAmount(tx), 0);
-    const balance = historyData?.balance ?? (totalDebit - totalCredit);
+    const totalDebit = historyData?.total_debits !== undefined
+      ? Number(historyData.total_debits)
+      : allTransactions.reduce((sum, tx) => sum + getDebitAmount(tx), 0);
+    const totalCredit = historyData?.total_credits !== undefined
+      ? Number(historyData.total_credits)
+      : allTransactions.reduce((sum, tx) => sum + getCreditAmount(tx), 0);
+    const balance = historyData?.balance !== undefined
+      ? Number(historyData.balance)
+      : (totalDebit - totalCredit);
     return { totalDebit, totalCredit, balance };
-  }, [filteredTransactions, historyData?.balance]);
+  }, [historyData?.total_debits, historyData?.total_credits, historyData?.balance, allTransactions]);
 
   // Create a map of payable invoices for O(1) lookup
   const payableMap = useMemo(() => {
@@ -444,7 +605,7 @@ const AccountLedgerTable: React.FC<AccountLedgerTableProps> = ({
 
   // Pre-calculate is_payable flag for each transaction to ensure grid updates
   const transactionsWithFlags = useMemo(() => {
-    const list = filteredTransactions.map(tx => {
+    const list = allTransactions.map(tx => {
       const relatedId = tx.related_object_id ?? (tx as any).related_id ?? (tx as any).related_object_reference;
       const relatedType = String(tx.related_object_type ?? '').toLowerCase();
       const key = String(relatedId ?? '');
@@ -494,7 +655,7 @@ const AccountLedgerTable: React.FC<AccountLedgerTableProps> = ({
     }
 
     return list;
-  }, [filteredTransactions, payableMap, highlightInvoiceId, totals]);
+  }, [allTransactions, payableMap, highlightInvoiceId, totals]);
 
   // Generate a version key to force grid re-render when payable status changes
   const payableVersion = useMemo(() => {
@@ -586,7 +747,7 @@ const AccountLedgerTable: React.FC<AccountLedgerTableProps> = ({
         onEditInv: (inv: any) => { setSelectedInvoice(inv); setModalType('editInv'); },
         isEmployeeView
       },
-      width: 120,
+      width: isEmployeeView ? 120 : 160,
       grow: 0,
     },
   ], [hideAmounts, client, payableMap, openModal, isEmployeeView]);
@@ -614,8 +775,11 @@ const AccountLedgerTable: React.FC<AccountLedgerTableProps> = ({
     );
   }
 
+  const hasActiveFilters = Boolean(filters.start_date || filters.end_date || filters.type || filters.search);
+
   return (
-    <div className="account-ledger-wrapper mx-auto w-[96%] max-w-[1600px] my-3 bg-bg-surface rounded-xl border border-border-default shadow-xs overflow-hidden" ref={tableRef}>
+    <div className="account-ledger-wrapper mx-auto w-[96%] max-w-[1600px] my-3 space-y-3" ref={tableRef}>
+      <style>{filterDateStyles}</style>
       <style>{`
         /* Highlighted transaction row - use outline for reliable border */
         .hulool-data-grid .dsg-row.transaction-row-highlighted {
@@ -647,21 +811,175 @@ const AccountLedgerTable: React.FC<AccountLedgerTableProps> = ({
         }
       `}</style>
 
+      {/* Unified Compact Filters Toolbar Card */}
+      <div className="bg-bg-surface border border-border-default rounded-xl p-3 shadow-xs">
+        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3">
+          
+          {/* Right: Icon / Title / Count */}
+          <div className="flex items-center gap-2.5 shrink-0 min-w-0">
+            <div className="shrink-0 text-primary">
+              <Receipt size={20} />
+            </div>
+            <div className="min-w-0">
+              <span className="text-sm font-bold text-text-primary">كشف الحساب المالي</span>
+              {totalRecords > 0 && (
+                <span className="text-xs text-text-secondary mr-2 font-normal">
+                  ({totalRecords} حركة)
+                </span>
+              )}
+            </div>
+          </div>
+
+          {/* Center: Inline Filter Fields */}
+          <div className="header-inline-filters flex flex-wrap items-center gap-2 lg:flex-1 lg:justify-center min-w-0">
+            {/* Search */}
+            <div className="relative w-48">
+              <Search size={14} className="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 text-text-muted" />
+              <input
+                type="text"
+                dir="rtl"
+                className="base-input h-9 w-full rounded-lg border-border-default bg-background/50 px-2 pl-8 text-right text-xs shadow-sm transition-all placeholder:text-text-muted/70 focus:bg-background focus:ring-1 focus:ring-primary/30"
+                placeholder="بحث في البيان، الهاتف، المعرّف..."
+                value={localSearch}
+                onChange={e => setLocalSearch(e.target.value)}
+              />
+              {localSearch && (
+                <button
+                  type="button"
+                  className="absolute left-1.5 top-1/2 -translate-y-1/2 rounded-full p-1 text-text-muted hover:bg-muted hover:text-text-primary"
+                  onClick={() => setLocalSearch('')}
+                >
+                  <X size={11} />
+                </button>
+              )}
+            </div>
+
+            {/* Start Date */}
+            <DatePicker
+              selected={parseDate(filters.start_date)}
+              onChange={(date: Date | null) => {
+                setFilters(prev => ({ ...prev, start_date: toISODate(date) }));
+                setPage(1);
+              }}
+              dateFormat="yyyy-MM-dd"
+              placeholderText="من تاريخ"
+              locale={arSA}
+              portalId="client-ledger-datepicker-portal"
+              showYearDropdown
+              scrollableYearDropdown
+              dropdownMode="select"
+              calendarStartDay={6}
+            />
+
+            {/* End Date */}
+            <DatePicker
+              selected={parseDate(filters.end_date)}
+              onChange={(date: Date | null) => {
+                setFilters(prev => ({ ...prev, end_date: toISODate(date) }));
+                setPage(1);
+              }}
+              dateFormat="yyyy-MM-dd"
+              placeholderText="إلى تاريخ"
+              locale={arSA}
+              portalId="client-ledger-datepicker-portal"
+              showYearDropdown
+              scrollableYearDropdown
+              dropdownMode="select"
+              calendarStartDay={6}
+            />
+
+            {/* Type Select */}
+            <div className="w-32 shrink-0">
+              <Select
+                value={filters.type || ALL_TYPES_VALUE}
+                onValueChange={value => {
+                  setFilters(prev => ({ ...prev, type: value === ALL_TYPES_VALUE ? '' : value }));
+                  setPage(1);
+                }}
+              >
+                <SelectTrigger className="h-9 w-full rounded-lg border-border-default bg-background/50 text-xs font-medium shadow-sm transition-all hover:bg-background focus:ring-1 focus:ring-primary/20">
+                  <SelectValue placeholder="النوع" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value={ALL_TYPES_VALUE}>كل الحركات</SelectItem>
+                  <SelectItem value="receipt">سند قبض</SelectItem>
+                  <SelectItem value="payment">سند صرف</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Reset */}
+            {hasActiveFilters && (
+              <button
+                type="button"
+                onClick={() => {
+                  setLocalSearch('');
+                  setFilters({ start_date: '', end_date: '', type: '', search: '' });
+                  setPage(1);
+                }}
+                className="flex h-9 w-9 items-center justify-center rounded-lg border border-dashed border-border-default bg-background hover:bg-primary/5 hover:text-text-primary transition-all active:scale-95 text-text-secondary"
+                title="إعادة ضبط الفلاتر"
+              >
+                <RotateCcw size={14} />
+              </button>
+            )}
+          </div>
+
+          {/* Left: Final Balance Display */}
+          <div className="flex items-center gap-3 shrink-0 lg:border-s lg:border-border-default lg:ps-4">
+            <div className="text-left">
+              <p className="text-[10px] text-text-secondary leading-none">الرصيد النهائي</p>
+              <p className={`text-base font-black mt-0.5 whitespace-nowrap ${totals.balance < 0 ? 'text-status-danger-text' : 'text-text-brand'}`}>
+                {hideAmounts ? '***' : formatCurrency(totals.balance)}
+              </p>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
       {/* Transactions Grid */}
-      <HuloolDataGrid
-        key={payableVersion}
-        data={transactionsWithFlags}
-        columns={columns}
-        isLoading={isLoading}
-        emptyMessage="لا توجد حركات مالية"
-        showId={false}
-        height="auto"
-        minHeight={300}
-        rowClassName={(row: any) => {
-          if (row.is_summary) return 'ledger-summary-row';
-          return row.is_highlighted ? 'transaction-row-highlighted' : '';
-        }}
-      />
+      <div className="bg-bg-surface rounded-xl border border-border-default shadow-xs overflow-hidden">
+        <HuloolDataGrid
+          key={payableVersion}
+          data={transactionsWithFlags}
+          columns={columns}
+          isLoading={isLoading}
+          emptyMessage="لا توجد حركات مالية"
+          showId={false}
+          height="auto"
+          minHeight={300}
+          rowClassName={(row: any) => {
+            if (row.is_summary) return 'ledger-summary-row';
+            return row.is_highlighted ? 'transaction-row-highlighted' : '';
+          }}
+        />
+
+        {hasMore && (
+          <div ref={scrollRef} className="flex justify-center items-center py-3 border-t border-border-default">
+            {isLoadingHistory && page > 1 ? (
+              <div className="flex items-center gap-2 text-sm text-text-secondary">
+                <svg className="animate-spin h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                </svg>
+                جاري تحميل المزيد...
+              </div>
+            ) : (
+              <div className="text-sm text-text-secondary">مرر للأسفل لتحميل المزيد</div>
+            )}
+          </div>
+        )}
+
+        {allTransactions.length > 0 && (
+          <div className="flex justify-center items-center py-2 border-t border-border-default bg-bg-surface-muted/30">
+            <div className="text-xs text-text-secondary">
+              عرض {allTransactions.length} من {totalRecords} حركة
+            </div>
+          </div>
+        )}
+      </div>
+
       {/* Modals */}
       {modalType === 'editTx' && selectedTransaction && (
         <TransactionEditModal
