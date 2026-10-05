@@ -126,7 +126,7 @@ const RecentClientsReceivablesPanel: React.FC<RecentClientsReceivablesPanelProps
   );
 
   return (
-    <div className="rounded-lg border border-border bg-card shadow-sm h-full flex flex-col">
+    <div className="rounded-lg border border-border bg-card shadow-sm h-full flex flex-col" dir="rtl">
       {/* Header — single left-border accent, white background */}
       <div className="px-4 py-3 border-b border-border border-l-4 border-l-primary bg-background flex-shrink-0 flex items-center justify-center">
         <h6 className="mb-0 font-semibold text-text-primary text-sm">المستحقات عند العملاء</h6>
@@ -147,10 +147,10 @@ const RecentClientsReceivablesPanel: React.FC<RecentClientsReceivablesPanelProps
             <table className="w-full text-sm mb-0 border-collapse">
               <thead className="sticky top-0 z-10 bg-background">
                 <tr>
-                  <th className="px-2.5 py-2.5 border border-border-strong text-center font-extrabold text-base text-text-primary">
+                  <th className="px-2.5 py-2.5 border border-border-strong text-right text-start font-extrabold text-base text-text-primary">
                     العميل
                   </th>
-                  <th className="px-2.5 py-2.5 border border-border-strong text-center font-extrabold text-base text-text-primary">
+                  <th className="px-2.5 py-2.5 border border-border-strong text-right text-start font-extrabold text-base text-text-primary">
                     الوصف
                   </th>
                   <th className="px-2.5 py-2.5 border border-border-strong text-center font-extrabold text-base text-text-primary">
@@ -166,10 +166,10 @@ const RecentClientsReceivablesPanel: React.FC<RecentClientsReceivablesPanelProps
                   const rowBg = index % 2 === 0 ? 'bg-bg-surface' : 'bg-bg-surface-hover';
                   return (
                     <tr key={invoice.id} className={`${rowBg} hover:bg-background transition-colors`}>
-                      <td className="px-2.5 py-2.5 border border-border-default text-center font-extrabold text-base text-text-primary overflow-hidden text-ellipsis whitespace-nowrap" style={{ maxWidth: '140px' }} title={invoice.client_name}>
+                      <td className="px-2.5 py-2.5 border border-border-default text-right text-start font-bold text-xs text-text-primary overflow-hidden text-ellipsis whitespace-nowrap" style={{ maxWidth: '140px' }} title={invoice.client_name}>
                         {invoice.client_name}
                       </td>
-                      <td className="px-2.5 py-2.5 border border-border-default text-center font-bold text-base text-text-secondary overflow-hidden text-ellipsis whitespace-nowrap">
+                      <td className="px-2.5 py-2.5 border border-border-default text-right text-start font-medium text-xs text-text-secondary overflow-hidden text-ellipsis whitespace-nowrap" title={invoice.description || invoice.task_name}>
                         {invoice.description || invoice.task_name}
                       </td>
                       <td className="px-2.5 py-2.5 border border-border-default text-center font-extrabold text-base text-status-danger-text">
@@ -222,7 +222,7 @@ const RecentClientsReceivablesPanel: React.FC<RecentClientsReceivablesPanelProps
               </tbody>
               <tfoot className="sticky bottom-0 bg-background z-10">
                 <tr className="border-t-2 border-border-strong font-extrabold bg-muted/60">
-                  <td colSpan={2} className="px-2.5 py-2 border border-border-strong text-center text-text-primary text-sm">
+                  <td colSpan={2} className="px-2.5 py-2 border border-border-strong text-right text-start text-text-primary text-sm">
                     اجمالي المبالغ المستحقة:
                   </td>
                   <td className="px-2.5 py-2 border border-border-strong text-center text-status-danger-text text-base dir-ltr">
