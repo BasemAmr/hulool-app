@@ -31,8 +31,20 @@ import {
   Loader2,
   CheckCircle2,
   CircleDashed,
+  AlertCircle,
 } from 'lucide-react';
 import type { AccountType } from '@/api/types';
+
+// ========================================
+// Configuration / Feature Flags
+// ========================================
+
+/**
+ * Feature flag: Disallow outgoing treasury transactions (صرف / from) if
+ * the resulting balance after the transaction would become negative.
+ * Set to false to disable this check and allow overdrafts.
+ */
+export const DISALLOW_NEGATIVE_TREASURY_BALANCE = true;
 
 // ========================================
 // Types
@@ -244,20 +256,65 @@ const UnifiedTransactionModal = () => {
 
   const displayDescription = description + autoDescription;
 
+  // ---- Treasury Negative Balance Validation (Client-side calculated) ----
+  const parsedAmount = parseFloat(amount) || 0;
+
+  // Check if FROM side is a treasury account (cashbox, bank, other treasury) being debited/paid out (صرف)
+  const isFromTreasury =
+    resolvedFromType === 'treasury' &&
+    fromPicker.accountId !== '' &&
+    fromPicker.kind !== 'settlement';
+
+  const fromTreasuryAccount = useMemo(() => {
+    if (!isFromTreasury || !treasuryData?.length) return null;
+    return treasuryData.find((t) => String(t.id) === String(fromPicker.accountId)) ?? null;
+  }, [isFromTreasury, treasuryData, fromPicker.accountId]);
+
+  const currentFromBalance = fromTreasuryAccount
+    ? (typeof fromTreasuryAccount.balance === 'number'
+        ? fromTreasuryAccount.balance
+        : parseFloat(String(fromTreasuryAccount.balance ?? 0)))
+    : null;
+
+  // Projected balance when money is taken out of this treasury account
+  const projectedFromBalance =
+    currentFromBalance !== null ? currentFromBalance - parsedAmount : null;
+
+  // Disallow if feature flag is active AND projected balance would drop below zero (< 0)
+  const isNegativeTreasuryDisallowed = Boolean(
+    DISALLOW_NEGATIVE_TREASURY_BALANCE &&
+    isFromTreasury &&
+    projectedFromBalance !== null &&
+    parsedAmount > 0 &&
+    projectedFromBalance < 0
+  );
+
   const accountsReady =
     fromPicker.accountId !== '' && toPicker.accountId !== '' &&
     resolvedFromType !== null && resolvedToType !== null;
   const detailsReady =
-    amount !== '' && parseFloat(amount) > 0 && displayDescription.trim() !== '';
+    amount !== '' && parsedAmount > 0 && displayDescription.trim() !== '';
 
   // Live settlement guard — product decision is to silently adopt the derived
   // direction and block save ONLY when both sides are settlement (invalid).
-  // Viewpoint disagreement never blocks; indeterminate is incomplete, not an error.
-  const canSubmit = accountsReady && detailsReady && liveDirection !== 'invalid';
+  // Also blocked if negative treasury balance is disallowed.
+  const canSubmit =
+    accountsReady &&
+    detailsReady &&
+    liveDirection !== 'invalid' &&
+    !isNegativeTreasuryDisallowed;
 
   // ---- Submit ----
   const handleSubmit = async () => {
-    if (!resolvedFromType || !resolvedToType || !fromPicker.accountId || !toPicker.accountId || !amount || !displayDescription.trim()) {
+    if (
+      !resolvedFromType ||
+      !resolvedToType ||
+      !fromPicker.accountId ||
+      !toPicker.accountId ||
+      !amount ||
+      !displayDescription.trim() ||
+      isNegativeTreasuryDisallowed
+    ) {
       return;
     }
     // Both-settlement is the only settlement selection that blocks save.
@@ -289,7 +346,15 @@ const UnifiedTransactionModal = () => {
 
   // ---- Save & New ----
   const handleSaveAndNew = async () => {
-    if (!resolvedFromType || !resolvedToType || !fromPicker.accountId || !toPicker.accountId || !amount || !displayDescription.trim()) {
+    if (
+      !resolvedFromType ||
+      !resolvedToType ||
+      !fromPicker.accountId ||
+      !toPicker.accountId ||
+      !amount ||
+      !displayDescription.trim() ||
+      isNegativeTreasuryDisallowed
+    ) {
       return;
     }
     // Both-settlement is the only settlement selection that blocks save.
@@ -603,6 +668,16 @@ const UnifiedTransactionModal = () => {
                 </div>
               </div>
             )}
+
+            {/* Negative Treasury Balance Warning (No fluff) */}
+            {isNegativeTreasuryDisallowed && (
+              <div className="flex items-center gap-2 p-2 rounded-lg bg-status-danger-bg/40 border border-status-danger-border/60 text-status-danger-text text-xs font-semibold">
+                <AlertCircle size={15} className="shrink-0 text-status-danger-text" />
+                <span>
+                  لا يمكن إتمام عملية الصرف: الرصيد الحالي ({currentFromBalance?.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ريال) غير كافٍ وسيصبح سالباً ({projectedFromBalance?.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ريال).
+                </span>
+              </div>
+            )}
           </div>
         </section>
 
@@ -623,6 +698,7 @@ const UnifiedTransactionModal = () => {
               variant="outline-primary"
               size="sm"
               disabled={!canSubmit || createTransaction.isPending}
+              className={isNegativeTreasuryDisallowed ? 'opacity-40 cursor-not-allowed bg-muted/20 border-border-default text-text-secondary' : ''}
               onClick={handleSaveAndNew}
             >
               حفظ وإضافة آخر
@@ -632,6 +708,7 @@ const UnifiedTransactionModal = () => {
               variant="primary"
               size="sm"
               disabled={!canSubmit || createTransaction.isPending}
+              className={isNegativeTreasuryDisallowed ? 'opacity-40 cursor-not-allowed bg-muted/40 text-text-secondary border-transparent shadow-none hover:bg-muted/40' : ''}
               onClick={handleSubmit}
             >
               {createTransaction.isPending ? (
