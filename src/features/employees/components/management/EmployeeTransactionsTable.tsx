@@ -451,9 +451,12 @@ const EmployeeTransactionsTable: React.FC<EmployeeTransactionsTableProps> = ({
     all.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
 
     // Append summary row
-    const totalDebit = confirmed.reduce((sum, t) => sum + t.debit_val, 0);
-    const totalCredit = confirmed.reduce((sum, t) => sum + t.credit_val, 0);
-    const finalBalance = summary.balance_due ?? (totalDebit - totalCredit);
+    // Totals come from the server summary (whole ledger), not from summing `confirmed`,
+    // which is only the current page - that made the footer disagree with the balance
+    // printed beside it. Server convention: balance = credit - debit.
+    const totalDebit = summary.total_expenses ?? confirmed.reduce((sum, t) => sum + t.debit_val, 0);
+    const totalCredit = summary.total_earned ?? confirmed.reduce((sum, t) => sum + t.credit_val, 0);
+    const finalBalance = summary.balance_due ?? (totalCredit - totalDebit);
 
     all.unshift({
       id: 'summary',
