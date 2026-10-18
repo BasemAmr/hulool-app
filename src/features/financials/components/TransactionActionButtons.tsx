@@ -1,6 +1,7 @@
-import { useRef, useState, useEffect } from 'react';
+import { useRef, useState, useEffect, useMemo } from 'react';
 import { FileSpreadsheet } from 'lucide-react';
 import { useModalStore } from '@/shared/stores/modalStore';
+import { useMyTreasuryPermissions } from '@/features/financials/api/treasuryQueries';
 import Button from '@/shared/ui/primitives/Button';
 import {
   buildSettlementQabdPreset,
@@ -39,6 +40,33 @@ const TransactionActionButtons: React.FC<TransactionActionButtonsProps> = ({
   const openModal = useModalStore(s => s.openModal);
   const [settlementOpen, setSettlementOpen] = useState(false);
   const settlementRef = useRef<HTMLDivElement>(null);
+  const { data: myPermissions } = useMyTreasuryPermissions();
+
+  // Settlement presets always post against the settlement account, so hide the whole
+  // dropdown when the employee has can_transact revoked on it - otherwise the button
+  // advertises an action the API answers with 403. Other presets still post against
+  // accountId, so gate those separately.
+  const canTransactOn = (id: number) => {
+    if (accountId > 0) return id === accountId;
+    const acc = myPermissions?.find((a) => Number(a.id) === Number(id));
+    return acc ? acc.can_transact !== false : true;
+  };
+  // metadata arrives as a JSON string, not an object.
+  const settlementAccountId = useMemo(() => {
+    for (const a of myPermissions ?? []) {
+      if (!a.metadata) continue;
+      try {
+        const meta = typeof a.metadata === 'string' ? JSON.parse(a.metadata) : a.metadata;
+        if (meta?.is_settlement === true || meta?.type === 'settlement') return a.id;
+      } catch {
+        // unparseable metadata - treat as a normal account
+      }
+    }
+    return undefined;
+  }, [myPermissions]);
+  const canUseSettlement = settlementAccountId
+    ? canTransactOn(settlementAccountId)
+    : true;
 
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
@@ -160,7 +188,9 @@ const TransactionActionButtons: React.FC<TransactionActionButtonsProps> = ({
         سند صرف
       </Button>
 
-      {/* سند تسوية - dropdown */}
+      {/* سند تسوية - dropdown. Hidden when the employee has no can_transact on the
+          settlement account; the server rejects it with 403 either way. */}
+      {canUseSettlement && (
       <div ref={settlementRef} className="relative">
         <Button
           variant="outline-secondary"
@@ -199,6 +229,7 @@ const TransactionActionButtons: React.FC<TransactionActionButtonsProps> = ({
           </div>
         )}
       </div>
+      )}
 
       <div className="flex-1" />
 

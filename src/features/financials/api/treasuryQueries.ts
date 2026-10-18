@@ -35,6 +35,24 @@ export const useGetTreasuryAccounts = () => {
 };
 
 /**
+ * Treasury accounts the current employee may act on, with can_transact / can_view resolved
+ * server-side. Admins and elevated employees get every account flagged true.
+ *
+ * Used to hide actions the server would reject with 403 anyway - the button check is UX only,
+ * the enforcement lives in UnifiedTransactionController::checkTreasuryTransactionAccess().
+ */
+export const useMyTreasuryPermissions = () => {
+  return useQuery<TreasuryAccountWithPermission[]>({
+    queryKey: ['treasury-accounts', 'my-permissions'],
+    queryFn: async () => {
+      const response = await apiClient.get<ApiResponse<TreasuryAccountWithPermission[]>>('/treasury-accounts/my-permissions');
+      return response.data.data;
+    },
+    staleTime: 30 * 1000,
+  });
+};
+
+/**
  * Fetch a single treasury account by ID
  */
 export const useGetTreasuryAccount = (id: number) => {
