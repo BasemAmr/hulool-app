@@ -219,26 +219,28 @@ const EmployeeNavbar = () => {
                 </button>
               }
             >
-              <div onClick={() => navigate('/employee/clients')} className={managementItemClass}>
-                <Users size={16} className="text-primary flex-shrink-0" />
-                <span>إدارة العملاء</span>
-              </div>
-              <div onClick={() => openModal('clientReport', {})} className={menuItemClass}>
-                <FileSpreadsheet size={16} className="text-foreground flex-shrink-0" />
-                <span>كشف حساب العميل</span>
-              </div>
-              <div onClick={() => openModal('clientForm', {})} className={menuItemClass}>
-                <Plus size={16} className="text-foreground flex-shrink-0" />
-                <span>إضافة عميل</span>
-              </div>
-              <div onClick={() => openModal('taskForm', {})} className={menuItemClass}>
-                <Plus size={16} className="text-foreground flex-shrink-0" />
-                <span>إضافة مهمة</span>
-              </div>
-              <div className="border-t border-border my-1" />
-              <div onClick={() => navigate('/employee/receivables')} className={menuItemClass}>
-                <CreditCard size={16} className="text-foreground flex-shrink-0" />
-                <span>مستحقات العملاء</span>
+              <div className="min-w-48 text-right">
+                <div onClick={() => navigate('/employee/clients')} className={managementItemClass}>
+                  <Users size={16} className="text-primary flex-shrink-0" />
+                  <span>إدارة العملاء</span>
+                </div>
+                <div onClick={() => openModal('clientReport', {})} className={menuItemClass}>
+                  <FileSpreadsheet size={16} className="text-foreground flex-shrink-0" />
+                  <span>كشف حساب العميل</span>
+                </div>
+                <div onClick={() => openModal('clientForm', {})} className={menuItemClass}>
+                  <Plus size={16} className="text-foreground flex-shrink-0" />
+                  <span>إضافة عميل</span>
+                </div>
+                <div onClick={() => openModal('taskForm', {})} className={menuItemClass}>
+                  <Plus size={16} className="text-foreground flex-shrink-0" />
+                  <span>إضافة مهمة</span>
+                </div>
+                <div className="border-t border-border my-1" />
+                <div onClick={() => navigate('/employee/receivables')} className={menuItemClass}>
+                  <CreditCard size={16} className="text-foreground flex-shrink-0" />
+                  <span>مستحقات العملاء</span>
+                </div>
               </div>
             </NavHoverDropdown>
 
