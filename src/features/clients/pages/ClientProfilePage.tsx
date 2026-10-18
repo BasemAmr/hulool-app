@@ -24,6 +24,7 @@ import { useReceivablesPermissions } from '@/shared/hooks/useReceivablesPermissi
 import { exportService } from '@/services/export/ExportService';
 import type { ClientStatementReportData, ClientTasksReportData, ClientCreditsReportData } from '@/services/export/exportTypes';
 import { TOAST_MESSAGES } from '@/shared/constants/toastMessages';
+import { useDocumentTitle } from '@/app/router/useDocumentTitle';
 
 // Feature flag: Set to true to use new Invoice/Ledger system
 const USE_INVOICE_LEDGER_SYSTEM = true;
@@ -300,6 +301,8 @@ const ClientProfilePage = () => {
     };
 
     const handleAssignTask = (task: Task) => openModal('assignTask', { task });
+
+    useDocumentTitle(client?.name);
 
     if (isLoading) return <div>Loading...</div>;
     if (!client) return <div>Client not found.</div>;

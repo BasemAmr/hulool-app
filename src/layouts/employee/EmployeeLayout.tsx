@@ -3,6 +3,7 @@ import { useMemo } from 'react';
 import EmployeeNavbar from './EmployeeNavbar';
 import ModalManager from '@/shared/modals/ModalManager';
 import TaskFollowUpPanel from '@/features/tasks/components/followup/TaskFollowUpPanel';
+import PageTitle from '@/app/router/PageTitle';
 import { useAuthStore } from '@/features/auth/store/authStore';
 
 /**
@@ -36,6 +37,7 @@ const EmployeePageWrapper = () => {
 
   return (
     <div className="rtl flex flex-col h-screen overflow-hidden bg-bg-surface" data-page-type={pageType}>
+      <PageTitle />
       <EmployeeNavbar />
       <main
         className="flex-1 overflow-y-auto h-full bg-bg-surface"

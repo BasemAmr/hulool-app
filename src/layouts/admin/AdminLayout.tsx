@@ -3,6 +3,7 @@ import { useMemo } from 'react';
 import Navbar from './AdminNavbar';
 import ModalManager from '@/shared/modals/ModalManager';
 import TaskFollowUpPanel from '@/features/tasks/components/followup/TaskFollowUpPanel';
+import PageTitle from '@/app/router/PageTitle';
 
 const PageWrapper = () => {
   const location = useLocation();
@@ -21,6 +22,7 @@ const PageWrapper = () => {
 
   return (
     <div className="flex flex-col h-screen overflow-hidden bg-bg-surface rtl" data-page={pageType}>
+      <PageTitle />
       <Navbar />
        <main 
         className="flex-1 overflow-y-auto bg-bg-surface ltr"

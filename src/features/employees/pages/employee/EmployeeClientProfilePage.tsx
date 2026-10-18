@@ -22,6 +22,7 @@ import { useReceivablesPermissions } from '@/shared/hooks/useReceivablesPermissi
 // Import export service
 import { exportService } from '@/services/export/ExportService';
 import type { ClientStatementReportData, ClientCreditsReportData } from '@/services/export/exportTypes';
+import { useDocumentTitle } from '@/app/router/useDocumentTitle';
 
 const EmployeeClientProfilePage = () => {
     const { t } = useTranslation();
@@ -173,6 +174,8 @@ const EmployeeClientProfilePage = () => {
         
         exportCreditsMutation.mutate(reportData);
     };
+
+    useDocumentTitle(client?.name);
 
     if (isLoading) return <div>Loading...</div>;
     if (!client) return <div>Client not found.</div>;

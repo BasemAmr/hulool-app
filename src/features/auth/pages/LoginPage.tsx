@@ -6,6 +6,7 @@ import { useAuthStore } from '@/features/auth/store/authStore';
 import { loginWithShortPassword } from '@/features/auth/api/authQueries';
 import { useVerifyPhone, useRecoverPassword } from '@/features/employees/api/userQueries';
 import PinSetupForm from '@/features/employees/components/PinSetupForm';
+import PageTitle from '@/app/router/PageTitle';
 
 type RecoveryStep = 'phone' | 'recovery-code' | 'new-password' | 'pin' | 'success';
 
@@ -163,6 +164,8 @@ const LoginPage = () => {
   const stepIcons = [Phone, KeyRound, Lock, ShieldCheck];
 
   return (
+    <>
+      <PageTitle />
     <div className="flex items-center justify-center min-h-screen bg-secondary">
       <div className="w-11/12 sm:w-2/3 md:w-1/2 lg:w-1/3">
         <div className="bg-card rounded-xl shadow-2xl">
@@ -461,6 +464,7 @@ const LoginPage = () => {
         </div>
       </div>
     </div>
+    </>
   );
 };
 

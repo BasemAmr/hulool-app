@@ -36,10 +36,14 @@ export type AccountKind = 'client' | 'employee' | 'treasury';
 /**
  * Which side of the row means "money came IN to the company".
  * True  -> a credit means money in  (client, employee)
- * False -> a debit means money in   (treasury)
+ * False -> a debit means money in   (treasury, cashbox, company)
+ *
+ * 'cashbox' and 'company' are the virtual aliases the backend normalises to 'treasury'
+ * (UnifiedTransactionService::normaliseAccountType). They must resolve the SAME way here,
+ * or a cashbox voucher reads صرف while the treasury grid beside it reads قبض.
  */
 function creditIsMoneyIn(accountType: string): boolean {
-  return accountType !== 'treasury';
+  return accountType === 'client' || accountType === 'employee';
 }
 
 /**
