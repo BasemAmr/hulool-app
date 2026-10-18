@@ -244,8 +244,11 @@ const EmployeeProfilePage = () => {
       )}
 
       {/* Other Views */}
+      {/* overflow-visible, not hidden: an ancestor with overflow!=visible becomes a new
+          scrollport, which silently disables position:sticky on the ledger toolbar below.
+          The rounding is cosmetic and no child content overflows. */}
       {activeMode !== 'dashboard' && (
-        <div className="rounded-lg border bg-card overflow-hidden">
+        <div className="rounded-lg border bg-card overflow-visible">
           {activeMode === 'transactions' && (
             <EmployeeTransactionsTable
               employeeId={employeeTableId}

@@ -19,7 +19,6 @@ import ClientReceivablesTable from '@/features/receivables/components/ClientRece
 import AccountLedgerTable from '@/features/invoices/components/AccountLedgerTable';
 import type { Task, StatementItem, TaskCancellationConflictData } from '@/api/types';
 import { useReceivablesPermissions } from '@/shared/hooks/useReceivablesPermissions';
-import ClientCreditsHistoryTable from '@/features/clients/components/ClientCreditsHistoryTable';
 
 // Import export service
 import { exportService } from '@/services/export/ExportService';
@@ -381,21 +380,9 @@ const ClientProfilePage = () => {
                 )
             )}
 
-            {/* Credits History Table - Show in general - receivables modes only */}
-            {(mode === 'general' || mode === 'receivables') && (
-                <div className="rounded-lg border border-border bg-card shadow-sm mb-3">
-                    <div className="px-4 py-3 border-b border-border">
-                        <h5 className="text-primary font-bold text-lg mb-0">{t('clients.creditsHistory')}</h5>
-                    </div>
-                    <div className="p-0">
-                        <ClientCreditsHistoryTable
-                            credits={creditsData?.credits || []}
-                            isLoading={isLoadingCredits}
-                            clientId={clientId}
-                        />
-                    </div>
-                </div>
-            )}
+            {/* DEAD: credit allocation table removed from the UI. The credits query is still
+                fetched above because the Excel export (handleExportCredits) reads it. The
+                component itself is retained in git history; restore this block if it returns. */}
         </div>
     );
 };

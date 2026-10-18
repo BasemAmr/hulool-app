@@ -564,7 +564,12 @@ function HuloolDataGrid<T extends Record<string, any>>({
     return customClass ? `${baseClass} ${customClass}` : baseClass;
   }, [typeField, data, rowClassName]);
   // Loading state
-  if (isLoading) {
+  // Only replace the grid with a full-page spinner when there is nothing to show yet.
+  // Unmounting on every load blanked the table during scroll-pagination and, because the
+  // grid remounts, threw the scroll position back to the top. With rows already on screen
+  // we keep them and let the caller's own indicator (e.g. the scroll sentinel) report that
+  // more rows are being appended.
+  if (isLoading && !data.length) {
     return (
       <div className="hulool-grid-loading">
         <div className="hulool-spinner" />

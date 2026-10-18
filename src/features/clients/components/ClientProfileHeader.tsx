@@ -1,12 +1,9 @@
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
-import { useState, useRef, useEffect } from 'react';
 import type { Client } from '@/api/types';
 import Button from '@/shared/ui/primitives/Button';
 import WhatsAppIcon from '@/shared/ui/icons/WhatsAppIcon';
 import { Plus, Download, TrendingUp, TrendingDown, ChevronDown } from 'lucide-react';
-import { useGetClientCredits } from '@/features/clients/api/clientCreditQueries';
-import SaudiRiyalIcon from '@/shared/ui/icons/SaudiRiyalIcon';
 import { useModalStore } from '@/shared/stores/modalStore';
 import {
   DropdownMenu,
@@ -35,23 +32,6 @@ interface ClientProfileHeaderProps {
   // --- END MODIFIED PROPS ---
 }
 
-const ClientCreditBalance = ({ clientId }: { clientId: number }) => {
-  const { data, isLoading } = useGetClientCredits(clientId);
-
-  if (isLoading) {
-    return <span className="text-text-primary text-sm">Loading...</span>;
-  }
-
-  const balance = data?.balance || 0;
-
-  return (
-    <span className="flex items-center text-text-primary font-bold">
-      <SaudiRiyalIcon size={16} className="me-1" />
-      {balance.toLocaleString('ar-SA', { style: 'currency', currency: 'SAR' })}
-    </span>
-  );
-};
-
 const ClientProfileHeader = ({ 
   client, 
   mode, 
@@ -66,16 +46,21 @@ const ClientProfileHeader = ({
   const { t } = useTranslation();
   const openModal = useModalStore(s => s.openModal);
 
-  const openUnified = (overrides: Record<string, any>) =>
+  // `object` not `Record<string, unknown>`: the settlement presets are typed interfaces with
+  // no index signature, which Record<string, unknown> rejects.
+  const openUnified = (overrides: object) =>
     openModal('unifiedTransaction', { lockDirection: true, ...overrides });
 
   return (
     <div className="rounded-lg border border-border bg-card shadow-sm mb-2">
       <div className="py-2 px-3">
-        <div className="flex justify-between items-center relative">
-          
+        {/* Narrow: stacked rows so the button cluster wraps instead of overflowing.
+            lg+: one row, exactly as before — the identity block is lifted back out of
+            flow (absolute) and the remaining two groups sit at either end. */}
+        <div className="relative flex flex-col gap-2 lg:flex-row lg:items-center lg:justify-between">
+
           {/* Left: Action Buttons and Dropdowns */}
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2">
             {/* Add Task Button */}
             <Button size="sm" onClick={onAddTask} className="hover:scale-105 transition-transform">
               <Plus size={16} className="me-1"/> {t('clientProfile.addTask')}
@@ -120,7 +105,10 @@ const ClientProfileHeader = ({
               </DropdownMenuTrigger>
               <DropdownMenuContent align="start" className="min-w-[180px]">
                 <DropdownMenuItem onClick={onAddInvoice} className="text-end">
-                  {t('clientProfile.addInvoice')}<Plus size={14} className="me-2"/>
+                  {/* key is absent from ar.json — i18next has no fallback key here, so it
+                      rendered the literal string "clientProfile.addInvoice". Inline default
+                      matches the house pattern in ClientProfilePage (t(key, 'arabic default')). */}
+                  {t('clientProfile.addInvoice', 'إضافة فاتورة')}<Plus size={14} className="me-2"/>
                 </DropdownMenuItem>
                 <DropdownMenuItem onClick={onAddCredit} className="text-end">
                   إضافة رصيد<Plus size={14} className="me-2"/>
@@ -229,34 +217,34 @@ const ClientProfileHeader = ({
             )}
           </div>
 
-          {/* Center: Client Info */}
-          <div className="absolute left-1/2 -translate-x-1/2 flex items-center">
+          {/* Center: Client Info — order-first on narrow so identity leads the stack;
+              at lg+ it is absolutely centred again (order is ignored once out of flow).
+              min-w-0 + truncate let a long name ellipsis instead of pushing the buttons. */}
+          <div className="order-first flex items-center min-w-0 lg:absolute lg:left-1/2 lg:-translate-x-1/2">
             {mode === 'receivables' && (
-              <span className="font-bold text-text-primary me-1.5 text-base">
-                كشف الحساب - 
+              <span className="shrink-0 font-bold text-text-primary me-1.5 text-base">
+                كشف الحساب -
               </span>
             )}
-            <span className="font-bold text-text-primary me-3 text-base">
+            <span className="truncate font-bold text-text-primary me-3 text-base">
               {client.name}
             </span>
-            <span className="text-text-primary me-2 text-sm">
+            <span className="shrink-0 text-text-primary me-2 text-sm">
               {client.phone}
             </span>
-            <a 
-              href={`https://wa.me/966${client.phone.substring(1)}`} 
-              target="_blank" 
-              rel="noopener noreferrer" 
-              className="text-status-success-text hover:scale-110 transition-transform"
+            <a
+              href={`https://wa.me/966${client.phone.substring(1)}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="shrink-0 text-status-success-text hover:scale-110 transition-transform"
             >
               <WhatsAppIcon size={18} />
             </a>
           </div>
 
-          {/* Right: Client Credit Balance */}
-          <div className="flex items-center gap-2">
-            <div className="text-end text-sm text-text-primary">الرصيد المتاح</div>
-            <ClientCreditBalance clientId={client.id} />
-          </div>
+          {/* DEAD: "الرصيد المتاح" removed - it rendered ٠٫٠٠ ر.س. for every client because the
+              credits endpoint returns 0 once allocations are unused. The private
+              ClientCreditBalance component above is now dead with it. */}
 
         </div>
       </div>

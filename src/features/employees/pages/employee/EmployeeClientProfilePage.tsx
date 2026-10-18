@@ -15,7 +15,6 @@ import { useGetMyReceivablesDashboardInfinite } from '@/features/employees/api/e
 import ClientProfileHeader from '@/features/clients/components/ClientProfileHeader';
 import EmployeeOwnTasksTable from '@/features/tasks/components/tables/EmployeeOwnTasksTable';
 import AccountLedgerTable from '@/features/invoices/components/AccountLedgerTable';
-import ClientCreditsHistoryTable from '@/features/clients/components/ClientCreditsHistoryTable';
 
 // Import types
 import { useReceivablesPermissions } from '@/shared/hooks/useReceivablesPermissions';
@@ -233,20 +232,8 @@ const EmployeeClientProfilePage = () => {
             )}
 
             {/* Credits History Table - Show in general and receivables modes only */}
-            {(mode === 'general' || mode === 'receivables') && (
-                <div className="rounded-lg border border-border bg-card shadow-sm mb-3">
-                    <div className="px-4 py-3 border-b border-border">
-                        <h5 className="mb-0 text-lg font-bold text-primary">{t('clients.creditsHistory')}</h5>
-                    </div>
-                    <div className="p-0">
-                        <ClientCreditsHistoryTable
-                            credits={creditsData?.credits || []}
-                            isLoading={isLoadingCredits}
-                            clientId={clientId}
-                        />
-                    </div>
-                </div>
-            )}
+            {/* DEAD: credit allocation table removed from the UI. The credits query is still
+                fetched above because the Excel export (handleExportCredits) reads it. */}
         </div>
     );
 };

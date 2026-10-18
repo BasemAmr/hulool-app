@@ -9,7 +9,7 @@
  * - Arabic Cairo font
  */
 
-import React, { useMemo } from 'react';
+import React, { useCallback, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useModalStore } from '@/shared/stores/modalStore';
 import type { ClientCredit } from '@/api/types';
@@ -107,10 +107,13 @@ interface ActionsCellData {
 }
 
 const ActionsCell = React.memo(({ rowData, columnData }: CellProps<ClientCredit, ActionsCellData>) => {
-  const { onEdit, onDelete } = columnData || {};
   const { t } = useTranslation();
 
+  // Narrow columnData, then destructure: the previous `columnData || {}` plus `onEdit?.()`
+  // doubled up the same null check this guard already performs. useTranslation must stay
+  // above it — hooks cannot follow an early return.
   if (!columnData) return null;
+  const { onEdit, onDelete } = columnData;
 
   return (
     <div style={{ display: 'flex', gap: '4px' }}>
@@ -118,7 +121,7 @@ const ActionsCell = React.memo(({ rowData, columnData }: CellProps<ClientCredit,
         className="p-1.5 border border-status-danger-border text-status-danger-text rounded-md hover:bg-status-danger-bg transition-colors"
         onClick={(e) => {
           e.stopPropagation();
-          onDelete?.(rowData);
+          onDelete(rowData);
         }}
         title={t('common.delete')}
       >
@@ -128,7 +131,7 @@ const ActionsCell = React.memo(({ rowData, columnData }: CellProps<ClientCredit,
         className="p-1.5 border border-primary text-primary rounded-md hover:bg-primary/10 transition-colors"
         onClick={(e) => {
           e.stopPropagation();
-          onEdit?.(rowData);
+          onEdit(rowData);
         }}
         title={t('common.edit')}
       >
@@ -151,13 +154,16 @@ const ClientCreditsHistoryTable: React.FC<ClientCreditsHistoryTableProps> = ({
   const { t } = useTranslation();
   const openModal = useModalStore((state) => state.openModal);
 
-  const handleEditCredit = (credit: ClientCredit) => {
+  // useCallback so the columnData memo below can depend on these honestly. Without it the
+  // memo captured the first render's closures, and since it only listed `columns` (which
+  // depends on `t`), a clientId change left the actions pointing at the previous client.
+  const handleEditCredit = useCallback((credit: ClientCredit) => {
     openModal('creditEdit', { credit, clientId });
-  };
+  }, [openModal, clientId]);
 
-  const handleDeleteCredit = (credit: ClientCredit) => {
+  const handleDeleteCredit = useCallback((credit: ClientCredit) => {
     openModal('creditDelete', { credit, clientId });
-  };
+  }, [openModal, clientId]);
 
   // Define columns
   const columns = useMemo((): HuloolGridColumn<ClientCredit>[] => [
@@ -226,7 +232,20 @@ const ClientCreditsHistoryTable: React.FC<ClientCreditsHistoryTableProps> = ({
       }
       return col;
     });
-  }, [columns]);
+  }, [columns, handleEditCredit, handleDeleteCredit]);
+
+  // Both callers pass `creditsData?.credits || []`, so while the query is still in flight
+  // this array is empty and the empty-check below used to win — the panel flashed
+  // "لا توجد اعتمادات" instead of loading. Check isLoading first (same order as the
+  // sibling ClientReceivablesTable). Both branches return early, so the grid is only
+  // reached with a non-empty array and a settled query.
+  if (isLoading) {
+    return (
+      <div className="flex justify-center items-center p-12">
+        <div className="w-10 h-10 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
+      </div>
+    );
+  }
 
   if (!credits || credits.length === 0) {
     return (
@@ -240,8 +259,6 @@ const ClientCreditsHistoryTable: React.FC<ClientCreditsHistoryTableProps> = ({
     <HuloolDataGrid
       data={credits}
       columns={columnsWithData as HuloolGridColumn<ClientCredit>[]}
-      isLoading={isLoading}
-      emptyMessage={t('clients.noCreditsFound')}
       showId={false}
     />
   );
