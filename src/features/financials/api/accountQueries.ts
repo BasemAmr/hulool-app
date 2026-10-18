@@ -580,6 +580,10 @@ export const useGetAccountHistory = (
     queryFn: () => fetchAccountHistory(accountType, accountId, page, TRANSACTIONS_PER_PAGE, filters),
     enabled: !!accountId && enabled,
     staleTime: 10 * 1000,
+    // `page` is part of the key, so every scroll step is a brand new query and `data`
+    // went undefined while it loaded - the toolbar totals rendered 0.00 mid-scroll and
+    // then jumped back. Holding the previous page keeps the totals on screen.
+    placeholderData: (previous) => previous,
   });
 };
 

@@ -17,6 +17,7 @@ import {
   useCreateUnifiedTransaction,
 } from '@/features/financials/api/financialCenterQueries';
 import { useGetTreasuryAccounts, useGetCategoryMetadata } from '@/features/financials/api/treasuryQueries';
+import { useCanUseSettlement } from '@/features/financials/api/treasuryQueries';
 import { useToast } from '@/shared/hooks/useToast';
 import AccountPickerCard from './AccountPickerCard';
 import type { PickerValue, PickerKind } from './AccountPickerCard';
@@ -72,6 +73,13 @@ const UnifiedTransactionModal = () => {
   // ---- Settlement detection ----
   const isSettlement =
     defaultFromCardType === 'settlement' || defaultToCardType === 'settlement';
+
+  // Single source of truth for settlement access. Every سند تسوية button in the app funnels
+  // through this modal, so gating here means a new surface cannot leak the action by simply
+  // forgetting the check. Individual call sites still hide their buttons for UX, but this is
+  // what actually guarantees it. The server answers 403 regardless.
+  const canUseSettlement = useCanUseSettlement();
+  const settlementDenied = isSettlement && !canUseSettlement;
 
   // Convert card type preset → PickerKind
   const presetToPickerKind = (cardType: string | undefined): PickerKind | null => {
@@ -520,6 +528,22 @@ const UnifiedTransactionModal = () => {
       title={activeTitle}
       titleClassName="text-center w-full ms-6"
     >
+      {/* Structural settlement gate. Any surface that opens a تسوية preset lands here, so a
+          caller that forgets to hide its button still cannot create the transaction. */}
+      {settlementDenied && (
+        <div dir="rtl" className="py-6 text-center">
+          <AlertCircle className="mx-auto h-8 w-8 text-status-danger-text" />
+          <p className="mt-3 text-sm font-bold text-text-primary">لا تملك صلاحية تسوية الحساب</p>
+          <p className="mt-1 text-xs text-text-secondary">
+            لا تملك صلاحية الحركة على حساب التسوية. راجع مدير النظام.
+          </p>
+          <Button variant="outline-secondary" size="sm" className="mt-4" onClick={handleClose}>
+            إغلاق
+          </Button>
+        </div>
+      )}
+
+      {!settlementDenied && (
       <div dir="rtl" className="space-y-5">
 
         {/* ============ ACCOUNTS ============ */}
@@ -796,6 +820,7 @@ const UnifiedTransactionModal = () => {
           </div>
         </div>
       </div>
+      )}
     </BaseModal>
   );
 };

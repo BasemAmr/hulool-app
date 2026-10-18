@@ -5,6 +5,7 @@ import Button from '@/shared/ui/primitives/Button';
 import WhatsAppIcon from '@/shared/ui/icons/WhatsAppIcon';
 import { Plus, Download, TrendingUp, TrendingDown, ChevronDown } from 'lucide-react';
 import { useModalStore } from '@/shared/stores/modalStore';
+import { useCanUseSettlement } from '@/features/financials/api/treasuryQueries';
 import {
   DropdownMenu,
   DropdownMenuTrigger,
@@ -45,6 +46,7 @@ const ClientProfileHeader = ({
 }: ClientProfileHeaderProps) => {
   const { t } = useTranslation();
   const openModal = useModalStore(s => s.openModal);
+  const canUseSettlement = useCanUseSettlement();
 
   // `object` not `Record<string, unknown>`: the settlement presets are typed interfaces with
   // no index signature, which Record<string, unknown> rejects.
@@ -149,7 +151,9 @@ const ClientProfileHeader = ({
               سند صرف
             </Button>
 
-            {/* سند تسوية */}
+            {/* سند تسوية - hidden when the employee has no can_transact on the settlement
+                account. This component is shared by the admin and employee client profiles. */}
+            {canUseSettlement && (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button
@@ -182,6 +186,7 @@ const ClientProfileHeader = ({
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
+            )}
 
             {/* Export Dropdown */}
             {(mode === 'receivables' || mode === 'tasks') && (

@@ -191,6 +191,9 @@ export const useGetEmployeeTransactions = (
       const response = await apiClient.get(`/employees/${employeeId}/payouts`, { params });
       return response.data;
     },
+    // `page` is in the key, so scrolling made `data` undefined and the toolbar totals
+    // flashed 0.00 before the next page landed. Keep the previous page visible.
+    placeholderData: (previous) => previous,
     enabled: !!employeeId,
     staleTime: 30 * 1000, // Keep fresh for 30 seconds
   });
