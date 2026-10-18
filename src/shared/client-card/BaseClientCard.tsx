@@ -134,12 +134,18 @@ const BaseClientCard = ({
       >
         <table className="w-full table-fixed text-sm font-['Cairo'] border-collapse">
           <colgroup>
-            <col />                                      {/* Task Name - fluid flex width */}
-            <col className="w-[84px]" />                 {/* Date */}
-            <col className="w-[72px]" />                 {/* Duration */}
-            {showAmountColumn && <col className="w-[72px]" />}    {/* Amount */}
-            {showStatus && <col className="w-[72px]" />}          {/* Status */}
-            <col className="w-[60px]" />                 {/* Actions */}
+            {/* Task Name - fluid flex width */}
+            <col />
+            {/* Date */}
+            <col className="w-[84px]" />
+            {/* Duration */}
+            <col className="w-[72px]" />
+            {/* Amount */}
+            {showAmountColumn && <col className="w-[72px]" />}
+            {/* Status */}
+            {showStatus && <col className="w-[72px]" />}
+            {/* Actions */}
+            <col className="w-[60px]" />
           </colgroup>
           <thead>
             <tr 
