@@ -1,3 +1,4 @@
+import { useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import apiClient from '@/api/client';
 import type { ApiResponse, TreasuryCategory, TreasuryAccountPermission, TreasuryAccount, TreasuryCategoryMetadata, TreasuryAccountWithPermission } from '@/api/types';
@@ -34,23 +35,6 @@ export const useGetTreasuryAccounts = () => {
   });
 };
 
-/**
- * Treasury accounts the current employee may act on, with can_transact / can_view resolved
- * server-side. Admins and elevated employees get every account flagged true.
- *
- * Used to hide actions the server would reject with 403 anyway - the button check is UX only,
- * the enforcement lives in UnifiedTransactionController::checkTreasuryTransactionAccess().
- */
-export const useMyTreasuryPermissions = () => {
-  return useQuery<TreasuryAccountWithPermission[]>({
-    queryKey: ['treasury-accounts', 'my-permissions'],
-    queryFn: async () => {
-      const response = await apiClient.get<ApiResponse<TreasuryAccountWithPermission[]>>('/treasury-accounts/my-permissions');
-      return response.data.data;
-    },
-    staleTime: 30 * 1000,
-  });
-};
 
 /**
  * Fetch a single treasury account by ID
@@ -287,4 +271,38 @@ export const useGetMyTreasuryAccounts = () => {
     },
     staleTime: 30 * 1000,
   });
+};
+
+
+/**
+ * Whether the current employee may post a سند تسوية.
+ *
+ * Settlement vouchers always target the settlement account, so every surface that offers
+ * one must ask this. Two ways to lose access, both of which mean "no":
+ *   - the permission row was DELETED -> the account is absent from /my-permissions
+ *     entirely, because that response is built FROM the permission table
+ *   - the row exists with can_transact = 0
+ *
+ * Returns false while the query is still in flight rather than flashing the action, and
+ * false for admins only once we can actually see the account.
+ *
+ * This is UX only. The server enforces the same rule and answers 403 - see
+ * UnifiedTransactionController::checkTreasuryTransactionAccess().
+ */
+export const useCanUseSettlement = () => {
+  const { data, isLoading } = useGetMyTreasuryAccounts();
+  return useMemo(() => {
+    if (isLoading) return false;
+    const accounts = data ?? [];
+    const settlement = accounts.find((a) => {
+      if (!a.metadata) return false;
+      try {
+        const meta = typeof a.metadata === 'string' ? JSON.parse(a.metadata) : a.metadata;
+        return meta?.is_settlement === true || meta?.type === 'settlement';
+      } catch {
+        return false;
+      }
+    });
+    return settlement ? settlement.can_transact === true : false;
+  }, [data, isLoading]);
 };

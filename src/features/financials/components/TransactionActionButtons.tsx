@@ -1,7 +1,7 @@
 import { useRef, useState, useEffect, useMemo } from 'react';
 import { FileSpreadsheet } from 'lucide-react';
 import { useModalStore } from '@/shared/stores/modalStore';
-import { useMyTreasuryPermissions } from '@/features/financials/api/treasuryQueries';
+import { useCanUseSettlement } from '@/features/financials/api/treasuryQueries';
 import Button from '@/shared/ui/primitives/Button';
 import {
   buildSettlementQabdPreset,
@@ -40,37 +40,7 @@ const TransactionActionButtons: React.FC<TransactionActionButtonsProps> = ({
   const openModal = useModalStore(s => s.openModal);
   const [settlementOpen, setSettlementOpen] = useState(false);
   const settlementRef = useRef<HTMLDivElement>(null);
-  const { data: myPermissions } = useMyTreasuryPermissions();
-
-  // Settlement presets always post against the settlement account, so hide the whole
-  // dropdown unless the employee still has can_transact on it.
-  //
-  // Absence of a permission ROW is also "no access": /my-permissions is built from the
-  // permission table, so an admin who DELETED the settlement permission removes the account
-  // from the response entirely. Defaulting to visible when it is missing showed the button
-  // for exactly the employees it should hide from. `myPermissions === undefined` means the
-  // query is still in flight, so hide rather than advertise something we cannot verify.
-  const canTransactOn = (id: number) => {
-    if (accountId > 0) return id === accountId;
-    const acc = myPermissions?.find((a) => Number(a.id) === Number(id));
-    return acc ? acc.can_transact !== false : true;
-  };
-  // metadata arrives as a JSON string, not an object.
-  const settlementAccountId = useMemo(() => {
-    for (const a of myPermissions ?? []) {
-      if (!a.metadata) continue;
-      try {
-        const meta = typeof a.metadata === 'string' ? JSON.parse(a.metadata) : a.metadata;
-        if (meta?.is_settlement === true || meta?.type === 'settlement') return a.id;
-      } catch {
-        // unparseable metadata - treat as a normal account
-      }
-    }
-    return undefined;
-  }, [myPermissions]);
-  const canUseSettlement = myPermissions
-    ? settlementAccountId !== undefined && canTransactOn(settlementAccountId)
-    : false;
+  const canUseSettlement = useCanUseSettlement();
 
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {

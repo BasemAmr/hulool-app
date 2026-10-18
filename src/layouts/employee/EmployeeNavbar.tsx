@@ -11,6 +11,7 @@ import {
   Settings, TrendingUp, TrendingDown, UserCog, Wallet, Landmark, CreditCard
 } from 'lucide-react';
 import { useGetMyTreasuryAccounts } from '@/features/financials/api/treasuryQueries';
+import { useCanUseSettlement } from '@/features/financials/api/treasuryQueries';
 import { useModalStore } from '@/shared/stores/modalStore';
 import {
   buildSettlementQabdPreset,
@@ -122,6 +123,9 @@ const EmployeeNavbar = () => {
 
   // Fetch treasury accounts assigned to the current employee
   const { data: myTreasuryAccounts = [] } = useGetMyTreasuryAccounts();
+  // The navbar offers تسوية on every employee page; hide it when the employee has no
+  // can_transact on the settlement account. Absent permission row counts as no access.
+  const canUseSettlement = useCanUseSettlement();
 
   // Group accounts
   const cashboxAccounts = useMemo(
@@ -409,6 +413,7 @@ const EmployeeNavbar = () => {
                   <span>سند صرف</span>
                 </Button>
 
+                {canUseSettlement && (
                 <NavHoverDropdown
                   align="end"
                   className="w-36 text-right"
@@ -444,6 +449,7 @@ const EmployeeNavbar = () => {
                     <span>تسوية صرف</span>
                   </div>
                 </NavHoverDropdown>
+                )}
               </div>
             )}
           </div>
