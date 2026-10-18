@@ -11,6 +11,7 @@ import { Landmark, FileSpreadsheet, ArrowRight, Search, X, RotateCcw, Printer } 
 import type { FinancialTransaction, CashBoxVoucher } from '@/api/types';
 import { LedgerFinalBalanceCell } from '@/shared/grid';
 import { LedgerStatCell } from '@/shared/ledger/LedgerStatCell';
+import { ledgerToneClassName } from '@/shared/ledger/ledgerDirection';
 import { useModalStore } from '@/shared/stores/modalStore';
 import { useAuthStore } from '@/features/auth/store/authStore';
 import { useToast } from '@/shared/hooks/useToast';
@@ -436,15 +437,9 @@ export const TreasuryAccountDetailsPage = () => {
       key: 'transaction_type',
       cellClassName: ({ rowData }: any) => {
         if (rowData.is_summary) return 'text-center font-bold';
-        let meta = rowData.metadata;
-        if (typeof meta === 'string') {
-          try { meta = JSON.parse(meta); } catch {}
-        }
-        if (meta?.voucher_type_override === 'receipt') {
-          return 'cashbox-debit-cell text-center font-bold';
-        }
-        if (Number(rowData.debit || 0) > 0) return 'cashbox-debit-cell text-center font-bold';
-        return 'cashbox-credit-cell text-center font-bold';
+        // Same resolver as the client and employee ledgers, so one payment reads the
+        // same colour everywhere. A treasury is debit-normal: money in is a debit.
+        return `${ledgerToneClassName('treasury', rowData.debit, rowData.credit)} text-center font-bold`;
       },
       formatter: (_val: string, rowData: any) => {
         if (rowData.is_summary) return '';

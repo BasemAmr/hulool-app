@@ -1,6 +1,6 @@
 // src/components/employee/RecentClientsReceivablesPanel.tsx
 import React from 'react';
-import { CreditCard, Edit3, MoreHorizontal, RotateCcw } from 'lucide-react';
+import { CreditCard, MoreHorizontal, RotateCcw } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useModalStore } from '@/shared/stores/modalStore';
 import WhatsAppIcon from '@/shared/ui/icons/WhatsAppIcon';
@@ -9,8 +9,6 @@ import apiClient from '@/api/client';
 import { useQuery } from '@tanstack/react-query';
 import { useRestoreTask } from '@/features/tasks/api/taskQueries';
 import { useToast } from '@/shared/hooks/useToast';
-
-interface RecentClientsReceivablesPanelProps {}
 
 // Transform invoice to receivable-like format for display
 interface DisplayInvoice {
@@ -27,7 +25,7 @@ interface DisplayInvoice {
   status: string;
 }
 
-const RecentClientsReceivablesPanel: React.FC<RecentClientsReceivablesPanelProps> = () => {
+const RecentClientsReceivablesPanel: React.FC = () => {
   const navigate = useNavigate();
   const { openModal } = useModalStore();
   const restoreTaskMutation = useRestoreTask();
@@ -65,29 +63,21 @@ const RecentClientsReceivablesPanel: React.FC<RecentClientsReceivablesPanelProps
     status: invoice.status,
   }));
 
-  // const handlePayment = (receivable: any) => {
-  //   openModal('paymentForm', { receivable });
-  // };
-
-  // const handleClientClick = (clientId: number) => {
-  //   navigate(`/clients/${clientId}?mode=receivables`);
-  // };
-
   const handleWhatsAppPaymentReminder = (phone: string, clientName: string, remainingAmount: number) => {
     const formattedAmount = formatCurrency(remainingAmount);
     sendPaymentReminder(phone, clientName, formattedAmount);
   };
 
-  const handleRestore = async (receivable: any) => {
-    if (!receivable.task_id) {
+  // Takes task_id directly: the button only renders when it exists, and the caller
+  // no longer needs to wrap it in an object just to unwrap it again.
+  const handleRestore = async (taskId: number | null) => {
+    if (!taskId) {
       error('فشل في الاستعادة', 'لا يمكن استرداد هذا المستحق - لا توجد مهمة مرتبطة به');
       return;
     }
 
     try {
-      await restoreTaskMutation.mutateAsync({
-        id: receivable.task_id
-      });
+      await restoreTaskMutation.mutateAsync({ id: taskId });
       success('تمت الاستعادة', 'تم استرداد المهمة بنجاح');
     } catch (err) {
       console.error('Restore task error:', err);
@@ -169,7 +159,7 @@ const RecentClientsReceivablesPanel: React.FC<RecentClientsReceivablesPanelProps
                       <td className="px-2.5 py-2.5 border border-border-default text-right text-start font-bold text-xs text-text-primary overflow-hidden text-ellipsis whitespace-nowrap" style={{ maxWidth: '140px' }} title={invoice.client_name}>
                         {invoice.client_name}
                       </td>
-                      <td className="px-2.5 py-2.5 border border-border-default text-right text-start font-medium text-xs text-text-secondary overflow-hidden text-ellipsis whitespace-nowrap" title={invoice.description || invoice.task_name}>
+                      <td className="px-2.5 py-2.5 border border-border-default text-right text-start font-bold text-xs text-text-primary overflow-hidden text-ellipsis whitespace-nowrap" title={invoice.description || invoice.task_name}>
                         {invoice.description || invoice.task_name}
                       </td>
                       <td className="px-2.5 py-2.5 border border-border-default text-center font-extrabold text-base text-status-danger-text">
@@ -207,7 +197,7 @@ const RecentClientsReceivablesPanel: React.FC<RecentClientsReceivablesPanelProps
                           {invoice.task_id && (
                             <button
                               className="inline-flex items-center justify-center rounded p-1.5 text-text-secondary hover:text-text-primary bg-transparent hover:bg-background border border-transparent hover:border-border-default transition-colors duration-150 disabled:opacity-40"
-                              onClick={() => handleRestore({ task_id: invoice.task_id })}
+                              onClick={() => handleRestore(invoice.task_id)}
                               disabled={restoreTaskMutation.isPending}
                               title="استرداد المهمة"
                             >
@@ -222,11 +212,13 @@ const RecentClientsReceivablesPanel: React.FC<RecentClientsReceivablesPanelProps
               </tbody>
               <tfoot className="sticky bottom-0 bg-background z-10">
                 <tr className="border-t-2 border-border-strong font-extrabold bg-muted/60">
-                  <td colSpan={2} className="px-2.5 py-2 border border-border-strong text-right text-start text-text-primary text-sm">
+                  {/* Total from the API, NOT summed from the page - this panel is paginated, so a
+                      client-side sum reported only the first per_page rows. */}
+                    <td colSpan={2} className="px-2.5 py-2 border border-border-strong text-right text-start text-text-primary text-sm">
                     اجمالي المبالغ المستحقة:
                   </td>
                   <td className="px-2.5 py-2 border border-border-strong text-center text-status-danger-text text-base dir-ltr">
-                    {formatCurrency(filteredReceivables.reduce((sum, inv) => sum + inv.remaining_amount, 0))} ر.س
+                    {formatCurrency(invoicesData?.total_outstanding ?? 0)} ر.س
                   </td>
                   <td className="px-2.5 py-2 border border-border-strong text-center"></td>
                 </tr>

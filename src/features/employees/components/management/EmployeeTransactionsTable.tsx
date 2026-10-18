@@ -13,6 +13,7 @@ import { Edit3, Trash2, Eye, Search, X, RotateCcw, Receipt } from 'lucide-react'
 import HuloolDataGrid from '@/shared/grid/HuloolDataGrid';
 import { LedgerFinalBalanceCell } from '@/shared/grid';
 import { LedgerStatCell } from '@/shared/ledger/LedgerStatCell';
+import { ledgerToneClassName } from '@/shared/ledger/ledgerDirection';
 import type { HuloolGridColumn } from '@/shared/grid/HuloolDataGrid';
 import type { CellProps } from 'react-datasheet-grid';
 import { useModalStore } from '@/shared/stores/modalStore';
@@ -478,16 +479,9 @@ const EmployeeTransactionsTable: React.FC<EmployeeTransactionsTableProps> = ({
       component: TypeBadgeCell,
       cellClassName: ({ rowData }: any) => {
         if (rowData?.is_summary) return '';
-        const tone = ({
-          EMPLOYEE_COMMISSION: 'success',
-          EMPLOYEE_PAYOUT: 'danger',
-          PAYOUT: 'danger',
-          CASHBOX_PAYMENT: 'danger',
-          EMPLOYEE_EXPENSE: 'warning',
-          EMPLOYEE_BORROW: 'info',
-        } as Record<string, string>)[rowData?.transaction_type]
-          || (rowData?.debit_val > 0 ? 'danger' : 'success');
-        return `ledger-type-${tone}-cell`;
+        // Resolved against the employee's credit-normal polarity, so a payout (debit)
+        // reads red and a commission (credit) reads green on every ledger.
+        return ledgerToneClassName('employee', rowData?.debit_val, rowData?.credit_val);
       },
       width: 130,
       grow: 0,

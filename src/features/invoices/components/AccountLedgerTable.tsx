@@ -42,6 +42,7 @@ import { sendPaymentReminder } from '@/shared/utils/whatsappUtils';
 import HuloolDataGrid from '@/shared/grid/HuloolDataGrid';
 import { LedgerFinalBalanceCell } from '@/shared/grid';
 import { LedgerStatCell } from '@/shared/ledger/LedgerStatCell';
+import { ledgerToneClassName } from '@/shared/ledger/ledgerDirection';
 import type { HuloolGridColumn } from '@/shared/grid';
 import type { CellProps } from 'react-datasheet-grid';
 import DatePicker from 'react-datepicker';
@@ -661,14 +662,9 @@ const AccountLedgerTable: React.FC<AccountLedgerTableProps> = ({
       component: TypeBadgeCell,
       cellClassName: ({ rowData }: any) => {
         if ((rowData as any).is_summary) return '';
-        const tone = ({
-          INVOICE_CREATED: 'danger', INVOICE_GENERATED: 'danger',
-          PAYMENT_RECEIVED: 'success',
-          CREDIT_APPLIED: 'info', CREDIT_RECEIVED: 'info', CREDIT_ALLOCATED: 'info',
-          ADJUSTMENT: 'warning', REVERSAL: 'warning', INVOICE_REVERSED: 'warning',
-          PAYOUT: 'danger', REPAYMENT: 'success',
-        } as Record<string, string>)[rowData.transaction_type] || 'neutral';
-        return `ledger-type-${tone}-cell`;
+        // Colour is resolved from debit/credit against the client's debit-normal
+        // polarity, not from a transaction_type lookup - see shared/ledger/ledgerDirection.
+        return ledgerToneClassName('client', rowData.debit, rowData.credit);
       },
       grow: 1,
     },
