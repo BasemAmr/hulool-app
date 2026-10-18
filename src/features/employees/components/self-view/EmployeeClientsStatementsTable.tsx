@@ -122,18 +122,11 @@ DateCell.displayName = 'DateCell';
 // Type Badge Cell
 const TypeBadgeCell = React.memo(({ rowData }: CellProps<EmployeeReceivableDashboardItem>) => {
   const typeColor = getTypeColor(rowData.type);
+  // Full-cell tint comes from cellClassName (ledger-type-*-cell); the label is plain text
+  // that inherits the cell colour via .hulool-cell-content.
   return (
-    <div style={{ display: 'flex', justifyContent: 'center' }}>
-      <span style={{
-        backgroundColor: typeColor.bgVar,
-        color: typeColor.textVar,
-        padding: '4px 10px',
-        borderRadius: '9999px',
-        fontSize: '0.875rem',
-        fontWeight: 600,
-      }}>
-        {typeColor.label}
-      </span>
+    <div style={{ display: 'flex', justifyContent: 'center', fontSize: '0.875rem' }}>
+      {typeColor.label}
     </div>
   );
 });
@@ -404,6 +397,8 @@ const EmployeeClientsStatementsTable: React.FC<EmployeeClientsStatementsTablePro
         title: 'النوع',
         type: 'custom',
         component: TypeBadgeCell,
+        cellClassName: ({ rowData }: any) =>
+          `ledger-type-${{ Accounting: 'warning', RealEstate: 'success', Government: 'info' }[rowData?.type as string] || 'neutral'}-cell`,
         grow: 1,
       },
       {

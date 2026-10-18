@@ -107,7 +107,6 @@ const UnifiedTransactionModal = () => {
   const [toPresetKind, setToPresetKind] = useState<PickerKind | null>(null);
   const [amount, setAmount] = useState<string>('');
   const [description, setDescription] = useState<string>('');
-  const [autoDescription, setAutoDescription] = useState<string>('');
   const [effectiveDate, setEffectiveDate] = useState<string>(
     new Date().toISOString().split('T')[0],
   );
@@ -192,7 +191,6 @@ const UnifiedTransactionModal = () => {
     setToPresetKind(tPreset);
     setAmount('');
     setDescription('');
-    setAutoDescription('');
     setEffectiveDate(new Date().toISOString().split('T')[0]);
   }, [isVisible, props, treasuryData]);
 
@@ -254,8 +252,6 @@ const UnifiedTransactionModal = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [fromPicker.kind, toPicker.kind, declaredSettlementAction]);
 
-  const displayDescription = description + autoDescription;
-
   // ---- Treasury Negative Balance Validation (Client-side calculated) ----
   const parsedAmount = parseFloat(amount) || 0;
 
@@ -293,7 +289,7 @@ const UnifiedTransactionModal = () => {
     fromPicker.accountId !== '' && toPicker.accountId !== '' &&
     resolvedFromType !== null && resolvedToType !== null;
   const detailsReady =
-    amount !== '' && parsedAmount > 0 && displayDescription.trim() !== '';
+    amount !== '' && parsedAmount > 0 && description.trim() !== '';
 
   // Live settlement guard — product decision is to silently adopt the derived
   // direction and block save ONLY when both sides are settlement (invalid).
@@ -312,7 +308,7 @@ const UnifiedTransactionModal = () => {
       !fromPicker.accountId ||
       !toPicker.accountId ||
       !amount ||
-      !displayDescription.trim() ||
+      !description.trim() ||
       isNegativeTreasuryDisallowed
     ) {
       return;
@@ -329,9 +325,9 @@ const UnifiedTransactionModal = () => {
         to_account_type: resolvedToType,
         to_account_id: Number(toPicker.accountId),
         amount: parseFloat(amount),
-        description: displayDescription.trim(),
+        description: finalDescription,
         effective_date: effectiveDate ? `${effectiveDate}T${new Date().toTimeString().split(' ')[0]}` : undefined,
-        voucher_type_override: voucherTypeOverride ? voucherTypeOverride : undefined,
+        voucher_type_override: effectiveVoucherType,
       });
 
       success('تم تسجيل المعاملة بنجاح');
@@ -352,7 +348,7 @@ const UnifiedTransactionModal = () => {
       !fromPicker.accountId ||
       !toPicker.accountId ||
       !amount ||
-      !displayDescription.trim() ||
+      !description.trim() ||
       isNegativeTreasuryDisallowed
     ) {
       return;
@@ -369,16 +365,15 @@ const UnifiedTransactionModal = () => {
         to_account_type: resolvedToType,
         to_account_id: Number(toPicker.accountId),
         amount: parseFloat(amount),
-        description: displayDescription.trim(),
+        description: finalDescription,
         effective_date: effectiveDate ? `${effectiveDate}T${new Date().toTimeString().split(' ')[0]}` : undefined,
-        voucher_type_override: voucherTypeOverride ? voucherTypeOverride : undefined,
+        voucher_type_override: effectiveVoucherType,
       });
 
       success('تم التسجيل — جاهز للمعاملة التالية');
       setAmount('');
       setDescription('');
-      setAutoDescription('');
-      setEffectiveDate(new Date().toISOString().split('T')[0]);
+        setEffectiveDate(new Date().toISOString().split('T')[0]);
       setVoucherTypeOverride('');
     } catch (err: any) {
       toastError(
@@ -396,7 +391,6 @@ const UnifiedTransactionModal = () => {
     setToPresetKind(null);
     setAmount('');
     setDescription('');
-    setAutoDescription('');
     setEffectiveDate(new Date().toISOString().split('T')[0]);
     setVoucherTypeOverride('');
     setInitialized(false);
@@ -439,24 +433,32 @@ const UnifiedTransactionModal = () => {
   const toName = getPickerLabel(toPicker);
   const fromKindLabel = getPickerKindLabel(fromPicker);
   const toKindLabel = getPickerKindLabel(toPicker);
-  useEffect(() => {
-    if (fromName && toName && fromPicker.accountId && toPicker.accountId) {
-      const fromStr = fromPicker.kind === 'settlement' ? fromName : `${fromKindLabel}: ${fromName}`;
-      const toStr = toPicker.kind === 'settlement' ? toName : `${toKindLabel}: ${toName}`;
-      setAutoDescription(`\n\nمن ${fromStr}\nالى ${toStr}`);
-    } else {
-      setAutoDescription('');
-    }
-  }, [fromName, toName, fromKindLabel, toKindLabel, fromPicker.accountId, toPicker.accountId]);
+
+  // The textarea holds ONLY what the user typed. The account trail is a separate
+  // auto-generated prefix assembled at submit time - rendering it inside the field made
+  // the description look pre-filled and made the user fight the auto-complete on every
+  // keystroke. Names only, no "kind: name" - the account type is redundant here.
+  const accountTrailPrefix = useMemo(() => {
+    if (!fromName || !toName || !fromPicker.accountId || !toPicker.accountId) return '';
+    return `من "${fromName}" الى "${toName}"`;
+  }, [fromName, toName, fromPicker.accountId, toPicker.accountId]);
+
+  const finalDescription = useMemo(() => {
+    const note = description.trim();
+    return accountTrailPrefix ? `${accountTrailPrefix} - ${note}` : note;
+  }, [accountTrailPrefix, description]);
+
+  // Print mask defaults to the direction the user picked: قبض → سند قبض,
+  // صرف → سند صرف. Only an explicit toggle deviates from that default.
+  const effectiveVoucherType: 'receipt' | 'expense' =
+    voucherTypeOverride || (direction === 'qabdh' ? 'receipt' : 'expense');
+
+  const defaultVoucherLabel = effectiveVoucherType === 'receipt' ? 'سند قبض' : 'سند صرف';
+  const altVoucherType: 'receipt' | 'expense' = effectiveVoucherType === 'receipt' ? 'expense' : 'receipt';
+  const altVoucherLabel = altVoucherType === 'receipt' ? 'سند قبض' : 'سند صرف';
 
   const handleDescriptionChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-    const val = e.target.value;
-    if (autoDescription && val.endsWith(autoDescription)) {
-      setDescription(val.slice(0, -autoDescription.length));
-    } else {
-      setDescription(val);
-      setAutoDescription('');
-    }
+    setDescription(e.target.value);
   };
 
   const fromIsSettlement = fromPicker.kind === 'settlement';
@@ -479,7 +481,7 @@ const UnifiedTransactionModal = () => {
     liveDirection === 'qabd' ? 'تسوية قبض' : liveDirection === 'sarf' ? 'تسوية صرف' : null;
   const activeTitle =
     modalTitleProp || (direction === 'qabdh' ? dirQabdhLabel : dirSarfLabel);
-  // Banner strings mirror the autoDescription convention: settlement side bare
+  // Banner strings mirror the submitted description: settlement side bare
   // name, other side 'kind: name'.
   const bannerFromStr =
     fromPicker.kind === 'settlement' ? fromName : `${fromKindLabel}: ${fromName}`;
@@ -525,28 +527,60 @@ const UnifiedTransactionModal = () => {
             </div>
           ) : (
             <div className="grid grid-cols-2 gap-3">
-              <AccountPickerCard
-                label="من حساب"
-                value={fromPicker}
-                onChange={setFromPicker}
-                clients={clients}
-                employees={employees}
-                treasuryData={treasuryData ?? []}
-                categoryMetadata={categoryMetadata ?? []}
-                presetKind={fromPresetKind}
-                isVisible={isVisible}
-              />
-              <AccountPickerCard
-                label="إلى حساب"
-                value={toPicker}
-                onChange={setToPicker}
-                clients={clients}
-                employees={employees}
-                treasuryData={treasuryData ?? []}
-                categoryMetadata={categoryMetadata ?? []}
-                presetKind={toPresetKind}
-                isVisible={isVisible}
-              />
+              {/* In RTL the first grid child renders at the visual start (right). For قبض
+                  the money arrives AT the treasury, so the treasury card ("إلى حساب")
+                  reads first. Values are untouched - only presentation order changes. */}
+              {direction === 'qabdh' ? (
+                <>
+                  <AccountPickerCard
+                    label="إلى حساب"
+                    value={toPicker}
+                    onChange={setToPicker}
+                    clients={clients}
+                    employees={employees}
+                    treasuryData={treasuryData ?? []}
+                    categoryMetadata={categoryMetadata ?? []}
+                    presetKind={toPresetKind}
+                    isVisible={isVisible}
+                  />
+                  <AccountPickerCard
+                    label="من حساب"
+                    value={fromPicker}
+                    onChange={setFromPicker}
+                    clients={clients}
+                    employees={employees}
+                    treasuryData={treasuryData ?? []}
+                    categoryMetadata={categoryMetadata ?? []}
+                    presetKind={fromPresetKind}
+                    isVisible={isVisible}
+                  />
+                </>
+              ) : (
+                <>
+                  <AccountPickerCard
+                    label="من حساب"
+                    value={fromPicker}
+                    onChange={setFromPicker}
+                    clients={clients}
+                    employees={employees}
+                    treasuryData={treasuryData ?? []}
+                    categoryMetadata={categoryMetadata ?? []}
+                    presetKind={fromPresetKind}
+                    isVisible={isVisible}
+                  />
+                  <AccountPickerCard
+                    label="إلى حساب"
+                    value={toPicker}
+                    onChange={setToPicker}
+                    clients={clients}
+                    employees={employees}
+                    treasuryData={treasuryData ?? []}
+                    categoryMetadata={categoryMetadata ?? []}
+                    presetKind={toPresetKind}
+                    isVisible={isVisible}
+                  />
+                </>
+              )}
             </div>
           )}
 
@@ -624,7 +658,7 @@ const UnifiedTransactionModal = () => {
                 البيان / الوصف <span className="text-status-danger-text">*</span>
               </label>
               <textarea
-                value={displayDescription}
+                value={description}
                 onChange={handleDescriptionChange}
                 placeholder="اكتب بيان المعاملة هنا..."
                 rows={3}
@@ -650,20 +684,20 @@ const UnifiedTransactionModal = () => {
                         : 'text-text-secondary hover:text-text-primary'
                     }`}
                   >
-                    {resolvedFromType === 'treasury' ? 'سند صرف (افتراضي)' : 'سند قبض (افتراضي)'}
+                    {defaultVoucherLabel} (افتراضي)
                   </button>
                   <button
                     type="button"
-                    onClick={() => setVoucherTypeOverride(resolvedFromType === 'treasury' ? 'receipt' : 'expense')}
+                    onClick={() => setVoucherTypeOverride(altVoucherType)}
                     className={`px-2.5 py-1 rounded text-xs font-medium transition-all ${
-                      (resolvedFromType === 'treasury' ? voucherTypeOverride === 'receipt' : voucherTypeOverride === 'expense')
-                        ? (resolvedFromType === 'treasury'
+                      voucherTypeOverride === altVoucherType
+                        ? (altVoucherType === 'receipt'
                             ? 'bg-status-success-bg text-status-success-text font-bold shadow-xs border border-status-success-border'
                             : 'bg-status-danger-bg text-status-danger-text font-bold shadow-xs border border-status-danger-border')
                         : 'text-text-secondary hover:text-text-primary'
                     }`}
                   >
-                    {resolvedFromType === 'treasury' ? 'سند قبض / إقرار استلام' : 'سند صرف للعميل'}
+                    {altVoucherLabel}
                   </button>
                 </div>
               </div>

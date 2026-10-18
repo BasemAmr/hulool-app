@@ -8,7 +8,7 @@
  * - Active cell bold text
  */
 
-import React, { useMemo, useState, useEffect } from 'react';
+import React, { useMemo, useState, useEffect, useRef, useCallback } from 'react';
 import { Edit3, Trash2, Eye, Search, X, RotateCcw, Receipt } from 'lucide-react';
 import HuloolDataGrid from '@/shared/grid/HuloolDataGrid';
 import { LedgerFinalBalanceCell } from '@/shared/grid';
@@ -56,26 +56,9 @@ interface ConfirmedTransaction {
   client_name?: string | null;
 }
 
-interface PendingCommission {
-  id: string;
-  item_type: string;
-  related_entity: string | null;
-  task_id: string | null;
-  expected_amount: string;
-  status: string;
-  notes: string | null;
-  created_at: string;
-  task_name?: string | null;
-  net_earning?: string | null;
-  task_status?: string | null;
-  client_name?: string | null;
-  invoice_id?: string | null;
-}
-
 interface EmployeeTransactionsTableProps {
   employeeId?: number;
   transactions?: ConfirmedTransaction[];
-  pendingCommissions?: PendingCommission[];
   isLoading?: boolean;
   page?: number;
   perPage?: number;
@@ -183,49 +166,26 @@ DateCell.displayName = 'DateCell';
 // Type Badge Cell
 const TypeBadgeCell = React.memo(({ rowData }: CellProps<any>) => {
   if (rowData.is_summary) return <span className="hulool-cell-content" />;
-  if (rowData.is_pending) {
-    return (
-      <span className="hulool-cell-content" style={{ justifyContent: 'center' }}>
-        <span style={{
-          backgroundColor: 'var(--token-status-warning-bg)',
-          color: 'var(--token-status-warning-text)',
-          padding: '4px 10px',
-          borderRadius: '9999px',
-          fontSize: '0.875rem',
-          fontWeight: 600,
-        }}>
-          عمولة معلقة
-        </span>
-      </span>
-    );
-  }
-  const badges: Record<string, { bg: string; text: string; label: string }> = {
-    'EMPLOYEE_COMMISSION': { bg: 'var(--token-status-success-bg)', text: 'var(--token-status-success-text)', label: 'عمولة' },
-    'EMPLOYEE_PAYOUT': { bg: 'var(--token-status-danger-bg)', text: 'var(--token-status-danger-text)', label: 'صرف' },
-    'PAYOUT': { bg: 'var(--token-status-danger-bg)', text: 'var(--token-status-danger-text)', label: 'صرف' },
-    'CASHBOX_PAYMENT': { bg: 'var(--token-status-danger-bg)', text: 'var(--token-status-danger-text)', label: 'صرف صندوق' },
-    'EMPLOYEE_EXPENSE': { bg: 'var(--token-status-warning-bg)', text: 'var(--token-status-warning-text)', label: 'مصروف' },
-    'EMPLOYEE_BORROW': { bg: 'var(--token-status-info-bg)', text: 'var(--token-status-info-text)', label: 'سلفة' },
+  const badges: Record<string, { tone: string; label: string }> = {
+    'EMPLOYEE_COMMISSION': { tone: 'success', label: 'عمولة' },
+    'EMPLOYEE_PAYOUT': { tone: 'danger', label: 'صرف' },
+    'PAYOUT': { tone: 'danger', label: 'صرف' },
+    'CASHBOX_PAYMENT': { tone: 'danger', label: 'صرف صندوق' },
+    'EMPLOYEE_EXPENSE': { tone: 'warning', label: 'مصروف' },
+    'EMPLOYEE_BORROW': { tone: 'info', label: 'سلفة' },
   };
 
   const badge = badges[rowData.transaction_type] || (
     rowData.debit_val > 0
-      ? { bg: 'var(--token-status-danger-bg)', text: 'var(--token-status-danger-text)', label: 'سند صرف' }
-      : { bg: 'var(--token-status-success-bg)', text: 'var(--token-status-success-text)', label: 'سند قبض' }
+      ? { tone: 'danger', label: 'سند صرف' }
+      : { tone: 'success', label: 'سند قبض' }
   );
 
+  // Full-cell tint comes from cellClassName (ledger-type-*-cell); the label is plain text
+  // that inherits the cell colour via .hulool-cell-content.
   return (
-    <span className="hulool-cell-content" style={{ justifyContent: 'center' }}>
-      <span style={{
-        backgroundColor: badge.bg,
-        color: badge.text,
-        padding: '4px 10px',
-        borderRadius: '9999px',
-        fontSize: '0.875rem',
-        fontWeight: 600,
-      }}>
-        {badge.label}
-      </span>
+    <span className="hulool-cell-content" style={{ justifyContent: 'center', fontSize: '0.875rem' }}>
+      {badge.label}
     </span>
   );
 });
@@ -280,7 +240,6 @@ interface ActionsCellData {
 }
 
 const ActionsCell = React.memo(({ rowData, columnData }: CellProps<any, ActionsCellData>) => {
-  if (rowData.is_summary || rowData.is_pending) return <span className="hulool-cell-content" />;
   const { canEdit, onView, onEdit, onDelete } = columnData || {};
 
   return (
@@ -336,7 +295,6 @@ ActionsCell.displayName = 'ActionsCell';
 const EmployeeTransactionsTable: React.FC<EmployeeTransactionsTableProps> = ({
   employeeId,
   transactions: propTransactions,
-  pendingCommissions: propPendingCommissions,
   isLoading: propIsLoading,
   page = 1,
   perPage = 20,
@@ -351,6 +309,12 @@ const EmployeeTransactionsTable: React.FC<EmployeeTransactionsTableProps> = ({
 
   const [internalPage, setInternalPage] = useState(1);
   const activePage = page !== undefined ? page : internalPage;
+
+  // Scroll-to-load: pages are appended to `accumulated` as the sentinel scrolls into view,
+  // matching the client and treasury ledgers. Previously this used prev/next buttons, which
+  // capped scanning at one page at a time on a long ledger.
+  const [accumulated, setAccumulated] = useState<ConfirmedTransaction[]>([]);
+  const sentinelRef = useRef<HTMLDivElement | null>(null);
 
   const handlePageChange = (newPage: number) => {
     if (onPageChange) {
@@ -398,15 +362,53 @@ const EmployeeTransactionsTable: React.FC<EmployeeTransactionsTableProps> = ({
 
   const isLoading = propIsLoading !== undefined ? propIsLoading : isQueryLoading;
 
-  const confirmedTransactions: ConfirmedTransaction[] = propTransactions
-    ? propTransactions
-    : (transactionsData?.data?.confirmed_transactions || []);
+  const pageRows: ConfirmedTransaction[] = useMemo(
+    () => (propTransactions
+      ? propTransactions
+      : (transactionsData?.data?.confirmed_transactions || [])),
+    [propTransactions, transactionsData]
+  );
 
-  const pendingCommissions: PendingCommission[] = propPendingCommissions
-    ? propPendingCommissions
-    : (transactionsData?.data?.pending_commissions || []);
+  // When not driven by a parent, append each fetched page (de-duplicated by id) instead of
+  // replacing, so scrolling accumulates the full ledger.
+  useEffect(() => {
+    if (propTransactions) return;
+    setAccumulated(prev => {
+      if (activePage === 1) return pageRows;
+      const seen = new Set(prev.map((t) => t.id));
+      return [...prev, ...pageRows.filter((t) => !seen.has(t.id))];
+    });
+  }, [pageRows, activePage, propTransactions]);
+
+  const confirmedTransactions = propTransactions ? propTransactions : accumulated;
 
   const pagination = transactionsData?.pagination || {};
+  const totalPages = pagination.total_pages || 1;
+  const hasMore = activePage < totalPages;
+  const isInitialLoad = isLoading && confirmedTransactions.length === 0;
+
+  const loadMore = useCallback(() => {
+    if (hasMore && !isLoading) handlePageChange(activePage + 1);
+  }, [hasMore, isLoading, activePage]);
+
+  useEffect(() => {
+    const sentinel = sentinelRef.current;
+    if (!sentinel) return;
+    const observer = new IntersectionObserver(
+      (entries) => { if (entries[0].isIntersecting && hasMore && !isLoading) loadMore(); },
+      { threshold: 0.1 }
+    );
+    observer.observe(sentinel);
+    return () => observer.disconnect();
+  }, [hasMore, isLoading, loadMore]);
+
+  // Any filter change restarts accumulation from page 1.
+  useEffect(() => {
+    handlePageChange(1);
+    if (!propTransactions) setAccumulated([]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [filters.start_date, filters.end_date, filters.type, filters.search]);
+
   const summary = transactionsData?.data?.summary || {};
 
   // Toolbar totals come from the server summary (whole ledger), never from summing the
@@ -436,11 +438,12 @@ const EmployeeTransactionsTable: React.FC<EmployeeTransactionsTableProps> = ({
     openModal('transactionDelete', { transaction });
   };
 
-  // Combine confirmed & pending transactions
+  // Confirmed transactions only. Pending commissions ("عمولة معلقة") are deliberately NOT
+  // shown here — they are uncalculated estimates, not ledger entries, and mixing them in
+  // made the running-balance column and row count disagree with the server totals.
   const combinedData = useMemo(() => {
-    const confirmed = confirmedTransactions.map((t) => ({
+    const all = confirmedTransactions.map((t) => ({
       ...t,
-      is_pending: false,
       is_summary: false,
       date: t.transaction_date || '',
       debit_val: parseFloat(t.debit || '0'),
@@ -448,24 +451,11 @@ const EmployeeTransactionsTable: React.FC<EmployeeTransactionsTableProps> = ({
       balance_val: t.balance ? parseFloat(t.balance) : null,
     }));
 
-    const pending = pendingCommissions.map((p) => ({
-      ...p,
-      is_pending: true,
-      is_summary: false,
-      transaction_type: 'PENDING_COMMISSION',
-      date: p.created_at || '',
-      debit_val: parseFloat(p.expected_amount || '0'),
-      credit_val: 0,
-      balance_val: null,
-      description: p.notes || p.task_name || 'عمولة معلقة',
-    }));
-
-    const all = [...confirmed, ...pending];
     // Sort descending by date
     all.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
 
     return all;
-  }, [confirmedTransactions, pendingCommissions]);
+  }, [confirmedTransactions]);
 
   // Define columns - RTL order (first is rightmost)
   const columns = useMemo((): HuloolGridColumn<any>[] => [
@@ -484,6 +474,19 @@ const EmployeeTransactionsTable: React.FC<EmployeeTransactionsTableProps> = ({
       title: 'النوع',
       type: 'custom',
       component: TypeBadgeCell,
+      cellClassName: ({ rowData }: any) => {
+        if (rowData?.is_summary) return '';
+        const tone = ({
+          EMPLOYEE_COMMISSION: 'success',
+          EMPLOYEE_PAYOUT: 'danger',
+          PAYOUT: 'danger',
+          CASHBOX_PAYMENT: 'danger',
+          EMPLOYEE_EXPENSE: 'warning',
+          EMPLOYEE_BORROW: 'info',
+        } as Record<string, string>)[rowData?.transaction_type]
+          || (rowData?.debit_val > 0 ? 'danger' : 'success');
+        return `ledger-type-${tone}-cell`;
+      },
       width: 130,
       grow: 0,
     },
@@ -697,43 +700,23 @@ const EmployeeTransactionsTable: React.FC<EmployeeTransactionsTableProps> = ({
         <HuloolDataGrid
           data={combinedData}
           columns={columns}
-          isLoading={isLoading}
-          emptyMessage="لا توجد معاملات مؤكدة أو معلقة حالياً"
+          isLoading={isInitialLoad}
+          emptyMessage="لا توجد معاملات مالية"
           showId={false}
           height="auto"
           minHeight={400}
           rowClassName={(rowData: any) => {
             if (!rowData) return '';
             if (rowData.is_summary) return 'ledger-summary-row';
-            if (rowData.is_pending) return 'bg-amber-50/40 hover:bg-amber-50/70 dark:bg-amber-950/10 dark:hover:bg-amber-950/20';
             return '';
           }}
         />
 
-        {/* Pagination */}
-        {pagination.total > perPage && (
-          <div className="p-4 flex justify-between items-center border-t border-border-default bg-bg-surface-muted/30">
-            <div className="text-text-primary text-sm">
-              عرض {((activePage - 1) * perPage) + 1} إلى {Math.min(activePage * perPage, pagination.total)} من {pagination.total} حركة
-            </div>
-            <div className="inline-flex gap-2">
-              <button
-                type="button"
-                onClick={() => handlePageChange(activePage - 1)}
-                disabled={activePage <= 1}
-                className="px-3 py-1 text-sm border border-border-default rounded-md hover:bg-accent disabled:opacity-50 cursor-pointer disabled:cursor-not-allowed"
-              >
-                السابق
-              </button>
-              <button
-                type="button"
-                onClick={() => handlePageChange(activePage + 1)}
-                disabled={activePage >= Math.ceil(pagination.total / perPage)}
-                className="px-3 py-1 text-sm border border-border-default rounded-md hover:bg-accent disabled:opacity-50 cursor-pointer disabled:cursor-not-allowed"
-              >
-                التالي
-              </button>
-            </div>
+        {/* Scroll sentinel - replaces the old prev/next footer. Reaching it loads the next
+            page and appends it, the same as the client and treasury ledgers. */}
+        {hasMore && (
+          <div ref={sentinelRef} className="py-3 flex items-center justify-center text-text-secondary text-xs">
+            {isLoading ? 'جاري تحميل المزيد...' : 'مرر للأسفل لتحميل المزيد'}
           </div>
         )}
       </div>

@@ -35,28 +35,8 @@ interface ClientReceivablesTableProps {
 // ================================
 // HELPER FUNCTIONS
 // ================================
-const getTypeBadgeStyle = (type: string) => {
-  const styles: Record<string, { bg: string; color: string }> = {
-    Accounting: {
-      bg: 'var(--token-status-warning-bg)',
-      color: 'var(--token-status-warning-text)',
-    },
-    RealEstate: {
-      bg: 'var(--token-status-success-bg)',
-      color: 'var(--token-status-success-text)',
-    },
-    Government: {
-      bg: 'var(--token-status-info-bg)',
-      color: 'var(--token-status-info-text)',
-    },
-    Other: {
-      bg: 'var(--token-status-neutral-bg)',
-      color: 'var(--token-status-neutral-text)',
-    },
-  };
-
-  return styles[type] || styles.Other;
-};
+// Type tones are applied as full-cell background via the ledger-type-*-cell classes
+// (see cellClassName on the type column and index.css), so only the label is needed here.
 
 // ================================
 // CUSTOM CELL COMPONENTS
@@ -142,7 +122,6 @@ DateCell.displayName = 'DateCell';
 
 // Type Badge Cell
 const TypeBadgeCell = React.memo(({ rowData }: CellProps<StatementItem>) => {
-  const style = getTypeBadgeStyle(rowData.type);
   const typeLabels: Record<string, string> = {
     'Accounting': 'محاسبة',
     'RealEstate': 'عقارات',
@@ -150,19 +129,11 @@ const TypeBadgeCell = React.memo(({ rowData }: CellProps<StatementItem>) => {
     'Other': 'أخرى',
   };
 
+  // Full-cell tint comes from cellClassName (ledger-type-*-cell); the label is plain text
+  // that inherits the cell colour via .hulool-cell-content.
   return (
-    <div style={{ display: 'flex', justifyContent: 'center' }}>
-      <span style={{
-        backgroundColor: style.bg,
-        color: style.color,
-        padding: '4px 10px',
-        borderRadius: '9999px',
-        fontSize: '0.75rem',
-        fontWeight: 600,
-        whiteSpace: 'nowrap',
-      }}>
-        {typeLabels[rowData.type] || typeLabels.Other}
-      </span>
+    <div style={{ display: 'flex', justifyContent: 'center', fontSize: '0.75rem', whiteSpace: 'nowrap' }}>
+      {typeLabels[rowData.type] || typeLabels.Other}
     </div>
   );
 });
@@ -449,6 +420,8 @@ const ClientReceivablesTable: React.FC<ClientReceivablesTableProps> = ({
       title: 'النوع',
       type: 'custom',
       component: TypeBadgeCell,
+      cellClassName: ({ rowData }: any) =>
+        `ledger-type-${{ Accounting: 'warning', RealEstate: 'success', Government: 'info' }[rowData?.type as string] || 'neutral'}-cell`,
       grow: 1,
     },
     {

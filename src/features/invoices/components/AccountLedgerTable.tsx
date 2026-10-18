@@ -291,38 +291,30 @@ DateCell.displayName = 'DateCell';
 // Type Badge Cell
 const TypeBadgeCell = React.memo(({ rowData }: CellProps<FinancialTransaction>) => {
   if ((rowData as any).is_summary) return <span className="hulool-cell-content" />;
-  const badges: Record<string, { bg: string; text: string; label: string }> = {
-    'INVOICE_CREATED': { bg: 'var(--token-status-danger-bg)', text: 'var(--token-status-danger-text)', label: 'فاتورة' },
-    'INVOICE_GENERATED': { bg: 'var(--token-status-danger-bg)', text: 'var(--token-status-danger-text)', label: 'فاتورة' },
-    'PAYMENT_RECEIVED': { bg: 'var(--token-status-success-bg)', text: 'var(--token-status-success-text)', label: 'دفعة' },
-    'CREDIT_APPLIED': { bg: 'var(--token-status-info-bg)', text: 'var(--token-status-info-text)', label: 'تخصيص رصيد' },
-    'CREDIT_RECEIVED': { bg: 'var(--token-status-info-bg)', text: 'var(--token-status-info-text)', label: 'رصيد مستلم' },
-    'CREDIT_ALLOCATED': { bg: 'var(--token-status-info-bg)', text: 'var(--token-status-info-text)', label: 'تخصيص رصيد' },
-    'ADJUSTMENT': { bg: 'var(--token-status-warning-bg)', text: 'var(--token-status-warning-text)', label: 'تعديل' },
-    'REVERSAL': { bg: 'var(--token-status-warning-bg)', text: 'var(--token-text-warning)', label: 'عكس' },
-    'INVOICE_REVERSED': { bg: 'var(--token-status-warning-bg)', text: 'var(--token-text-warning)', label: 'فاتورة ملغاة' },
-    'PAYOUT': { bg: 'var(--token-status-danger-bg)', text: 'var(--token-status-danger-text)', label: 'سند صرف' },
-    'REPAYMENT': { bg: 'var(--token-status-success-bg)', text: 'var(--token-status-success-text)', label: 'سند قبض' },
+  const badges: Record<string, { tone: string; label: string }> = {
+    'INVOICE_CREATED': { tone: 'danger', label: 'فاتورة' },
+    'INVOICE_GENERATED': { tone: 'danger', label: 'فاتورة' },
+    'PAYMENT_RECEIVED': { tone: 'success', label: 'دفعة' },
+    'CREDIT_APPLIED': { tone: 'info', label: 'تخصيص رصيد' },
+    'CREDIT_RECEIVED': { tone: 'info', label: 'رصيد مستلم' },
+    'CREDIT_ALLOCATED': { tone: 'info', label: 'تخصيص رصيد' },
+    'ADJUSTMENT': { tone: 'warning', label: 'تعديل' },
+    'REVERSAL': { tone: 'warning', label: 'عكس' },
+    'INVOICE_REVERSED': { tone: 'warning', label: 'فاتورة ملغاة' },
+    'PAYOUT': { tone: 'danger', label: 'سند صرف' },
+    'REPAYMENT': { tone: 'success', label: 'سند قبض' },
   };
 
   const badge = badges[rowData.transaction_type] || {
-    bg: 'var(--token-status-neutral-bg)',
-    text: 'var(--token-text-primary)',
+    tone: 'neutral',
     label: rowData.transaction_type,
   };
 
+  // Full-cell tint comes from cellClassName (ledger-type-*-cell); the label is plain text
+  // that inherits the cell colour via .hulool-cell-content.
   return (
-    <span className="hulool-cell-content" style={{ justifyContent: 'center' }}>
-      <span style={{
-        backgroundColor: badge.bg,
-        color: badge.text,
-        padding: '4px 10px',
-        borderRadius: '9999px',
-        fontSize: '0.875rem',
-        fontWeight: 600,
-      }}>
-        {badge.label}
-      </span>
+    <span className="hulool-cell-content" style={{ justifyContent: 'center', fontSize: '0.875rem' }}>
+      {badge.label}
     </span>
   );
 });
@@ -667,6 +659,17 @@ const AccountLedgerTable: React.FC<AccountLedgerTableProps> = ({
       title: 'النوع',
       type: 'custom',
       component: TypeBadgeCell,
+      cellClassName: ({ rowData }: any) => {
+        if ((rowData as any).is_summary) return '';
+        const tone = ({
+          INVOICE_CREATED: 'danger', INVOICE_GENERATED: 'danger',
+          PAYMENT_RECEIVED: 'success',
+          CREDIT_APPLIED: 'info', CREDIT_RECEIVED: 'info', CREDIT_ALLOCATED: 'info',
+          ADJUSTMENT: 'warning', REVERSAL: 'warning', INVOICE_REVERSED: 'warning',
+          PAYOUT: 'danger', REPAYMENT: 'success',
+        } as Record<string, string>)[rowData.transaction_type] || 'neutral';
+        return `ledger-type-${tone}-cell`;
+      },
       grow: 1,
     },
     {

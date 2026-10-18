@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { User, DollarSign, FileText, Users as UsersIcon, CreditCard, Activity, Clock, LayoutDashboard, ChevronDown, TrendingUp, TrendingDown } from 'lucide-react';
+import { DollarSign, FileText, Users as UsersIcon, CreditCard, Activity, Clock, LayoutDashboard, ChevronDown, TrendingUp, TrendingDown } from 'lucide-react';
 import Button from '@/shared/ui/primitives/Button';
 import { useModalStore } from '@/shared/stores/modalStore';
 import { useGetEmployee } from '@/features/employees/api/employeeQueries';
@@ -40,17 +40,10 @@ const EmployeeHeader: React.FC<EmployeePageHeader> = ({ employee, onSarf, onQabd
   const openModal = useModalStore((state) => state.openModal);
 
   return (
-    <div className="flex flex-wrap justify-around items-center gap-4 mb-6">
-      {/* Employee Name and Status */}
-      <div className="flex justify-around items-center gap-4 flex-1">
-        <div className="flex items-center gap-3">
-          <div className="w-12 h-12 bg-primary text-white rounded-full flex items-center justify-center">
-            <User size={24} />
-          </div>
-          <div>
-            <h1 className="text-2xl font-bold text-text-primary">{employee.display_name}</h1>
-          </div>
-        </div>
+    <div className="flex flex-wrap items-center justify-between gap-4 mb-6">
+      {/* Employee Name — sits at the RTL start (right), no avatar */}
+      <div className="flex items-center gap-3 flex-1">
+        <h1 className="text-2xl font-bold text-text-primary">{employee.display_name}</h1>
       </div>
 
       {/* Mode Selection Cards */}

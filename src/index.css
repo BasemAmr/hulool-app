@@ -1306,6 +1306,54 @@ html[data-theme='dark'] .client-card-table th {
   color: inherit !important;
 }
 
+/* --- Ledger "type" cells ---
+   These used to render a small inline pill (border-radius 9999px, 4px 10px padding) floating
+   in a white cell. The debit/credit/balance columns tint the WHOLE cell instead, so the type
+   column now matches: full-cell background + token text colour, no pill.
+   Colour per tone mirrors the existing --token-status-* tokens (light and dark). */
+.ledger-type-danger-cell,
+.ledger-type-success-cell,
+.ledger-type-info-cell,
+.ledger-type-warning-cell,
+.ledger-type-neutral-cell {
+  font-weight: 700 !important;
+  text-align: center !important;
+  justify-content: center !important;
+}
+
+.hulool-data-grid .dsg-row:not(.dsg-row-header):hover .dsg-cell.ledger-type-danger-cell,
+.hulool-data-grid .dsg-row:not(.dsg-row-header):hover .dsg-cell.ledger-type-success-cell,
+.hulool-data-grid .dsg-row:not(.dsg-row-header):hover .dsg-cell.ledger-type-info-cell,
+.hulool-data-grid .dsg-row:not(.dsg-row-header):hover .dsg-cell.ledger-type-warning-cell,
+.hulool-data-grid .dsg-row:not(.dsg-row-header):hover .dsg-cell.ledger-type-neutral-cell {
+  background-color: inherit !important;
+}
+
+.ledger-type-danger-cell {
+  background-color: var(--token-status-danger-bg) !important;
+  color: var(--token-status-danger-text) !important;
+}
+
+.ledger-type-success-cell {
+  background-color: var(--token-status-success-bg) !important;
+  color: var(--token-status-success-text) !important;
+}
+
+.ledger-type-info-cell {
+  background-color: var(--token-status-info-bg) !important;
+  color: var(--token-status-info-text) !important;
+}
+
+.ledger-type-warning-cell {
+  background-color: var(--token-status-warning-bg) !important;
+  color: var(--token-status-warning-text) !important;
+}
+
+.ledger-type-neutral-cell {
+  background-color: var(--token-status-neutral-bg) !important;
+  color: var(--token-status-neutral-text) !important;
+}
+
 /* --- Task Grid Cell Status Classes ---
    Semantic tokens only. These previously used hardcoded hex (#b45309, #6366f1, ...),
    which are light-theme values: in dark mode they mixed with --token-bg-surface into
