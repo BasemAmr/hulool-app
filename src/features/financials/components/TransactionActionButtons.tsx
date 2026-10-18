@@ -40,7 +40,7 @@ const TransactionActionButtons: React.FC<TransactionActionButtonsProps> = ({
   const openModal = useModalStore(s => s.openModal);
   const [settlementOpen, setSettlementOpen] = useState(false);
   const settlementRef = useRef<HTMLDivElement>(null);
-  const canUseSettlement = useCanUseSettlement();
+  const { canUseSettlement } = useCanUseSettlement();
 
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {

@@ -78,8 +78,11 @@ const UnifiedTransactionModal = () => {
   // through this modal, so gating here means a new surface cannot leak the action by simply
   // forgetting the check. Individual call sites still hide their buttons for UX, but this is
   // what actually guarantees it. The server answers 403 regardless.
-  const canUseSettlement = useCanUseSettlement();
-  const settlementDenied = isSettlement && !canUseSettlement;
+  const { canUseSettlement, permissionResolved: settlementPermissionResolved } = useCanUseSettlement();
+  // While the permission query is in flight canUseSettlement is false, which would briefly
+  // claim the employee is denied. Render nothing for a settlement modal until it settles.
+  const settlementDecisionPending = isSettlement && !settlementPermissionResolved;
+  const settlementDenied = isSettlement && settlementPermissionResolved && !canUseSettlement;
 
   // Convert card type preset → PickerKind
   const presetToPickerKind = (cardType: string | undefined): PickerKind | null => {
@@ -529,7 +532,11 @@ const UnifiedTransactionModal = () => {
       titleClassName="text-center w-full ms-6"
     >
       {/* Structural settlement gate. Any surface that opens a تسوية preset lands here, so a
-          caller that forgets to hide its button still cannot create the transaction. */}
+          caller that forgets to hide its button still cannot create the transaction.
+          While the permission query is in flight we render nothing rather than claim the
+          employee is denied - that would flash an error for people who are allowed. */}
+      {settlementDecisionPending && <div className="py-10" />}
+
       {settlementDenied && (
         <div dir="rtl" className="py-6 text-center">
           <AlertCircle className="mx-auto h-8 w-8 text-status-danger-text" />

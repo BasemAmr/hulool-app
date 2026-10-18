@@ -313,9 +313,6 @@ const ClientProfilePage = () => {
                 onAddInvoice={handleAddReceivable}
                 onAddCredit={handleAddCredit}
                 onExportStatement={handleExportStatement}
-                onExportTasks={handleExportTasks}
-                onExportCredits={handleExportCredits}
-                isExporting={exportStatementMutation.isPending || exportTasksMutation.isPending || exportCreditsMutation.isPending}
             />
 
 

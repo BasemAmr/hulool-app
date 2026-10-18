@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, useMemo } from 'react';
-import { NavLink, useNavigate, useLocation } from 'react-router-dom';
+import { Link, NavLink, useNavigate, useLocation } from 'react-router-dom';
 import { useAuthStore } from '@/features/auth/store/authStore';
 import { useTranslation } from 'react-i18next';
 import Logo from '@/shared/ui/primitives/Logo';
@@ -205,10 +205,10 @@ const Navbar = () => {
               </button>
             }
           >
-            <div onClick={() => navigate('/clients')} className={managementItemClass}>
+            <Link to={'/clients'} className={managementItemClass}>
               <Users size={16} className="text-primary flex-shrink-0" />
               <span>إدارة العملاء</span>
-            </div>
+            </Link>
             <div onClick={() => openModal('clientReport', {})} className={menuItemClass}>
               <FileSpreadsheet size={16} className="text-foreground flex-shrink-0" />
               <span>كشف حساب العميل</span>
@@ -222,10 +222,10 @@ const Navbar = () => {
               <span>إضافة مهمة</span>
             </div>
             <div className="border-t border-border my-1" />
-            <div onClick={() => navigate('/receivables')} className={menuItemClass}>
+            <Link to={'/receivables'} className={menuItemClass}>
               <CreditCard size={16} className="text-foreground flex-shrink-0" />
               <span>مستحقات العملاء</span>
-            </div>
+            </Link>
           </NavHoverDropdown>
 
           {/* الموظفين Dropdown */}
@@ -239,10 +239,10 @@ const Navbar = () => {
               </button>
             }
           >
-            <div onClick={() => navigate('/settings')} className={managementItemClass}>
+            <Link to={'/settings'} className={managementItemClass}>
               <UserCog size={16} className="text-primary flex-shrink-0" />
               <span>إدارة الموظفين</span>
-            </div>
+            </Link>
             <div onClick={() => openModal('employeeReport', {})} className={menuItemClass}>
               <FileSpreadsheet size={16} className="text-foreground flex-shrink-0" />
               <span>كشف حساب الموظف</span>
@@ -263,13 +263,9 @@ const Navbar = () => {
               </div>
             ) : (
               employees.map((employee) => (
-                <div
-                  key={employee.id}
-                  onClick={() => navigate(`/employees/${employee.id}/dashboard`)}
-                  className={listItemClass}
-                >
+                <Link to={`/employees/${employee.id}/dashboard`} className={listItemClass}>
                   <span>{employee.display_name}</span>
-                </div>
+                </Link>
               ))
             )}
           </NavHoverDropdown>
@@ -285,10 +281,10 @@ const Navbar = () => {
               </button>
             }
           >
-            <div onClick={() => navigate('/financial-center/treasury-accounts?section=assets&category=cashbox')} className={managementItemClass}>
+            <Link to={'/financial-center/treasury-accounts?section=assets&category=cashbox'} className={managementItemClass}>
               <Wallet size={16} className="text-primary flex-shrink-0" />
               <span>إدارة الصناديق</span>
-            </div>
+            </Link>
             <div onClick={() => openModal('treasuryAccountReport', { subType: 'cashbox' })} className={menuItemClass}>
               <FileSpreadsheet size={16} className="text-foreground flex-shrink-0" />
               <span>كشف حساب الصندوق</span>
@@ -304,13 +300,9 @@ const Navbar = () => {
               </div>
             ) : (
               cashboxAccounts.map((account) => (
-                <div
-                  key={account.id}
-                  onClick={() => navigate(`/financial-center/treasury-accounts/${account.id}`)}
-                  className={listItemClass}
-                >
+                <Link to={`/financial-center/treasury-accounts/${account.id}`} className={listItemClass}>
                   <span className="whitespace-nowrap">{account.name}</span>
-                </div>
+                </Link>
               ))
             )}
           </NavHoverDropdown>
@@ -326,10 +318,10 @@ const Navbar = () => {
               </button>
             }
           >
-            <div onClick={() => navigate('/financial-center/treasury-accounts?section=assets&category=bank')} className={managementItemClass}>
+            <Link to={'/financial-center/treasury-accounts?section=assets&category=bank'} className={managementItemClass}>
               <Landmark size={16} className="text-primary flex-shrink-0" />
               <span>إدارة البنوك</span>
-            </div>
+            </Link>
             <div onClick={() => openModal('treasuryAccountReport', { subType: 'bank' })} className={menuItemClass}>
               <FileSpreadsheet size={16} className="text-foreground flex-shrink-0" />
               <span>كشف حساب البنك</span>
@@ -345,13 +337,9 @@ const Navbar = () => {
               </div>
             ) : (
               bankAccounts.map((account) => (
-                <div
-                  key={account.id}
-                  onClick={() => navigate(`/financial-center/treasury-accounts/${account.id}`)}
-                  className={listItemClass}
-                >
+                <Link to={`/financial-center/treasury-accounts/${account.id}`} className={listItemClass}>
                   <span className="whitespace-nowrap">{account.name}</span>
-                </div>
+                </Link>
               ))
             )}
           </NavHoverDropdown>
@@ -380,10 +368,10 @@ const Navbar = () => {
               <span>تقرير حسابات</span>
             </div>
             <div className="border-t border-border my-1" />
-            <div onClick={() => navigate('/financial-center/treasury-accounts')} className={menuItemClass}>
+            <Link to={'/financial-center/treasury-accounts'} className={menuItemClass}>
               <FolderTree size={16} className="text-foreground flex-shrink-0" />
               <span>شجرة الحسابات</span>
-            </div>
+            </Link>
           </NavHoverDropdown>
 
           {/* المهام Dropdown */}
@@ -400,14 +388,10 @@ const Navbar = () => {
             {taskNavigationItems.map((item) => {
               const ItemIcon = item.icon;
               return (
-                <div
-                  key={item.path}
-                  onClick={() => navigate(item.path)}
-                  className={menuItemClass}
-                >
+                <Link to={item.path} className={menuItemClass}>
                   <ItemIcon size={16} className="text-foreground flex-shrink-0" />
                   <span>{item.label}</span>
-                </div>
+                </Link>
               );
             })}
           </NavHoverDropdown>

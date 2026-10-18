@@ -186,9 +186,6 @@ const EmployeeClientProfilePage = () => {
                 onAddInvoice={handleAddInvoice}
                 onAddCredit={handleAddCredit}
                 onExportStatement={handleExportStatement}
-                onExportTasks={() => {}} // Tasks export not implemented for employee view
-                onExportCredits={handleExportCredits}
-                isExporting={exportStatementMutation.isPending || exportCreditsMutation.isPending}
             />
 
             {/* Employee Tasks Table - Show in general and tasks modes */}

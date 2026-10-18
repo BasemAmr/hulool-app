@@ -291,7 +291,8 @@ export const useGetMyTreasuryAccounts = () => {
  */
 export const useCanUseSettlement = () => {
   const { data, isLoading } = useGetMyTreasuryAccounts();
-  return useMemo(() => {
+  const permissionResolved = !isLoading;
+  const canUse = useMemo(() => {
     if (isLoading) return false;
     const accounts = data ?? [];
     const settlement = accounts.find((a) => {
@@ -305,4 +306,5 @@ export const useCanUseSettlement = () => {
     });
     return settlement ? settlement.can_transact === true : false;
   }, [data, isLoading]);
+  return { canUseSettlement: canUse, permissionResolved };
 };

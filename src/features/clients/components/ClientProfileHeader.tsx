@@ -27,9 +27,6 @@ interface ClientProfileHeaderProps {
   onAddCredit: () => void;
   // --- MODIFIED PROPS ---
   onExportStatement: () => void;
-  onExportTasks: () => void;
-  onExportCredits: () => void;
-  isExporting: boolean;
   // --- END MODIFIED PROPS ---
 }
 
@@ -40,13 +37,10 @@ const ClientProfileHeader = ({
   onAddInvoice, 
   onAddCredit,
   onExportStatement,
-  onExportTasks,
-  onExportCredits,
-  isExporting,
 }: ClientProfileHeaderProps) => {
   const { t } = useTranslation();
   const openModal = useModalStore(s => s.openModal);
-  const canUseSettlement = useCanUseSettlement();
+  const { canUseSettlement } = useCanUseSettlement();
 
   // `object` not `Record<string, unknown>`: the settlement presets are typed interfaces with
   // no index signature, which Record<string, unknown> rejects.
@@ -111,9 +105,6 @@ const ClientProfileHeader = ({
                       rendered the literal string "clientProfile.addInvoice". Inline default
                       matches the house pattern in ClientProfilePage (t(key, 'arabic default')). */}
                   {t('clientProfile.addInvoice', 'إضافة فاتورة')}<Plus size={14} className="me-2"/>
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={onAddCredit} className="text-end">
-                  إضافة رصيد<Plus size={14} className="me-2"/>
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
@@ -188,38 +179,6 @@ const ClientProfileHeader = ({
             </DropdownMenu>
             )}
 
-            {/* Export Dropdown */}
-            {(mode === 'receivables' || mode === 'tasks') && (
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <button
-                    className="px-2 py-1 text-xs border border-border-strong text-text-secondary rounded-md hover:bg-bg-surface-muted transition-colors disabled:opacity-50"
-                    disabled={isExporting}
-                  >
-                    <Download size={14} className="me-1" />
-                    {isExporting ? 'جاري...' : 'تصدير'}
-                    <span className="ms-1">▼</span>
-                  </button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="start" className="min-w-[120px]">
-                  {mode === 'receivables' && (
-                    <>
-                      <DropdownMenuItem onClick={onExportStatement} className="text-end">
-                        <span className="text-success me-2">📊</span> كشف الحساب (Excel)
-                      </DropdownMenuItem>
-                      <DropdownMenuItem onClick={onExportCredits} className="text-end">
-                        <span className="text-info me-2">💰</span> تقرير الائتمانات (Excel)
-                      </DropdownMenuItem>
-                    </>
-                  )}
-                  {mode === 'tasks' && (
-                    <DropdownMenuItem onClick={onExportTasks} className="text-end">
-                      <span className="text-primary me-2">📋</span> تقرير المهام (Excel)
-                    </DropdownMenuItem>
-                  )}
-                </DropdownMenuContent>
-              </DropdownMenu>
-            )}
           </div>
 
           {/* Center: Client Info — order-first on narrow so identity leads the stack;

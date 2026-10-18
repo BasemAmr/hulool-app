@@ -32,7 +32,7 @@ export const TreasuryAccountSelectorWidget: React.FC = () => {
   const settlementRef = useRef<HTMLDivElement>(null);
   // سند تسوية always targets the settlement account; hide it when the employee has
   // no can_transact on it. Absent permission row counts as no access.
-  const canUseSettlement = useCanUseSettlement();
+  const { canUseSettlement } = useCanUseSettlement();
 
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {

@@ -32,10 +32,17 @@ import {
   Search,
   X,
   RotateCcw,
-  Eye
+  Eye,
+  FileSpreadsheet
 } from 'lucide-react';
 import { formatDate } from '@/shared/utils/dateUtils';
 import { useModalStore } from '@/shared/stores/modalStore';
+import Button from '@/shared/ui/primitives/Button';
+import { ExportChoiceModal } from '@/features/financials/modals/ExportChoiceModal';
+import { exportService } from '@/services/export/ExportService';
+import type { ClientStatementReportData } from '@/services/export/exportTypes';
+import { useToast } from '@/shared/hooks/useToast';
+import apiClient from '@/api/client';
 import { useGetAccountHistory } from '@/features/financials/api/accountQueries';
 import { useGetPayableInvoices } from '@/features/invoices/api/invoiceQueries';
 import { sendPaymentReminder } from '@/shared/utils/whatsappUtils';
@@ -290,32 +297,33 @@ const DateCell = React.memo(({ rowData, active }: CellProps<FinancialTransaction
 DateCell.displayName = 'DateCell';
 
 // Type Badge Cell
+// Single source of truth for the row label: the grid cell renders it and the Excel export
+// writes it, so a row never reads as "فاتورة" on screen and "INVOICE_GENERATED" in the file.
+const TYPE_LABELS: Record<string, string> = {
+  INVOICE_CREATED: 'فاتورة',
+  INVOICE_GENERATED: 'فاتورة',
+  PAYMENT_RECEIVED: 'دفعة',
+  CREDIT_APPLIED: 'تخصيص رصيد',
+  CREDIT_RECEIVED: 'رصيد مستلم',
+  CREDIT_ALLOCATED: 'تخصيص رصيد',
+  ADJUSTMENT: 'تعديل',
+  REVERSAL: 'عكس',
+  INVOICE_REVERSED: 'فاتورة ملغاة',
+  PAYOUT: 'سند صرف',
+  REPAYMENT: 'سند قبض',
+};
+
+const typeLabel = (transactionType?: string | null): string =>
+  (transactionType && TYPE_LABELS[transactionType]) || transactionType || '';
+
 const TypeBadgeCell = React.memo(({ rowData }: CellProps<FinancialTransaction>) => {
   if ((rowData as any).is_summary) return <span className="hulool-cell-content" />;
-  const badges: Record<string, { tone: string; label: string }> = {
-    'INVOICE_CREATED': { tone: 'danger', label: 'فاتورة' },
-    'INVOICE_GENERATED': { tone: 'danger', label: 'فاتورة' },
-    'PAYMENT_RECEIVED': { tone: 'success', label: 'دفعة' },
-    'CREDIT_APPLIED': { tone: 'info', label: 'تخصيص رصيد' },
-    'CREDIT_RECEIVED': { tone: 'info', label: 'رصيد مستلم' },
-    'CREDIT_ALLOCATED': { tone: 'info', label: 'تخصيص رصيد' },
-    'ADJUSTMENT': { tone: 'warning', label: 'تعديل' },
-    'REVERSAL': { tone: 'warning', label: 'عكس' },
-    'INVOICE_REVERSED': { tone: 'warning', label: 'فاتورة ملغاة' },
-    'PAYOUT': { tone: 'danger', label: 'سند صرف' },
-    'REPAYMENT': { tone: 'success', label: 'سند قبض' },
-  };
-
-  const badge = badges[rowData.transaction_type] || {
-    tone: 'neutral',
-    label: rowData.transaction_type,
-  };
 
   // Full-cell tint comes from cellClassName (ledger-type-*-cell); the label is plain text
   // that inherits the cell colour via .hulool-cell-content.
   return (
     <span className="hulool-cell-content" style={{ justifyContent: 'center', fontSize: '0.875rem' }}>
-      {badge.label}
+      {typeLabel(rowData.transaction_type)}
     </span>
   );
 });
@@ -474,6 +482,72 @@ const ActionsCell = React.memo(({ rowData, columnData }: CellProps<FinancialTran
 ActionsCell.displayName = 'ActionsCell';
 
 // ================================
+// EXPORT
+// ================================
+
+interface LedgerExportFilters {
+  start_date?: string;
+  end_date?: string;
+  type?: string;
+  search?: string;
+}
+
+// The subset of a history row this file reads. Amounts arrive as strings from WPDB.
+interface LedgerExportRow {
+  id: number | string;
+  transaction_date?: string | null;
+  created_at?: string | null;
+  transaction_type?: string | null;
+  description?: string | null;
+  debit?: string | number | null;
+  credit?: string | number | null;
+  related_object_id?: string | number | null;
+}
+
+interface LedgerExportResponse {
+  transactions?: LedgerExportRow[];
+  total_pages?: number;
+  total_debits?: string | number;
+  total_credits?: string | number;
+  balance?: string | number;
+}
+
+/**
+ * Reads the whole filtered ledger server-side, one page at a time.
+ *
+ * The endpoint caps per_page at 100 and applies the SAME filters to the rows and to the
+ * total_debits / total_credits it returns, so summing the returned rows reproduces the grid
+ * toolbar exactly - that is the whole point of exporting from here instead of from
+ * `allTransactions`, which only holds the pages the user happened to scroll to.
+ */
+const fetchAllClientHistory = async (clientId: number, filters: LedgerExportFilters) => {
+  const rows: LedgerExportRow[] = [];
+  let page = 1;
+  let totalPages = 1;
+  let stats: LedgerExportResponse | null = null;
+
+  do {
+    const { data } = await apiClient.get<LedgerExportResponse>(`/accounts/client/${clientId}/history`, {
+      params: {
+        page,
+        per_page: 100,
+        // Undefined keys are dropped by axios, matching how the grid's query builds params.
+        start_date: filters.start_date || undefined,
+        end_date: filters.end_date || undefined,
+        transaction_type: filters.type || undefined,
+        search: filters.search || undefined,
+      },
+    });
+    rows.push(...(data?.transactions || []));
+    totalPages = Number(data?.total_pages || 1);
+    stats = data;
+    page++;
+  } while (page <= totalPages);
+
+  return { rows, stats };
+};
+
+// ================================
 // MAIN COMPONENT
 // ================================
 
@@ -496,6 +570,9 @@ const AccountLedgerTable: React.FC<AccountLedgerTableProps> = ({
   const [allTransactions, setAllTransactions] = useState<FinancialTransaction[]>([]);
   const scrollRef = useRef<HTMLDivElement>(null);
   const [localSearch, setLocalSearch] = useState('');
+  const [showExportChoice, setShowExportChoice] = useState(false);
+  const [isExporting, setIsExporting] = useState(false);
+  const toast = useToast();
   const [filters, setFilters] = useState<FilterState>({
     start_date: '',
     end_date: '',
@@ -753,6 +830,71 @@ const AccountLedgerTable: React.FC<AccountLedgerTableProps> = ({
     }
   }, [highlightInvoiceId, transactionsWithFlags.length]);
 
+  // --- Excel export (تصدير) ---
+  // One handler for all three modal options; they differ only in the filters sent to the
+  // server. No overrides = the toolbar's current filters; every override = that option's own
+  // filters, so "كامل" and "نطاق تاريخي" really do ignore what is in the toolbar (a leftover
+  // type/search filter there would silently make a full export a filtered one).
+  const handleExportLedger = async (overrides?: LedgerExportFilters) => {
+    const effective: LedgerExportFilters = {
+      start_date: filters.start_date,
+      end_date: filters.end_date,
+      type: filters.type,
+      search: filters.search,
+      ...overrides,
+    };
+
+    try {
+      setIsExporting(true);
+      const { rows, stats } = await fetchAllClientHistory(client.id, effective);
+
+      const rowsDebit = rows.reduce((sum, tx) => sum + Number(tx.debit || 0), 0);
+      const rowsCredit = rows.reduce((sum, tx) => sum + Number(tx.credit || 0), 0);
+
+      // Prefer the server totals (they are what the toolbar shows, and they stay right even
+      // if the grid has not scrolled to every row yet); fall back to summing the rows.
+      const totalDebit = stats?.total_debits !== undefined ? Number(stats.total_debits) : rowsDebit;
+      const totalCredit = stats?.total_credits !== undefined ? Number(stats.total_credits) : rowsCredit;
+      const balance = stats?.balance !== undefined ? Number(stats.balance) : totalDebit - totalCredit;
+
+      const reportData: ClientStatementReportData = {
+        client,
+        clientName: client.name,
+        clientPhone: client.phone || '',
+        statementItems: rows.map((tx) => ({
+          id: Number(tx.id),
+          description: tx.description || '',
+          debit: Number(tx.debit || 0),
+          credit: Number(tx.credit || 0),
+          date: tx.transaction_date || tx.created_at || '',
+          type: typeLabel(tx.transaction_type),
+          reference_id: tx.related_object_id ? Number(tx.related_object_id) : undefined,
+        })),
+        totals: { totalDebit, totalCredit, balance },
+        // The sheet prints this as "فترة التقرير"; use the real span of the exported rows
+        // (the endpoint orders newest first) rather than inventing a last-365-days window.
+        period: {
+          from: (effective.start_date || rows[rows.length - 1]?.transaction_date || '').slice(0, 10) || new Date().toISOString().slice(0, 10),
+          to: (effective.end_date || rows[0]?.transaction_date || '').slice(0, 10) || new Date().toISOString().slice(0, 10),
+        },
+      };
+
+      await exportService.exportClientStatement(reportData);
+      toast.success('تم التصدير بنجاح');
+    } catch (err) {
+      toast.error('فشل التصدير', err instanceof Error ? err.message : String(err));
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
+  // The modal sends "YYYY-MM-DD 00:00:00" / "23:59:59"; the endpoint uses the time part when present.
+  const NO_FILTERS: LedgerExportFilters = { start_date: '', end_date: '', type: '', search: '' };
+  const handleExportFiltered = () => handleExportLedger();
+  const handleExportFull = () => handleExportLedger(NO_FILTERS);
+  const handleExportDateRange = (startDate?: string, endDate?: string) =>
+    handleExportLedger({ start_date: startDate || '', end_date: endDate || '', type: '', search: '' });
+
   if (historyError) {
     return (
       <div className="text-center p-12 text-status-danger-text">
@@ -922,17 +1064,47 @@ const AccountLedgerTable: React.FC<AccountLedgerTableProps> = ({
             <div className="hidden lg:flex-1" aria-hidden="true" />
           </div>
 
-          {/* RTL end (left): server-calculated totals, as flush cells. Below lg they stay a
-              single flush row that scrolls sideways (they no longer fit a phone and used to be
-              clipped); lg keeps them in place with the inline-start divider. */}
+          {/* RTL end (left): server-calculated totals, as flush cells, then the export action.
+              Below lg they stay a single flush row that scrolls sideways (they no longer fit a
+              phone and used to be clipped); lg keeps them in place with the inline-start divider.
+              The Button is whitespace-nowrap, so the export action never gets squeezed out. */}
           <div className="flex items-stretch shrink-0 border-t lg:border-t-0 lg:border-s border-border-default overflow-x-auto lg:overflow-x-visible">
             {hideAmounts ? (
-              <div className="flex items-center px-5 py-1.5 text-text-secondary text-xs">•••</div>
+              <>
+                <div className="flex items-center px-5 py-1.5 text-text-secondary text-xs">•••</div>
+                {/* No export when the viewer may not see amounts: the sheet would hand over
+                    exactly the debits/credits the toolbar is hiding. */}
+                <div className="flex items-center px-4">
+                  <Button
+                    variant="outline-primary"
+                    size="sm"
+                    onClick={() => setShowExportChoice(true)}
+                    disabled
+                    className="h-9 whitespace-nowrap"
+                    title="لا يمكن التصدير بدون صلاحية عرض المبالغ"
+                  >
+                    <FileSpreadsheet size={15} className="me-1.5" />
+                    تصدير Excel
+                  </Button>
+                </div>
+              </>
             ) : (
               <>
                 <LedgerStatCell label="اجمالي المدين" value={totals.totalDebit} tone="debit" divider />
                 <LedgerStatCell label="اجمالي الدائن" value={totals.totalCredit} tone="credit" divider />
-                <LedgerStatCell label="الرصيد النهائي" value={totals.balance} tone="balance" />
+                <LedgerStatCell label="الرصيد النهائي" value={totals.balance} tone="balance" divider />
+                <div className="flex items-center px-4">
+                  <Button
+                    variant="outline-primary"
+                    size="sm"
+                    onClick={() => setShowExportChoice(true)}
+                    disabled={isExporting || allTransactions.length === 0}
+                    className="h-9 whitespace-nowrap"
+                  >
+                    <FileSpreadsheet size={15} className="me-1.5" />
+                    تصدير Excel
+                  </Button>
+                </div>
               </>
             )}
           </div>
@@ -983,6 +1155,14 @@ const AccountLedgerTable: React.FC<AccountLedgerTableProps> = ({
       </div>
 
       {/* Modals */}
+      <ExportChoiceModal
+        isOpen={showExportChoice}
+        onClose={() => setShowExportChoice(false)}
+        onExportFiltered={handleExportFiltered}
+        onExportFull={handleExportFull}
+        onExportDateRange={handleExportDateRange}
+        title="تصدير كشف الحساب"
+      />
       {modalType === 'editTx' && selectedTransaction && (
         <TransactionEditModal
           isOpen={true}

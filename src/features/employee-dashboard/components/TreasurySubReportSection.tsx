@@ -38,7 +38,7 @@ export const TreasurySubReportSection: React.FC<TreasurySubReportSectionProps> =
   const openModal = useModalStore((state) => state.openModal);
   // تسوية buttons always target the settlement account; hide them when the employee
   // has no can_transact on it. Absent permission row counts as no access.
-  const canUseSettlement = useCanUseSettlement();
+  const { canUseSettlement } = useCanUseSettlement();
 
   // Read initial selection from localStorage
   const [selectedId, setSelectedId] = useState<number | null>(() => {

@@ -125,7 +125,7 @@ const EmployeeNavbar = () => {
   const { data: myTreasuryAccounts = [] } = useGetMyTreasuryAccounts();
   // The navbar offers تسوية on every employee page; hide it when the employee has no
   // can_transact on the settlement account. Absent permission row counts as no access.
-  const canUseSettlement = useCanUseSettlement();
+  const { canUseSettlement } = useCanUseSettlement();
 
   // Group accounts
   const cashboxAccounts = useMemo(
@@ -224,10 +224,10 @@ const EmployeeNavbar = () => {
               }
             >
               <div className="min-w-48 text-right">
-                <div onClick={() => navigate('/employee/clients')} className={managementItemClass}>
+                <Link to={'/employee/clients'} className={managementItemClass}>
                   <Users size={16} className="text-primary flex-shrink-0" />
                   <span>إدارة العملاء</span>
-                </div>
+                </Link>
                 <div onClick={() => openModal('clientReport', {})} className={menuItemClass}>
                   <FileSpreadsheet size={16} className="text-foreground flex-shrink-0" />
                   <span>كشف حساب العميل</span>
@@ -241,10 +241,10 @@ const EmployeeNavbar = () => {
                   <span>إضافة مهمة</span>
                 </div>
                 <div className="border-t border-border my-1" />
-                <div onClick={() => navigate('/employee/receivables')} className={menuItemClass}>
+                <Link to={'/employee/receivables'} className={menuItemClass}>
                   <CreditCard size={16} className="text-foreground flex-shrink-0" />
                   <span>مستحقات العملاء</span>
-                </div>
+                </Link>
               </div>
             </NavHoverDropdown>
 
@@ -271,13 +271,9 @@ const EmployeeNavbar = () => {
                 </div>
               ) : (
                 cashboxAccounts.map((account) => (
-                  <div
-                    key={account.id}
-                    onClick={() => navigate(`/employee/treasury-accounts/${account.id}`)}
-                    className={listItemClass}
-                  >
+                  <Link to={`/employee/treasury-accounts/${account.id}`} className={listItemClass}>
                     <span className="whitespace-nowrap">{account.name}</span>
-                  </div>
+                  </Link>
                 ))
               )}
             </NavHoverDropdown>
@@ -305,13 +301,9 @@ const EmployeeNavbar = () => {
                 </div>
               ) : (
                 bankAccounts.map((account) => (
-                  <div
-                    key={account.id}
-                    onClick={() => navigate(`/employee/treasury-accounts/${account.id}`)}
-                    className={listItemClass}
-                  >
+                  <Link to={`/employee/treasury-accounts/${account.id}`} className={listItemClass}>
                     <span className="whitespace-nowrap">{account.name}</span>
-                  </div>
+                  </Link>
                 ))
               )}
             </NavHoverDropdown>
@@ -329,13 +321,9 @@ const EmployeeNavbar = () => {
                 }
               >
                 {otherAccounts.map((account) => (
-                  <div
-                    key={account.id}
-                    onClick={() => navigate(`/employee/treasury-accounts/${account.id}`)}
-                    className={listItemClass}
-                  >
+                  <Link to={`/employee/treasury-accounts/${account.id}`} className={listItemClass}>
                     <span className="whitespace-nowrap">{account.name}</span>
-                  </div>
+                  </Link>
                 ))}
               </NavHoverDropdown>
             )}
@@ -356,10 +344,10 @@ const EmployeeNavbar = () => {
                 <span>إضافة مهمة</span>
               </div>
               <div className="border-t border-border my-1" />
-              <div onClick={() => navigate('/employee/tasks')} className={menuItemClass}>
+              <Link to={'/employee/tasks'} className={menuItemClass}>
                 <ClipboardList size={16} className="text-foreground flex-shrink-0" />
                 <span>صفحة المهام</span>
-              </div>
+              </Link>
             </NavHoverDropdown>
 
             {/* معاملاتي / سجل المعاملات */}
