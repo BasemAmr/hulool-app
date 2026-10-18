@@ -481,7 +481,11 @@ export const TreasuryAccountDetailsPage = () => {
       grow: 0,
       cellClassName: ({ rowData }: any) => {
         if (rowData.is_summary) return 'ledger-summary-debit text-center';
-        return Number(rowData.debit) > 0 ? 'ledger-debit-cell text-center' : '';
+        // Money direction, not raw sign: on a treasury a DEBIT is money coming in,
+        // so it must read the same colour as the type cell above it.
+        return Number(rowData.debit) > 0
+          ? `${ledgerToneClassName('treasury', rowData.debit, rowData.credit)} text-center`
+          : '';
       },
       formatter: (val: number, rowData: any) => {
         if (rowData.is_summary) return val > 0 ? formatNumberOnly(val) : '0.00';
@@ -497,7 +501,9 @@ export const TreasuryAccountDetailsPage = () => {
       grow: 0,
       cellClassName: ({ rowData }: any) => {
         if (rowData.is_summary) return 'ledger-summary-credit text-center';
-        return Number(rowData.credit) > 0 ? 'ledger-credit-cell text-center' : '';
+        return Number(rowData.credit) > 0
+          ? `${ledgerToneClassName('treasury', rowData.debit, rowData.credit)} text-center`
+          : '';
       },
       formatter: (val: number, rowData: any) => {
         if (rowData.is_summary) return val > 0 ? formatNumberOnly(val) : '0.00';
@@ -680,8 +686,10 @@ export const TreasuryAccountDetailsPage = () => {
                 divider. The Button is whitespace-nowrap, so the export action never gets squeezed
                 out of the scroll row. */}
             <div className="flex items-stretch shrink-0 border-t lg:border-t-0 lg:border-s border-border-default overflow-x-auto lg:overflow-x-visible">
-              <LedgerStatCell label="اجمالي المدين" value={totalDebits} tone="debit" divider />
-              <LedgerStatCell label="اجمالي الدائن" value={totalCredits} tone="credit" divider />
+              {/* Tone follows money direction on a treasury, where debits are money in -
+                  a fixed red debit / green credit would contradict the rows below. */}
+              <LedgerStatCell label="اجمالي المدين" value={totalDebits} tone={totalDebits > 0 ? 'credit' : 'debit'} divider />
+              <LedgerStatCell label="اجمالي الدائن" value={totalCredits} tone={totalCredits > 0 ? 'debit' : 'credit'} divider />
               <LedgerStatCell label="الرصيد النهائي" value={finalBalance} tone="balance" divider />
               <div className="flex items-center px-4">
                 <Button
