@@ -43,9 +43,13 @@ const TransactionActionButtons: React.FC<TransactionActionButtonsProps> = ({
   const { data: myPermissions } = useMyTreasuryPermissions();
 
   // Settlement presets always post against the settlement account, so hide the whole
-  // dropdown when the employee has can_transact revoked on it - otherwise the button
-  // advertises an action the API answers with 403. Other presets still post against
-  // accountId, so gate those separately.
+  // dropdown unless the employee still has can_transact on it.
+  //
+  // Absence of a permission ROW is also "no access": /my-permissions is built from the
+  // permission table, so an admin who DELETED the settlement permission removes the account
+  // from the response entirely. Defaulting to visible when it is missing showed the button
+  // for exactly the employees it should hide from. `myPermissions === undefined` means the
+  // query is still in flight, so hide rather than advertise something we cannot verify.
   const canTransactOn = (id: number) => {
     if (accountId > 0) return id === accountId;
     const acc = myPermissions?.find((a) => Number(a.id) === Number(id));
@@ -64,9 +68,9 @@ const TransactionActionButtons: React.FC<TransactionActionButtonsProps> = ({
     }
     return undefined;
   }, [myPermissions]);
-  const canUseSettlement = settlementAccountId
-    ? canTransactOn(settlementAccountId)
-    : true;
+  const canUseSettlement = myPermissions
+    ? settlementAccountId !== undefined && canTransactOn(settlementAccountId)
+    : false;
 
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
