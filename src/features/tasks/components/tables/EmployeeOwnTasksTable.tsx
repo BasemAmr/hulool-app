@@ -96,7 +96,10 @@ const ClientLinkCell = React.memo(({ rowData }: CellProps<Task>) => {
       {clientId ? (
         <Link
           to={`/employee/clients/${clientId}`}
-          className="text-primary hover:underline truncate"
+          // text-text-primary is the theme-aware token (near-black light / near-white dark),
+          // matching the admin task table. text-primary is a brand colour and rendered teal
+          // in dark mode, which is why the client names looked off.
+          className="text-text-primary hover:underline truncate"
           title={clientName}
         >
           {clientName}

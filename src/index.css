@@ -567,6 +567,21 @@ html[data-theme='dark'] {
     color-scheme: dark;
   }
 
+  /* Native <select> dropdown popups are drawn by the browser, not by our styles, so they
+     ignore color-scheme on Linux/Chrome and render light in dark mode. Setting explicit
+     background/color on the control AND on <option> is what actually themes the popup.
+     Fixes every native select in the app at once rather than one component at a time. */
+  select,
+  select option {
+    background-color: var(--color-card, var(--token-bg-surface));
+    color: var(--color-card-foreground, var(--token-text-primary));
+  }
+
+  select option:checked {
+    background-color: var(--color-accent, var(--token-status-info-bg));
+    color: var(--color-accent-foreground, var(--token-text-primary));
+  }
+
   body {
     background-color: var(--color-background);
     color: var(--color-foreground);
@@ -1291,74 +1306,77 @@ html[data-theme='dark'] .client-card-table th {
   color: inherit !important;
 }
 
-/* --- Task Grid Cell Status Classes --- */
+/* --- Task Grid Cell Status Classes ---
+   Semantic tokens only. These previously used hardcoded hex (#b45309, #6366f1, ...),
+   which are light-theme values: in dark mode they mixed with --token-bg-surface into
+   muddy purple/brown fills with unreadable dark text. Tokens flip per theme. */
 .task-status-new-cell {
-  background-color: color-mix(in srgb, #f59e0b 22%, var(--token-bg-surface)) !important;
-  color: #b45309 !important;
+  background-color: var(--token-status-warning-bg) !important;
+  color: var(--token-status-warning-text) !important;
   font-weight: 700 !important;
   text-align: center !important;
 }
 
 .task-status-progress-cell {
-  background-color: color-mix(in srgb, #0284c7 22%, var(--token-bg-surface)) !important;
-  color: #0369a1 !important;
+  background-color: var(--token-status-info-bg) !important;
+  color: var(--token-status-info-text) !important;
   font-weight: 700 !important;
   text-align: center !important;
 }
 
 .task-status-pending-cell {
-  background-color: color-mix(in srgb, #6366f1 22%, var(--token-bg-surface)) !important;
-  color: #4338ca !important;
+  background-color: var(--token-status-info-bg) !important;
+  color: var(--token-status-info-text) !important;
   font-weight: 700 !important;
   text-align: center !important;
 }
 
 .task-status-completed-cell {
-  background-color: color-mix(in srgb, #10b981 22%, var(--token-bg-surface)) !important;
-  color: #047857 !important;
+  background-color: var(--token-status-success-bg) !important;
+  color: var(--token-status-success-text) !important;
   font-weight: 700 !important;
   text-align: center !important;
 }
 
 .task-status-deferred-cell {
-  background-color: color-mix(in srgb, #f43f5e 22%, var(--token-bg-surface)) !important;
-  color: #be123c !important;
+  background-color: var(--token-status-danger-bg) !important;
+  color: var(--token-status-danger-text) !important;
   font-weight: 700 !important;
   text-align: center !important;
 }
 
 .task-status-cancelled-cell {
-  background-color: color-mix(in srgb, #64748b 20%, var(--token-bg-surface)) !important;
-  color: #334155 !important;
+  background-color: var(--token-status-neutral-bg) !important;
+  color: var(--token-status-neutral-text) !important;
   font-weight: 700 !important;
   text-align: center !important;
 }
 
 /* --- Task Grid Cell Type Classes --- */
 .task-type-government-cell {
-  background-color: color-mix(in srgb, #0284c7 20%, var(--token-bg-surface)) !important;
-  color: #0369a1 !important;
+  background-color: var(--token-status-info-bg) !important;
+  color: var(--token-status-info-text) !important;
   font-weight: 700 !important;
   text-align: center !important;
 }
 
 .task-type-realestate-cell {
-  background-color: color-mix(in srgb, #10b981 20%, var(--token-bg-surface)) !important;
-  color: #047857 !important;
+  background-color: var(--token-status-success-bg) !important;
+  color: var(--token-status-success-text) !important;
   font-weight: 700 !important;
   text-align: center !important;
 }
 
 .task-type-accounting-cell {
-  background-color: color-mix(in srgb, #f59e0b 22%, var(--token-bg-surface)) !important;
-  color: #b45309 !important;
+  background-color: var(--token-status-warning-bg) !important;
+  color: var(--token-status-warning-text) !important;
   font-weight: 700 !important;
   text-align: center !important;
 }
 
 .task-type-general-cell {
-  background-color: color-mix(in srgb, #64748b 18%, var(--token-bg-surface)) !important;
-  color: #334155 !important;
+  background-color: var(--token-status-neutral-bg) !important;
+  color: var(--token-status-neutral-text) !important;
   font-weight: 700 !important;
   text-align: center !important;
 }
