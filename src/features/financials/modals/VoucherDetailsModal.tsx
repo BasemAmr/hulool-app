@@ -18,6 +18,16 @@ const VoucherDetailsModal = () => {
   if (!voucher) return null;
 
   const isClientTx = voucher.account_type === 'client';
+
+  // Every transaction in this ledger is one leg of a double-entry pair. The API resolves
+  // the two account names onto the debit and credit sides of THIS row, so the counterparty
+  // account is whichever side this row did NOT book to. Shown as plain text - deliberately
+  // not a link: the employee may have no view access to the paired account, and a link that
+  // 403s is more confusing than no link.
+  const isDebitRow = Number(voucher.debit) > 0;
+  const pairedAccountName = isDebitRow
+    ? voucher.credit_account_name
+    : voucher.debit_account_name;
   
   let voucherTypeLabel = '';
   let badgeColorClass = '';
@@ -90,6 +100,23 @@ const VoucherDetailsModal = () => {
               <span className="text-base font-bold text-status-danger-text block">{voucher.credit_account_name || '—'}</span>
             </div>
           </div>
+
+          {Number(voucher.related_transaction_id) > 0 && (
+            <div className="grid grid-cols-2 gap-6 border-t border-border-strong pt-4">
+              <div>
+                <span className="text-muted-foreground text-sm block mb-1.5 font-medium">الحركة المقابلة</span>
+                <span className="text-base font-semibold text-text-primary block" dir="ltr">
+                  #{voucher.related_transaction_id}
+                </span>
+              </div>
+              <div>
+                <span className="text-muted-foreground text-sm block mb-1.5 font-medium">حساب الحركة المقابلة</span>
+                <span className="text-base font-semibold text-text-primary block">
+                  {pairedAccountName || '—'}
+                </span>
+              </div>
+            </div>
+          )}
 
           <div className="border-t border-border-strong pt-4">
             <span className="text-muted-foreground text-sm block mb-1.5 font-medium">الوصف (البيان)</span>
