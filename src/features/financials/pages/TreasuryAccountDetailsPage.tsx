@@ -10,6 +10,7 @@ import Button from '@/shared/ui/primitives/Button';
 import { Landmark, FileSpreadsheet, ArrowRight, Search, X, RotateCcw, Printer } from 'lucide-react';
 import type { FinancialTransaction, CashBoxVoucher } from '@/api/types';
 import { LedgerFinalBalanceCell } from '@/shared/grid';
+import { LedgerStatCell } from '@/shared/ledger/LedgerStatCell';
 import { useModalStore } from '@/shared/stores/modalStore';
 import { useAuthStore } from '@/features/auth/store/authStore';
 import { useToast } from '@/shared/hooks/useToast';
@@ -275,31 +276,15 @@ export const TreasuryAccountDetailsPage = () => {
     return () => observer.disconnect();
   }, [hasMore, isLoadingHistory, loadMore]);
 
+  // All three come from the server (account-history response: total_debits /
+  // total_credits / balance via getAccountStatistics). Do not recompute the balance as
+  // debits - credits here - the server value is authoritative and filter-aware.
   const totalDebits = Number(historyData?.total_debits ?? 0);
   const totalCredits = Number(historyData?.total_credits ?? 0);
-  // Full final balance shown in the totals row next to the debit/credit totals.
-  const finalBalance = totalDebits - totalCredits;
+  const finalBalance = Number(historyData?.balance ?? 0);
 
-  const summaryRow = useMemo(() => {
-    return {
-      id: -999999,
-      account_id: accountId,
-      account_type: 'treasury',
-      date: '',
-      transaction_type: 'SUMMARY',
-      description: 'الإجماليات',
-      debit: totalDebits,
-      credit: totalCredits,
-      balance: finalBalance,
-      type: 'CASHBOX_RECEIPT',
-      category: '',
-      is_summary: true,
-    } as any;
-  }, [accountId, totalDebits, totalCredits, finalBalance]);
-
-  const gridData = useMemo(() => {
-    return [summaryRow, ...allTransactions];
-  }, [summaryRow, allTransactions]);
+  // Totals now live in the toolbar, so the grid carries only real transactions.
+  const gridData = allTransactions;
 
   const transactions = allTransactions;
   const isInitialLoad = isLoadingAccount;
@@ -574,11 +559,13 @@ export const TreasuryAccountDetailsPage = () => {
       <style>{filterDateStyles}</style>
       <div className="p-6 space-y-4 text-right" dir="rtl">
         {/* Unified Compact Header and Filter Card */}
-        <div className="bg-bg-surface border border-border-default rounded-xl p-4 shadow-sm">
-          <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+        <div className="bg-bg-surface border border-border-default rounded-xl shadow-sm overflow-hidden">
+          <div className="relative flex flex-col lg:flex-row lg:items-stretch">
 
-            {/* Right: Back button + Title */}
-            <div className="flex items-center gap-3 shrink-0 min-w-0">
+            {/* Center: Back button + Title. Real flex child with equal spacers so it reads
+                as the bar's midpoint without absolute positioning. */}
+            <div className="order-first flex items-center justify-center gap-3 p-3 shrink-0 lg:order-none lg:flex-1">
+              <div className="hidden lg:flex-1" aria-hidden="true" />
               <button
                 onClick={handleBack}
                 className="shrink-0 p-1.5 rounded-md text-text-secondary hover:text-text-primary hover:bg-bg-surface-muted transition-colors cursor-pointer"
@@ -594,9 +581,10 @@ export const TreasuryAccountDetailsPage = () => {
                 {subtitle && <p className="text-xs text-text-secondary mt-0.5">{subtitle}</p>}
               </div>
             </div>
+            <div className="hidden lg:flex-1" aria-hidden="true" />
 
-            {/* Center: Inline Filter Fields */}
-            <div className="header-inline-filters flex flex-wrap items-center gap-2 lg:flex-1 lg:justify-center min-w-0">
+            {/* RTL start (right): Inline Filter Fields */}
+            <div className="header-inline-filters flex flex-wrap items-center gap-2 p-3 lg:justify-end min-w-0 shrink-0">
               {/* Search */}
               <div className="relative w-44">
                 <Search size={14} className="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 text-text-muted" />
@@ -683,23 +671,22 @@ export const TreasuryAccountDetailsPage = () => {
               )}
             </div>
 
-            {/* Left: Balance Info + Export Button */}
-            <div className="flex items-center gap-3 shrink-0 lg:border-s lg:border-border-default lg:ps-4">
-              <Button
-                variant="outline-primary"
-                size="sm"
-                onClick={() => setShowExportChoice(true)}
-                disabled={isExporting || transactions.length === 0}
-                className="h-9"
-              >
-                <FileSpreadsheet size={15} className="me-1.5" />
-                تصدير Excel
-              </Button>
-              <div className="text-left">
-                <p className="text-[10px] text-text-secondary leading-none">الرصيد الحالي</p>
-                <p className="text-lg font-black text-text-brand mt-0.5 whitespace-nowrap">
-                  {formatNumberOnly(account?.balance || 0)}
-                </p>
+            {/* RTL end (left): server-calculated totals as flush cells, then the export action */}
+            <div className="flex items-stretch shrink-0 border-t lg:border-t-0 lg:border-s border-border-default">
+              <LedgerStatCell label="اجمالي المدين" value={totalDebits} tone="debit" divider />
+              <LedgerStatCell label="اجمالي الدائن" value={totalCredits} tone="credit" divider />
+              <LedgerStatCell label="الرصيد النهائي" value={finalBalance} tone="balance" divider />
+              <div className="flex items-center px-4">
+                <Button
+                  variant="outline-primary"
+                  size="sm"
+                  onClick={() => setShowExportChoice(true)}
+                  disabled={isExporting || transactions.length === 0}
+                  className="h-9"
+                >
+                  <FileSpreadsheet size={15} className="me-1.5" />
+                  تصدير Excel
+                </Button>
               </div>
             </div>
 
@@ -711,7 +698,6 @@ export const TreasuryAccountDetailsPage = () => {
             data={gridData}
             columns={columns}
             isLoading={isLoadingHistory && page === 1 && transactions.length === 0}
-            rowClassName={(row: any) => (row.is_summary ? 'treasury-summary-row' : '')}
           />
 
           {hasMore && (

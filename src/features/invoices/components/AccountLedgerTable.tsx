@@ -41,6 +41,7 @@ import { useGetPayableInvoices } from '@/features/invoices/api/invoiceQueries';
 import { sendPaymentReminder } from '@/shared/utils/whatsappUtils';
 import HuloolDataGrid from '@/shared/grid/HuloolDataGrid';
 import { LedgerFinalBalanceCell } from '@/shared/grid';
+import { LedgerStatCell } from '@/shared/ledger/LedgerStatCell';
 import type { HuloolGridColumn } from '@/shared/grid';
 import type { CellProps } from 'react-datasheet-grid';
 import DatePicker from 'react-datepicker';
@@ -640,22 +641,9 @@ const AccountLedgerTable: React.FC<AccountLedgerTableProps> = ({
       return { ...tx, is_payable: isPayable, is_highlighted: isHighlighted };
     });
 
-    if (list.length > 0) {
-      list.unshift({
-        id: -999,
-        transaction_type: 'SUMMARY_ROW',
-        description: 'الإجماليات',
-        debit: totals.totalDebit,
-        credit: totals.totalCredit,
-        balance_after: totals.balance,
-        transaction_date: '',
-        created_at: '',
-        is_summary: true,
-      } as any);
-    }
-
+    // Totals now live in the toolbar (server-calculated), so no SUMMARY_ROW is injected.
     return list;
-  }, [allTransactions, payableMap, highlightInvoiceId, totals]);
+  }, [allTransactions, payableMap, highlightInvoiceId]);
 
   // Generate a version key to force grid re-render when payable status changes
   const payableVersion = useMemo(() => {
@@ -812,26 +800,11 @@ const AccountLedgerTable: React.FC<AccountLedgerTableProps> = ({
       `}</style>
 
       {/* Unified Compact Filters Toolbar Card */}
-      <div className="bg-bg-surface border border-border-default rounded-xl p-3 shadow-xs">
-        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3">
-          
-          {/* Right: Icon / Title / Count */}
-          <div className="flex items-center gap-2.5 shrink-0 min-w-0">
-            <div className="shrink-0 text-primary">
-              <Receipt size={20} />
-            </div>
-            <div className="min-w-0">
-              <span className="text-sm font-bold text-text-primary">كشف الحساب المالي</span>
-              {totalRecords > 0 && (
-                <span className="text-xs text-text-secondary mr-2 font-normal">
-                  ({totalRecords} حركة)
-                </span>
-              )}
-            </div>
-          </div>
+      <div className="bg-bg-surface border border-border-default rounded-xl shadow-xs overflow-hidden">
+        <div className="relative flex flex-col lg:flex-row lg:items-stretch">
 
-          {/* Center: Inline Filter Fields */}
-          <div className="header-inline-filters flex flex-wrap items-center gap-2 lg:flex-1 lg:justify-center min-w-0">
+          {/* RTL start (right): Inline Filter Fields */}
+          <div className="header-inline-filters flex flex-wrap items-center gap-2 p-3 lg:justify-end min-w-0 shrink-0">
             {/* Search */}
             <div className="relative w-48">
               <Search size={14} className="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 text-text-muted" />
@@ -925,14 +898,36 @@ const AccountLedgerTable: React.FC<AccountLedgerTableProps> = ({
             )}
           </div>
 
-          {/* Left: Final Balance Display */}
-          <div className="flex items-center gap-3 shrink-0 lg:border-s lg:border-border-default lg:ps-4">
-            <div className="text-left">
-              <p className="text-[10px] text-text-secondary leading-none">الرصيد النهائي</p>
-              <p className={`text-base font-black mt-0.5 whitespace-nowrap ${totals.balance < 0 ? 'text-status-danger-text' : 'text-text-brand'}`}>
-                {hideAmounts ? '***' : formatCurrency(totals.balance)}
-              </p>
+          {/* Center: Icon / Title / Count. Sits between the filters and the totals as a real
+              flex child with equal-width spacers, so it reads as the bar's midpoint without
+              absolute positioning (which overlapped the filters on narrow screens). */}
+          <div className="order-first flex items-center justify-center gap-2.5 py-3 shrink-0 lg:order-none lg:flex-1">
+            <div className="hidden lg:flex-1" aria-hidden="true" />
+            <div className="shrink-0 text-primary">
+              <Receipt size={20} />
             </div>
+            <div className="flex items-baseline min-w-0">
+              <span className="text-sm font-bold text-text-primary">كشف الحساب المالي</span>
+              {totalRecords > 0 && (
+                <span className="text-xs text-text-secondary mr-2 font-normal">
+                  ({totalRecords} حركة)
+                </span>
+              )}
+            </div>
+            <div className="hidden lg:flex-1" aria-hidden="true" />
+          </div>
+
+          {/* RTL end (left): server-calculated totals, as flush cells */}
+          <div className="flex items-stretch shrink-0 border-t lg:border-t-0 lg:border-s border-border-default">
+            {hideAmounts ? (
+              <div className="flex items-center px-5 py-1.5 text-text-secondary text-xs">•••</div>
+            ) : (
+              <>
+                <LedgerStatCell label="اجمالي المدين" value={totals.totalDebit} tone="debit" divider />
+                <LedgerStatCell label="اجمالي الدائن" value={totals.totalCredit} tone="credit" divider />
+                <LedgerStatCell label="الرصيد النهائي" value={totals.balance} tone="balance" />
+              </>
+            )}
           </div>
 
         </div>

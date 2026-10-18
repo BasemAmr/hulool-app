@@ -12,6 +12,7 @@ import React, { useMemo, useState, useEffect } from 'react';
 import { Edit3, Trash2, Eye, Search, X, RotateCcw, Receipt } from 'lucide-react';
 import HuloolDataGrid from '@/shared/grid/HuloolDataGrid';
 import { LedgerFinalBalanceCell } from '@/shared/grid';
+import { LedgerStatCell } from '@/shared/ledger/LedgerStatCell';
 import type { HuloolGridColumn } from '@/shared/grid/HuloolDataGrid';
 import type { CellProps } from 'react-datasheet-grid';
 import { useModalStore } from '@/shared/stores/modalStore';
@@ -34,34 +35,8 @@ import {
 // ================================
 // STAT CELL (toolbar totals)
 // ================================
-
-/** Flush cell: label above, value below. No vertical padding or margin against the bar's
- *  top/bottom borders, so consecutive cells tile the toolbar edge like a ledger strip.
- *  `divider` draws the separator on the inline-END side. RTL matters here: the cells run
- *  right-to-left, so `border-s` would put the line on each cell's outer edge and leave the
- *  credit|balance boundary unmarked - which is exactly the gap that was visible.
- *  Colours come from semantic tokens, so light and dark themes both work. */
-const StatCell: React.FC<{
-  label: string;
-  value: number;
-  tone: 'debit' | 'credit' | 'balance';
-  divider?: boolean;
-}> = ({ label, value, tone, divider }) => (
-  <div className={`flex flex-col justify-center px-5 py-1.5 ${divider ? 'border-e border-border-default' : ''}`}>
-    <span className="text-xs leading-tight text-text-secondary whitespace-nowrap">{label}</span>
-    <span
-      className={`text-lg leading-tight font-bold whitespace-nowrap ${
-        tone === 'debit'
-          ? 'text-status-danger-text'
-          : tone === 'credit'
-            ? 'text-status-success-text'
-            : 'text-text-brand'
-      }`}
-    >
-      {formatCurrency(value)}
-    </span>
-  </div>
-);
+// Toolbar totals use the shared LedgerStatCell so client, treasury and employee ledgers
+// stay identical. Values come from the server summary, never from summing the page.
 
 // ================================
 // TYPE DEFINITIONS
@@ -709,9 +684,9 @@ const EmployeeTransactionsTable: React.FC<EmployeeTransactionsTableProps> = ({
           {/* RTL end (left): all-time totals from the server summary, as flush cells.
               No padding gap to the card edges so they read as cells of the bar itself. */}
           <div className="flex items-stretch shrink-0 border-t lg:border-t-0 lg:border-s border-border-default">
-            <StatCell label="اجمالي المدين" value={totalDebit} tone="debit" divider />
-            <StatCell label="اجمالي الدائن" value={totalCredit} tone="credit" divider />
-            <StatCell label="الرصيد النهائي" value={finalBalance} tone="balance" />
+            <LedgerStatCell label="اجمالي المدين" value={totalDebit} tone="debit" divider />
+            <LedgerStatCell label="اجمالي الدائن" value={totalCredit} tone="credit" divider />
+            <LedgerStatCell label="الرصيد النهائي" value={finalBalance} tone="balance" />
           </div>
 
         </div>
