@@ -32,6 +32,24 @@ import {
 } from '@/shared/ui/shadcn/select';
 
 // ================================
+// STAT CELL (toolbar totals)
+// ================================
+
+/** Flush cell: label above, value below. No vertical padding or margin against the bar's
+ *  top/bottom borders, so consecutive cells tile the toolbar edge like a ledger strip.
+ *  Text colour comes from a token (`text-text-primary` / `text-text-secondary`), which is
+ *  near-black in light mode and near-white in dark mode - no hardcoded colour.
+ *  `divider` draws the separator on the RTL end side; the bar's own border is the outer edge. */
+const StatCell: React.FC<{ label: string; value: number; divider?: boolean }> = ({ label, value, divider }) => (
+  <div className={`flex flex-col justify-center px-5 py-1.5 ${divider ? 'border-s border-border-default' : ''}`}>
+    <span className="text-xs leading-tight text-text-secondary whitespace-nowrap">{label}</span>
+    <span className="text-lg leading-tight font-bold whitespace-nowrap text-text-primary">
+      {formatCurrency(value)}
+    </span>
+  </div>
+);
+
+// ================================
 // TYPE DEFINITIONS
 // ================================
 
@@ -402,6 +420,13 @@ const EmployeeTransactionsTable: React.FC<EmployeeTransactionsTableProps> = ({
   const pagination = transactionsData?.pagination || {};
   const summary = transactionsData?.data?.summary || {};
 
+  // Toolbar totals come from the server summary (whole ledger), never from summing the
+  // paginated `confirmed` rows - that is what made the old footer disagree with the balance.
+  // Server convention: balance = credit - debit.
+  const totalDebit = summary.total_expenses ?? 0;
+  const totalCredit = summary.total_earned ?? 0;
+  const finalBalance = summary.balance_due ?? (totalCredit - totalDebit);
+
   const handleViewTransaction = (transaction: any) => {
     openModal('voucherDetails', { voucher: toEmployeeVoucher(transaction, employeeName) });
   };
@@ -450,28 +475,8 @@ const EmployeeTransactionsTable: React.FC<EmployeeTransactionsTableProps> = ({
     // Sort descending by date
     all.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
 
-    // Append summary row
-    // Totals come from the server summary (whole ledger), not from summing `confirmed`,
-    // which is only the current page - that made the footer disagree with the balance
-    // printed beside it. Server convention: balance = credit - debit.
-    const totalDebit = summary.total_expenses ?? confirmed.reduce((sum, t) => sum + t.debit_val, 0);
-    const totalCredit = summary.total_earned ?? confirmed.reduce((sum, t) => sum + t.credit_val, 0);
-    const finalBalance = summary.balance_due ?? (totalCredit - totalDebit);
-
-    all.unshift({
-      id: 'summary',
-      is_summary: true,
-      is_pending: false,
-      date: '',
-      transaction_type: '',
-      description: 'الإجماليات',
-      debit_val: totalDebit,
-      credit_val: totalCredit,
-      balance_val: finalBalance,
-    } as any);
-
     return all;
-  }, [confirmedTransactions, pendingCommissions, summary]);
+  }, [confirmedTransactions, pendingCommissions]);
 
   // Define columns - RTL order (first is rightmost)
   const columns = useMemo((): HuloolGridColumn<any>[] => [
@@ -570,26 +575,11 @@ const EmployeeTransactionsTable: React.FC<EmployeeTransactionsTableProps> = ({
       <style>{filterDateStyles}</style>
 
       {/* Unified Compact Filters Toolbar Card */}
-      <div className="bg-bg-surface border border-border-default rounded-xl p-3 shadow-xs">
-        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3">
-          
-          {/* Right: Icon / Title / Count */}
-          <div className="flex items-center gap-2.5 shrink-0 min-w-0">
-            <div className="shrink-0 text-primary">
-              <Receipt size={20} />
-            </div>
-            <div className="min-w-0">
-              <span className="text-sm font-bold text-text-primary">كشف معاملات الموظف</span>
-              {pagination.total !== undefined && (
-                <span className="text-xs text-text-secondary mr-2 font-normal">
-                  ({pagination.total} حركة)
-                </span>
-              )}
-            </div>
-          </div>
+      <div className="bg-bg-surface border border-border-default rounded-xl shadow-xs overflow-hidden">
+        <div className="relative flex flex-col lg:flex-row lg:items-stretch">
 
-          {/* Center: Inline Filter Fields */}
-          <div className="header-inline-filters flex flex-wrap items-center gap-2 lg:flex-1 lg:justify-center min-w-0">
+          {/* RTL start (right): Inline Filter Fields */}
+          <div className="header-inline-filters flex flex-wrap items-center gap-2 p-3 lg:justify-end min-w-0 shrink-0">
             {/* Search */}
             <div className="relative w-48">
               <Search size={14} className="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 text-text-muted" />
@@ -683,14 +673,31 @@ const EmployeeTransactionsTable: React.FC<EmployeeTransactionsTableProps> = ({
             )}
           </div>
 
-          {/* Left: Balance Display */}
-          <div className="flex items-center gap-3 shrink-0 lg:border-s lg:border-border-default lg:ps-4">
-            <div className="text-left">
-              <p className="text-[10px] text-text-secondary leading-none">الرصيد المستحق</p>
-              <p className={`text-base font-black mt-0.5 whitespace-nowrap ${(summary.balance_due ?? 0) < 0 ? 'text-status-danger-text' : 'text-text-brand'}`}>
-                {formatCurrency(summary.balance_due ?? 0)}
-              </p>
+          {/* Center: Icon / Title / Count. Sits between the filters and the totals as a real flex
+              child with equal-width spacers on both sides, so it stays visually centered
+              without absolute positioning (which overlapped on narrow screens). */}
+          <div className="order-first flex items-center justify-center gap-2.5 py-3 shrink-0 lg:order-none lg:flex-1">
+            <div className="hidden lg:flex-1" aria-hidden="true" />
+            <div className="shrink-0 text-primary">
+              <Receipt size={20} />
             </div>
+            <div className="flex items-baseline min-w-0">
+              <span className="text-sm font-bold text-text-primary">كشف معاملات الموظف</span>
+              {pagination.total !== undefined && (
+                <span className="text-xs text-text-secondary mr-2 font-normal">
+                  ({pagination.total} حركة)
+                </span>
+              )}
+            </div>
+            <div className="hidden lg:flex-1" aria-hidden="true" />
+          </div>
+
+          {/* RTL end (left): all-time totals from the server summary, as flush cells.
+              No padding gap to the card edges so they read as cells of the bar itself. */}
+          <div className="flex items-stretch shrink-0 border-t lg:border-t-0 lg:border-s border-border-default">
+            <StatCell label="اجمالي المدين" value={totalDebit} divider />
+            <StatCell label="اجمالي الدائن" value={totalCredit} divider />
+            <StatCell label="الرصيد النهائي" value={finalBalance} />
           </div>
 
         </div>

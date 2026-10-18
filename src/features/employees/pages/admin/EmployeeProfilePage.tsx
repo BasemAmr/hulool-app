@@ -3,8 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { User, DollarSign, FileText, Users as UsersIcon, CreditCard, Activity, Clock, LayoutDashboard, ChevronDown, TrendingUp, TrendingDown } from 'lucide-react';
 import Button from '@/shared/ui/primitives/Button';
 import { useModalStore } from '@/shared/stores/modalStore';
-import { useGetEmployee, useGetEmployeeLedger, type EmployeeLedgerResponse } from '@/features/employees/api/employeeQueries';
-import { formatCurrency } from '@/shared/utils/formatUtils';
+import { useGetEmployee } from '@/features/employees/api/employeeQueries';
 import { Card, CardHeader, CardContent } from '@/shared/ui/shadcn/card';
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from '@/shared/ui/shadcn/dropdown-menu';
 import {
@@ -26,51 +25,6 @@ import AdminEmployeeTransactionsPanel from '../../components/admin-views/AdminEm
 
 type ViewMode = 'dashboard' | 'transactions' | 'tasks' | 'clients' | 'invoices';
 
-interface FinancialSummaryCardProps {
-  summary?: {
-    total_earned: number;
-    total_expenses?: number;
-    total_paid_out?: number;
-    balance_due: number;
-    total_transactions: number;
-    last_payout_date: string | null;
-  };
-  pendingCount: number;
-}
-const FinancialSummaryCard: React.FC<FinancialSummaryCardProps> = ({ summary, pendingCount }) => {
-  if (!summary) return null;
-
-  const totalPaidOut = summary.total_paid_out ?? summary.total_expenses ?? 0;
-
-  return (
-    <div className="flex gap-4 items-center bg-background p-2">
-      {/* Total Earned */}
-      <div className="flex items-center gap-1">
-        <span className="text-sm font-medium text-text-secondary">إجمالي المستحق:</span>
-        <span className="text-sm font-bold text-text-primary">{formatCurrency(summary.total_earned)}</span>
-      </div>
-
-      {/* Total Paid Out */}
-      <div className="flex items-center gap-1">
-        <span className="text-sm font-medium text-text-secondary">إجمالي المصروف:</span>
-        <span className="text-sm font-bold text-text-primary">{formatCurrency(totalPaidOut)}</span>
-      </div>
-
-      {/* Balance Due */}
-      <div className="flex items-center gap-1">
-        <span className="text-sm font-medium text-text-secondary">الرصيد المتبقي:</span>
-        <span className="text-sm font-bold text-text-primary">{formatCurrency(summary.balance_due)}</span>
-      </div>
-
-      {/* Pending Commissions */}
-      <div className="flex items-center gap-1">
-        <span className="text-sm font-medium text-text-secondary">عمولات معلقة:</span>
-        <span className="text-sm font-bold text-text-primary">{pendingCount} معاملة</span>
-      </div>
-    </div>
-  );
-};
-
 interface EmployeePageHeader {
   employee: any;
   onSarf: () => void;
@@ -80,11 +34,9 @@ interface EmployeePageHeader {
   activeMode: ViewMode;
   onModeChange: (mode: ViewMode) => void;
   modeOptions: ReadonlyArray<{ key: ViewMode; label: string; icon: any }>;
-  ledgerData?: EmployeeLedgerResponse;
-  pendingCount: number;
 }
 
-const EmployeeHeader: React.FC<EmployeePageHeader> = ({ employee, onSarf, onQabd, onSettlementQabd, onSettlementSarf, activeMode, onModeChange, modeOptions, ledgerData, pendingCount }) => {
+const EmployeeHeader: React.FC<EmployeePageHeader> = ({ employee, onSarf, onQabd, onSettlementQabd, onSettlementSarf, activeMode, onModeChange, modeOptions }) => {
   const openModal = useModalStore((state) => state.openModal);
 
   return (
@@ -99,11 +51,6 @@ const EmployeeHeader: React.FC<EmployeePageHeader> = ({ employee, onSarf, onQabd
             <h1 className="text-2xl font-bold text-text-primary">{employee.display_name}</h1>
           </div>
         </div>
-        <FinancialSummaryCard
-          summary={ledgerData?.data?.summary}
-          pendingCount={pendingCount}
-        />
-
       </div>
 
       {/* Mode Selection Cards */}
@@ -190,17 +137,6 @@ const EmployeeProfilePage = () => {
   const employeeTableId = parseInt(id || '0', 10);
   const { data: employee, isLoading, error: employeeError } = useGetEmployee(employeeTableId);
   const userId = employee?.user_id;
-  // Fetch ledger data for summary
-  const { data: ledgerData } = useGetEmployeeLedger(employeeTableId, { page: 1, per_page: 100 });
-
-  // Calculate pending commissions count
-  const pendingCount = ledgerData?.data?.pending_commissions?.length ||
-    (ledgerData?.data?.transactions || []).filter(t =>
-      t.is_pending ||
-      (t.direction === 'CREDIT' &&
-        (parseFloat(t.amount || '0') === 0 ||
-          t.transaction_name?.startsWith('Pending:')))
-    ).length;
 
   const handleSarf = () => {
     if (!employee) return;
@@ -277,8 +213,6 @@ const EmployeeProfilePage = () => {
         activeMode={activeMode}
         onModeChange={handleModeChange}
         modeOptions={modeOptions}
-        ledgerData={ledgerData}
-        pendingCount={pendingCount}
       />
 
 
