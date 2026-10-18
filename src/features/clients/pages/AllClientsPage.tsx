@@ -22,12 +22,16 @@ import {
   buildSettlementQabdPreset,
   buildSettlementSarfPreset,
 } from '@/features/financials/utils/settlementPresets';
+import { useCanUseSettlement } from '@/features/financials/api/treasuryQueries';
 
 const AllClientsPage = () => {
   const { t } = useTranslation();
   // const navigate = useNavigate();
   const openModal = useModalStore((state) => state.openModal);
   const { success, error } = useToast(); // ADD
+  // سند تسوية always targets the settlement account; hide it when the employee has
+  // no can_transact on it. Absent permission row counts as no access.
+  const canUseSettlement = useCanUseSettlement();
 
   const [search, setSearch] = useState('');
   const [regionFilter, setRegionFilter] = useState<number | null>(null);
@@ -165,7 +169,8 @@ const AllClientsPage = () => {
             سند صرف
           </Button>
 
-          {/* سند تسوية */}
+          {/* سند تسوية - whole menu is settlement-only, so hide the dropdown too */}
+          {canUseSettlement && (
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button
@@ -198,6 +203,7 @@ const AllClientsPage = () => {
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
+          )}
         </div>
         
         {/* Search and Export */}

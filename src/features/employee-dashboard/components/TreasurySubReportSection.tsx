@@ -8,6 +8,7 @@ import {
   buildSettlementQabdPreset,
   buildSettlementSarfPreset,
 } from '@/features/financials/utils/settlementPresets';
+import { useCanUseSettlement } from '@/features/financials/api/treasuryQueries';
 
 // Color convention: مقبوضات=أخضر, مصروفات=أحمر, رصيد=أزرق
 const COLOR_QABDH   = 'var(--token-chart-1)'; // teal/green
@@ -35,6 +36,9 @@ export const TreasurySubReportSection: React.FC<TreasurySubReportSectionProps> =
   onFilterChange,
 }) => {
   const openModal = useModalStore((state) => state.openModal);
+  // تسوية buttons always target the settlement account; hide them when the employee
+  // has no can_transact on it. Absent permission row counts as no access.
+  const canUseSettlement = useCanUseSettlement();
 
   // Read initial selection from localStorage
   const [selectedId, setSelectedId] = useState<number | null>(() => {
@@ -136,7 +140,9 @@ export const TreasurySubReportSection: React.FC<TreasurySubReportSectionProps> =
         )}
 
         {/* 4 Action Buttons in 1 row targeting selected account */}
-        <div className="grid grid-cols-4 gap-1">
+        {/* 4 columns when settlement is available (4 buttons), 2 when it is hidden, so the
+            remaining سند قبض / سند صرف pair does not sit in the left half of an empty grid. */}
+        <div className={`grid gap-1 ${canUseSettlement ? 'grid-cols-4' : 'grid-cols-2'}`}>
           <Button
             type="button"
             variant="outline-success"
@@ -173,7 +179,10 @@ export const TreasurySubReportSection: React.FC<TreasurySubReportSectionProps> =
             <span>سند صرف</span>
           </Button>
 
-          <Button
+          {/* Settlement pair — hidden as a unit so the two buttons never split */}
+          {canUseSettlement && (
+            <>
+              <Button
             type="button"
             variant="outline-secondary"
             size="sm"
@@ -184,20 +193,22 @@ export const TreasurySubReportSection: React.FC<TreasurySubReportSectionProps> =
             }
           >
             <span>تسوية قبض</span>
-          </Button>
+              </Button>
 
-          <Button
-            type="button"
-            variant="outline-secondary"
-            size="sm"
-            className="h-5.5 px-0.5 text-[9px] font-bold cursor-pointer whitespace-nowrap"
-            onClick={() =>
-              // Standard تسوية preset: صرف = FROM this treasury account TO settlement.
+              <Button
+                type="button"
+                variant="outline-secondary"
+                size="sm"
+                className="h-5.5 px-0.5 text-[9px] font-bold cursor-pointer whitespace-nowrap"
+                onClick={() =>
+                  // Standard تسوية preset: صرف = FROM this treasury account TO settlement.
               openModal('unifiedTransaction', buildSettlementSarfPreset({ kind: 'treasury', id: accountIdStr }))
             }
           >
             <span>تسوية صرف</span>
           </Button>
+            </>
+          )}
         </div>
       </div>
 

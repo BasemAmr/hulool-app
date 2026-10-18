@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Card, CardContent } from '@/shared/ui/shadcn/card';
 import { Wallet, ExternalLink, ChevronDown } from 'lucide-react';
-import { useGetMyTreasuryAccounts } from '@/features/financials/api/treasuryQueries';
+import { useGetMyTreasuryAccounts, useCanUseSettlement } from '@/features/financials/api/treasuryQueries';
 import { useModalStore } from '@/shared/stores/modalStore';
 import { useAuthStore } from '@/features/auth/store/authStore';
 import {
@@ -30,6 +30,9 @@ export const TreasuryAccountSelectorWidget: React.FC = () => {
   );
   const [settlementOpen, setSettlementOpen] = useState(false);
   const settlementRef = useRef<HTMLDivElement>(null);
+  // سند تسوية always targets the settlement account; hide it when the employee has
+  // no can_transact on it. Absent permission row counts as no access.
+  const canUseSettlement = useCanUseSettlement();
 
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
@@ -179,7 +182,8 @@ export const TreasuryAccountSelectorWidget: React.FC = () => {
               سند صرف
             </button>
 
-            {/* سند تسوية - dropdown */}
+            {/* سند تسوية - dropdown. Settlement is its only purpose, so the whole trigger goes. */}
+            {canUseSettlement && (
             <div ref={settlementRef} className="flex-1 relative">
               <button
                 onClick={() => setSettlementOpen((prev) => !prev)}
@@ -216,6 +220,7 @@ export const TreasuryAccountSelectorWidget: React.FC = () => {
                 </div>
               )}
             </div>
+            )}
           </div>
         )}
       </CardContent>

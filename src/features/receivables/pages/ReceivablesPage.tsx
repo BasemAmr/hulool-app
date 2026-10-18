@@ -17,12 +17,16 @@ import {
   buildSettlementQabdPreset,
   buildSettlementSarfPreset,
 } from '@/features/financials/utils/settlementPresets';
+import { useCanUseSettlement } from '@/features/financials/api/treasuryQueries';
 
 const ReceivablesPage = () => {
   const { t } = useTranslation();
   const openModal = useModalStore((state) => state.openModal);
   const { hasViewAllReceivablesPermission, isLoading: isPermissionsLoading } = useReceivablesPermissions();
   const { showToast } = useToast();
+  // سند تسوية always targets the settlement account; hide it when the employee has
+  // no can_transact on it. Absent permission row counts as no access.
+  const canUseSettlement = useCanUseSettlement();
 
   const [search, setSearch] = useState('');
   const debouncedSearch = useDebounce(search, 500);
@@ -148,6 +152,7 @@ const ReceivablesPage = () => {
             سند صرف
           </Button>
 
+          {canUseSettlement && (
           <div ref={settlementRef} className="relative">
             <Button
               variant="outline-secondary"
@@ -185,6 +190,7 @@ const ReceivablesPage = () => {
               </div>
             )}
           </div>
+          )}
         </div>
 
         <div className="flex items-center gap-2">
