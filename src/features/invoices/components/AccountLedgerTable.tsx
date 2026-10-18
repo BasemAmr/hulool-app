@@ -803,13 +803,18 @@ const AccountLedgerTable: React.FC<AccountLedgerTableProps> = ({
       `}</style>
 
       {/* Unified Compact Filters Toolbar Card */}
-      <div className="bg-bg-surface border border-border-default rounded-xl shadow-xs overflow-hidden">
+{/* lg:sticky keeps the search filters and the totals reachable while scrolling a long
+           ledger. <main> is the scroll container (flex-1 overflow-y-auto) and the navbar is
+           its sibling, so top-0 lands directly under the navbar. z-40 stays below the
+           navbar's z-50 and the dropdowns' z-[9999]. */}
+      <div className="lg:sticky lg:top-0 lg:z-40 bg-bg-surface border border-border-default rounded-xl shadow-xs overflow-hidden">
         <div className="relative flex flex-col lg:flex-row lg:items-stretch">
 
-          {/* RTL start (right): Inline Filter Fields */}
-          <div className="header-inline-filters flex flex-wrap items-center gap-2 p-3 lg:justify-end min-w-0 shrink-0">
+          {/* RTL start (right): Inline Filter Fields. Below lg the row stays a single line and
+              scrolls sideways instead of wrapping into a tall column; lg restores the wrap. */}
+          <div className="header-inline-filters flex flex-nowrap items-center gap-2 p-3 lg:flex-wrap lg:justify-end min-w-0 shrink-0 overflow-x-auto lg:overflow-x-visible">
             {/* Search */}
-            <div className="relative w-48">
+            <div className="relative w-36 shrink-0 lg:w-48 lg:shrink">
               <Search size={14} className="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 text-text-muted" />
               <input
                 type="text"
@@ -903,16 +908,17 @@ const AccountLedgerTable: React.FC<AccountLedgerTableProps> = ({
 
           {/* Center: Icon / Title / Count. Sits between the filters and the totals as a real
               flex child with equal-width spacers, so it reads as the bar's midpoint without
-              absolute positioning (which overlapped the filters on narrow screens). */}
-          <div className="order-first flex items-center justify-center gap-2.5 py-3 shrink-0 lg:order-none lg:flex-1">
+              absolute positioning (which overlapped the filters on narrow screens). The
+              title/count truncate so this stays one line on a phone. */}
+          <div className="order-first flex items-center justify-center gap-2.5 py-2 lg:py-3 shrink-0 lg:order-none lg:flex-1">
             <div className="hidden lg:flex-1" aria-hidden="true" />
             <div className="shrink-0 text-primary">
               <Receipt size={20} />
             </div>
             <div className="flex items-baseline min-w-0">
-              <span className="text-sm font-bold text-text-primary">كشف الحساب المالي</span>
+              <span className="text-sm font-bold text-text-primary truncate min-w-0">كشف الحساب المالي</span>
               {totalRecords > 0 && (
-                <span className="text-xs text-text-secondary mr-2 font-normal">
+                <span className="text-xs text-text-secondary mr-2 font-normal truncate min-w-0">
                   ({totalRecords} حركة)
                 </span>
               )}
@@ -920,8 +926,10 @@ const AccountLedgerTable: React.FC<AccountLedgerTableProps> = ({
             <div className="hidden lg:flex-1" aria-hidden="true" />
           </div>
 
-          {/* RTL end (left): server-calculated totals, as flush cells */}
-          <div className="flex items-stretch shrink-0 border-t lg:border-t-0 lg:border-s border-border-default">
+          {/* RTL end (left): server-calculated totals, as flush cells. Below lg they stay a
+              single flush row that scrolls sideways (they no longer fit a phone and used to be
+              clipped); lg keeps them in place with the inline-start divider. */}
+          <div className="flex items-stretch shrink-0 border-t lg:border-t-0 lg:border-s border-border-default overflow-x-auto lg:overflow-x-visible">
             {hideAmounts ? (
               <div className="flex items-center px-5 py-1.5 text-text-secondary text-xs">•••</div>
             ) : (

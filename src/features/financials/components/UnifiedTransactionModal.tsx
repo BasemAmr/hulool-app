@@ -107,9 +107,30 @@ const UnifiedTransactionModal = () => {
   const [toPresetKind, setToPresetKind] = useState<PickerKind | null>(null);
   const [amount, setAmount] = useState<string>('');
   const [description, setDescription] = useState<string>('');
-  const [effectiveDate, setEffectiveDate] = useState<string>(
-    new Date().toISOString().split('T')[0],
-  );
+  // Both parts default to the CURRENT local clock. Previously the date came from
+  // toISOString() (UTC) while the submitted time came from toTimeString() (local),
+  // so near midnight the two could describe different days.
+  const nowLocalDate = () => {
+    const d = new Date();
+    const m = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${d.getFullYear()}-${m}-${day}`;
+  };
+  const nowLocalTime = () => {
+    const d = new Date();
+    return `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
+  };
+
+  // The REST arg is validated as `date-time`, which REQUIRES seconds. The <input
+  // type="time"> gives HH:MM only, so append :00 or WP rejects the request before it
+  // ever reaches the service's normaliser.
+  const buildEffectiveDateTime = (date: string, time: string) => {
+    const hhmm = /^\d{2}:\d{2}$/.test(time) ? time : nowLocalTime();
+    return `${date}T${hhmm}:00`;
+  };
+
+  const [effectiveDate, setEffectiveDate] = useState<string>(nowLocalDate);
+  const [effectiveTime, setEffectiveTime] = useState<string>(nowLocalTime);
   const [voucherTypeOverride, setVoucherTypeOverride] = useState<'receipt' | 'expense' | ''>('');
   const [initialized, setInitialized] = useState<boolean>(false);
 
@@ -191,7 +212,8 @@ const UnifiedTransactionModal = () => {
     setToPresetKind(tPreset);
     setAmount('');
     setDescription('');
-    setEffectiveDate(new Date().toISOString().split('T')[0]);
+    setEffectiveDate(nowLocalDate());
+    setEffectiveTime(nowLocalTime());
   }, [isVisible, props, treasuryData]);
 
   // ---- Resolve account type from PickerValue ----
@@ -326,7 +348,7 @@ const UnifiedTransactionModal = () => {
         to_account_id: Number(toPicker.accountId),
         amount: parseFloat(amount),
         description: finalDescription,
-        effective_date: effectiveDate ? `${effectiveDate}T${new Date().toTimeString().split(' ')[0]}` : undefined,
+        effective_date: effectiveDate ? buildEffectiveDateTime(effectiveDate, effectiveTime) : undefined,
         voucher_type_override: effectiveVoucherType,
       });
 
@@ -366,14 +388,15 @@ const UnifiedTransactionModal = () => {
         to_account_id: Number(toPicker.accountId),
         amount: parseFloat(amount),
         description: finalDescription,
-        effective_date: effectiveDate ? `${effectiveDate}T${new Date().toTimeString().split(' ')[0]}` : undefined,
+        effective_date: effectiveDate ? buildEffectiveDateTime(effectiveDate, effectiveTime) : undefined,
         voucher_type_override: effectiveVoucherType,
       });
 
       success('تم التسجيل — جاهز للمعاملة التالية');
       setAmount('');
       setDescription('');
-        setEffectiveDate(new Date().toISOString().split('T')[0]);
+      setEffectiveDate(nowLocalDate());
+      setEffectiveTime(nowLocalTime());
       setVoucherTypeOverride('');
     } catch (err: any) {
       toastError(
@@ -391,7 +414,8 @@ const UnifiedTransactionModal = () => {
     setToPresetKind(null);
     setAmount('');
     setDescription('');
-    setEffectiveDate(new Date().toISOString().split('T')[0]);
+    setEffectiveDate(nowLocalDate());
+    setEffectiveTime(nowLocalTime());
     setVoucherTypeOverride('');
     setInitialized(false);
     setDirection('sarf');
@@ -618,9 +642,10 @@ const UnifiedTransactionModal = () => {
           </div>
 
           <div className="space-y-3.5">
-            {/* Amount + Date — same row */}
-            <div className="grid grid-cols-2 gap-3">
-              <div>
+            {/* Amount + Date + Time — one row. Time defaults to the current clock and stays
+                editable for backdated/forward-dated entries. */}
+            <div className="grid grid-cols-12 gap-2.5">
+              <div className="col-span-5">
                 <label className="block text-xs font-bold text-text-secondary mb-1.5">
                   المبلغ <span className="text-status-danger-text">*</span>
                 </label>
@@ -639,7 +664,7 @@ const UnifiedTransactionModal = () => {
                 </div>
               </div>
 
-              <div>
+              <div className="col-span-4">
                 <label className="block text-xs font-bold text-text-secondary mb-1.5">
                   التاريخ <span className="text-status-danger-text">*</span>
                 </label>
@@ -648,6 +673,20 @@ const UnifiedTransactionModal = () => {
                   value={effectiveDate}
                   onChange={(val: any) => setEffectiveDate(typeof val === 'string' ? val : val?.target?.value ?? '')}
                   className="w-full"
+                />
+              </div>
+
+              <div className="col-span-3">
+                <label className="block text-xs font-bold text-text-secondary mb-1.5">
+                  الوقت
+                </label>
+                <input
+                  type="time"
+                  name="effective_time"
+                  value={effectiveTime}
+                  onChange={(e) => setEffectiveTime(e.target.value)}
+                  dir="ltr"
+                  className="base-input w-full text-center font-mono text-xs"
                 />
               </div>
             </div>

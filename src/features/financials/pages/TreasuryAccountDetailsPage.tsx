@@ -559,34 +559,18 @@ export const TreasuryAccountDetailsPage = () => {
       <style>{filterDateStyles}</style>
       <div className="p-6 space-y-4 text-right" dir="rtl">
         {/* Unified Compact Header and Filter Card */}
-        <div className="bg-bg-surface border border-border-default rounded-xl shadow-sm overflow-hidden">
+        {/* lg:sticky keeps the search filters and the totals reachable while scrolling a long
+            ledger. <main> is the scroll container (flex-1 overflow-y-auto) and the navbar is
+            its sibling, so top-0 lands directly under the navbar. z-40 stays below the
+            navbar's z-50 and the dropdowns' z-[9999]. */}
+        <div className="lg:sticky lg:top-0 lg:z-40 bg-bg-surface border border-border-default rounded-xl shadow-sm overflow-hidden">
           <div className="relative flex flex-col lg:flex-row lg:items-stretch">
 
-            {/* Center: Back button + Title. Real flex child with equal spacers so it reads
-                as the bar's midpoint without absolute positioning. */}
-            <div className="order-first flex items-center justify-center gap-3 p-3 shrink-0 lg:order-none lg:flex-1">
-              <div className="hidden lg:flex-1" aria-hidden="true" />
-              <button
-                onClick={handleBack}
-                className="shrink-0 p-1.5 rounded-md text-text-secondary hover:text-text-primary hover:bg-bg-surface-muted transition-colors cursor-pointer"
-                title="الرجوع"
-              >
-                <ArrowRight size={20} />
-              </button>
-              <div className="shrink-0 text-primary">
-                <Landmark size={24} />
-              </div>
-              <div className="min-w-0">
-                <h2 className="text-lg font-bold text-text-primary truncate">{account?.name || ''}</h2>
-                {subtitle && <p className="text-xs text-text-secondary mt-0.5">{subtitle}</p>}
-              </div>
-            </div>
-            <div className="hidden lg:flex-1" aria-hidden="true" />
-
-            {/* RTL start (right): Inline Filter Fields */}
-            <div className="header-inline-filters flex flex-wrap items-center gap-2 p-3 lg:justify-end min-w-0 shrink-0">
+            {/* RTL start (right): Inline Filter Fields. Below lg the row stays a single line and
+                scrolls sideways instead of wrapping into a tall column; lg restores the wrap. */}
+            <div className="header-inline-filters flex flex-nowrap items-center gap-2 p-3 lg:flex-wrap lg:justify-end min-w-0 shrink-0 overflow-x-auto lg:overflow-x-visible">
               {/* Search */}
-              <div className="relative w-44">
+              <div className="relative w-36 shrink-0 lg:w-44 lg:shrink">
                 <Search size={14} className="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 text-text-muted" />
                 <input
                   type="text"
@@ -671,8 +655,36 @@ export const TreasuryAccountDetailsPage = () => {
               )}
             </div>
 
-            {/* RTL end (left): server-calculated totals as flush cells, then the export action */}
-            <div className="flex items-stretch shrink-0 border-t lg:border-t-0 lg:border-s border-border-default">
+            {/* Center: Back button + Title. Sits between the filters and the totals with
+                equal-width spacers so it reads as the bar's midpoint. It must come AFTER the
+                filters in DOM order, otherwise in RTL it lands at the far right and pushes the
+                search box into the middle. min-w-0 lets the account name + subtitle truncate
+                instead of wrapping onto extra lines on a phone. */}
+            <div className="order-first flex items-center justify-center gap-2.5 py-2 lg:py-3 shrink-0 lg:order-none lg:flex-1">
+              <div className="hidden lg:flex-1" aria-hidden="true" />
+              <button
+                onClick={handleBack}
+                className="shrink-0 p-1.5 rounded-md text-text-secondary hover:text-text-primary hover:bg-bg-surface-muted transition-colors cursor-pointer"
+                title="الرجوع"
+              >
+                <ArrowRight size={18} />
+              </button>
+              <div className="shrink-0 text-primary">
+                <Landmark size={20} />
+              </div>
+              <div className="flex items-baseline min-w-0">
+                <span className="text-sm font-bold text-text-primary truncate min-w-0">{account?.name || ''}</span>
+                {subtitle && <span className="text-xs text-text-secondary mr-2 truncate min-w-0">{subtitle}</span>}
+              </div>
+              <div className="hidden lg:flex-1" aria-hidden="true" />
+            </div>
+
+            {/* RTL end (left): server-calculated totals as flush cells, then the export action.
+                Below lg they stay a single flush row that scrolls sideways (they no longer fit a
+                phone and used to be clipped); lg keeps them in place with the inline-start
+                divider. The Button is whitespace-nowrap, so the export action never gets squeezed
+                out of the scroll row. */}
+            <div className="flex items-stretch shrink-0 border-t lg:border-t-0 lg:border-s border-border-default overflow-x-auto lg:overflow-x-visible">
               <LedgerStatCell label="اجمالي المدين" value={totalDebits} tone="debit" divider />
               <LedgerStatCell label="اجمالي الدائن" value={totalCredits} tone="credit" divider />
               <LedgerStatCell label="الرصيد النهائي" value={finalBalance} tone="balance" divider />

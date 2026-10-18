@@ -402,10 +402,12 @@ const EmployeeTransactionsTable: React.FC<EmployeeTransactionsTableProps> = ({
     return () => observer.disconnect();
   }, [hasMore, isLoading, loadMore]);
 
-  // Any filter change restarts accumulation from page 1.
+  // Any filter change restarts accumulation from page 1. We deliberately do NOT clear
+  // `accumulated` here: clearing it blanks the grid while the new query is in flight. The
+  // page-1 branch of the effect above replaces the rows as soon as fresh data lands, so the
+  // previous result stays on screen until then and the table never flashes empty.
   useEffect(() => {
     handlePageChange(1);
-    if (!propTransactions) setAccumulated([]);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [filters.start_date, filters.end_date, filters.type, filters.search]);
 
@@ -558,7 +560,11 @@ const EmployeeTransactionsTable: React.FC<EmployeeTransactionsTableProps> = ({
 
   const hasActiveFilters = Boolean(filters.start_date || filters.end_date || filters.type || filters.search);
 
-  if (isLoading && !transactionsData) {
+  // Only on the very first load, when there is nothing to show yet. Previously this also fired
+  // on every filter/search change (a new query key means `transactionsData` is briefly
+  // undefined), which replaced the whole page - toolbar and grid - with "Loading
+  // transactions..." and threw the reader back to the top of the table.
+  if (isInitialLoad) {
     return <div className="p-4 text-center">Loading transactions...</div>;
   }
 
@@ -567,13 +573,18 @@ const EmployeeTransactionsTable: React.FC<EmployeeTransactionsTableProps> = ({
       <style>{filterDateStyles}</style>
 
       {/* Unified Compact Filters Toolbar Card */}
-      <div className="bg-bg-surface border border-border-default rounded-xl shadow-xs overflow-hidden">
+{/* lg:sticky keeps the search filters and the totals reachable while scrolling a long
+           ledger. <main> is the scroll container (flex-1 overflow-y-auto) and the navbar is
+           its sibling, so top-0 lands directly under the navbar. z-40 stays below the
+           navbar's z-50 and the dropdowns' z-[9999]. */}
+      <div className="lg:sticky lg:top-0 lg:z-40 bg-bg-surface border border-border-default rounded-xl shadow-xs overflow-hidden">
         <div className="relative flex flex-col lg:flex-row lg:items-stretch">
 
-          {/* RTL start (right): Inline Filter Fields */}
-          <div className="header-inline-filters flex flex-wrap items-center gap-2 p-3 lg:justify-end min-w-0 shrink-0">
+          {/* RTL start (right): Inline Filter Fields. Below lg the row stays a single line and
+              scrolls sideways instead of wrapping into a tall column; lg restores the wrap. */}
+          <div className="header-inline-filters flex flex-nowrap items-center gap-2 p-3 lg:flex-wrap lg:justify-end min-w-0 shrink-0 overflow-x-auto lg:overflow-x-visible">
             {/* Search */}
-            <div className="relative w-48">
+            <div className="relative w-36 shrink-0 lg:w-48 lg:shrink">
               <Search size={14} className="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 text-text-muted" />
               <input
                 type="text"
@@ -667,16 +678,17 @@ const EmployeeTransactionsTable: React.FC<EmployeeTransactionsTableProps> = ({
 
           {/* Center: Icon / Title / Count. Sits between the filters and the totals as a real flex
               child with equal-width spacers on both sides, so it stays visually centered
-              without absolute positioning (which overlapped on narrow screens). */}
-          <div className="order-first flex items-center justify-center gap-2.5 py-3 shrink-0 lg:order-none lg:flex-1">
+              without absolute positioning (which overlapped on narrow screens). The
+              title/count truncate so this stays one line on a phone. */}
+          <div className="order-first flex items-center justify-center gap-2.5 py-2 lg:py-3 shrink-0 lg:order-none lg:flex-1">
             <div className="hidden lg:flex-1" aria-hidden="true" />
             <div className="shrink-0 text-primary">
               <Receipt size={20} />
             </div>
             <div className="flex items-baseline min-w-0">
-              <span className="text-sm font-bold text-text-primary">كشف معاملات الموظف</span>
+              <span className="text-sm font-bold text-text-primary truncate min-w-0">كشف معاملات الموظف</span>
               {pagination.total !== undefined && (
-                <span className="text-xs text-text-secondary mr-2 font-normal">
+                <span className="text-xs text-text-secondary mr-2 font-normal truncate min-w-0">
                   ({pagination.total} حركة)
                 </span>
               )}
@@ -685,8 +697,10 @@ const EmployeeTransactionsTable: React.FC<EmployeeTransactionsTableProps> = ({
           </div>
 
           {/* RTL end (left): all-time totals from the server summary, as flush cells.
-              No padding gap to the card edges so they read as cells of the bar itself. */}
-          <div className="flex items-stretch shrink-0 border-t lg:border-t-0 lg:border-s border-border-default">
+              No padding gap to the card edges so they read as cells of the bar itself.
+              Below lg they stay a single flush row that scrolls sideways (they no longer fit a
+              phone and used to be clipped); lg keeps them in place with the inline-start divider. */}
+          <div className="flex items-stretch shrink-0 border-t lg:border-t-0 lg:border-s border-border-default overflow-x-auto lg:overflow-x-visible">
             <LedgerStatCell label="اجمالي المدين" value={totalDebit} tone="debit" divider />
             <LedgerStatCell label="اجمالي الدائن" value={totalCredit} tone="credit" divider />
             <LedgerStatCell label="الرصيد النهائي" value={finalBalance} tone="balance" />
@@ -715,8 +729,18 @@ const EmployeeTransactionsTable: React.FC<EmployeeTransactionsTableProps> = ({
         {/* Scroll sentinel - replaces the old prev/next footer. Reaching it loads the next
             page and appends it, the same as the client and treasury ledgers. */}
         {hasMore && (
-          <div ref={sentinelRef} className="py-3 flex items-center justify-center text-text-secondary text-xs">
-            {isLoading ? 'جاري تحميل المزيد...' : 'مرر للأسفل لتحميل المزيد'}
+          <div ref={sentinelRef} className="flex justify-center items-center py-3 border-t border-border-default">
+            {isLoading && activePage > 1 ? (
+              <div className="flex items-center gap-2 text-sm text-text-secondary">
+                <svg className="animate-spin h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                </svg>
+                جاري تحميل المزيد...
+              </div>
+            ) : (
+              <div className="text-sm text-text-secondary">مرر للأسفل لتحميل المزيد</div>
+            )}
           </div>
         )}
       </div>
