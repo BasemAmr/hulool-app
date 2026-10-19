@@ -86,6 +86,22 @@ export function resolveLedgerTone(
   return moneyInAmount >= moneyOutAmount ? 'success' : 'danger';
 }
 
+/**
+ * Signed change this single transaction made to the account balance.
+ *
+ * Same polarity rule as resolveLedgerTone: a debit-normal ledger (treasury) grows on debit, a
+ * credit-normal one (client, employee) grows on credit.
+ */
+export function ledgerBalanceDelta(
+  accountType: string,
+  debit: number | string | null | undefined,
+  credit: number | string | null | undefined,
+): number {
+  const d = Number(debit ?? 0) || 0;
+  const c = Number(credit ?? 0) || 0;
+  return creditIsMoneyIn(accountType) ? c - d : d - c;
+}
+
 /** Full-cell class used by every ledger's type column. */
 export function ledgerToneClassName(
   accountType: string,

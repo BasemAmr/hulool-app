@@ -14,7 +14,7 @@ import { Edit3, Trash2, Eye, Search, X, RotateCcw, Receipt, FileSpreadsheet } fr
 import HuloolDataGrid from '@/shared/grid/HuloolDataGrid';
 import { LedgerFinalBalanceCell } from '@/shared/grid';
 import { LedgerStatCell } from '@/shared/ledger/LedgerStatCell';
-import { ledgerToneClassName } from '@/shared/ledger/ledgerDirection';
+import { ledgerToneClassName, ledgerBalanceDelta } from '@/shared/ledger/ledgerDirection';
 import type { HuloolGridColumn } from '@/shared/grid/HuloolDataGrid';
 import type { CellProps } from 'react-datasheet-grid';
 import { useModalStore } from '@/shared/stores/modalStore';
@@ -240,7 +240,12 @@ CreditCell.displayName = 'CreditCell';
 
 // Balance Cell
 const BalanceCell = React.memo(({ rowData }: CellProps<any>) => {
-  return <LedgerFinalBalanceCell balance={rowData.balance_val} />;
+  return (
+    <LedgerFinalBalanceCell
+      balance={rowData.balance_val}
+      delta={ledgerBalanceDelta('employee', rowData.debit, rowData.credit)}
+    />
+  );
 });
 BalanceCell.displayName = 'BalanceCell';
 

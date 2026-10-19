@@ -50,7 +50,7 @@ import { sendPaymentReminder } from '@/shared/utils/whatsappUtils';
 import HuloolDataGrid from '@/shared/grid/HuloolDataGrid';
 import { LedgerFinalBalanceCell } from '@/shared/grid';
 import { LedgerStatCell } from '@/shared/ledger/LedgerStatCell';
-import { ledgerToneClassName } from '@/shared/ledger/ledgerDirection';
+import { ledgerToneClassName, ledgerBalanceDelta } from '@/shared/ledger/ledgerDirection';
 import type { HuloolGridColumn } from '@/shared/grid';
 import type { CellProps } from 'react-datasheet-grid';
 import DatePicker from 'react-datepicker';
@@ -285,7 +285,15 @@ CreditCell.displayName = 'CreditCell';
 // Balance Cell
 const BalanceCell = React.memo(({ rowData, columnData }: CellProps<FinancialTransaction, { hideAmounts: boolean }>) => {
   const balance = getBalance(rowData);
-  return <LedgerFinalBalanceCell balance={balance} hideAmounts={columnData?.hideAmounts} />;
+  // Arrow = did THIS row move the balance, not "is the balance negative". On an overdrawn
+  // client every row is red and down-arrowed, which hides that some rows helped.
+  return (
+    <LedgerFinalBalanceCell
+      balance={balance}
+      hideAmounts={columnData?.hideAmounts}
+      delta={ledgerBalanceDelta('client', (rowData as any).debit, (rowData as any).credit)}
+    />
+  );
 });
 BalanceCell.displayName = 'BalanceCell';
 

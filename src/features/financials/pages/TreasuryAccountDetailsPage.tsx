@@ -10,6 +10,7 @@ import Button from '@/shared/ui/primitives/Button';
 import { Landmark, FileSpreadsheet, ArrowRight, Search, X, RotateCcw, Printer } from 'lucide-react';
 import type { FinancialTransaction, CashBoxVoucher } from '@/api/types';
 import { LedgerFinalBalanceCell } from '@/shared/grid';
+import { ledgerBalanceDelta } from '@/shared/ledger/ledgerDirection';
 import { LedgerStatCell } from '@/shared/ledger/LedgerStatCell';
 import { ledgerToneClassName } from '@/shared/ledger/ledgerDirection';
 import { useModalStore } from '@/shared/stores/modalStore';
@@ -540,7 +541,17 @@ export const TreasuryAccountDetailsPage = () => {
       title: 'الرصيد النهائي',
       key: 'balance',
       type: 'custom',
-      component: (props: any) => <LedgerFinalBalanceCell balance={props.rowData?.balance} />,
+      component: (props: any) => (
+        <LedgerFinalBalanceCell
+          balance={props.rowData?.balance}
+          delta={ledgerBalanceDelta(
+            // toCashBoxVoucher stamps 'cashbox'/'company'; both resolve as treasury (debit-normal).
+            String(props.rowData?.account_type || 'treasury'),
+            props.rowData?.debit,
+            props.rowData?.credit,
+          )}
+        />
+      ),
       width: 155,
       grow: 0,
       cellClassName: ({ rowData }: any) => {
