@@ -42,6 +42,20 @@ export type AccountKind = 'client' | 'employee' | 'treasury';
  * (UnifiedTransactionService::normaliseAccountType). They must resolve the SAME way here,
  * or a cashbox voucher reads صرف while the treasury grid beside it reads قبض.
  */
+/**
+ * Every account_type this module understands. 'cashbox' and 'company' are the backend's
+ * aliases for 'treasury' (UnifiedTransactionService::normaliseAccountType).
+ *
+ * Exported so callers that need to know whether a row carries enough information to be
+ * coloured do NOT re-declare the list and fall out of sync - that is exactly how the voucher
+ * modal ended up treating a cashbox row as having no polarity at all.
+ */
+export const LEDGER_ACCOUNT_TYPES = ['client', 'employee', 'treasury', 'cashbox', 'company'] as const;
+
+export function isKnownLedgerType(accountType: string): boolean {
+  return (LEDGER_ACCOUNT_TYPES as readonly string[]).includes(accountType);
+}
+
 function creditIsMoneyIn(accountType: string): boolean {
   return accountType === 'client' || accountType === 'employee';
 }

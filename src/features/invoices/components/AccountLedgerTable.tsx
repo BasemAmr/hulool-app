@@ -31,7 +31,6 @@ import {
   Trash2,
   MessageSquare,
   Search,
-  Hash,
   X,
   RotateCcw,
   Eye,
@@ -629,6 +628,15 @@ const AccountLedgerTable: React.FC<AccountLedgerTableProps> = ({
     }
   }, [filter]);
 
+  // Reset the accumulated list when the client or any filter changes.
+  // Without this a linked navigation (paired-leg link, ?search=8023) keeps the rows already
+  // accumulated for the previous filter and appends the new page to them, so the list reads
+  // as unfiltered. The debounce below only resets when the user types.
+  useEffect(() => {
+    setPage(1);
+    setAllTransactions([]);
+  }, [client?.id, filters.start_date, filters.end_date, filters.type, filters.search]);
+
   // Fetch account data with server-side filters
   const {
     data: historyData,
@@ -1001,25 +1009,6 @@ const AccountLedgerTable: React.FC<AccountLedgerTableProps> = ({
                   <X size={11} />
                 </button>
               )}
-            </div>
-
-            {/* Id lookup: a narrow view over the SAME `search` value, not a second filter. The
-                endpoint already matches t.id for a numeric search, with or without a leading '#'
-                (verified: search=377 and search=#377 both return row 377; #37777 returns none).
-                Sharing localSearch is what makes the reset button and the ?search= deep link
-                clear this box with no extra code. */}
-            <div className="relative w-20 shrink-0">
-              <Hash size={13} className="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 text-text-muted" />
-              <input
-                type="text"
-                inputMode="numeric"
-                dir="ltr"
-                aria-label="بحث برقم الحركة"
-                className="base-input h-9 w-full rounded-lg border-border-default bg-background/50 px-2 pl-8 text-center text-xs shadow-sm transition-all placeholder:text-text-muted/70 focus:bg-background focus:ring-1 focus:ring-primary/30"
-                placeholder="#123"
-                value={/^#?\d+$/.test(localSearch) ? localSearch : ''}
-                onChange={e => setLocalSearch(e.target.value.replace(/[^\d#]/g, ''))}
-              />
             </div>
 
             {/* Start Date */}

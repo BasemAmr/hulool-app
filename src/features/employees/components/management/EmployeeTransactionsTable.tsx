@@ -10,7 +10,7 @@
 
 import React, { useMemo, useState, useEffect, useRef, useCallback } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { Edit3, Trash2, Eye, Search, Hash, X, RotateCcw, Receipt, FileSpreadsheet } from 'lucide-react';
+import { Edit3, Trash2, Eye, Search, X, RotateCcw, Receipt, FileSpreadsheet } from 'lucide-react';
 import HuloolDataGrid from '@/shared/grid/HuloolDataGrid';
 import { LedgerFinalBalanceCell } from '@/shared/grid';
 import { LedgerStatCell } from '@/shared/ledger/LedgerStatCell';
@@ -501,14 +501,18 @@ const EmployeeTransactionsTable: React.FC<EmployeeTransactionsTableProps> = ({
     return () => observer.disconnect();
   }, [hasMore, isLoading, loadMore]);
 
-  // Any filter change restarts accumulation from page 1. We deliberately do NOT clear
-  // `accumulated` here: clearing it blanks the grid while the new query is in flight. The
-  // page-1 branch of the effect above replaces the rows as soon as fresh data lands, so the
-  // previous result stays on screen until then and the table never flashes empty.
+  // Any filter change restarts accumulation from page 1.
+  // We deliberately do NOT clear `accumulated` here: clearing it blanks the grid while the
+  // new query is in flight. The page-1 branch of the effect above replaces the rows as soon
+  // as fresh data arrives, so the previous result stays on screen until then.
+  //
+  // handlePageChange(1) is unconditional (the old `if` compared localSearch to filters.search
+  // and never fired on a linked navigation, where both are seeded from ?search= and are equal
+  // by construction). That left `activePage` at whatever the reader had scrolled to, so the
+  // page-N response was appended to the previous accumulation instead of replacing it.
   useEffect(() => {
     handlePageChange(1);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [filters.start_date, filters.end_date, filters.type, filters.search]);
+  }, [filters.start_date, filters.end_date, filters.type, filters.search, employeeId]);
 
   const summary = transactionsData?.data?.summary || {};
 
@@ -782,25 +786,6 @@ const EmployeeTransactionsTable: React.FC<EmployeeTransactionsTableProps> = ({
                   <X size={11} />
                 </button>
               )}
-            </div>
-
-            {/* Id lookup: a narrow view over the SAME `search` value, not a second filter.
-                /employees/{id}/payouts already matches ft.id for a numeric search, with or without
-                a leading '#' (verified: search=7876 and search=#7876 both return row 7876; #7777
-                returns none). Sharing localSearch is what makes the reset button and the ?search=
-                deep link clear this box with no extra code. */}
-            <div className="relative w-20 shrink-0">
-              <Hash size={13} className="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 text-text-muted" />
-              <input
-                type="text"
-                inputMode="numeric"
-                dir="ltr"
-                aria-label="بحث برقم الحركة"
-                className="base-input h-9 w-full rounded-lg border-border-default bg-background/50 px-2 pl-8 text-center text-xs shadow-sm transition-all placeholder:text-text-muted/70 focus:bg-background focus:ring-1 focus:ring-primary/30"
-                placeholder="#123"
-                value={/^#?\d+$/.test(localSearch) ? localSearch : ''}
-                onChange={e => setLocalSearch(e.target.value.replace(/[^\d#]/g, ''))}
-              />
             </div>
 
             {/* Start Date */}

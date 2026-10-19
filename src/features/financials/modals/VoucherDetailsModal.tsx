@@ -6,7 +6,7 @@ import Button from '@/shared/ui/primitives/Button';
 import type { CashBoxVoucher } from '@/api/types';
 import { formatCurrency } from '@/shared/utils';
 import { formatDateTime } from '@/shared/utils/dateUtils';
-import { resolveLedgerTone } from '@/shared/ledger/ledgerDirection';
+import { resolveLedgerTone, isKnownLedgerType } from '@/shared/ledger/ledgerDirection';
 import { useAuthStore } from '@/features/auth/store/authStore';
 import { useGetMyTreasuryAccounts } from '@/features/financials/api/treasuryQueries';
 
@@ -100,7 +100,11 @@ const VoucherDetailsModal = () => {
   // on a treasury a payment received is a DEBIT, so it showed "سند صرف" in red while the
   // ledger beside it showed a green قبض.
   const voucherAccountType = String(voucher.account_type || '');
-  const hasPolarity = ['client', 'employee', 'treasury'].includes(voucherAccountType);
+  // Must accept 'cashbox'/'company' too - toCashBoxVoucher() stamps those on every treasury
+  // voucher, and this list previously omitted them, so the resolver was skipped and the raw
+  // sign was used instead: a treasury DEBIT (money in) fell through to 'danger' and printed
+  // سند صرف against a green قبض in the ledger beside it.
+  const hasPolarity = isKnownLedgerType(voucherAccountType);
   const tone = hasPolarity
     ? resolveLedgerTone(voucherAccountType, voucher.debit, voucher.credit)
     : (Number(voucher.credit) > 0 ? 'success' : 'danger');

@@ -7,7 +7,7 @@ import HuloolDataGrid from '@/shared/grid/HuloolDataGrid';
 import type { HuloolGridColumn } from '@/shared/grid/HuloolDataGrid';
 import type { CellProps } from 'react-datasheet-grid';
 import Button from '@/shared/ui/primitives/Button';
-import { Landmark, FileSpreadsheet, ArrowRight, Search, Hash, X, RotateCcw, Printer } from 'lucide-react';
+import { Landmark, FileSpreadsheet, ArrowRight, Search, X, RotateCcw, Printer } from 'lucide-react';
 import type { FinancialTransaction, CashBoxVoucher } from '@/api/types';
 import { LedgerFinalBalanceCell } from '@/shared/grid';
 import { LedgerStatCell } from '@/shared/ledger/LedgerStatCell';
@@ -230,6 +230,17 @@ export const TreasuryAccountDetailsPage = () => {
     }, 350);
     return () => clearTimeout(handler);
   }, [localSearch, filters.search]);
+
+  // Reset the accumulated list whenever the account or any filter changes.
+  //
+  // The debounce above only calls setPage(1) when the user TYPES something new, so a linked
+  // navigation (the paired-leg link opens ?search=8023) never resets: page was already 3 from
+  // scrolling, and allTransactions still held the previous account's rows. Page 3 of the new
+  // filter then got appended to it, so the list looked unfiltered.
+  useEffect(() => {
+    setPage(1);
+    setAllTransactions([]);
+  }, [accountId, filters.start_date, filters.end_date, filters.type, filters.search]);
 
   const categoryLabels = useCategoryLabels();
 
@@ -604,25 +615,6 @@ export const TreasuryAccountDetailsPage = () => {
                     <X size={11} />
                   </button>
                 )}
-              </div>
-
-              {/* Id lookup: a narrow view over the SAME `search` value, not a second filter. The
-                  endpoint already matches t.id for a numeric search, with or without a leading '#'
-                  (verified: search=6909 and search=#6909 both return row 6909 on account 11).
-                  Sharing localSearch is what makes the reset button and the ?search= deep link
-                  clear this box with no extra code. */}
-              <div className="relative w-20 shrink-0">
-                <Hash size={13} className="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 text-text-muted" />
-                <input
-                  type="text"
-                  inputMode="numeric"
-                  dir="ltr"
-                  aria-label="بحث برقم الحركة"
-                  className="base-input h-9 w-full rounded-lg border-border-default bg-background/50 px-2 pl-8 text-center text-xs shadow-sm transition-all placeholder:text-text-muted/70 focus:bg-background focus:ring-1 focus:ring-primary/30"
-                  placeholder="#123"
-                  value={/^#?\d+$/.test(localSearch) ? localSearch : ''}
-                  onChange={e => setLocalSearch(e.target.value.replace(/[^\d#]/g, ''))}
-                />
               </div>
 
               {/* Start Date */}
