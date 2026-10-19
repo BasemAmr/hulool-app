@@ -9,6 +9,7 @@
  */
 
 import React, { useMemo, useEffect, useRef, useState, useCallback } from 'react';
+import { useLocation, useSearchParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import type {
   FinancialTransaction,
@@ -30,6 +31,7 @@ import {
   Trash2,
   MessageSquare,
   Search,
+  Hash,
   X,
   RotateCcw,
   Eye,
@@ -181,6 +183,9 @@ function toClientLedgerVoucher(tx: FinancialTransaction, client: Client): CashBo
     credit,
     balance: getBalance(tx),
     related_transaction_id: (tx as any).related_transaction_id ?? 0,
+    // Paired leg's account: which ledger الحركة المقابلة would point at.
+    target_type: (tx as any).target_type ?? null,
+    target_id: (tx as any).target_id ?? null,
     related_object_type: tx.related_object_type ?? '',
     related_object_id: tx.related_object_id ?? 0,
     created_by: tx.created_by ?? 0,
@@ -569,7 +574,25 @@ const AccountLedgerTable: React.FC<AccountLedgerTableProps> = ({
   const [page, setPage] = useState(1);
   const [allTransactions, setAllTransactions] = useState<FinancialTransaction[]>([]);
   const scrollRef = useRef<HTMLDivElement>(null);
-  const [localSearch, setLocalSearch] = useState('');
+
+  // Deep link: /clients/:id?search=7868 opens this ledger scoped to a single transaction,
+  // which is where the paired-leg link in the voucher modal lands for a client counterparty.
+  //
+  // Guarded on the route because this component is ALSO rendered inside AccountLedgerModal,
+  // where the surrounding page's ?search= belongs to a different component and must not
+  // silently pre-filter the modal. Page-level instances sit on /clients/:id (admin) or
+  // /employee/clients/:id (employee); both end in `/clients/${client.id}`.
+  //
+  // Read into INITIAL state for both the committed filter and the visible box. Seeding via an
+  // effect instead would race the reset-sync effect below, which also fires on mount and
+  // would clobber the seed on the way in.
+  const location = useLocation();
+  const [searchParams] = useSearchParams();
+  const linkedSearch = location.pathname.endsWith(`/clients/${client.id}`)
+    ? searchParams.get('search') ?? ''
+    : '';
+
+  const [localSearch, setLocalSearch] = useState(linkedSearch);
   const [showExportChoice, setShowExportChoice] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
   const toast = useToast();
@@ -577,7 +600,7 @@ const AccountLedgerTable: React.FC<AccountLedgerTableProps> = ({
     start_date: '',
     end_date: '',
     type: filter && filter !== 'all' ? filter : '',
-    search: '',
+    search: linkedSearch,
   });
 
   // Debounce search by 350ms
@@ -590,6 +613,13 @@ const AccountLedgerTable: React.FC<AccountLedgerTableProps> = ({
     }, 350);
     return () => clearTimeout(handler);
   }, [localSearch, filters.search]);
+
+  // The reset button clears filters.search; mirror it back into the input. Without this the
+  // box keeps showing the old text while the grid shows the full ledger - the one control
+  // and its result disagreeing on screen. (The treasury ledger already does this.)
+  useEffect(() => {
+    setLocalSearch(filters.search);
+  }, [filters.search]);
 
   // Keep filters.type updated if prop filter changes
   useEffect(() => {
@@ -958,7 +988,7 @@ const AccountLedgerTable: React.FC<AccountLedgerTableProps> = ({
                 type="text"
                 dir="rtl"
                 className="base-input h-9 w-full rounded-lg border-border-default bg-background/50 px-2 pl-8 text-right text-xs shadow-sm transition-all placeholder:text-text-muted/70 focus:bg-background focus:ring-1 focus:ring-primary/30"
-                placeholder="بحث في البيان، الهاتف، المعرّف..."
+                placeholder="بحث في البيان، الهاتف، المعرّف... أو #رقم الحركة"
                 value={localSearch}
                 onChange={e => setLocalSearch(e.target.value)}
               />
@@ -971,6 +1001,25 @@ const AccountLedgerTable: React.FC<AccountLedgerTableProps> = ({
                   <X size={11} />
                 </button>
               )}
+            </div>
+
+            {/* Id lookup: a narrow view over the SAME `search` value, not a second filter. The
+                endpoint already matches t.id for a numeric search, with or without a leading '#'
+                (verified: search=377 and search=#377 both return row 377; #37777 returns none).
+                Sharing localSearch is what makes the reset button and the ?search= deep link
+                clear this box with no extra code. */}
+            <div className="relative w-20 shrink-0">
+              <Hash size={13} className="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 text-text-muted" />
+              <input
+                type="text"
+                inputMode="numeric"
+                dir="ltr"
+                aria-label="بحث برقم الحركة"
+                className="base-input h-9 w-full rounded-lg border-border-default bg-background/50 px-2 pl-8 text-center text-xs shadow-sm transition-all placeholder:text-text-muted/70 focus:bg-background focus:ring-1 focus:ring-primary/30"
+                placeholder="#123"
+                value={/^#?\d+$/.test(localSearch) ? localSearch : ''}
+                onChange={e => setLocalSearch(e.target.value.replace(/[^\d#]/g, ''))}
+              />
             </div>
 
             {/* Start Date */}

@@ -1,5 +1,5 @@
 import React, { useState, useRef, useCallback, useEffect, useMemo } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { useGetTreasuryAccount } from '../api/treasuryQueries';
 import { useGetAccountHistory, useDeleteTransaction } from '../api/accountQueries';
 import { useCategoryLabels } from '@/features/financials/constants/categoryConfig';
@@ -7,7 +7,7 @@ import HuloolDataGrid from '@/shared/grid/HuloolDataGrid';
 import type { HuloolGridColumn } from '@/shared/grid/HuloolDataGrid';
 import type { CellProps } from 'react-datasheet-grid';
 import Button from '@/shared/ui/primitives/Button';
-import { Landmark, FileSpreadsheet, ArrowRight, Search, X, RotateCcw, Printer } from 'lucide-react';
+import { Landmark, FileSpreadsheet, ArrowRight, Search, Hash, X, RotateCcw, Printer } from 'lucide-react';
 import type { FinancialTransaction, CashBoxVoucher } from '@/api/types';
 import { LedgerFinalBalanceCell } from '@/shared/grid';
 import { LedgerStatCell } from '@/shared/ledger/LedgerStatCell';
@@ -34,6 +34,7 @@ import {
   ShadcnSelectTrigger as SelectTrigger,
   ShadcnSelectValue as SelectValue,
 } from '@/shared/ui/shadcn/select';
+import { useDocumentTitle } from '@/app/router/useDocumentTitle';
 
 interface TransformedVoucherTransaction extends FinancialTransaction {
   debit: number;
@@ -63,6 +64,10 @@ function toCashBoxVoucher(txn: TransformedVoucherTransaction): CashBoxVoucher {
     credit: txn.credit,
     balance: txn.balance,
     related_transaction_id: (txn as any).related_transaction_id ?? 0,
+    // Paired leg's account. Needed by the voucher modal to decide whether الحركة المقابلة
+    // can link across, and to which ledger.
+    target_type: (txn as any).target_type ?? null,
+    target_id: (txn as any).target_id ?? null,
     related_object_type: txn.related_object_type ?? '',
     related_object_id: txn.related_object_id ?? 0,
     created_by: txn.created_by ?? 0,
@@ -195,14 +200,22 @@ export const TreasuryAccountDetailsPage = () => {
   const [showExportChoice, setShowExportChoice] = useState(false);
   const toast = useToast();
   const scrollRef = useRef<HTMLDivElement>(null);
+
+  // Deep link: /treasury-accounts/:id?search=7593 opens this ledger scoped to a single
+  // transaction - that is how the paired-leg link in the voucher modal drops the user straight
+  // on the row they clicked from. Read once into initial state; the box is seeded from the
+  // same value so what is typed always matches what was fetched.
+  const [searchParams] = useSearchParams();
+  const linkedSearch = searchParams.get('search') ?? '';
+
   const [filters, setFilters] = useState<FilterState>({
     start_date: '',
     end_date: '',
     type: '',
-    search: '',
+    search: linkedSearch,
   });
 
-  const [localSearch, setLocalSearch] = useState('');
+  const [localSearch, setLocalSearch] = useState(linkedSearch);
 
   useEffect(() => {
     setLocalSearch(filters.search);
@@ -221,6 +234,7 @@ export const TreasuryAccountDetailsPage = () => {
   const categoryLabels = useCategoryLabels();
 
   const { data: account, isLoading: isLoadingAccount, error: accountError } = useGetTreasuryAccount(accountId);
+  useDocumentTitle(account?.name);
   const { data: historyData, isLoading: isLoadingHistory, error: historyError } = useGetAccountHistory('treasury', accountId, page, {
     start_date: filters.start_date,
     end_date: filters.end_date,
@@ -577,7 +591,7 @@ export const TreasuryAccountDetailsPage = () => {
                   type="text"
                   dir="rtl"
                   className="base-input h-9 w-full rounded-lg border-border-default bg-background/50 px-2 pl-8 text-right text-xs shadow-sm transition-all placeholder:text-text-muted/70 focus:bg-background focus:ring-1 focus:ring-primary/30"
-                  placeholder="بحث..."
+                  placeholder="بحث... أو #رقم الحركة"
                   value={localSearch}
                   onChange={e => setLocalSearch(e.target.value)}
                 />
@@ -590,6 +604,25 @@ export const TreasuryAccountDetailsPage = () => {
                     <X size={11} />
                   </button>
                 )}
+              </div>
+
+              {/* Id lookup: a narrow view over the SAME `search` value, not a second filter. The
+                  endpoint already matches t.id for a numeric search, with or without a leading '#'
+                  (verified: search=6909 and search=#6909 both return row 6909 on account 11).
+                  Sharing localSearch is what makes the reset button and the ?search= deep link
+                  clear this box with no extra code. */}
+              <div className="relative w-20 shrink-0">
+                <Hash size={13} className="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 text-text-muted" />
+                <input
+                  type="text"
+                  inputMode="numeric"
+                  dir="ltr"
+                  aria-label="بحث برقم الحركة"
+                  className="base-input h-9 w-full rounded-lg border-border-default bg-background/50 px-2 pl-8 text-center text-xs shadow-sm transition-all placeholder:text-text-muted/70 focus:bg-background focus:ring-1 focus:ring-primary/30"
+                  placeholder="#123"
+                  value={/^#?\d+$/.test(localSearch) ? localSearch : ''}
+                  onChange={e => setLocalSearch(e.target.value.replace(/[^\d#]/g, ''))}
+                />
               </div>
 
               {/* Start Date */}

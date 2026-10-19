@@ -9,7 +9,8 @@
  */
 
 import React, { useMemo, useState, useEffect, useRef, useCallback } from 'react';
-import { Edit3, Trash2, Eye, Search, X, RotateCcw, Receipt, FileSpreadsheet } from 'lucide-react';
+import { useSearchParams } from 'react-router-dom';
+import { Edit3, Trash2, Eye, Search, Hash, X, RotateCcw, Receipt, FileSpreadsheet } from 'lucide-react';
 import HuloolDataGrid from '@/shared/grid/HuloolDataGrid';
 import { LedgerFinalBalanceCell } from '@/shared/grid';
 import { LedgerStatCell } from '@/shared/ledger/LedgerStatCell';
@@ -135,6 +136,10 @@ function toEmployeeVoucher(rowData: any, employeeName?: string): CashBoxVoucher 
     credit,
     balance: rowData.balance_val ?? (rowData.balance ? parseFloat(rowData.balance) : 0),
     related_transaction_id: rowData.related_transaction_id ?? 0,
+    // The payouts endpoint does not pair its rows today (both fields come back null), but
+    // pass them through so this mapper stays correct if the backend starts pairing them.
+    target_type: rowData.target_type ?? null,
+    target_id: rowData.target_id ?? null,
     related_object_type: rowData.related_object_type ?? '',
     related_object_id: rowData.related_object_id ?? 0,
     created_by: rowData.created_by ?? 0,
@@ -401,7 +406,14 @@ const EmployeeTransactionsTable: React.FC<EmployeeTransactionsTableProps> = ({
     }
   };
 
-  const [localSearch, setLocalSearch] = useState('');
+  // Deep link: /employees/:id?search=7876 opens this ledger scoped to a single transaction,
+  // which is where the paired-leg link in the voucher modal lands. Read into INITIAL state
+  // for both the committed filter and the visible box - seeding via an effect instead would
+  // race the reset-sync effect below, which fires on mount and would clobber the seed.
+  const [searchParams] = useSearchParams();
+  const linkedSearch = searchParams.get('search') ?? '';
+
+  const [localSearch, setLocalSearch] = useState(linkedSearch);
   const [showExportChoice, setShowExportChoice] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
   const toast = useToast();
@@ -409,8 +421,15 @@ const EmployeeTransactionsTable: React.FC<EmployeeTransactionsTableProps> = ({
     start_date: '',
     end_date: '',
     type: '',
-    search: '',
+    search: linkedSearch,
   });
+
+  // The reset button clears filters.search; mirror it back into the input. Without this the
+  // box keeps showing the old text while the grid shows the full ledger - the one control
+  // and its result disagreeing on screen. (The treasury ledger already does this.)
+  useEffect(() => {
+    setLocalSearch(filters.search);
+  }, [filters.search]);
 
   // Debounce search by 350ms
   useEffect(() => {
@@ -750,7 +769,7 @@ const EmployeeTransactionsTable: React.FC<EmployeeTransactionsTableProps> = ({
                 type="text"
                 dir="rtl"
                 className="base-input h-9 w-full rounded-lg border-border-default bg-background/50 px-2 pl-8 text-right text-xs shadow-sm transition-all placeholder:text-text-muted/70 focus:bg-background focus:ring-1 focus:ring-primary/30"
-                placeholder="بحث في البيان، المهمة، العميل..."
+                placeholder="بحث في البيان، المهمة، العميل... أو #رقم الحركة"
                 value={localSearch}
                 onChange={e => setLocalSearch(e.target.value)}
               />
@@ -763,6 +782,25 @@ const EmployeeTransactionsTable: React.FC<EmployeeTransactionsTableProps> = ({
                   <X size={11} />
                 </button>
               )}
+            </div>
+
+            {/* Id lookup: a narrow view over the SAME `search` value, not a second filter.
+                /employees/{id}/payouts already matches ft.id for a numeric search, with or without
+                a leading '#' (verified: search=7876 and search=#7876 both return row 7876; #7777
+                returns none). Sharing localSearch is what makes the reset button and the ?search=
+                deep link clear this box with no extra code. */}
+            <div className="relative w-20 shrink-0">
+              <Hash size={13} className="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 text-text-muted" />
+              <input
+                type="text"
+                inputMode="numeric"
+                dir="ltr"
+                aria-label="بحث برقم الحركة"
+                className="base-input h-9 w-full rounded-lg border-border-default bg-background/50 px-2 pl-8 text-center text-xs shadow-sm transition-all placeholder:text-text-muted/70 focus:bg-background focus:ring-1 focus:ring-primary/30"
+                placeholder="#123"
+                value={/^#?\d+$/.test(localSearch) ? localSearch : ''}
+                onChange={e => setLocalSearch(e.target.value.replace(/[^\d#]/g, ''))}
+              />
             </div>
 
             {/* Start Date */}

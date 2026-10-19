@@ -60,6 +60,12 @@ export interface CashBoxVoucher {
   credit: number;
   balance: number;
   related_transaction_id: number;
+  // The PAIRED transaction's account, as resolved by the history/payouts endpoints.
+  // This - not the debit/credit account names - is what says WHERE the counterparty ledger
+  // is, so it is what decides whether "الحركة المقابلة" can be a link. Absent on endpoints
+  // that do not pair their rows (employee payouts), hence optional.
+  target_type?: string | null;
+  target_id?: number | string | null;
   related_object_type: string;
   related_object_id: number;
   created_by: number;
