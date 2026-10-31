@@ -5,7 +5,7 @@ import { useModalStore } from '@/shared/stores/modalStore';
 import { applyPageBackground } from '@/shared/utils/backgroundUtils';
 import ClientsReceivablesTable from '../components/ClientsReceivablesTable';
 import Button from '@/shared/ui/primitives/Button';
-import { FileSpreadsheet, Search, X } from 'lucide-react';
+import { FileSpreadsheet, Search, X, TrendingUp, TrendingDown, ChevronDown } from 'lucide-react';
 import { useReceivablesPermissions } from '@/shared/hooks/useReceivablesPermissions';
 import { useDebounce } from '@/shared/hooks/useDebounce';
 import { useMutation } from '@tanstack/react-query';
@@ -18,6 +18,7 @@ import {
   buildSettlementSarfPreset,
 } from '@/features/financials/utils/settlementPresets';
 import { useCanUseSettlement } from '@/features/financials/api/treasuryQueries';
+import { LedgerStatCell } from '@/shared/ledger/LedgerStatCell';
 
 const ReceivablesPage = () => {
   const { t } = useTranslation();
@@ -119,133 +120,167 @@ const ReceivablesPage = () => {
   }
 
   return (
-    <div>
-      <header className="flex justify-between items-center mb-1 py-1">
-        <div className="flex items-center gap-2">
-          <h5 className="mb-0 text-primary font-bold" style={{ fontSize: '1.1rem' }}>{t('receivables.title')}</h5>
+    <div className="space-y-3" dir="rtl">
+      {/* Ledger-style Toolbar Header matching TreasuryAccountDetailsPage */}
+      <div className="bg-bg-surface border border-border-default rounded-xl shadow-sm overflow-hidden">
+        <div className="relative flex flex-col lg:flex-row lg:items-stretch">
+          
+          {/* RTL Start (Right side): Title + Transaction Action Buttons */}
+          <div className="flex flex-wrap items-center gap-2 p-3 min-w-0 shrink-0">
+            <h5 className="mb-0 text-primary font-bold text-base px-1 whitespace-nowrap">
+              {t('receivables.title')}
+            </h5>
 
-          <Button
-            variant="outline-success"
-            size="sm"
-            className="font-bold"
-            onClick={() => openModal('unifiedTransaction', {
-              defaultFromCardType: 'client',
-              defaultToCardType: 'cashbox',
-              lockDirection: true,
-              title: 'سند قبض',
-            })}
-          >
-            سند قبض
-          </Button>
-
-          <Button
-            variant="outline-danger"
-            size="sm"
-            className="font-bold"
-            onClick={() => openModal('unifiedTransaction', {
-              defaultFromCardType: 'cashbox',
-              defaultToCardType: 'client',
-              lockDirection: true,
-              title: 'سند صرف',
-            })}
-          >
-            سند صرف
-          </Button>
-
-          {canUseSettlement && (
-          <div ref={settlementRef} className="relative">
             <Button
-              variant="outline-secondary"
+              variant="outline-success"
               size="sm"
-              className="font-bold"
-              onClick={() => setSettlementOpen((v) => !v)}
+              className="font-bold flex items-center gap-1"
+              onClick={() => openModal('unifiedTransaction', {
+                defaultFromCardType: 'client',
+                defaultToCardType: 'cashbox',
+                lockDirection: true,
+                title: 'سند قبض',
+              })}
             >
-              سند تسوية
+              <TrendingUp size={14} />
+              سند قبض
             </Button>
-            {settlementOpen && (
-              <div className="absolute left-0 top-full mt-1 z-50 min-w-[180px] rounded-lg border border-border bg-card shadow-xl">
-                <button
-                  type="button"
-                  className="flex w-full items-center gap-2 px-4 py-2.5 text-sm font-semibold text-text-primary hover:bg-muted/50 transition-colors rounded-t-lg"
-                  onClick={() => {
-                    setSettlementOpen(false);
-                    // Standard تسوية preset: قبض = FROM settlement TO cashbox (debit cash up).
-                    openModal('unifiedTransaction', buildSettlementQabdPreset({ kind: 'cashbox' }));
-                  }}
+
+            <Button
+              variant="outline-danger"
+              size="sm"
+              className="font-bold flex items-center gap-1"
+              onClick={() => openModal('unifiedTransaction', {
+                defaultFromCardType: 'cashbox',
+                defaultToCardType: 'client',
+                lockDirection: true,
+                title: 'سند صرف',
+              })}
+            >
+              <TrendingDown size={14} />
+              سند صرف
+            </Button>
+
+            {canUseSettlement && (
+              <div ref={settlementRef} className="relative">
+                <Button
+                  variant="outline-secondary"
+                  size="sm"
+                  className="font-bold flex items-center gap-1"
+                  onClick={() => setSettlementOpen((v) => !v)}
                 >
-                  تسوية قبض
-                </button>
-                <div className="border-t border-border" />
-                <button
-                  type="button"
-                  className="flex w-full items-center gap-2 px-4 py-2.5 text-sm font-semibold text-text-primary hover:bg-muted/50 transition-colors rounded-b-lg"
-                  onClick={() => {
-                    setSettlementOpen(false);
-                    // Standard تسوية preset: صرف = FROM cashbox TO settlement.
-                    openModal('unifiedTransaction', buildSettlementSarfPreset({ kind: 'cashbox' }));
-                  }}
-                >
-                  تسوية صرف
-                </button>
+                  <span>سند تسوية</span>
+                  <ChevronDown size={14} />
+                </Button>
+                {settlementOpen && (
+                  <div className="absolute right-0 top-full mt-1 z-50 min-w-[180px] rounded-lg border border-border bg-card shadow-xl">
+                    <button
+                      type="button"
+                      className="flex w-full items-center gap-2 px-4 py-2.5 text-sm font-semibold text-text-primary hover:bg-muted/50 transition-colors rounded-t-lg"
+                      onClick={() => {
+                        setSettlementOpen(false);
+                        openModal('unifiedTransaction', buildSettlementQabdPreset({ kind: 'cashbox' }));
+                      }}
+                    >
+                      <TrendingUp size={14} className="text-status-success-text" />
+                      تسوية قبض
+                    </button>
+                    <div className="border-t border-border" />
+                    <button
+                      type="button"
+                      className="flex w-full items-center gap-2 px-4 py-2.5 text-sm font-semibold text-text-primary hover:bg-muted/50 transition-colors rounded-b-lg"
+                      onClick={() => {
+                        setSettlementOpen(false);
+                        openModal('unifiedTransaction', buildSettlementSarfPreset({ kind: 'cashbox' }));
+                      }}
+                    >
+                      <TrendingDown size={14} className="text-status-danger-text" />
+                      تسوية صرف
+                    </button>
+                  </div>
+                )}
               </div>
             )}
           </div>
-          )}
-        </div>
 
-        <div className="flex items-center gap-2">
-          <div className="relative" style={{ minWidth: '250px' }}>
-            <Search
-              size={14}
-              className="absolute text-text-primary"
-              style={{ left: '8px', top: '50%', transform: 'translateY(-50%)' }}
-            />
-            <input
-              type="text"
-              className="w-full px-3 py-1.5 text-sm border border-input rounded-md bg-background text-text-primary focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-colors"
-              placeholder="البحث بالاسم أو رقم الهاتف..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              style={{ paddingLeft: '32px' }}
-            />
-            {search && (
-              <button
-                type="button"
-                className="absolute text-text-primary p-0 hover:text-foreground transition-colors"
-                style={{ right: '8px', top: '50%', transform: 'translateY(-50%)' }}
-                onClick={handleClearSearch}
-                title="مسح البحث"
-              >
-                <X size={14} />
-              </button>
+          {/* Center: Search input */}
+          <div className="flex items-center justify-center p-3 lg:flex-1">
+            <div className="relative w-full max-w-sm">
+              <Search
+                size={14}
+                className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 text-text-muted"
+              />
+              <input
+                type="text"
+                dir="rtl"
+                className="base-input h-9 w-full rounded-lg border-border-default bg-background/50 pr-8 pl-8 text-right text-xs shadow-sm transition-all placeholder:text-text-muted/70 focus:bg-background focus:ring-1 focus:ring-primary/30"
+                placeholder="البحث بالاسم أو رقم الهاتف..."
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+              />
+              {search && (
+                <button
+                  type="button"
+                  className="absolute left-2 top-1/2 -translate-y-1/2 rounded-full p-1 text-text-muted hover:bg-muted hover:text-text-primary"
+                  onClick={handleClearSearch}
+                  title="مسح البحث"
+                >
+                  <X size={12} />
+                </button>
+              )}
+            </div>
+            {debouncedSearch && data && (
+              <small className="text-text-secondary mr-2 shrink-0">
+                ({data.pages[0]?.pagination?.total || 0} نتيجة)
+              </small>
             )}
           </div>
 
-          {debouncedSearch && data && (
-            <small className="text-text-primary" style={{ minWidth: 'fit-content' }}>
-              ({data.pages[0]?.pagination?.total || 0} نتيجة)
-            </small>
-          )}
+          {/* RTL End (Left side): Server-calculated Totals + Export Button */}
+          <div className="flex items-stretch shrink-0 border-t lg:border-t-0 lg:border-s border-border-default overflow-x-auto lg:overflow-x-visible">
+            <LedgerStatCell
+              label="اجمالي المدين"
+              value={totalsData?.total_amount || 0}
+              tone="debit"
+              divider
+            />
+            <LedgerStatCell
+              label="اجمالي الدائن"
+              value={totalsData?.total_paid || 0}
+              tone="credit"
+              divider
+            />
+            <LedgerStatCell
+              label="إجمالي المستحقات"
+              value={totalsData?.total_unpaid || 0}
+              tone="balance"
+              divider
+            />
+            <div className="flex items-center px-4">
+              <Button
+                variant="outline-primary"
+                size="sm"
+                onClick={handleExportExcel}
+                isLoading={exportReceivablesMutation.isPending}
+                className="h-9 whitespace-nowrap"
+              >
+                <FileSpreadsheet size={15} className="me-1.5" />
+                تصدير Excel
+              </Button>
+            </div>
+          </div>
 
-          <Button
-            variant="outline-primary"
-            size="sm"
-            onClick={handleExportExcel}
-            isLoading={exportReceivablesMutation.isPending}
-          >
-            <FileSpreadsheet size={14} className="me-1" />
-            تصدير
-          </Button>
         </div>
-      </header>
+      </div>
 
-      <div className="rounded-lg border border-border bg-card shadow-sm">
+      {/* Table Container - expanded by 10% (from 85% to 95%, matching treasury ledger presentation) */}
+      <div className="receivables-table-container mx-auto w-[95%] max-w-[1760px] bg-bg-surface rounded-xl border border-border-default shadow-xs overflow-hidden">
         <div className="p-0">
           {debouncedSearch && allClients.length === 0 && !isLoading ? (
-            <div className="text-center p-4">
-              <Search size={32} className="text-text-primary mb-2" />
+            <div className="text-center p-6">
+              <Search size={32} className="text-text-muted mx-auto mb-2" />
               <h6 className="text-text-primary font-semibold mb-1">لا توجد نتائج</h6>
-              <p className="text-text-primary mb-2" style={{ fontSize: '0.875rem' }}>
+              <p className="text-text-secondary mb-3 text-sm">
                 لم يتم العثور على عملاء يحتوون على "{debouncedSearch}" في الاسم أو رقم الهاتف
               </p>
               <Button variant="outline-primary" size="sm" onClick={handleClearSearch}>
@@ -261,18 +296,19 @@ const ReceivablesPage = () => {
                 isTotalsLoading={isTotalsLoading}
               />
 
-              <div ref={ref} className="text-center p-4">
+              <div ref={ref} className="text-center p-3 border-t border-border-default">
                 {hasNextPage && (
                   <Button
                     onClick={() => fetchNextPage()}
                     isLoading={isFetchingNextPage}
                     variant="outline-primary"
+                    size="sm"
                   >
                     {isFetchingNextPage ? 'جاري التحميل...' : 'تحميل المزيد'}
                   </Button>
                 )}
                 {!hasNextPage && !isLoading && allClients.length > 0 && (
-                  <p className="text-text-primary mb-0">
+                  <p className="text-text-secondary text-xs mb-0">
                     {debouncedSearch ? 'وصلت إلى نهاية نتائج البحث' : 'وصلت إلى نهاية القائمة'}
                   </p>
                 )}

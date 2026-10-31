@@ -516,6 +516,12 @@ const UnifiedTransactionModal = () => {
     liveDirection === 'qabd' ? 'تسوية قبض' : liveDirection === 'sarf' ? 'تسوية صرف' : null;
   const activeTitle =
     modalTitleProp || (direction === 'qabdh' ? dirQabdhLabel : dirSarfLabel);
+
+  // Semantic color tone for Modal Header & Footer: Qabd = Blue, Sarf = Red
+  const isQabd = isSettlement
+    ? (liveDirection === 'qabd' || direction === 'qabdh' || activeTitle.includes('قبض'))
+    : (direction === 'qabdh' || activeTitle.includes('قبض'));
+
   // Banner strings mirror the submitted description: settlement side bare
   // name, other side 'kind: name'.
   const bannerFromStr =
@@ -529,8 +535,70 @@ const UnifiedTransactionModal = () => {
       isOpen={isVisible}
       onClose={handleClose}
       title={activeTitle}
-      titleClassName="text-center w-full ms-6"
+      className={`unified-tx-modal ${isQabd ? 'unified-tx-modal-qabd' : 'unified-tx-modal-sarf'}`}
+      titleClassName={`text-center w-full ms-6 font-bold ${isQabd ? 'text-status-info-text' : 'text-status-danger-text'}`}
     >
+      <style>{`
+        /* Scoped solely to UnifiedTransactionModal via .unified-tx-modal wrapper */
+        .unified-tx-modal.unified-tx-modal-qabd {
+          background-color: var(--primitive-blue-50) !important;
+          border-color: var(--primitive-blue-200) !important;
+        }
+        .unified-tx-modal.unified-tx-modal-qabd header {
+          background-color: color-mix(in srgb, var(--primitive-blue-700) 12%, var(--primitive-blue-50)) !important;
+          border-bottom-color: var(--primitive-blue-200) !important;
+        }
+        .unified-tx-modal.unified-tx-modal-qabd .unified-tx-footer {
+          background-color: color-mix(in srgb, var(--primitive-blue-700) 8%, var(--primitive-blue-50)) !important;
+          border-top-color: var(--primitive-blue-200) !important;
+        }
+
+        .unified-tx-modal.unified-tx-modal-sarf {
+          background-color: var(--primitive-red-50) !important;
+          border-color: var(--primitive-red-200) !important;
+        }
+        .unified-tx-modal.unified-tx-modal-sarf header {
+          background-color: color-mix(in srgb, var(--primitive-red-600) 12%, var(--primitive-red-50)) !important;
+          border-bottom-color: var(--primitive-red-200) !important;
+        }
+        .unified-tx-modal.unified-tx-modal-sarf .unified-tx-footer {
+          background-color: color-mix(in srgb, var(--primitive-red-600) 8%, var(--primitive-red-50)) !important;
+          border-top-color: var(--primitive-red-200) !important;
+        }
+
+        /* Dark mode overrides */
+        .dark .unified-tx-modal.unified-tx-modal-qabd,
+        html.dark .unified-tx-modal.unified-tx-modal-qabd {
+          background-color: #0d1b2a !important;
+          border-color: #1e3a5f !important;
+        }
+        .dark .unified-tx-modal.unified-tx-modal-qabd header,
+        html.dark .unified-tx-modal.unified-tx-modal-qabd header {
+          background-color: #122338 !important;
+          border-bottom-color: #1e3a5f !important;
+        }
+        .dark .unified-tx-modal.unified-tx-modal-qabd .unified-tx-footer,
+        html.dark .unified-tx-modal.unified-tx-modal-qabd .unified-tx-footer {
+          background-color: #102033 !important;
+          border-top-color: #1e3a5f !important;
+        }
+
+        .dark .unified-tx-modal.unified-tx-modal-sarf,
+        html.dark .unified-tx-modal.unified-tx-modal-sarf {
+          background-color: #200d11 !important;
+          border-color: #4c1d24 !important;
+        }
+        .dark .unified-tx-modal.unified-tx-modal-sarf header,
+        html.dark .unified-tx-modal.unified-tx-modal-sarf header {
+          background-color: #2b1218 !important;
+          border-bottom-color: #4c1d24 !important;
+        }
+        .dark .unified-tx-modal.unified-tx-modal-sarf .unified-tx-footer,
+        html.dark .unified-tx-modal.unified-tx-modal-sarf .unified-tx-footer {
+          background-color: #251015 !important;
+          border-top-color: #4c1d24 !important;
+        }
+      `}</style>
       {/* Structural settlement gate. Any surface that opens a تسوية preset lands here, so a
           caller that forgets to hide its button still cannot create the transaction.
           While the permission query is in flight we render nothing rather than claim the
@@ -786,10 +854,10 @@ const UnifiedTransactionModal = () => {
         </section>
 
         {/* ============ FOOTER ============ */}
-        <div className="flex items-center justify-between pt-3 border-t border-border">
+        <div className="unified-tx-footer flex items-center justify-between p-3.5 -mx-6 -mb-6 mt-4 rounded-b-xl border-t">
           <Button
             type="button"
-            variant="outline-secondary"
+            variant="outline-danger"
             size="sm"
             onClick={handleClose}
           >
@@ -799,10 +867,10 @@ const UnifiedTransactionModal = () => {
           <div className="flex items-center gap-2">
             <Button
               type="button"
-              variant="outline-primary"
+              variant="secondary"
               size="sm"
               disabled={!canSubmit || createTransaction.isPending}
-              className={isNegativeTreasuryDisallowed ? 'opacity-40 cursor-not-allowed bg-muted/20 border-border-default text-text-secondary' : ''}
+              className={isNegativeTreasuryDisallowed ? 'opacity-40 cursor-not-allowed bg-muted/20 border-border-default text-text-secondary' : 'border border-border-strong'}
               onClick={handleSaveAndNew}
             >
               حفظ وإضافة آخر
@@ -812,7 +880,9 @@ const UnifiedTransactionModal = () => {
               variant="primary"
               size="sm"
               disabled={!canSubmit || createTransaction.isPending}
-              className={isNegativeTreasuryDisallowed ? 'opacity-40 cursor-not-allowed bg-muted/40 text-text-secondary border-transparent shadow-none hover:bg-muted/40' : ''}
+              className={`!bg-emerald-600 hover:!bg-emerald-700 !text-white font-bold shadow-sm ${
+                isNegativeTreasuryDisallowed ? 'opacity-40 cursor-not-allowed bg-muted/40 text-text-secondary border-transparent shadow-none hover:bg-muted/40' : ''
+              }`}
               onClick={handleSubmit}
             >
               {createTransaction.isPending ? (

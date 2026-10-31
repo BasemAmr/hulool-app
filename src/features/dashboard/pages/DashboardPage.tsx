@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { 
   useGetDashboardStats, 
@@ -8,8 +8,9 @@ import {
 } from '@/features/dashboard/api/dashboardQueries';
 import { useModalStore } from '@/shared/stores/modalStore';
 import type { Task } from '@/api/types';
-import { FileText, BookOpen, Home } from 'lucide-react';
+import { FileText, LayoutGrid, BarChart3 } from 'lucide-react';
 import { applyPageBackground } from '@/shared/utils/backgroundUtils';
+import AdminReportsPanel from '../components/AdminReportsPanel';
 
 import { 
   DndContext, 
@@ -40,7 +41,7 @@ const DashboardPage = () => {
     const { data: stats, isLoading: isLoadingStats } = useGetDashboardStats();
     const [groupedClients, setGroupedClients] = useState<GroupedClientsResponse | null>(null);
     const [activeDragItem, setActiveDragItem] = useState<ClientWithTasksAndStats | null>(null);
-    const [activeContainer, setActiveContainer] = useState<keyof GroupedClientsResponse | null>(null);
+    const [activeContainer, setActiveContainer] = useState<'Government' | 'Other' | null>(null);
 
     const updateSortOrderMutation = useUpdateClientSortOrder();
 
@@ -73,38 +74,53 @@ const DashboardPage = () => {
         })
     );
 
-    const taskTypeConfig = {
-        Government: {
-            icon: <FileText size={20} />,
-            displayName: 'حكومية',
-            accentColor: 'var(--token-status-info-text)',
-        },
-        Accounting: {
-            icon: <BookOpen size={20} />,
-            displayName: 'محاسبية',
-            accentColor: 'var(--token-status-warning-text)',
-        },
-        'Real Estate': {
-            icon: <Home size={20} />,
-            displayName: 'عقارية',
-            accentColor: 'var(--token-status-success-text)',
-        }
-    };
+    // Column 2: Government tasks clients (renamed to خدمات قيد الإجراء)
+    const governmentClients = useMemo(() => {
+        return groupedClients?.Government || [];
+    }, [groupedClients]);
 
-    const columnTypes = ['Government', 'Accounting', 'Real Estate'] as const;
+    // Column 3: Non-government tasks clients (Accounting, Real Estate, Other)
+    const otherClients = useMemo(() => {
+        if (!groupedClients) return [];
+        const map = new Map<number, ClientWithTasksAndStats>();
+
+        const addList = (list: ClientWithTasksAndStats[]) => {
+            list.forEach(c => {
+                const id = Number(c.client.id);
+                if (map.has(id)) {
+                    const existing = map.get(id)!;
+                    const existingTaskIds = new Set(existing.tasks.map(t => t.id));
+                    const newTasks = c.tasks.filter(t => !existingTaskIds.has(t.id));
+                    existing.tasks = [...existing.tasks, ...newTasks];
+                } else {
+                    map.set(id, { ...c, tasks: [...c.tasks] });
+                }
+            });
+        };
+
+        addList(groupedClients.Accounting || []);
+        addList(groupedClients['Real Estate'] || []);
+        addList(groupedClients.Other || []);
+
+        return Array.from(map.values());
+    }, [groupedClients]);
 
     function handleDragStart(event: DragStartEvent): void {
         const { active } = event;
-        
-        // Parse the composite ID (format: "containerType-clientId")
         const [containerType, clientId] = active.id.toString().split('-');
-        const container = containerType as keyof GroupedClientsResponse;
-        
-        if (groupedClients && container && clientId) {
-            const clientData = groupedClients[container].find(c => c.client.id.toString() === clientId);
+        const container = containerType as 'Government' | 'Other';
+
+        if (container === 'Government') {
+            const clientData = governmentClients.find(c => c.client.id.toString() === clientId);
             if (clientData) {
                 setActiveDragItem(clientData);
-                setActiveContainer(container);
+                setActiveContainer('Government');
+            }
+        } else if (container === 'Other') {
+            const clientData = otherClients.find(c => c.client.id.toString() === clientId);
+            if (clientData) {
+                setActiveDragItem(clientData);
+                setActiveContainer('Other');
             }
         }
     }
@@ -112,72 +128,49 @@ const DashboardPage = () => {
     function handleDragEnd(event: DragEndEvent): void {
         const { active, over } = event;
 
-        if (!active || !over || active.id === over.id) {
+        if (!active || !over || active.id === over.id || !activeContainer) {
             setActiveDragItem(null);
             setActiveContainer(null);
             return;
         }
 
-        if (!groupedClients || !activeContainer) {
-            setActiveDragItem(null);
-            setActiveContainer(null);
-            return;
-        }
-
-        // Parse the composite IDs
         const [activeContainerType, activeClientId] = active.id.toString().split('-');
         const [overContainerType, overClientId] = over.id.toString().split('-');
-        
-        // Only allow reordering within the same container
+
         if (activeContainerType !== overContainerType) {
             setActiveDragItem(null);
             setActiveContainer(null);
             return;
         }
 
-        const containerItems = groupedClients[activeContainer];
-        const oldIndex = containerItems.findIndex(c => c.client.id.toString() === activeClientId);
-        const newIndex = containerItems.findIndex(c => c.client.id.toString() === overClientId);
+        if (activeContainer === 'Government') {
+            const oldIndex = governmentClients.findIndex(c => c.client.id.toString() === activeClientId);
+            const newIndex = governmentClients.findIndex(c => c.client.id.toString() === overClientId);
 
-        if (oldIndex !== -1 && newIndex !== -1 && oldIndex !== newIndex) {
-            const reorderedItems = arrayMove(containerItems, oldIndex, newIndex);
+            if (oldIndex !== -1 && newIndex !== -1 && oldIndex !== newIndex) {
+                const reorderedItems = arrayMove(governmentClients, oldIndex, newIndex);
+                setGroupedClients(prev => prev ? { ...prev, Government: reorderedItems } : null);
 
-            // Optimistic UI Update
-            setGroupedClients(prev => {
-                if (!prev) return null;
-                return { 
-                    ...prev, 
-                    [activeContainer]: reorderedItems 
-                };
-            });
+                const clientIds = reorderedItems.map(c => Number(c.client.id));
+                updateSortOrderMutation.mutate({ taskType: 'Government', clientIds });
+            }
+        } else if (activeContainer === 'Other') {
+            const oldIndex = otherClients.findIndex(c => c.client.id.toString() === activeClientId);
+            const newIndex = otherClients.findIndex(c => c.client.id.toString() === overClientId);
 
-            // Persist to backend
-            const clientIds = reorderedItems.map(c => {
-                const id = c.client.id;
-                return typeof id === 'string' ? parseInt(id, 10) : id;
-            });
-            const typeForApi = activeContainer === 'Real Estate' ? 'RealEstate' : activeContainer;
-            
-            updateSortOrderMutation.mutate(
-                { taskType: typeForApi, clientIds },
-                {
-                    onSuccess: () => {
-                        // Sort order updated successfully
-                    },
-                    onError: (error) => {
-                        console.error('Failed to update sort order:', error);
-                    }
-                }
-            );
+            if (oldIndex !== -1 && newIndex !== -1 && oldIndex !== newIndex) {
+                const reorderedItems = arrayMove(otherClients, oldIndex, newIndex);
+                const clientIds = reorderedItems.map(c => Number(c.client.id));
+                updateSortOrderMutation.mutate({ taskType: 'Accounting', clientIds });
+            }
         }
 
-        // Reset states at the end
         setActiveDragItem(null);
         setActiveContainer(null);
     }
 
     return (
-        <div className="relative pb-[20px]">
+        <div className="relative pb-[20px] dir-rtl" dir="rtl">
             {/* Collapsible Task Status Cards - Fixed at Bottom */}
             <CollapsibleTaskStatusCards
                 stats={stats || {
@@ -205,52 +198,85 @@ const DashboardPage = () => {
                 onDragEnd={handleDragEnd}
             >
                 {!isLoadingClients && groupedClients && (
-                    // *** MANAGEMENT VIEW - 3 Task Type Columns ***
+                    // *** ADMIN DASHBOARD 3 COLUMNS: Reports | خدمات قيد الإجراء | خدمات أخرى ***
                     <div className="min-h-[calc(100vh-200px)] overflow-visible relative z-[1]">
-                        <div className="overflow-visible relative z-[1]">
-                            <div className="grid grid-cols-1 lg:grid-cols-3 gap-3 overflow-visible relative z-[1]">
-                                {columnTypes.map((type, columnIndex) => {
-                                const clients = groupedClients[type] || [];
-                                const config = taskTypeConfig[type];
+                        <div className="grid grid-cols-1 lg:grid-cols-3 gap-3 overflow-visible relative z-[1]">
+                            {/* Column 1: التقارير */}
+                            <div className="p-1 overflow-visible relative" style={{ zIndex: 10 }}>
+                                <CardColumnContainer
+                                    title="التقارير"
+                                    icon={<BarChart3 size={18} className="text-primary" />}
+                                    accentColor="var(--token-status-info-text)"
+                                    isEmpty={false}
+                                >
+                                    <AdminReportsPanel />
+                                </CardColumnContainer>
+                            </div>
 
-                                return (
-                                    <div 
-                                        className="p-1 overflow-visible relative" 
-                                        key={type} 
-                                        style={{ zIndex: 10 - columnIndex }}
-                                    >
-                                        <CardColumnContainer
-                                            title={`خدمات ${config.displayName}`}
-                                            icon={config.icon}
-                                            accentColor={config.accentColor}
-                                            itemCount={clients.length}
-                                            moreLink={`/tasks?type=${type}`}
-                                            isEmpty={clients.length === 0}
-                                            emptyMessage={t('common.noResults')}
+                            {/* Column 2: خدمات قيد الإجراء (Government tasks) */}
+                            <div className="p-1 overflow-visible relative" style={{ zIndex: 9 }}>
+                                <CardColumnContainer
+                                    title="خدمات قيد الإجراء"
+                                    icon={<FileText size={18} className="text-primary" />}
+                                    accentColor="var(--token-status-info-text)"
+                                    itemCount={governmentClients.length}
+                                    moreLink="/tasks?type=Government"
+                                    isEmpty={governmentClients.length === 0}
+                                    emptyMessage={t('common.noResults')}
+                                >
+                                    {governmentClients.length > 0 && (
+                                        <SortableContext 
+                                            items={governmentClients.map(c => `Government-${c.client.id}`)}
+                                            strategy={verticalListSortingStrategy}
                                         >
-                                            {clients.length > 0 && (
-                                                <SortableContext 
-                                                    items={clients.map(c => `${type}-${c.client.id}`)}
-                                                    strategy={verticalListSortingStrategy}
-                                                >
-                                                    {clients.map((clientData) => (
-                                                        <SortableBaseClientCard
-                                                            key={`${type}-${clientData.client.id}`}
-                                                            data={clientData}
-                                                            role="admin"
-                                                            context="admin-dashboard"
-                                                            sortableId={`${type}-${clientData.client.id}`}
-                                                            onAssign={handleAssignTask}
-                                                            showAmount={true}
-                                                            showEmployeePrefix={true}
-                                                        />
-                                                    ))}
-                                                </SortableContext>
-                                            )}
-                                        </CardColumnContainer>
-                                    </div>
-                                );
-                                })}
+                                            {governmentClients.map((clientData) => (
+                                                <SortableBaseClientCard
+                                                    key={`Government-${clientData.client.id}`}
+                                                    data={clientData}
+                                                    role="admin"
+                                                    context="admin-dashboard"
+                                                    sortableId={`Government-${clientData.client.id}`}
+                                                    onAssign={handleAssignTask}
+                                                    showAmount={true}
+                                                    showEmployeePrefix={true}
+                                                />
+                                            ))}
+                                        </SortableContext>
+                                    )}
+                                </CardColumnContainer>
+                            </div>
+
+                            {/* Column 3: خدمات أخرى (All other task types) */}
+                            <div className="p-1 overflow-visible relative" style={{ zIndex: 8 }}>
+                                <CardColumnContainer
+                                    title="خدمات أخرى"
+                                    icon={<LayoutGrid size={18} className="text-amber-500" />}
+                                    accentColor="var(--token-status-warning-text)"
+                                    itemCount={otherClients.length}
+                                    moreLink="/tasks"
+                                    isEmpty={otherClients.length === 0}
+                                    emptyMessage={t('common.noResults')}
+                                >
+                                    {otherClients.length > 0 && (
+                                        <SortableContext 
+                                            items={otherClients.map(c => `Other-${c.client.id}`)}
+                                            strategy={verticalListSortingStrategy}
+                                        >
+                                            {otherClients.map((clientData) => (
+                                                <SortableBaseClientCard
+                                                    key={`Other-${clientData.client.id}`}
+                                                    data={clientData}
+                                                    role="admin"
+                                                    context="admin-dashboard"
+                                                    sortableId={`Other-${clientData.client.id}`}
+                                                    onAssign={handleAssignTask}
+                                                    showAmount={true}
+                                                    showEmployeePrefix={true}
+                                                />
+                                            ))}
+                                        </SortableContext>
+                                    )}
+                                </CardColumnContainer>
                             </div>
                         </div>
                     </div>

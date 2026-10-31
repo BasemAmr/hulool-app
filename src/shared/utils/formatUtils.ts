@@ -17,11 +17,11 @@ export function formatDate(dateString: string | null | undefined): string {
   try {
     const date = new Date(dateString);
     if (isNaN(date.getTime())) return '—';
-    return new Intl.DateTimeFormat('en-US', {
-      year: 'numeric',
-      month: '2-digit',
-      day: '2-digit',
-    }).format(date);
+    // Format as DD/MM/YYYY using en-GB locale (or day/month/year parts)
+    const day = date.getDate().toString().padStart(2, '0');
+    const month = (date.getMonth() + 1).toString().padStart(2, '0');
+    const year = date.getFullYear();
+    return `${day}/${month}/${year}`;
   } catch {
     return '—';
   }

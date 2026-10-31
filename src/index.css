@@ -2,6 +2,8 @@
 
 @import "tailwindcss";
 
+@custom-variant dark (&:where(.dark, .dark *, [data-theme="dark"], [data-theme="dark"] *));
+
 /* ============================================================
    LEVEL 1 — PRIMITIVE PALETTE
    Raw color values. Never use these directly in components.
@@ -69,7 +71,8 @@
   /* --- Backgrounds --- */
   --token-bg-page: var(--primitive-white);
   --token-bg-surface: var(--primitive-white);
-  --token-bg-surface-hover: var(--primitive-white);
+  --token-bg-surface-hover: color-mix(in srgb, var(--primitive-brand-500) 12%, var(--primitive-white));
+  --token-table-row-hover: color-mix(in srgb, var(--primitive-brand-500) 12%, var(--primitive-white));
   /* border-only separation preferred */
   --token-bg-surface-muted: var(--primitive-white);
   /* use border-strong for hierarchy */
@@ -227,9 +230,36 @@
   --token-column-badge-text: #334155;
   --token-column-badge-border: #e2e8f0;
 
+  /* --- Report Card Tokens (Light Mode - Calculated Bluish Gradient Theme) --- */
+  --token-report-card-bg: linear-gradient(180deg, #ffffff 0%, #f4f9fe 50%, #edf5fc 100%);
+  --token-report-card-bg-stroke: #f4f9fe;
+  --token-report-card-header-bg: linear-gradient(135deg, rgba(224, 242, 254, 0.85) 0%, rgba(186, 230, 253, 0.5) 100%);
+  --token-report-card-border: rgba(56, 189, 248, 0.35);
+  --token-report-card-border-hover: rgba(2, 132, 199, 0.55);
+  --token-report-card-shadow: 0 4px 20px -2px rgba(2, 132, 199, 0.08), 0 2px 6px -1px rgba(2, 132, 199, 0.04), inset 0 1px 0 rgba(255, 255, 255, 0.9);
+  --token-report-card-text: #0c4a6e;
+  --token-report-card-title: #0369a1;
+  --token-report-card-subtext: #475569;
+  --token-report-card-input-bg: rgba(255, 255, 255, 0.9);
+  --token-report-card-input-border: rgba(56, 189, 248, 0.35);
+  --token-report-card-stat-bg: rgba(255, 255, 255, 0.8);
+  --token-report-card-stat-border: rgba(56, 189, 248, 0.25);
+  --token-report-btn-qabd-bg: linear-gradient(180deg, #ecfdf5 0%, #d1fae5 100%);
+  --token-report-btn-qabd-text: #065f46;
+  --token-report-btn-qabd-border: #6ee7b7;
+  --token-report-btn-sarf-bg: linear-gradient(180deg, #fff1f2 0%, #ffe4e6 100%);
+  --token-report-btn-sarf-text: #9f1239;
+  --token-report-btn-sarf-border: #fda4af;
+  --token-report-btn-settle-qabd-bg: linear-gradient(180deg, #f0f9ff 0%, #e0f2fe 100%);
+  --token-report-btn-settle-qabd-text: #0369a1;
+  --token-report-btn-settle-qabd-border: #7dd3fc;
+  --token-report-btn-settle-sarf-bg: linear-gradient(180deg, #f8fafc 0%, #f1f5f9 100%);
+  --token-report-btn-settle-sarf-text: #334155;
+  --token-report-btn-settle-sarf-border: #cbd5e1;
+
   /* --- Ledger Final Balance Tokens --- */
-  --token-ledger-balance-neg-bg: var(--primitive-red-600);
-  --token-ledger-balance-neg-text: #ffffff;
+  --token-ledger-balance-neg-bg: color-mix(in srgb, var(--primitive-red-600) 22%, var(--token-bg-surface));
+  --token-ledger-balance-neg-text: var(--primitive-red-700);
   --token-ledger-balance-pos-bg: var(--token-status-success-bg);
   --token-ledger-balance-pos-text: var(--token-status-success-text);
 }
@@ -239,7 +269,8 @@ html.dark,
 html[data-theme='dark'] {
   --token-bg-page: #0f172a;
   --token-bg-surface: #111827;
-  --token-bg-surface-hover: #1e293b;
+  --token-bg-surface-hover: color-mix(in srgb, var(--primitive-brand-500) 18%, #111827);
+  --token-table-row-hover: color-mix(in srgb, var(--primitive-brand-500) 18%, #111827);
   --token-bg-surface-muted: #1e293b;
 
   --token-text-primary: #f8fafc;
@@ -391,9 +422,36 @@ html[data-theme='dark'] {
   --token-column-badge-text: #cbd5e1;
   --token-column-badge-border: #334155;
 
+  /* --- Report Card Tokens (Dark Mode - Oceanic Deep Sapphire Gradient Theme) --- */
+  --token-report-card-bg: linear-gradient(180deg, #132238 0%, #0f1b2e 55%, #0a1322 100%);
+  --token-report-card-bg-stroke: #0f1b2e;
+  --token-report-card-header-bg: linear-gradient(135deg, rgba(14, 165, 233, 0.2) 0%, rgba(3, 105, 161, 0.1) 100%);
+  --token-report-card-border: rgba(56, 189, 248, 0.22);
+  --token-report-card-border-hover: rgba(56, 189, 248, 0.45);
+  --token-report-card-shadow: 0 8px 28px -4px rgba(2, 132, 199, 0.18), inset 0 1px 0 rgba(56, 189, 248, 0.15);
+  --token-report-card-text: #f0f9ff;
+  --token-report-card-title: #38bdf8;
+  --token-report-card-subtext: #94a3b8;
+  --token-report-card-input-bg: rgba(15, 23, 42, 0.75);
+  --token-report-card-input-border: rgba(56, 189, 248, 0.25);
+  --token-report-card-stat-bg: rgba(15, 23, 42, 0.6);
+  --token-report-card-stat-border: rgba(56, 189, 248, 0.15);
+  --token-report-btn-qabd-bg: linear-gradient(180deg, rgba(6, 95, 70, 0.4) 0%, rgba(6, 78, 59, 0.55) 100%);
+  --token-report-btn-qabd-text: #34d399;
+  --token-report-btn-qabd-border: rgba(52, 211, 153, 0.4);
+  --token-report-btn-sarf-bg: linear-gradient(180deg, rgba(159, 18, 57, 0.4) 0%, rgba(136, 19, 55, 0.55) 100%);
+  --token-report-btn-sarf-text: #fb7185;
+  --token-report-btn-sarf-border: rgba(251, 113, 133, 0.4);
+  --token-report-btn-settle-qabd-bg: linear-gradient(180deg, rgba(3, 105, 161, 0.4) 0%, rgba(7, 89, 133, 0.55) 100%);
+  --token-report-btn-settle-qabd-text: #38bdf8;
+  --token-report-btn-settle-qabd-border: rgba(56, 189, 248, 0.4);
+  --token-report-btn-settle-sarf-bg: linear-gradient(180deg, rgba(30, 41, 59, 0.5) 0%, rgba(15, 23, 42, 0.7) 100%);
+  --token-report-btn-settle-sarf-text: #cbd5e1;
+  --token-report-btn-settle-sarf-border: rgba(148, 163, 184, 0.3);
+
   /* --- Ledger Final Balance Tokens (Dark Mode) --- */
-  --token-ledger-balance-neg-bg: #b91c1c;
-  --token-ledger-balance-neg-text: #ffffff;
+  --token-ledger-balance-neg-bg: color-mix(in srgb, #ef4444 26%, var(--token-bg-surface));
+  --token-ledger-balance-neg-text: #fca5a5;
   --token-ledger-balance-pos-bg: color-mix(in srgb, var(--primitive-green-700) 25%, var(--token-bg-page));
   --token-ledger-balance-pos-text: #bbf7d0;
 }
@@ -545,6 +603,30 @@ html[data-theme='dark'] {
   --color-column-badge-bg: var(--token-column-badge-bg);
   --color-column-badge-text: var(--token-column-badge-text);
   --color-column-badge-border: var(--token-column-badge-border);
+
+  /* Report Card Tokens */
+  --color-report-card-bg: var(--token-report-card-bg);
+  --color-report-card-header-bg: var(--token-report-card-header-bg);
+  --color-report-card-border: var(--token-report-card-border);
+  --color-report-card-text: var(--token-report-card-text);
+  --color-report-card-title: var(--token-report-card-title);
+  --color-report-card-subtext: var(--token-report-card-subtext);
+  --color-report-card-input-bg: var(--token-report-card-input-bg);
+  --color-report-card-input-border: var(--token-report-card-input-border);
+  --color-report-card-stat-bg: var(--token-report-card-stat-bg);
+  --color-report-card-stat-border: var(--token-report-card-stat-border);
+  --color-report-btn-qabd-bg: var(--token-report-btn-qabd-bg);
+  --color-report-btn-qabd-text: var(--token-report-btn-qabd-text);
+  --color-report-btn-qabd-border: var(--token-report-btn-qabd-border);
+  --color-report-btn-sarf-bg: var(--token-report-btn-sarf-bg);
+  --color-report-btn-sarf-text: var(--token-report-btn-sarf-text);
+  --color-report-btn-sarf-border: var(--token-report-btn-sarf-border);
+  --color-report-btn-settle-qabd-bg: var(--token-report-btn-settle-qabd-bg);
+  --color-report-btn-settle-qabd-text: var(--token-report-btn-settle-qabd-text);
+  --color-report-btn-settle-qabd-border: var(--token-report-btn-settle-qabd-border);
+  --color-report-btn-settle-sarf-bg: var(--token-report-btn-settle-sarf-bg);
+  --color-report-btn-settle-sarf-text: var(--token-report-btn-settle-sarf-text);
+  --color-report-btn-settle-sarf-border: var(--token-report-btn-settle-sarf-border);
 
   /* Ledger Final Balance */
   --color-ledger-balance-neg-bg: var(--token-ledger-balance-neg-bg);

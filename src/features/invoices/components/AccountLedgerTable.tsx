@@ -292,6 +292,7 @@ const BalanceCell = React.memo(({ rowData, columnData }: CellProps<FinancialTran
       balance={balance}
       hideAmounts={columnData?.hideAmounts}
       delta={ledgerBalanceDelta('client', (rowData as any).debit, (rowData as any).credit)}
+      accountType="client"
     />
   );
 });
@@ -835,11 +836,12 @@ const AccountLedgerTable: React.FC<AccountLedgerTableProps> = ({
       grow: 1,
       cellClassName: ({ rowData }) => {
         const balance = getBalance(rowData);
-        const isNeg = balance < 0;
+        // For a client, balance > 0 is unpaid debt (red / danger); balance <= 0 is zero or in credit (green / pos)
+        const isDebt = balance > 0;
         if ((rowData as any).is_summary) {
-          return isNeg ? 'ledger-summary-balance-neg text-center' : 'ledger-summary-balance-pos text-center';
+          return isDebt ? 'ledger-summary-balance-neg text-center' : 'ledger-summary-balance-pos text-center';
         }
-        return isNeg ? 'ledger-balance-neg text-center' : 'ledger-balance-pos text-center';
+        return isDebt ? 'ledger-balance-neg text-center' : 'ledger-balance-pos text-center';
       }
     },
     {

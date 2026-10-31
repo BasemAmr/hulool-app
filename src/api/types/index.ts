@@ -763,6 +763,7 @@ export interface ClientSummary {
   paid_amount: number;
   remaining_amount: number;
   receivables_count: number;
+  unpaid_invoices_count?: number;
   total_receivables?: number;
   total_paid?: number;
   total_outstanding?: number;

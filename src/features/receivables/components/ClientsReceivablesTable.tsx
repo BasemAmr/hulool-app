@@ -11,16 +11,25 @@
 
 import React, { useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { CreditCard, Edit3 } from 'lucide-react';
+import { CreditCard, Edit3, TrendingUp, TrendingDown, ChevronDown } from 'lucide-react';
 import HuloolDataGrid from '@/shared/grid/HuloolDataGrid';
 import type { HuloolGridColumn } from '@/shared/grid/HuloolDataGrid';
 import type { CellProps } from 'react-datasheet-grid';
 import { useModalStore } from '@/shared/stores/modalStore';
 import WhatsAppIcon from '@/shared/ui/icons/WhatsAppIcon';
 import { sendPaymentReminder, formatPhoneForWhatsApp } from '@/shared/utils/whatsappUtils';
+import {
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuItem,
+} from '@/shared/ui/shadcn/dropdown-menu';
+import {
+  buildSettlementQabdPreset,
+  buildSettlementSarfPreset,
+} from '@/features/financials/utils/settlementPresets';
 
-const neutralActionButtonClass = 'inline-flex items-center justify-center rounded p-1.5 text-text-secondary hover:text-text-primary cursor-pointer transition-colors duration-150';
-const neutralTextActionButtonClass = 'inline-flex items-center gap-1 rounded px-3 py-1.5 text-text-secondary hover:text-text-primary cursor-pointer transition-colors duration-150';
+const neutralActionButtonClass = 'inline-flex items-center justify-center rounded p-1 text-text-secondary hover:text-text-primary cursor-pointer transition-colors duration-150';
 
 // ================================
 // TYPE DEFINITIONS
@@ -34,6 +43,7 @@ interface ClientReceivablesSummary {
   paid_amount: number;
   remaining_amount: number;
   receivables_count: number;
+  unpaid_invoices_count?: number;
 }
 
 interface ClientsReceivablesTableProps {
@@ -165,20 +175,29 @@ RemainingCell.displayName = 'RemainingCell';
 
 // Actions Cell
 interface ActionsCellData {
-  openModal: (modal: string, data: any) => void;
+  openModal: (modal: string, data?: any) => void;
   onPaymentReminder: (phone: string, clientName: string, amount: number) => void;
   onPayment: (clientId: number) => void;
   onViewLedger: (clientId: number, clientName: string) => void;
+  onQabd: (clientId: number) => void;
+  onSarf: (clientId: number) => void;
+  onTaswiyaQabd: (clientId: number) => void;
+  onTaswiyaSarf: (clientId: number) => void;
 }
 
 const ActionsCell = React.memo(({ rowData, columnData }: CellProps<ClientReceivablesSummary, ActionsCellData>) => {
-  const { openModal, onPaymentReminder, onPayment, onViewLedger } = columnData || {};
-  const hasDebt = Number(rowData.remaining_amount) > 0;
+  const {
+    onPaymentReminder,
+    onPayment,
+    onViewLedger,
+    onQabd,
+    onSarf,
+    onTaswiyaQabd,
+    onTaswiyaSarf,
+  } = columnData || {};
 
-  const handleEdit = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    openModal?.('clientReceivablesEdit', { clientId: rowData.client_id });
-  };
+  const hasDebt = Number(rowData.remaining_amount) > 0;
+  const hasUnpaidInvoices = Number(rowData.unpaid_invoices_count || 0) > 0;
 
   const handleReminder = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -208,52 +227,83 @@ const ActionsCell = React.memo(({ rowData, columnData }: CellProps<ClientReceiva
       onMouseDown={(e) => e.stopPropagation()}
       onClick={(e) => e.stopPropagation()}
     >
-      {/* COMMENTED OUT: Edit receivables - deprecated functionality
       <button
-        onClick={handleEdit}
-        onMouseDown={(e) => e.stopPropagation()}
-        title="تعديل المستحقات"
-        style={{
-          padding: '4px 8px',
-          borderRadius: '6px',
-          border: '1px solid var(--color-primary)',
-          backgroundColor: 'transparent',
-          color: 'var(--color-primary)',
-          cursor: 'pointer',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-        }}
-      >
-        <Edit3 size={14} />
-      </button>
-      */}
-      <button
+        type="button"
         onClick={handleViewLedger}
-        onMouseDown={(e) => e.stopPropagation()}
         title="عرض كشف الحساب"
         className={neutralActionButtonClass}
       >
         <Edit3 size={14} />
       </button>
+
       <button
+        type="button"
         onClick={handleReminder}
-        onMouseDown={(e) => e.stopPropagation()}
         title="إرسال تذكير دفع عبر واتساب"
         disabled={!hasDebt}
         className={neutralActionButtonClass}
       >
         <WhatsAppIcon size={14} />
       </button>
-      <button
-        onClick={handlePay}
-        onMouseDown={(e) => e.stopPropagation()}
-        disabled={!hasDebt}
-        className={neutralTextActionButtonClass}
-      >
-        <CreditCard size={14} />
-        سداد
-      </button>
+
+      {hasUnpaidInvoices && (
+        <button
+          type="button"
+          onClick={handlePay}
+          title="سداد فاتورة"
+          className="inline-flex items-center justify-center rounded p-1 text-text-secondary hover:text-text-primary hover:bg-muted/40 cursor-pointer transition-colors"
+        >
+          <CreditCard size={15} />
+        </button>
+      )}
+
+      <div className="flex items-center gap-1">
+        <button
+          type="button"
+          onClick={() => onQabd?.(rowData.client_id)}
+          title="سند قبض"
+          className="inline-flex items-center gap-0.5 px-1.5 py-0.5 text-xs font-bold rounded border border-status-success-border text-status-success-text bg-status-success-bg hover:opacity-85 transition-opacity cursor-pointer"
+        >
+          <TrendingUp size={11} />
+          قبض
+        </button>
+        <button
+          type="button"
+          onClick={() => onSarf?.(rowData.client_id)}
+          title="سند صرف"
+          className="inline-flex items-center gap-0.5 px-1.5 py-0.5 text-xs font-bold rounded border border-status-danger-border text-status-danger-text bg-status-danger-bg hover:opacity-85 transition-opacity cursor-pointer"
+        >
+          <TrendingDown size={11} />
+          صرف
+        </button>
+        <DropdownMenu dir="rtl">
+          <DropdownMenuTrigger asChild>
+            <button
+              type="button"
+              className="inline-flex items-center gap-0.5 px-1.5 py-0.5 text-xs font-bold rounded border border-border text-text-primary bg-background hover:bg-muted/40 transition-colors cursor-pointer"
+            >
+              تسوية
+              <ChevronDown size={10} />
+            </button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="z-[9999] min-w-[130px] bg-card border border-border shadow-xl">
+            <DropdownMenuItem
+              className="flex items-center gap-2 text-xs font-semibold text-status-success-text cursor-pointer hover:bg-status-success-bg/20 py-1.5"
+              onClick={() => onTaswiyaQabd?.(rowData.client_id)}
+            >
+              <TrendingUp size={12} />
+              تسوية قبض
+            </DropdownMenuItem>
+            <DropdownMenuItem
+              className="flex items-center gap-2 text-xs font-semibold text-status-danger-text cursor-pointer hover:bg-status-danger-bg/20 py-1.5"
+              onClick={() => onTaswiyaSarf?.(rowData.client_id)}
+            >
+              <TrendingDown size={12} />
+              تسوية صرف
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      </div>
     </div>
   );
 });
@@ -303,6 +353,40 @@ const ClientsReceivablesTable: React.FC<ClientsReceivablesTableProps> = ({
     });
   };
 
+  const handleQabd = (clientId: number) => {
+    openModal('unifiedTransaction', {
+      defaultFromCardType: 'client',
+      defaultFromAccountId: String(clientId),
+      defaultToCardType: 'cashbox',
+      lockDirection: true,
+      title: 'سند قبض',
+    });
+  };
+
+  const handleSarf = (clientId: number) => {
+    openModal('unifiedTransaction', {
+      defaultFromCardType: 'cashbox',
+      defaultToCardType: 'client',
+      defaultToAccountId: String(clientId),
+      lockDirection: true,
+      title: 'سند صرف',
+    });
+  };
+
+  const handleTaswiyaQabd = (clientId: number) => {
+    openModal('unifiedTransaction', buildSettlementQabdPreset({
+      kind: 'client',
+      id: String(clientId),
+    }));
+  };
+
+  const handleTaswiyaSarf = (clientId: number) => {
+    openModal('unifiedTransaction', buildSettlementSarfPreset({
+      kind: 'client',
+      id: String(clientId),
+    }));
+  };
+
   // Filter clients with debt
   const filteredClients = useMemo(() =>
     clients.filter(client => (Number(client.remaining_amount) || 0) > 0),
@@ -329,7 +413,7 @@ const ClientsReceivablesTable: React.FC<ClientsReceivablesTableProps> = ({
       type: 'custom',
       component: ClientNameCell as React.ComponentType<CellProps<ClientReceivablesSummary>>,
       columnData: { onClientClick: handleClientClick },
-      grow: 2,
+      grow: 1.5,
     },
     {
       id: 'client_phone',
@@ -338,7 +422,7 @@ const ClientsReceivablesTable: React.FC<ClientsReceivablesTableProps> = ({
       type: 'custom',
       component: PhoneCell as React.ComponentType<CellProps<ClientReceivablesSummary>>,
       columnData: { onWhatsApp: handleWhatsApp },
-      grow: 1,
+      grow: 0.8,
     },
     {
       id: 'total_amount',
@@ -380,12 +464,15 @@ const ClientsReceivablesTable: React.FC<ClientsReceivablesTableProps> = ({
         openModal,
         onPaymentReminder: handlePaymentReminder,
         onPayment: handlePayment,
-        onViewLedger: handleViewLedger
+        onViewLedger: handleViewLedger,
+        onQabd: handleQabd,
+        onSarf: handleSarf,
+        onTaswiyaQabd: handleTaswiyaQabd,
+        onTaswiyaSarf: handleTaswiyaSarf,
       },
-      width: 250, // Fixed width for actions
-      grow: 0,
+      grow: 1.5,
     },
-  ], [handleClientClick, handleWhatsApp, openModal, handlePaymentReminder, handlePayment, handleViewLedger]);
+  ], [handleClientClick, handleWhatsApp, openModal, handlePaymentReminder, handlePayment, handleViewLedger, handleQabd, handleSarf, handleTaswiyaQabd, handleTaswiyaSarf]);
 
   // Empty state
   if (!clients || clients.length === 0 || filteredClients.length === 0) {
@@ -410,48 +497,6 @@ const ClientsReceivablesTable: React.FC<ClientsReceivablesTableProps> = ({
         height="auto"
         minHeight={400}
       />
-
-      {/* Summary Totals Row */}
-      <div className="rounded-lg border border-border bg-card shadow-sm mt-2">
-        <div className="p-2">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-2 text-center">
-            <div className="flex justify-between items-center p-2 bg-primary text-white rounded font-bold">
-              <span className="text-sm">الإجمالي</span>
-              <span></span>
-            </div>
-            <div className="flex justify-between items-center p-2 bg-bg-surface-muted rounded">
-              <span className="text-text-secondary text-sm">إجمالي المدين:</span>
-              <span className="font-bold text-text-primary">
-                {isTotalsLoading ? (
-                  <div className="inline-block w-4 h-4 border-2 border-primary border-t-transparent rounded-full animate-spin" />
-                ) : (
-                  formatCurrency(displayTotals.totalAmount)
-                )}
-              </span>
-            </div>
-            <div className="flex justify-between items-center p-2 bg-bg-surface-muted rounded">
-              <span className="text-text-secondary text-sm">إجمالي الدائن:</span>
-              <span className="font-bold text-text-primary">
-                {isTotalsLoading ? (
-                  <div className="inline-block w-4 h-4 border-2 border-status-success-border border-t-transparent rounded-full animate-spin" />
-                ) : (
-                  formatCurrency(displayTotals.paidAmount)
-                )}
-              </span>
-            </div>
-            <div className="flex justify-between items-center p-2 bg-bg-surface-muted rounded">
-              <span className="text-text-secondary text-sm">إجمالي المستحقات:</span>
-              <span className={`font-bold ${displayTotals.remainingAmount > 0 ? 'text-status-danger-text' : 'text-text-primary'}`}>
-                {isTotalsLoading ? (
-                  <div className="inline-block w-4 h-4 border-2 border-status-danger-border border-t-transparent rounded-full animate-spin" />
-                ) : (
-                  formatCurrency(displayTotals.remainingAmount)
-                )}
-              </span>
-            </div>
-          </div>
-        </div>
-      </div>
     </div>
   );
 };

@@ -62,30 +62,45 @@ export const PieChartWidget: React.FC<PieChartWidgetProps> = ({
 
   return (
     <div className="flex items-center justify-between gap-4 w-full">
-      {/* Side Legend (Matching User Image 1) */}
+      {/* Side Legend */}
       {showLegend && (
-        <div className="flex-1 space-y-2 min-w-0 pr-1 text-right" dir="rtl">
+        <div className="flex-1 space-y-1.5 min-w-0 pr-1 text-right select-none" dir="rtl">
           {segments.map((seg) => (
             <div
               key={seg.id}
               className={`flex items-center justify-between text-xs py-1 px-2 rounded-md transition-colors cursor-pointer ${
-                activeSegmentIndex === seg.index ? 'bg-muted/70 font-bold' : 'hover:bg-muted/30'
+                activeSegmentIndex === seg.index ? 'bg-black/5 dark:bg-white/10 font-bold' : 'hover:bg-black/5 dark:hover:bg-white/5'
               }`}
               onMouseEnter={() => setActiveSegmentIndex(seg.index)}
               onMouseLeave={() => setActiveSegmentIndex(null)}
             >
               <div className="flex items-center gap-2 min-w-0">
                 <span
-                  className="w-3 h-3 rounded-sm flex-shrink-0"
+                  className="w-2.5 h-2.5 rounded-xs flex-shrink-0 shadow-2xs"
                   style={{ backgroundColor: seg.color }}
                 />
-                <span className="text-text-primary font-bold truncate">{seg.label}</span>
+                <span
+                  className="font-bold truncate text-xs"
+                  style={{ color: 'var(--token-report-card-text, var(--token-text-primary))' }}
+                >
+                  {seg.label}
+                </span>
               </div>
-              <div className="flex items-center gap-2 ms-3 text-[11px] flex-shrink-0">
+              <div className="flex items-center gap-1.5 ms-2 text-[11px] flex-shrink-0">
                 {seg.formattedValue && (
-                  <span className="font-bold text-text-primary dir-ltr">{seg.formattedValue}</span>
+                  <span
+                    className="font-extrabold dir-ltr text-xs tabular-nums"
+                    style={{ color: 'var(--token-report-card-title, var(--token-text-primary))' }}
+                  >
+                    {seg.formattedValue}
+                  </span>
                 )}
-                <span className="text-text-secondary font-semibold">({seg.formattedPct})</span>
+                <span
+                  className="font-semibold tabular-nums text-[11px]"
+                  style={{ color: 'var(--token-report-card-subtext, var(--token-text-secondary))' }}
+                >
+                  ({seg.formattedPct})
+                </span>
               </div>
             </div>
           ))}
@@ -100,7 +115,7 @@ export const PieChartWidget: React.FC<PieChartWidgetProps> = ({
               cx={center}
               cy={center}
               r={radius}
-              fill="var(--token-bg-surface-muted, #f1f5f9)"
+              fill="var(--token-report-card-input-bg, #f1f5f9)"
               className="opacity-60"
             />
           ) : (
@@ -110,10 +125,10 @@ export const PieChartWidget: React.FC<PieChartWidgetProps> = ({
                 d={seg.pathData}
                 style={{
                   fill: seg.color,
-                  stroke: 'var(--token-bg-surface, #ffffff)',
-                  strokeWidth: 3,
+                  stroke: 'var(--token-report-card-bg, #ffffff)',
+                  strokeWidth: 2.5,
                   strokeLinejoin: 'round',
-                  transform: activeSegmentIndex === seg.index ? 'scale(1.05)' : 'scale(1)',
+                  transform: activeSegmentIndex === seg.index ? 'scale(1.04)' : 'scale(1)',
                   transformOrigin: `${center}px ${center}px`,
                   transition: 'transform 200ms, opacity 200ms',
                 }}

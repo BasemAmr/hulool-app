@@ -1,8 +1,8 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { PieChartWidget, type PieSegment } from './PieChartWidget';
 import { Spinner } from '@/shared/ui/shadcn/spinner';
-import Button from '@/shared/ui/primitives/Button';
 import { useModalStore } from '@/shared/stores/modalStore';
+import { useAuthStore } from '@/features/auth/store/authStore';
 import type { TreasuryAccountReport, ReportPeriod } from '../api/employeeDashboardQueries';
 import {
   buildSettlementQabdPreset,
@@ -10,10 +10,10 @@ import {
 } from '@/features/financials/utils/settlementPresets';
 import { useCanUseSettlement } from '@/features/financials/api/treasuryQueries';
 
-// Color convention: مقبوضات=أخضر, مصروفات=أحمر, رصيد=أزرق
-const COLOR_QABDH   = 'var(--token-chart-1)'; // teal/green
-const COLOR_SARF    = 'var(--token-chart-4)'; // rose/red
-const COLOR_BALANCE = 'var(--token-chart-5)'; // sky blue
+// High-contrast, calibrated chart colors
+const COLOR_QABDH = '#10b981'; // emerald
+const COLOR_SARF = '#f43f5e';  // rose
+const COLOR_BALANCE = '#38bdf8'; // sky
 
 const fmt = (n: number) =>
   new Intl.NumberFormat('en-US', { maximumFractionDigits: 0 }).format(n) + ' ر.س';
@@ -36,9 +36,13 @@ export const TreasurySubReportSection: React.FC<TreasurySubReportSectionProps> =
   onFilterChange,
 }) => {
   const openModal = useModalStore((state) => state.openModal);
-  // تسوية buttons always target the settlement account; hide them when the employee
-  // has no can_transact on it. Absent permission row counts as no access.
+  const user = useAuthStore((state) => state.user);
+
+  // Settlement permission check matching EmployeeNavbar
   const { canUseSettlement } = useCanUseSettlement();
+  const isAdmin = user?.type === 'admin' || user?.type === 'employee_admin';
+  const canMakeTransactions = isAdmin || user?.can_make_transactions !== false;
+  const showSettlement = isAdmin || (canMakeTransactions && canUseSettlement);
 
   // Read initial selection from localStorage
   const [selectedId, setSelectedId] = useState<number | null>(() => {
@@ -70,7 +74,13 @@ export const TreasurySubReportSection: React.FC<TreasurySubReportSectionProps> =
 
   if (isLoading && accounts.length === 0) {
     return (
-      <div className="bg-card border border-border rounded-xl p-3 shadow-sm flex items-center justify-center py-8">
+      <div
+        style={{
+          backgroundImage: 'var(--token-report-card-bg)',
+          borderColor: 'var(--token-report-card-border)',
+        }}
+        className="rounded-2xl p-6 flex items-center justify-center shadow-xs border"
+      >
         <Spinner />
       </div>
     );
@@ -79,11 +89,21 @@ export const TreasurySubReportSection: React.FC<TreasurySubReportSectionProps> =
   // ── Empty State ────────────────────────────────────────────────────────
   if (accounts.length === 0) {
     return (
-      <div className="bg-card border border-border rounded-xl p-3 shadow-sm">
-        <div className="flex items-center gap-1.5 pb-2 border-b border-border">
-          <h3 className="text-sm font-bold text-text-primary">{title}</h3>
+      <div
+        style={{
+          backgroundImage: 'var(--token-report-card-bg)',
+          borderColor: 'var(--token-report-card-border)',
+          boxShadow: 'var(--token-report-card-shadow)',
+        }}
+        className="rounded-2xl border p-4 shadow-xs"
+      >
+        <div
+          style={{ borderBottomColor: 'var(--token-report-card-border)' }}
+          className="flex items-center gap-1.5 pb-2 border-b"
+        >
+          <h3 style={{ color: 'var(--token-report-card-title)' }} className="text-xs font-bold">{title}</h3>
         </div>
-        <div className="py-6 text-center text-xs text-text-secondary">لا توجد حسابات معينة لك</div>
+        <div style={{ color: 'var(--token-report-card-subtext)' }} className="py-6 text-center text-xs">لا توجد حسابات معينة لك</div>
       </div>
     );
   }
@@ -94,7 +114,7 @@ export const TreasurySubReportSection: React.FC<TreasurySubReportSectionProps> =
   const allZero = qabdh === 0 && sarf === 0 && balance === 0;
 
   const chartData: PieSegment[] = allZero
-    ? [{ id: 'empty', label: 'لا توجد حركات', value: 1, color: 'var(--token-border-default)', formattedValue: '' }]
+    ? [{ id: 'empty', label: 'لا توجد حركات', value: 1, color: '#64748b', formattedValue: '' }]
     : ([
         { id: 'qabdh',   label: 'إجمالي المقبوضات', value: qabdh,   color: COLOR_QABDH,   formattedValue: fmt(qabdh) },
         { id: 'sarf',    label: 'إجمالي المصروفات',  value: sarf,    color: COLOR_SARF,    formattedValue: fmt(sarf) },
@@ -104,120 +124,173 @@ export const TreasurySubReportSection: React.FC<TreasurySubReportSectionProps> =
   const accountIdStr = String(acc!.id);
 
   return (
-    <div className="bg-card border border-border rounded-xl p-3.5 shadow-xs space-y-2.5">
-      {/* Header */}
-      <div className="space-y-2 pb-2.5 border-b border-border-default">
-
-        {/* Title + Period Filter */}
-        <div className="flex items-center justify-between gap-2">
-          <h3 className="text-sm font-bold text-text-primary truncate">{title}</h3>
-          <select
-            value={filterMode}
-            onChange={(e) => onFilterChange(e.target.value as ReportPeriod)}
-            className="bg-bg-surface text-xs font-bold text-text-primary border border-border-default rounded-md px-2 py-1 focus:outline-none cursor-pointer flex-shrink-0"
+    <div
+      style={{
+        backgroundImage: 'var(--token-report-card-bg)',
+        borderColor: 'var(--token-report-card-border)',
+        boxShadow: 'var(--token-report-card-shadow)',
+      }}
+      className="rounded-2xl border shadow-xs flex flex-col transition-all overflow-hidden dir-rtl"
+      dir="rtl"
+    >
+      {/* 1. Compact Header */}
+      <div
+        style={{
+          backgroundImage: 'var(--token-report-card-header-bg)',
+          borderBottomColor: 'var(--token-report-card-border)',
+        }}
+        className="px-3.5 py-2.5 border-b flex items-center justify-between gap-2 select-none backdrop-blur-xs"
+      >
+        <div className="flex items-center gap-1.5 min-w-0">
+          <span className="w-2 h-2 rounded-full bg-primary shrink-0 shadow-xs" />
+          <h3
+            style={{ color: 'var(--token-report-card-title)' }}
+            className="text-xs font-bold truncate tracking-tight"
           >
-            <option value="current_month">الشهر الحالي</option>
-            <option value="all">جميع البيانات</option>
-          </select>
+            {title}
+          </h3>
         </div>
 
-        {/* Account Selector dropdown */}
-        {accounts.length > 1 && (
-          <select
-            value={acc!.id}
-            onChange={(e) => handleAccountChange(Number(e.target.value))}
-            className="w-full bg-bg-surface text-xs font-bold text-text-primary border border-border-default rounded-md px-2 py-1.5 focus:outline-none cursor-pointer"
-          >
-            {accounts.map((a) => (
-              <option key={a.id} value={a.id}>{a.name}</option>
-            ))}
-          </select>
-        )}
-
-        {/* Single-account name label */}
-        {accounts.length === 1 && (
-          <div className="text-[11px] font-bold text-text-secondary">{acc!.name}</div>
-        )}
-
-        {/* 4 Action Buttons in 1 row targeting selected account */}
-        {/* 4 columns when settlement is available (4 buttons), 2 when it is hidden, so the
-            remaining سند قبض / سند صرف pair does not sit in the left half of an empty grid. */}
-        <div className={`grid gap-1 ${canUseSettlement ? 'grid-cols-4' : 'grid-cols-2'}`}>
-          <Button
-            type="button"
-            variant="outline-success"
-            size="sm"
-            className="h-5.5 px-0.5 text-[9px] font-bold cursor-pointer whitespace-nowrap"
-            onClick={() =>
-              openModal('unifiedTransaction', {
-                title: 'سند قبض',
-                defaultFromCardType: 'client',
-                defaultToCardType: 'treasury',
-                defaultToAccountId: accountIdStr,
-                lockDirection: false,
-              })
-            }
-          >
-            <span>سند قبض</span>
-          </Button>
-
-          <Button
-            type="button"
-            variant="outline-danger"
-            size="sm"
-            className="h-5.5 px-0.5 text-[9px] font-bold cursor-pointer whitespace-nowrap"
-            onClick={() =>
-              openModal('unifiedTransaction', {
-                title: 'سند صرف',
-                defaultFromCardType: 'treasury',
-                defaultFromAccountId: accountIdStr,
-                defaultToCardType: 'client',
-                lockDirection: false,
-              })
-            }
-          >
-            <span>سند صرف</span>
-          </Button>
-
-          {/* Settlement pair — hidden as a unit so the two buttons never split */}
-          {canUseSettlement && (
-            <>
-              <Button
-            type="button"
-            variant="outline-secondary"
-            size="sm"
-            className="h-5.5 px-0.5 text-[9px] font-bold cursor-pointer whitespace-nowrap"
-            onClick={() =>
-              // Standard تسوية preset: قبض = FROM settlement TO this treasury account (debit cash up).
-              openModal('unifiedTransaction', buildSettlementQabdPreset({ kind: 'treasury', id: accountIdStr }))
-            }
-          >
-            <span>تسوية قبض</span>
-              </Button>
-
-              <Button
-                type="button"
-                variant="outline-secondary"
-                size="sm"
-                className="h-5.5 px-0.5 text-[9px] font-bold cursor-pointer whitespace-nowrap"
-                onClick={() =>
-                  // Standard تسوية preset: صرف = FROM this treasury account TO settlement.
-              openModal('unifiedTransaction', buildSettlementSarfPreset({ kind: 'treasury', id: accountIdStr }))
-            }
-          >
-            <span>تسوية صرف</span>
-          </Button>
-            </>
-          )}
-        </div>
+        {/* Period Filter */}
+        <select
+          value={filterMode}
+          onChange={(e) => onFilterChange(e.target.value as ReportPeriod)}
+          style={{
+            background: 'var(--token-report-card-input-bg)',
+            borderColor: 'var(--token-report-card-input-border)',
+            color: 'var(--token-report-card-text)',
+          }}
+          className="border rounded-lg px-2.5 py-1 text-[11px] font-bold focus:outline-none cursor-pointer shadow-2xs transition-colors"
+        >
+          <option value="current_month">الشهر الحالي</option>
+          <option value="all">جميع البيانات</option>
+        </select>
       </div>
 
-      {/* Pie Chart with amounts and percentages in legend */}
-      <PieChartWidget
-        data={chartData}
-        size={140}
-        showLegend={true}
-      />
+      {/* 2. Body */}
+      <div className="p-3.5 space-y-3 flex-1 flex flex-col justify-between">
+        {/* Account Selector dropdown or Single account label */}
+        {accounts.length > 1 ? (
+          <div>
+            <select
+              value={acc!.id}
+              onChange={(e) => handleAccountChange(Number(e.target.value))}
+              style={{
+                background: 'var(--token-report-card-input-bg)',
+                borderColor: 'var(--token-report-card-input-border)',
+                color: 'var(--token-report-card-text)',
+              }}
+              className="w-full border rounded-lg px-2.5 py-1.5 text-xs font-bold focus:outline-none cursor-pointer shadow-2xs transition-colors"
+            >
+              {accounts.map((a) => (
+                <option key={a.id} value={a.id}>{a.name}</option>
+              ))}
+            </select>
+          </div>
+        ) : (
+          <div
+            style={{ color: 'var(--token-report-card-subtext)' }}
+            className="text-xs font-bold px-1"
+          >
+            {acc!.name}
+          </div>
+        )}
+
+        {/* Action Buttons: Conditioned on permissions, deep non-glowing dark styles */}
+        {canMakeTransactions && (
+          <div className={`grid gap-1.5 ${showSettlement ? 'grid-cols-4' : 'grid-cols-2'}`}>
+            <button
+              type="button"
+              style={{
+                backgroundImage: 'var(--token-report-btn-qabd-bg)',
+                color: 'var(--token-report-btn-qabd-text)',
+                borderColor: 'var(--token-report-btn-qabd-border)',
+              }}
+              className="h-7.5 px-1.5 rounded-lg text-[11px] font-bold border transition-all flex items-center justify-center cursor-pointer shadow-2xs active:scale-98"
+              onClick={() =>
+                openModal('unifiedTransaction', {
+                  title: 'سند قبض',
+                  defaultFromCardType: 'client',
+                  defaultToCardType: 'treasury',
+                  defaultToAccountId: accountIdStr,
+                  lockDirection: false,
+                })
+              }
+              title="سند قبض"
+            >
+              <span>سند قبض</span>
+            </button>
+
+            <button
+              type="button"
+              style={{
+                backgroundImage: 'var(--token-report-btn-sarf-bg)',
+                color: 'var(--token-report-btn-sarf-text)',
+                borderColor: 'var(--token-report-btn-sarf-border)',
+              }}
+              className="h-7.5 px-1.5 rounded-lg text-[11px] font-bold border transition-all flex items-center justify-center cursor-pointer shadow-2xs active:scale-98"
+              onClick={() =>
+                openModal('unifiedTransaction', {
+                  title: 'سند صرف',
+                  defaultFromCardType: 'treasury',
+                  defaultFromAccountId: accountIdStr,
+                  defaultToCardType: 'client',
+                  lockDirection: false,
+                })
+              }
+              title="سند صرف"
+            >
+              <span>سند صرف</span>
+            </button>
+
+            {/* Settlement buttons ONLY if authorized */}
+            {showSettlement && (
+              <>
+                <button
+                  type="button"
+                  style={{
+                    backgroundImage: 'var(--token-report-btn-settle-qabd-bg)',
+                    color: 'var(--token-report-btn-settle-qabd-text)',
+                    borderColor: 'var(--token-report-btn-settle-qabd-border)',
+                  }}
+                  className="h-7.5 px-1.5 rounded-lg text-[11px] font-bold border transition-all flex items-center justify-center cursor-pointer shadow-2xs active:scale-98"
+                  onClick={() =>
+                    openModal('unifiedTransaction', buildSettlementQabdPreset({ kind: 'treasury', id: accountIdStr }))
+                  }
+                  title="تسوية قبض"
+                >
+                  <span>تسوية قبض</span>
+                </button>
+
+                <button
+                  type="button"
+                  style={{
+                    backgroundImage: 'var(--token-report-btn-settle-sarf-bg)',
+                    color: 'var(--token-report-btn-settle-sarf-text)',
+                    borderColor: 'var(--token-report-btn-settle-sarf-border)',
+                  }}
+                  className="h-7.5 px-1.5 rounded-lg text-[11px] font-bold border transition-all flex items-center justify-center cursor-pointer shadow-2xs active:scale-98"
+                  onClick={() =>
+                    openModal('unifiedTransaction', buildSettlementSarfPreset({ kind: 'treasury', id: accountIdStr }))
+                  }
+                  title="تسوية صرف"
+                >
+                  <span>تسوية صرف</span>
+                </button>
+              </>
+            )}
+          </div>
+        )}
+
+        {/* Pie Chart with amounts and percentages in legend */}
+        <div className="pt-1">
+          <PieChartWidget
+            data={chartData}
+            size={135}
+            showLegend={true}
+          />
+        </div>
+      </div>
     </div>
   );
 };

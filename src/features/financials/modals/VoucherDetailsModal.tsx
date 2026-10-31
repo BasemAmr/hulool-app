@@ -1,5 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
+import { Pencil } from 'lucide-react';
 import { useModalStore } from '@/shared/stores/modalStore';
 import BaseModal from '@/shared/ui/layout/BaseModal';
 import Button from '@/shared/ui/primitives/Button';
@@ -54,6 +55,7 @@ function pairedLedgerPath(
 
 const VoucherDetailsModal = () => {
   const closeModal = useModalStore((state) => state.closeModal);
+  const openModal = useModalStore((state) => state.openModal);
   const props = useModalStore((state) => state.props as VoucherDetailsModalProps);
   const { voucher } = props;
 
@@ -168,11 +170,11 @@ const VoucherDetailsModal = () => {
 
           <div className="grid grid-cols-2 gap-6 border-t border-border-strong pt-4">
             <div>
-              <span className="text-muted-foreground text-sm block mb-1.5 font-medium">الحساب المدين</span>
+              <span className="text-muted-foreground text-sm block mb-1.5 font-medium">إلى (الحساب المدين)</span>
               <span className="text-base font-bold text-status-success-text block">{voucher.debit_account_name || '—'}</span>
             </div>
             <div>
-              <span className="text-muted-foreground text-sm block mb-1.5 font-medium">الحساب الدائن</span>
+              <span className="text-muted-foreground text-sm block mb-1.5 font-medium">من (الحساب الدائن)</span>
               <span className="text-base font-bold text-status-danger-text block">{voucher.credit_account_name || '—'}</span>
             </div>
           </div>
@@ -224,7 +226,34 @@ const VoucherDetailsModal = () => {
         </div>
 
         {/* Actions */}
-        <div className="flex justify-end gap-3 pt-2">
+        <div className="flex justify-between items-center pt-2">
+          {isAdmin ? (
+            <Button
+              type="button"
+              variant="outline-primary"
+              size="sm"
+              className="flex items-center gap-1.5 px-4 font-semibold"
+              onClick={() => {
+                closeModal();
+                if (voucher.account_type === 'cashbox' || voucher.account_type === 'treasury') {
+                  openModal('voucherEdit', {
+                    boxId: voucher.account_id,
+                    voucher: voucher,
+                    isTreasury: true,
+                  });
+                } else {
+                  openModal('transactionEdit', {
+                    transaction: voucher,
+                  });
+                }
+              }}
+              title="تعديل الحركة المالية"
+            >
+              <Pencil size={15} />
+              <span>تعديل الحركة</span>
+            </Button>
+          ) : <div />}
+
           <Button variant="secondary" onClick={closeModal} className="px-8 py-2.5 text-base font-medium">
             إغلاق
           </Button>

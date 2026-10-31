@@ -10,6 +10,53 @@ import { useUpdateTransaction } from '../api/accountQueries';
 import { useToast } from '@/shared/hooks/useToast';
 import type { CashBoxVoucher } from '@/api/types';
 
+function parseDateTimeParts(raw: any): { date: string; time: string } {
+  if (!raw) {
+    const now = new Date();
+    const y = now.getFullYear();
+    const m = String(now.getMonth() + 1).padStart(2, '0');
+    const d = String(now.getDate()).padStart(2, '0');
+    const hh = String(now.getHours()).padStart(2, '0');
+    const mm = String(now.getMinutes()).padStart(2, '0');
+    const ss = String(now.getSeconds()).padStart(2, '0');
+    return { date: `${y}-${m}-${d}`, time: `${hh}:${mm}:${ss}` };
+  }
+
+  const str = String(raw).trim().replace('Z', '').split('.')[0];
+  let d = '';
+  let t = '00:00:00';
+
+  if (str.includes('T')) {
+    const parts = str.split('T');
+    d = parts[0] || '';
+    t = parts[1] || '00:00:00';
+  } else if (str.includes(' ')) {
+    const parts = str.split(' ');
+    d = parts[0] || '';
+    t = parts[1] || '00:00:00';
+  } else {
+    d = str;
+  }
+
+  if (d.includes('/')) {
+    const slashParts = d.split('/');
+    if (slashParts[0].length === 4) {
+      d = `${slashParts[0]}-${slashParts[1].padStart(2, '0')}-${slashParts[2].padStart(2, '0')}`;
+    } else if (slashParts[2]?.length === 4) {
+      d = `${slashParts[2]}-${slashParts[1].padStart(2, '0')}-${slashParts[0].padStart(2, '0')}`;
+    }
+  }
+
+  const timeParts = t.split(':');
+  if (timeParts.length === 2) {
+    t = `${timeParts[0].padStart(2, '0')}:${timeParts[1].padStart(2, '0')}:00`;
+  } else if (timeParts.length >= 3) {
+    t = `${timeParts[0].padStart(2, '0')}:${timeParts[1].padStart(2, '0')}:${timeParts[2].substring(0, 2).padStart(2, '0')}`;
+  }
+
+  return { date: d, time: t };
+}
+
 interface RecordVoucherModalProps {
   isOpen: boolean;
   onClose: () => void;
@@ -33,6 +80,7 @@ export const RecordVoucherModal: React.FC<RecordVoucherModalProps> = ({
   const [amount, setAmount] = useState('');
   const [description, setDescription] = useState('');
   const [transactionDate, setTransactionDate] = useState('');
+  const [transactionTime, setTransactionTime] = useState('00:00:00');
   const [targetType, setTargetType] = useState<'company' | 'employee' | 'client'>('company');
   const [targetId, setTargetId] = useState<string>('');
 
@@ -54,8 +102,6 @@ export const RecordVoucherModal: React.FC<RecordVoucherModalProps> = ({
   const updateMutation = useUpdateVoucher(selectedBoxId || 0, voucherToEdit?.id || 0);
   const updateTransactionMutation = useUpdateTransaction();
 
-  const [originalTime, setOriginalTime] = useState('');
-
   // Initialize form states
   useEffect(() => {
     if (isOpen) {
@@ -65,19 +111,20 @@ export const RecordVoucherModal: React.FC<RecordVoucherModalProps> = ({
         setType(isReceipt ? 'receipt' : 'payment');
         const amt = (voucherToEdit.debit || 0) > 0 ? voucherToEdit.debit : voucherToEdit.credit;
         setAmount(String(amt));
-        setDescription(voucherToEdit.description);
+        setDescription(voucherToEdit.description || '');
         
-        // Handle date
-        const rawDate = voucherToEdit.date || '';
-        const parts = rawDate.split(' ');
-        setTransactionDate(parts[0] || '');
-        setOriginalTime(parts[1] || '');
+        // Handle date and time
+        const rawDate = voucherToEdit.date || (voucherToEdit as any).transaction_date || (voucherToEdit as any).created_at || '';
+        const { date: initialDate, time: initialTime } = parseDateTimeParts(rawDate);
+        setTransactionDate(initialDate);
+        setTransactionTime(initialTime);
       } else {
         setType(defaultType);
         setAmount('');
         setDescription('');
-        setTransactionDate(new Date().toISOString().split('T')[0]);
-        setOriginalTime('');
+        const { date: initialDate, time: initialTime } = parseDateTimeParts(null);
+        setTransactionDate(initialDate);
+        setTransactionTime(initialTime);
         setTargetType('company');
         setTargetId('');
       }
@@ -105,16 +152,7 @@ export const RecordVoucherModal: React.FC<RecordVoucherModalProps> = ({
       }
     }
 
-    let finalDateTime = transactionDate;
-    if (transactionDate) {
-      if (isEdit && originalTime && transactionDate === (voucherToEdit?.date || '').split(' ')[0]) {
-        finalDateTime = `${transactionDate} ${originalTime}`;
-      } else {
-        const now = new Date();
-        const timeStr = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}:${String(now.getSeconds()).padStart(2, '0')}`;
-        finalDateTime = `${transactionDate} ${timeStr}`;
-      }
-    }
+    const finalDateTime = transactionDate ? `${transactionDate} ${transactionTime || '00:00:00'}` : undefined;
 
     const payload = {
       type,
@@ -122,7 +160,7 @@ export const RecordVoucherModal: React.FC<RecordVoucherModalProps> = ({
       description: description.trim(),
       target_account_type: isEdit ? 'company' : targetType,
       target_account_id: isEdit ? 1 : (targetType === 'company' ? 1 : parseInt(targetId)),
-      transaction_date: finalDateTime || undefined,
+      transaction_date: finalDateTime,
     };
 
     if (isEdit && isTreasury) {
@@ -132,7 +170,7 @@ export const RecordVoucherModal: React.FC<RecordVoucherModalProps> = ({
         debit,
         credit,
         description: description.trim(),
-        transaction_date: finalDateTime || undefined,
+        transaction_date: finalDateTime,
       };
 
       updateTransactionMutation.mutate({ id: voucherToEdit!.id, data: updatePayload }, {
@@ -207,25 +245,38 @@ export const RecordVoucherModal: React.FC<RecordVoucherModalProps> = ({
           </div>
         )}
 
-        {/* Amount & Date row */}
+        {/* Amount */}
+        <div>
+          <NumberInput
+            name="amount"
+            label="المبلغ"
+            value={amount}
+            onChange={(e) => setAmount(e.target.value)}
+            placeholder="0.00"
+            required
+          />
+        </div>
+
+        {/* Date & Time row */}
         <div className="grid grid-cols-2 gap-4">
           <div>
-            <NumberInput
-              name="amount"
-              label="المبلغ"
-              value={amount}
-              onChange={(e) => setAmount(e.target.value)}
-              placeholder="0.00"
-              required
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium mb-1 text-text-primary">تاريخ السند (اختياري)</label>
+            <label className="block text-sm font-medium mb-1 text-text-primary">تاريخ السند</label>
             <input
               type="date"
               className="w-full bg-background border border-input rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-primary text-right"
               value={transactionDate}
               onChange={(e) => setTransactionDate(e.target.value)}
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium mb-1 text-text-primary">وقت السند (HH:MM:SS)</label>
+            <input
+              type="time"
+              step="1"
+              dir="ltr"
+              className="w-full bg-background border border-input rounded-md px-3 py-2 text-sm font-mono text-center focus:outline-none focus:ring-1 focus:ring-primary"
+              value={transactionTime}
+              onChange={(e) => setTransactionTime(e.target.value)}
             />
           </div>
         </div>

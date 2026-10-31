@@ -116,11 +116,10 @@ function formatDate(dateString: string | null | undefined): string {
   try {
     const date = new Date(dateString);
     if (isNaN(date.getTime())) return '—';
-    return new Intl.DateTimeFormat('en-US', {
-      year: 'numeric',
-      month: '2-digit',
-      day: '2-digit',
-    }).format(date);
+    const day = date.getDate().toString().padStart(2, '0');
+    const month = (date.getMonth() + 1).toString().padStart(2, '0');
+    const year = date.getFullYear();
+    return `${day}/${month}/${year}`;
   } catch {
     return '—';
   }
@@ -660,6 +659,8 @@ function HuloolDataGrid<T extends Record<string, any>>({
           --dsg-border-color: var(--token-border-default);
           --dsg-selection-border-color: var(--token-border-focus);
           --dsg-selection-background-color: color-mix(in srgb, var(--token-border-focus) 10%, transparent);
+          --dsg-cell-background-color: var(--token-bg-surface);
+          background-color: var(--token-bg-surface) !important;
           direction: ltr; /* Keep LTR internally, we handle RTL via column reversal */
           overflow-x: auto !important;
           ${height === 'auto' ? 'overflow-y: hidden !important;' : ''}
@@ -849,7 +850,7 @@ function HuloolDataGrid<T extends Record<string, any>>({
            ================================ */
         
         .hulool-data-grid .dsg-row:not(.dsg-row-header):hover .dsg-cell {
-          background-color: var(--token-bg-surface-hover) !important;
+          background-color: var(--token-table-row-hover, var(--token-bg-surface-hover)) !important;
         }
         
         /* Enable pointer events for buttons in cells */

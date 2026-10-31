@@ -137,7 +137,8 @@ const fetchClientsReceivablesSummary = async (): Promise<{ clients: ClientSummar
     total_amount: Number(client.total_debit || client.total_receivables || 0),
     paid_amount: Number(client.total_credit || client.total_paid || 0),
     remaining_amount: Number(client.total_outstanding || 0),
-    receivables_count: Number(client.transaction_count || client.receivables_count || 0)
+    receivables_count: Number(client.transaction_count || client.receivables_count || 0),
+    unpaid_invoices_count: Number(client.unpaid_invoices_count || 0)
   }));
 
   return { clients: transformedClients };
@@ -164,7 +165,8 @@ export const fetchPaginatedClientsReceivablesSummary = async ({ pageParam = 1, s
     total_amount: Number(client.total_debit || client.total_receivables || 0),
     paid_amount: Number(client.total_credit || client.total_paid || 0),
     remaining_amount: Number(client.total_outstanding || 0),
-    receivables_count: Number(client.transaction_count || client.receivables_count || 0)
+    receivables_count: Number(client.transaction_count || client.receivables_count || 0),
+    unpaid_invoices_count: Number(client.unpaid_invoices_count || 0)
   }));
 
   return { clients: transformedClients, pagination: data.pagination };

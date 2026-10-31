@@ -162,6 +162,72 @@ export const useGetClientsWithActiveTasks = (taskType: 'employee' | 'admin' = 'a
   return query;
 };
 
+export interface AdminTreasuryReportItem {
+  id: number;
+  name: string;
+  sub_type: string;
+  balance: number;
+  qabdh: number;
+  sarf: number;
+}
+
+export interface AdminAccountsReport {
+  accounts: AdminTreasuryReportItem[];
+  total_balance: number;
+  total_qabdh: number;
+  total_sarf: number;
+}
+
+export interface AdminTasksBucket {
+  count: number;
+  amount: number;
+}
+
+export interface AdminTasksReport {
+  period: string;
+  processing: AdminTasksBucket;
+  completed_paid: AdminTasksBucket;
+  completed_unpaid: AdminTasksBucket;
+  total: AdminTasksBucket;
+  total_task_cost: number;
+  estimated_profit: number;
+}
+
+export interface AdminReportsData {
+  period: 'current_month' | 'all' | 'custom';
+  start_date?: string;
+  end_date?: string;
+  cashbox_report: AdminAccountsReport;
+  bank_report: AdminAccountsReport;
+  tasks_report: AdminTasksReport;
+}
+
+export interface AdminReportsFilterParams {
+  cashbox_period?: 'current_month' | 'all' | 'custom';
+  cashbox_start_date?: string;
+  cashbox_end_date?: string;
+  bank_period?: 'current_month' | 'all' | 'custom';
+  bank_start_date?: string;
+  bank_end_date?: string;
+  tasks_period?: 'current_month' | 'all' | 'custom';
+  tasks_start_date?: string;
+  tasks_end_date?: string;
+}
+
+export const useGetAdminReports = (params: AdminReportsFilterParams = {}) => {
+  return useQuery({
+    queryKey: ['dashboard', 'admin', 'reports', params],
+    queryFn: async (): Promise<AdminReportsData> => {
+      const { data } = await apiClient.get<ApiResponse<AdminReportsData>>('/dashboard/admin/reports', {
+        params,
+      });
+      if (!data.success) throw new Error(data.message || 'Failed to fetch admin reports');
+      return data.data;
+    },
+    staleTime: 30 * 1000,
+  });
+};
+
 // Employee dashboard hook
 export const useGetEmployeeClientsWithActiveTasks = () => {
   const queryClient = useQueryClient();
