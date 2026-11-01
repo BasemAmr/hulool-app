@@ -168,8 +168,24 @@ const Navbar = () => {
   const managementItemClass = "flex items-center justify-start gap-2.5 px-3 py-2 text-sm font-extrabold rounded text-primary hover:underline hover:bg-primary/10 cursor-pointer transition-colors text-right";
   const listItemClass = "flex items-center justify-start px-3 py-2 text-sm font-bold rounded hover:bg-accent hover:text-accent-foreground cursor-pointer transition-colors text-right";
 
+  // Navigation link & dropdown trigger styling matching oceanic/sapphire navbar theme
+  const navItemClass = (isActive: boolean) =>
+    `flex items-center gap-1.5 px-3 py-2 text-xs font-bold rounded-lg transition-all outline-none cursor-pointer whitespace-nowrap ${
+      isActive
+        ? 'bg-white/25 dark:bg-sky-500/25 text-white dark:text-sky-100 border border-white/35 dark:border-sky-400/30 shadow-2xs'
+        : 'text-white/90 dark:text-sky-100/85 hover:bg-white/15 dark:hover:bg-sky-500/15 hover:text-white border border-transparent'
+    }`;
+
   return (
-    <nav className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60" dir="rtl">
+    <nav
+      className="sticky top-0 z-50 w-full border-b select-none shadow-sm transition-all"
+      style={{
+        backgroundImage: 'var(--token-navbar-bg)',
+        borderColor: 'var(--token-navbar-border)',
+        color: 'var(--token-navbar-text)',
+      }}
+      dir="rtl"
+    >
       <div className="flex h-16 items-center px-4 gap-4">
         {/* Logo */}
         <div className="flex-shrink-0 ml-4">
@@ -181,27 +197,19 @@ const Navbar = () => {
           {/* Dashboard link */}
           <NavLink
             to="/dashboard"
-            className={({ isActive }) =>
-              `flex items-center gap-2 px-3 py-2 text-sm font-bold rounded-md transition-colors whitespace-nowrap ${isActive
-                ? 'bg-primary/10 text-primary'
-                : 'text-text-secondary hover:bg-accent hover:text-accent-foreground'
-              }`
-            }
+            className={({ isActive }) => navItemClass(isActive)}
           >
-            <LayoutDashboard size={16} />
+            <LayoutDashboard size={15} />
             <span>{t('dashboard.title') || 'لوحة التحكم'}</span>
           </NavLink>
 
           {/* العملاء Dropdown */}
           <NavHoverDropdown
             trigger={
-              <button className={`flex items-center gap-2 px-3 py-2 text-sm font-bold rounded-md transition-colors outline-none cursor-pointer ${location.pathname.startsWith('/clients')
-                ? 'bg-primary/10 text-primary'
-                : 'text-text-secondary hover:bg-accent hover:text-accent-foreground'
-                }`}>
-                <Users size={16} />
+              <button className={navItemClass(location.pathname.startsWith('/clients') || location.pathname.startsWith('/receivables'))}>
+                <Users size={15} />
                 <span>{t('clients.title') || 'العملاء'}</span>
-                <ChevronDown size={14} className="text-text-secondary" />
+                <ChevronDown size={13} className="opacity-80" />
               </button>
             }
           >
@@ -227,10 +235,10 @@ const Navbar = () => {
           <NavHoverDropdown
             className="w-56 text-right max-h-[70vh] overflow-y-auto"
             trigger={
-              <button className={`flex items-center gap-2 px-3 py-2 text-sm font-bold rounded-md transition-colors outline-none cursor-pointer ${isEmployeesActive ? 'bg-primary/10 text-primary' : 'text-text-secondary hover:bg-accent hover:text-accent-foreground'}`}>
-                <UserCog size={16} />
+              <button className={navItemClass(isEmployeesActive)}>
+                <UserCog size={15} />
                 <span>الموظفين</span>
-                <ChevronDown size={14} className="text-text-secondary" />
+                <ChevronDown size={13} className="opacity-80" />
               </button>
             }
           >
@@ -269,10 +277,10 @@ const Navbar = () => {
           <NavHoverDropdown
             className="min-w-48 text-right max-h-80 overflow-y-auto"
             trigger={
-              <button className={`flex items-center gap-2 px-3 py-2 text-sm font-bold rounded-md transition-colors outline-none cursor-pointer ${isCashboxActive ? 'bg-primary/10 text-primary' : 'text-text-secondary hover:bg-accent hover:text-accent-foreground'}`}>
-                <Wallet size={16} />
+              <button className={navItemClass(isCashboxActive)}>
+                <Wallet size={15} />
                 <span>الصندوق</span>
-                <ChevronDown size={14} className="text-text-secondary" />
+                <ChevronDown size={13} className="opacity-80" />
               </button>
             }
           >
@@ -306,10 +314,10 @@ const Navbar = () => {
           <NavHoverDropdown
             className="min-w-48 text-right max-h-80 overflow-y-auto"
             trigger={
-              <button className={`flex items-center gap-2 px-3 py-2 text-sm font-bold rounded-md transition-colors outline-none cursor-pointer ${isBankActive ? 'bg-primary/10 text-primary' : 'text-text-secondary hover:bg-accent hover:text-accent-foreground'}`}>
-                <Landmark size={16} />
+              <button className={navItemClass(isBankActive)}>
+                <Landmark size={15} />
                 <span>البنك</span>
-                <ChevronDown size={14} className="text-text-secondary" />
+                <ChevronDown size={13} className="opacity-80" />
               </button>
             }
           >
@@ -343,10 +351,10 @@ const Navbar = () => {
           <NavHoverDropdown
             className="w-64 text-right"
             trigger={
-              <button className={`flex items-center gap-2 px-3 py-2 text-sm font-bold rounded-md transition-colors outline-none cursor-pointer ${isFinancialActive ? 'bg-primary/10 text-primary' : 'text-text-secondary hover:bg-accent hover:text-accent-foreground'}`}>
-                <Wallet size={16} />
+              <button className={navItemClass(isFinancialActive)}>
+                <Wallet size={15} />
                 <span>المركز المالي</span>
-                <ChevronDown size={14} className="text-text-secondary" />
+                <ChevronDown size={13} className="opacity-80" />
               </button>
             }
           >
@@ -373,10 +381,10 @@ const Navbar = () => {
           <NavHoverDropdown
             className="w-48 text-right"
             trigger={
-              <button className={`flex items-center gap-2 px-3 py-2 text-sm font-bold rounded-md transition-colors outline-none cursor-pointer ${isTasksActive ? 'bg-primary/10 text-primary' : 'text-text-secondary hover:bg-accent hover:text-accent-foreground'}`}>
-                <NotebookText size={16} />
+              <button className={navItemClass(isTasksActive)}>
+                <NotebookText size={15} />
                 <span>المهام</span>
-                <ChevronDown size={14} className="text-text-secondary" />
+                <ChevronDown size={13} className="opacity-80" />
               </button>
             }
           >
@@ -394,31 +402,25 @@ const Navbar = () => {
           {/* Settings link */}
           <NavLink
             to="/settings"
-            className={({ isActive }) =>
-              `flex items-center gap-2 px-3 py-2 text-sm font-bold rounded-md transition-colors whitespace-nowrap ${isActive
-                ? 'bg-primary/10 text-primary'
-                : 'text-text-secondary hover:bg-accent hover:text-accent-foreground'
-              }`
-            }
+            className={({ isActive }) => navItemClass(isActive)}
           >
-            <Settings size={16} />
+            <Settings size={15} />
             <span>{t('settings.title') || 'الإعدادات'}</span>
           </NavLink>
 
           {/* ── Quick Transactions Bar: Settlement only for Admin ───────────── */}
-          <div className="flex items-center gap-1.5 ms-2 px-2 py-0.5 rounded-lg border border-border/60 bg-muted/30">
+          <div className="flex items-center gap-1.5 ms-2 px-2 py-0.5 rounded-lg border border-white/30 dark:border-sky-500/30 bg-white/15 dark:bg-sky-950/30">
             <NavHoverDropdown
               align="end"
               className="w-36 text-right"
               trigger={
-                <Button
-                  variant="outline-secondary"
-                  size="sm"
-                  className="h-7 px-2 text-xs font-bold gap-1 whitespace-nowrap cursor-pointer"
+                <button
+                  type="button"
+                  className="h-7 px-2.5 text-xs font-bold gap-1 rounded-md bg-white/20 dark:bg-sky-500/20 text-white dark:text-sky-100 border border-white/30 dark:border-sky-400/30 flex items-center whitespace-nowrap cursor-pointer hover:bg-white/30"
                 >
                   <span>تسوية</span>
-                  <ChevronDown size={11} />
-                </Button>
+                  <ChevronDown size={11} className="text-white/80" />
+                </button>
               }
             >
               <div
@@ -448,12 +450,12 @@ const Navbar = () => {
           {/* Search */}
           <div className="relative hidden sm:block w-64 ml-2">
             <div
-              className="flex items-center w-full px-3 py-1.5 bg-background border border-input rounded-md text-sm text-text-secondary cursor-pointer hover:bg-background transition-colors"
+              className="flex items-center w-full px-3 py-1.5 rounded-lg text-xs cursor-pointer transition-colors shadow-2xs bg-white/20 dark:bg-slate-900/50 border border-white/30 dark:border-sky-500/30 text-white placeholder:text-white/70 hover:bg-white/25"
               onClick={handleSearchFocus}
             >
-              <Search size={16} className="ml-2" />
-              <span>بحث سريع...</span>
-              <span className="mr-auto text-xs border border-border px-1.5 rounded bg-background">Ctrl K</span>
+              <Search size={14} className="ml-2 text-white/80" />
+              <span className="text-white/85">بحث سريع...</span>
+              <span className="mr-auto text-[10px] font-mono border border-white/30 dark:border-sky-500/30 px-1.5 py-0.5 rounded bg-white/15 dark:bg-slate-800 text-white">Ctrl K</span>
             </div>
           </div>
 

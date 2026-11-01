@@ -142,22 +142,19 @@ const TotalCreditCell = React.memo(({ rowData, active }: CellProps<ClientReceiva
 });
 TotalCreditCell.displayName = 'TotalCreditCell';
 
-const RemainingCell = React.memo(({ rowData, active }: CellProps<ClientReceivablesSummary>) => {
+const RemainingCell = React.memo(({ rowData }: CellProps<ClientReceivablesSummary>) => {
   const amount = Number(rowData.remaining_amount) || 0;
   const isDebt = amount > 0;
-  const isCredit = amount < 0;
 
   return (
-    <span
-      className="hulool-cell-content"
+    <div
+      className="hulool-cell-content w-full h-full flex items-center justify-center font-extrabold text-sm tabular-nums"
       style={{
-        justifyContent: 'center',
-        fontWeight: active ? 800 : 700,
-        color: isDebt ? 'var(--token-text-danger)' : (isCredit ? 'var(--token-text-success)' : 'var(--token-text-primary)'),
+        color: isDebt ? 'var(--token-report-btn-sarf-text)' : 'var(--token-report-btn-qabd-text)',
       }}
     >
-      {formatCurrency(amount)}
-    </span>
+      <span>{formatCurrency(amount)}</span>
+    </div>
   );
 });
 RemainingCell.displayName = 'RemainingCell';
@@ -371,6 +368,10 @@ const EmployeeReceivablesTable: React.FC<EmployeeReceivablesTableProps> = ({
       title: 'إجمالي المستحقات',
       type: 'custom',
       component: RemainingCell,
+      cellClassName: ({ rowData }: any) => {
+        const val = Number(rowData?.remaining_amount || 0);
+        return val > 0 ? 'ledger-balance-neg text-center' : 'ledger-balance-pos text-center';
+      },
       grow: 1,
     },
     {

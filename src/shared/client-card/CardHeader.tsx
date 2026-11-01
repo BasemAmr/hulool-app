@@ -1,5 +1,5 @@
 // Card Header Component - Client information header matching reference design
-// Features single-row compact layout: Drag handle (icon-only), ID, Name, WhatsApp, Drive, and 3-dots menu
+// Features single-row compact layout: Drag handle (icon-only), Centered Client Name, WhatsApp, Drive, and 3-dots menu
 
 import { Link } from 'react-router-dom';
 import { AlertTriangle, Cloud, GripVertical } from 'lucide-react';
@@ -49,11 +49,10 @@ const CardHeader = ({
   const hasValidDriveLink = isValidGoogleDriveLink(client.google_drive_link);
 
   return (
-    <div className="px-3.5 py-2 select-none" dir="rtl">
-      <div className="flex justify-between items-center gap-2">
-        {/* Right side in RTL: Drag icon, ID, and Client Name */}
-        <div className="flex items-center gap-2 min-w-0">
-          {/* Drag Handle - Icon Only (No text) */}
+    <div className="px-3 py-2 select-none" dir="rtl">
+      <div className="flex items-center justify-between gap-2">
+        {/* Right side in RTL: Drag Handle Icon */}
+        <div className="flex items-center shrink-0">
           {dragHandleProps ? (
             <div
               {...dragHandleProps.attributes}
@@ -62,37 +61,37 @@ const CardHeader = ({
               style={{ color: 'var(--token-card-header-subtext)' }}
               title="سحب لإعادة الترتيب"
             >
-              <GripVertical size={14} style={{ color: 'inherit' }} />
+              <GripVertical size={16} style={{ color: 'inherit' }} />
             </div>
           ) : (
             <div
               className="p-0.5 opacity-60 shrink-0"
               style={{ color: 'var(--token-card-header-subtext)' }}
             >
-              <GripVertical size={14} />
+              <GripVertical size={16} />
             </div>
           )}
-
-          {/* Client Name Link */}
-          <div className="flex items-center gap-1.5 min-w-0">
-            <Link
-              to={clientLink}
-              className="no-underline font-bold text-sm font-['Cairo'] transition-colors truncate drop-shadow-xs"
-              style={{ color: 'var(--token-card-header-text)' }}
-              title={client.name}
-            >
-              {client.name}
-            </Link>
-            {isUrgent && (
-              <span title="قصوى" className="shrink-0 flex items-center">
-                <AlertTriangle size={15} className="text-amber-300 fill-amber-300/30" />
-              </span>
-            )}
-          </div>
         </div>
 
-        {/* Left side in RTL: WhatsApp, Google Drive (if valid), and 3-dots Dropdown Menu */}
-        <div className="flex items-center gap-1.5 shrink-0">
+        {/* Center in RTL: Centered Client Name Link */}
+        <div className="flex-1 flex items-center justify-center gap-1.5 min-w-0 px-2 text-center">
+          <Link
+            to={clientLink}
+            className="no-underline font-bold text-sm font-['Cairo'] transition-colors truncate drop-shadow-xs text-center"
+            style={{ color: 'var(--token-card-header-text)' }}
+            title={client.name}
+          >
+            {client.name}
+          </Link>
+          {isUrgent && (
+            <span title="قصوى" className="shrink-0 flex items-center">
+              <AlertTriangle size={15} className="text-amber-300 fill-amber-300/30" />
+            </span>
+          )}
+        </div>
+
+        {/* Left side in RTL: Action buttons group */}
+        <div className="flex items-center gap-1.5 shrink-0 justify-end">
           {/* WhatsApp Button */}
           <button
             onClick={openWhatsApp}

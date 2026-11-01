@@ -257,6 +257,19 @@
   --token-report-btn-settle-sarf-text: #334155;
   --token-report-btn-settle-sarf-border: #cbd5e1;
 
+  /* --- Navbar Tokens (Light Mode - Oceanic Executive Blue) --- */
+  --token-navbar-bg: linear-gradient(135deg, #0284c7 0%, #0369a1 100%);
+  --token-navbar-border: rgba(56, 189, 248, 0.35);
+  --token-navbar-text: #ffffff;
+  --token-navbar-subtext: #e0f2fe;
+  --token-navbar-hover-bg: rgba(255, 255, 255, 0.14);
+  --token-navbar-active-bg: rgba(255, 255, 255, 0.22);
+  --token-navbar-active-text: #ffffff;
+  --token-navbar-active-border: rgba(255, 255, 255, 0.35);
+  --token-navbar-search-bg: rgba(255, 255, 255, 0.2);
+  --token-navbar-search-border: rgba(255, 255, 255, 0.3);
+  --token-navbar-search-text: #ffffff;
+
   /* --- Ledger Final Balance Tokens --- */
   --token-ledger-balance-neg-bg: color-mix(in srgb, var(--primitive-red-600) 22%, var(--token-bg-surface));
   --token-ledger-balance-neg-text: var(--primitive-red-700);
@@ -448,6 +461,19 @@ html[data-theme='dark'] {
   --token-report-btn-settle-sarf-bg: linear-gradient(180deg, rgba(30, 41, 59, 0.5) 0%, rgba(15, 23, 42, 0.7) 100%);
   --token-report-btn-settle-sarf-text: #cbd5e1;
   --token-report-btn-settle-sarf-border: rgba(148, 163, 184, 0.3);
+
+  /* --- Navbar Tokens (Dark Mode - Midnight Sapphire) --- */
+  --token-navbar-bg: linear-gradient(135deg, #0c2d48 0%, #071e3d 100%);
+  --token-navbar-border: rgba(56, 189, 248, 0.22);
+  --token-navbar-text: #f0f9ff;
+  --token-navbar-subtext: #93c5fd;
+  --token-navbar-hover-bg: rgba(56, 189, 248, 0.12);
+  --token-navbar-active-bg: rgba(56, 189, 248, 0.22);
+  --token-navbar-active-text: #38bdf8;
+  --token-navbar-active-border: rgba(56, 189, 248, 0.4);
+  --token-navbar-search-bg: rgba(15, 23, 42, 0.65);
+  --token-navbar-search-border: rgba(56, 189, 248, 0.25);
+  --token-navbar-search-text: #f0f9ff;
 
   /* --- Ledger Final Balance Tokens (Dark Mode) --- */
   --token-ledger-balance-neg-bg: color-mix(in srgb, #ef4444 26%, var(--token-bg-surface));

@@ -177,8 +177,24 @@ const EmployeeNavbar = () => {
   const managementItemClass = "flex items-center justify-start gap-2.5 px-3 py-2 text-sm font-extrabold rounded text-primary hover:underline hover:bg-primary/10 cursor-pointer transition-colors text-right";
   const listItemClass = "flex items-center justify-start px-3 py-2 text-sm font-bold rounded hover:bg-accent hover:text-accent-foreground cursor-pointer transition-colors text-right";
 
+  // Navigation link & dropdown trigger styling matching oceanic/sapphire navbar theme
+  const navItemClass = (isActive: boolean) =>
+    `flex items-center gap-1.5 px-3 py-2 text-xs font-bold rounded-lg transition-all outline-none cursor-pointer whitespace-nowrap ${
+      isActive
+        ? 'bg-white/25 dark:bg-sky-500/25 text-white dark:text-sky-100 border border-white/35 dark:border-sky-400/30 shadow-2xs'
+        : 'text-white/90 dark:text-sky-100/85 hover:bg-white/15 dark:hover:bg-sky-500/15 hover:text-white border border-transparent'
+    }`;
+
   return (
-    <nav className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60" dir="rtl">
+    <nav
+      className="sticky top-0 z-50 w-full border-b select-none shadow-sm transition-all"
+      style={{
+        backgroundImage: 'var(--token-navbar-bg)',
+        borderColor: 'var(--token-navbar-border)',
+        color: 'var(--token-navbar-text)',
+      }}
+      dir="rtl"
+    >
       <div className="flex h-16 items-center px-4 gap-4">
         {/* Right Group: Logo, Welcome, Navigation */}
         <div className="flex items-center gap-4 flex-1 min-w-0">
@@ -189,7 +205,7 @@ const EmployeeNavbar = () => {
 
           {/* Welcome Message */}
           <div className="hidden xl:block mr-4 flex-shrink-0">
-            <span className="text-sm font-bold text-text-primary">
+            <span className="text-sm font-bold text-white">
               مرحباً {user?.display_name}
             </span>
           </div>
@@ -199,27 +215,19 @@ const EmployeeNavbar = () => {
             {/* الصفحة الرئيسية */}
             <NavLink
               to="/employee/dashboard"
-              className={({ isActive }) =>
-                `flex items-center gap-2 px-3 py-2 text-sm font-bold rounded-md transition-colors whitespace-nowrap ${isActive
-                  ? 'bg-primary/10 text-primary'
-                  : 'text-text-secondary hover:bg-accent hover:text-accent-foreground'
-                }`
-              }
+              className={({ isActive }) => navItemClass(isActive)}
             >
-              <Home size={16} />
+              <Home size={15} />
               <span>الصفحة الرئيسية</span>
             </NavLink>
 
             {/* العملاء Dropdown */}
             <NavHoverDropdown
               trigger={
-                <button className={`flex items-center gap-1.5 px-3 py-2 text-sm font-bold rounded-md transition-colors outline-none cursor-pointer ${location.pathname.startsWith('/employee/clients')
-                  ? 'bg-primary/10 text-primary'
-                  : 'text-text-secondary hover:bg-accent hover:text-accent-foreground'
-                  }`}>
-                  <Users size={16} />
+                <button className={navItemClass(location.pathname.startsWith('/employee/clients') || location.pathname.startsWith('/employee/receivables'))}>
+                  <Users size={15} />
                   <span>العملاء</span>
-                  <ChevronDown size={14} className="text-text-secondary opacity-70" />
+                  <ChevronDown size={13} className="opacity-80" />
                 </button>
               }
             >
@@ -247,11 +255,10 @@ const EmployeeNavbar = () => {
             <NavHoverDropdown
               className="min-w-48 text-right max-h-80 overflow-y-auto"
               trigger={
-                <button className={`flex items-center gap-1.5 px-3 py-2 text-sm font-bold rounded-md transition-colors outline-none cursor-pointer ${isCashboxActive ? 'bg-primary/10 text-primary' : 'text-text-secondary hover:bg-accent hover:text-accent-foreground'
-                  }`}>
-                  <Wallet size={16} />
+                <button className={navItemClass(isCashboxActive)}>
+                  <Wallet size={15} />
                   <span>الصناديق</span>
-                  <ChevronDown size={14} className="text-text-secondary opacity-70" />
+                  <ChevronDown size={13} className="opacity-80" />
                 </button>
               }
             >
@@ -277,11 +284,10 @@ const EmployeeNavbar = () => {
             <NavHoverDropdown
               className="min-w-48 text-right max-h-80 overflow-y-auto"
               trigger={
-                <button className={`flex items-center gap-1.5 px-3 py-2 text-sm font-bold rounded-md transition-colors outline-none cursor-pointer ${isBankActive ? 'bg-primary/10 text-primary' : 'text-text-secondary hover:bg-accent hover:text-accent-foreground'
-                  }`}>
-                  <Landmark size={16} />
+                <button className={navItemClass(isBankActive)}>
+                  <Landmark size={15} />
                   <span>البنوك</span>
-                  <ChevronDown size={14} className="text-text-secondary opacity-70" />
+                  <ChevronDown size={13} className="opacity-80" />
                 </button>
               }
             >
@@ -308,10 +314,9 @@ const EmployeeNavbar = () => {
               <NavHoverDropdown
                 className="min-w-48 text-right max-h-80 overflow-y-auto"
                 trigger={
-                  <button className={`flex items-center gap-1.5 px-3 py-2 text-sm font-bold rounded-md transition-colors outline-none cursor-pointer ${isOtherActive ? 'bg-primary/10 text-primary' : 'text-text-secondary hover:bg-accent hover:text-accent-foreground'
-                    }`}>
+                  <button className={navItemClass(isOtherActive)}>
                     <span>حسابات أخرى</span>
-                    <ChevronDown size={14} className="text-text-secondary opacity-70" />
+                    <ChevronDown size={13} className="opacity-80" />
                   </button>
                 }
               >
@@ -327,10 +332,10 @@ const EmployeeNavbar = () => {
             <NavHoverDropdown
               className="w-48 text-right"
               trigger={
-                <button className="flex items-center gap-1.5 px-3 py-2 text-sm font-bold rounded-md text-text-secondary hover:bg-accent hover:text-accent-foreground transition-colors outline-none cursor-pointer">
-                  <ClipboardList size={16} />
+                <button className={navItemClass(location.pathname.startsWith('/employee/tasks'))}>
+                  <ClipboardList size={15} />
                   <span>المهام</span>
-                  <ChevronDown size={14} className="text-text-secondary opacity-70" />
+                  <ChevronDown size={13} className="opacity-80" />
                 </button>
               }
             >
@@ -348,14 +353,9 @@ const EmployeeNavbar = () => {
             {/* معاملاتي / سجل المعاملات */}
             <NavLink
               to="/employee/financials?tab=history"
-              className={({ isActive }) =>
-                `flex items-center gap-2 px-3 py-2 text-sm font-bold rounded-md transition-colors whitespace-nowrap ${isActive || location.pathname.startsWith('/employee/financials')
-                  ? 'bg-primary/10 text-primary'
-                  : 'text-text-secondary hover:bg-accent hover:text-accent-foreground'
-                }`
-              }
+              className={({ isActive }) => navItemClass(isActive || location.pathname.startsWith('/employee/financials'))}
             >
-              <FileSpreadsheet size={16} />
+              <FileSpreadsheet size={15} />
               <span>سجل المعاملات</span>
             </NavLink>
           </div>
@@ -366,11 +366,11 @@ const EmployeeNavbar = () => {
           {/* Search */}
           <div className="relative hidden xxl:block w-48 ml-2">
             <div
-              className="flex items-center w-full px-3 py-1.5 bg-background border border-input rounded-md text-sm text-text-secondary cursor-pointer hover:bg-background transition-colors"
+              className="flex items-center w-full px-3 py-1.5 rounded-lg text-xs cursor-pointer transition-colors shadow-2xs bg-white/20 dark:bg-slate-900/50 border border-white/30 dark:border-sky-500/30 text-white placeholder:text-white/70 hover:bg-white/25"
               onClick={handleSearchFocus}
             >
-              <Search size={16} className="ml-2" />
-              <span>بحث...</span>
+              <Search size={14} className="ml-2 text-white/80" />
+              <span className="text-white/85">بحث...</span>
             </div>
           </div>
 
