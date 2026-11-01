@@ -224,14 +224,14 @@ const EmployeeNavbar = () => {
               }
             >
               <div className="min-w-48 text-right">
-                <Link to={'/employee/clients'} className={managementItemClass}>
-                  <Users size={16} className="text-primary flex-shrink-0" />
+                <Link to={'/employee/receivables'} className={managementItemClass}>
+                  <CreditCard size={16} className="text-primary flex-shrink-0" />
+                  <span>تقرير العملاء "المستحقات"</span>
+                </Link>
+                <Link to={'/employee/clients'} className={menuItemClass}>
+                  <Users size={16} className="text-foreground flex-shrink-0" />
                   <span>إدارة العملاء</span>
                 </Link>
-                <div onClick={() => openModal('clientReport', {})} className={menuItemClass}>
-                  <FileSpreadsheet size={16} className="text-foreground flex-shrink-0" />
-                  <span>كشف حساب العميل</span>
-                </div>
                 <div onClick={() => openModal('clientForm', {})} className={menuItemClass}>
                   <Plus size={16} className="text-foreground flex-shrink-0" />
                   <span>إضافة عميل</span>
@@ -240,11 +240,6 @@ const EmployeeNavbar = () => {
                   <Plus size={16} className="text-foreground flex-shrink-0" />
                   <span>إضافة مهمة</span>
                 </div>
-                <div className="border-t border-border my-1" />
-                <Link to={'/employee/receivables'} className={menuItemClass}>
-                  <CreditCard size={16} className="text-foreground flex-shrink-0" />
-                  <span>مستحقات العملاء</span>
-                </Link>
               </div>
             </NavHoverDropdown>
 
@@ -363,83 +358,6 @@ const EmployeeNavbar = () => {
               <FileSpreadsheet size={16} />
               <span>سجل المعاملات</span>
             </NavLink>
-
-            {/* ── Quick Transactions Bar (Center AFTER all menu links) ───────────── */}
-            {canMakeTransactions && (
-              <div className="flex items-center gap-1.5 ms-2 px-2 py-0.5 rounded-lg border border-border/60 bg-muted/30">
-                <Button
-                  variant="outline-success"
-                  size="sm"
-                  className="h-7 px-2 text-xs font-bold gap-1 whitespace-nowrap"
-                  onClick={() =>
-                    openModal('unifiedTransaction', {
-                      title: 'سند قبض',
-                      defaultFromCardType: 'client',
-                      defaultToCardType: 'cashbox',
-                      lockDirection: false,
-                    })
-                  }
-                >
-                  <TrendingUp size={12} />
-                  <span>سند قبض</span>
-                </Button>
-
-                <Button
-                  variant="outline-danger"
-                  size="sm"
-                  className="h-7 px-2 text-xs font-bold gap-1 whitespace-nowrap"
-                  onClick={() =>
-                    openModal('unifiedTransaction', {
-                      title: 'سند صرف',
-                      defaultFromCardType: 'cashbox',
-                      defaultToCardType: 'client',
-                      lockDirection: false,
-                    })
-                  }
-                >
-                  <TrendingDown size={12} />
-                  <span>سند صرف</span>
-                </Button>
-
-                {canUseSettlement && (
-                <NavHoverDropdown
-                  align="end"
-                  className="w-36 text-right"
-                  trigger={
-                    <Button
-                      variant="outline-secondary"
-                      size="sm"
-                      className="h-7 px-2 text-xs font-bold gap-1 whitespace-nowrap cursor-pointer"
-                    >
-                      <span>تسوية</span>
-                      <ChevronDown size={11} />
-                    </Button>
-                  }
-                >
-                  <div
-                    className="flex items-center justify-start gap-2 text-xs font-bold text-status-success-text cursor-pointer hover:bg-status-success-bg/20 py-2 px-2 rounded"
-                    onClick={() =>
-                      // Standard تسوية preset: قبض = FROM settlement TO cashbox (debit cash up).
-                      openModal('unifiedTransaction', buildSettlementQabdPreset({ kind: 'cashbox' }))
-                    }
-                  >
-                    <TrendingUp size={13} />
-                    <span>تسوية قبض</span>
-                  </div>
-                  <div
-                    className="flex items-center justify-start gap-2 text-xs font-bold text-status-danger-text cursor-pointer hover:bg-status-danger-bg/20 py-2 px-2 rounded"
-                    onClick={() =>
-                      // Standard تسوية preset: صرف = FROM cashbox TO settlement.
-                      openModal('unifiedTransaction', buildSettlementSarfPreset({ kind: 'cashbox' }))
-                    }
-                  >
-                    <TrendingDown size={13} />
-                    <span>تسوية صرف</span>
-                  </div>
-                </NavHoverDropdown>
-                )}
-              </div>
-            )}
           </div>
         </div>
 

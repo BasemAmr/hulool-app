@@ -530,6 +530,18 @@ const UnifiedTransactionModal = () => {
     toPicker.kind === 'settlement' ? toName : `${toKindLabel}: ${toName}`;
   const liveBannerLabel = liveSettlementTitle;
 
+  // Single-entity mode: When one side is preselected (client, employee, treasury, or settlement),
+  // the user only selects the other side full-width, eliminating 'from' vs 'to' confusion.
+  const isFromPreselected = Boolean((fromPresetKind || props?.defaultFromAccountId) && fromPicker.accountId) || fromIsSettlement;
+  const isToPreselected = Boolean((toPresetKind || props?.defaultToAccountId) && toPicker.accountId) || toPicker.kind === 'settlement';
+  const isSingleEntityMode = isSettlement || (isFromPreselected !== isToPreselected);
+  const preselectedSide = fromIsSettlement ? 'from' : (toPicker.kind === 'settlement' ? 'to' : (isFromPreselected ? 'from' : (isToPreselected ? 'to' : null)));
+  const targetChoosableSide = preselectedSide === 'from' ? 'to' : (preselectedSide === 'to' ? 'from' : null);
+
+  const preselectedKind = preselectedSide === 'from' ? fromPicker.kind : toPicker.kind;
+  const preselectedName = preselectedSide === 'from' ? fromName : toName;
+  const preselectedKindLabel = preselectedSide === 'from' ? fromKindLabel : toKindLabel;
+
   return (
     <BaseModal
       isOpen={isVisible}
@@ -632,13 +644,18 @@ const UnifiedTransactionModal = () => {
             <span className="text-sm font-bold text-text-primary">الحسابات</span>
           </div>
 
-          {/* من حساب → إلى حساب — In settlement mode, target account picker spans full row */}
-          {isSettlement ? (
-            <div className="w-full">
+          {/* Single-entity mode: When one side is preselected (client, employee, treasury, or settlement),
+              render target account picker full-width to avoid 'from' vs 'to' confusion */}
+          {isSingleEntityMode && targetChoosableSide ? (
+            <div className="w-full space-y-2.5">
               <AccountPickerCard
-                label={fromIsSettlement ? 'إلى حساب' : 'من حساب'}
-                value={fromIsSettlement ? toPicker : fromPicker}
-                onChange={fromIsSettlement ? setToPicker : setFromPicker}
+                label={
+                  targetChoosableSide === 'to'
+                    ? (direction === 'qabdh' ? 'إلى حساب (إيداع في)' : 'إلى حساب (صرف إلى)')
+                    : (direction === 'qabdh' ? 'من حساب (استلام من)' : 'من حساب (صرف من)')
+                }
+                value={targetChoosableSide === 'to' ? toPicker : fromPicker}
+                onChange={targetChoosableSide === 'to' ? setToPicker : setFromPicker}
                 clients={clients}
                 employees={employees}
                 treasuryData={treasuryData ?? []}
@@ -646,7 +663,18 @@ const UnifiedTransactionModal = () => {
                 presetKind={null}
                 isVisible={isVisible}
                 isRowWide={true}
+                excludeKinds={preselectedKind ? [preselectedKind] : []}
               />
+              {preselectedName && (
+                <div className={`rounded-lg border px-3 py-2 text-xs font-bold ${
+                  isQabd
+                    ? 'border-status-info-border bg-status-info-bg text-status-info-text'
+                    : 'border-status-danger-border bg-status-danger-bg text-status-danger-text'
+                }`}>
+                  <span>{direction === 'qabdh' ? 'سند قبض' : 'سند صرف'} — الطرف المحدد: </span>
+                  <span className="font-extrabold">{preselectedKindLabel ? `${preselectedKindLabel}: ` : ''}{preselectedName}</span>
+                </div>
+              )}
             </div>
           ) : (
             <div className="grid grid-cols-2 gap-3">

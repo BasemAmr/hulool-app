@@ -112,41 +112,11 @@ const EmployeeReceivablesPage = () => {
       <div className="bg-bg-surface border border-border-default rounded-xl shadow-sm overflow-hidden">
         <div className="relative flex flex-col lg:flex-row lg:items-stretch">
           
-          {/* RTL Start (Right side): Title + Transaction Action Buttons */}
-          <div className="flex flex-wrap items-center gap-2 p-3 min-w-0 shrink-0">
-            <h5 className="mb-0 text-primary font-bold text-base px-1 whitespace-nowrap">
+          {/* RTL Start (Right side): Title */}
+          <div className="flex items-center gap-2 p-3 min-w-0 shrink-0">
+            <h5 className="mb-0 text-primary font-bold text-base px-2 whitespace-nowrap">
               {t('receivables.title')}
             </h5>
-
-            <Button
-              variant="outline-success"
-              size="sm"
-              className="font-bold flex items-center gap-1"
-              onClick={() => openModal('unifiedTransaction', {
-                defaultFromCardType: 'client',
-                defaultToCardType: 'cashbox',
-                lockDirection: true,
-                title: 'سند قبض',
-              })}
-            >
-              <TrendingUp size={14} />
-              سند قبض
-            </Button>
-
-            <Button
-              variant="outline-danger"
-              size="sm"
-              className="font-bold flex items-center gap-1"
-              onClick={() => openModal('unifiedTransaction', {
-                defaultFromCardType: 'cashbox',
-                defaultToCardType: 'client',
-                lockDirection: true,
-                title: 'سند صرف',
-              })}
-            >
-              <TrendingDown size={14} />
-              سند صرف
-            </Button>
           </div>
 
           {/* Center: Search input */}

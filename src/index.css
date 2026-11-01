@@ -1287,19 +1287,12 @@ html[data-theme='dark'] .client-card-table th {
   font-weight: 700 !important;
 }
 
-/* Full-cell Final Balance classes for normal rows */
+/* Final Balance cell container for normal rows - let the calm glowing pill badge shine through */
 .ledger-balance-pos,
-.hulool-data-grid .dsg-row:not(.dsg-row-header):hover .dsg-cell.ledger-balance-pos {
-  background-color: var(--token-status-success-bg) !important;
-  color: var(--token-status-success-text) !important;
-  font-weight: 800 !important;
-}
-
+.hulool-data-grid .dsg-row:not(.dsg-row-header):hover .dsg-cell.ledger-balance-pos,
 .ledger-balance-neg,
 .hulool-data-grid .dsg-row:not(.dsg-row-header):hover .dsg-cell.ledger-balance-neg {
-  background-color: var(--token-ledger-balance-neg-bg) !important;
-  color: var(--token-ledger-balance-neg-text) !important;
-  font-weight: 800 !important;
+  background-color: transparent !important;
 }
 
 /* Unified Totals / Summary Row - Softer bluish tint like header row */

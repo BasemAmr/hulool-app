@@ -37,6 +37,7 @@ interface AccountPickerCardProps {
   isVisible: boolean;
   isRowWide?: boolean;
   readOnly?: boolean;
+  excludeKinds?: PickerKind[];
 }
 
 // ========================================
@@ -85,6 +86,7 @@ export default function AccountPickerCard({
   isVisible,
   isRowWide = false,
   readOnly = false,
+  excludeKinds = [],
 }: AccountPickerCardProps) {
   const [forceShowList, setForceShowList] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
@@ -184,8 +186,9 @@ export default function AccountPickerCard({
 
   // ---- Quick action buttons ----
   const renderQuickActions = () => {
-    // Only show settlement when it's the currently selected kind
+    // Only show settlement when it's the currently selected kind, and filter out excluded kinds
     const actions = QUICK_ACTIONS.filter((a) => {
+      if (excludeKinds.includes(a.kind)) return false;
       if (a.kind === 'settlement') return value.kind === 'settlement';
       return true;
     });

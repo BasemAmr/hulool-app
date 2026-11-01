@@ -102,7 +102,21 @@ const TaskRow = ({
         ...(isEmployeeTask ? { outline: '1px solid var(--token-border-strong)' } : {}),
       }}
     >
-      {/* 1. Task Name & Sub-details (Rightmost in RTL) */}
+      {/* 1. Date: Single line with clear text and sharp badge (First column) */}
+      <td className="px-1.5 py-2.5 text-center border-0 align-middle">
+        <span 
+          className="inline-flex items-center justify-center w-full h-6 text-[11px] font-semibold rounded-none whitespace-nowrap tabular-nums font-['Cairo'] shadow-2xs border"
+          style={{
+            backgroundColor: 'var(--token-card-badge-date-bg)',
+            color: 'var(--token-card-badge-date-text)',
+            borderColor: 'var(--token-card-badge-date-border)',
+          }}
+        >
+          {displayDate}
+        </span>
+      </td>
+
+      {/* 2. Task Name & Sub-details (Second column) */}
       <td className="px-3.5 py-2.5 text-right border-0 align-middle">
         <div className="flex flex-col text-right">
           <span 
@@ -122,20 +136,6 @@ const TaskRow = ({
             </span>
           )}
         </div>
-      </td>
-
-      {/* 2. Date: Single line with clear black text and sharp badge */}
-      <td className="px-1.5 py-2.5 text-center border-0 align-middle">
-        <span 
-          className="inline-flex items-center justify-center w-full h-6 text-[11px] font-semibold rounded-none whitespace-nowrap tabular-nums font-['Cairo'] shadow-2xs border"
-          style={{
-            backgroundColor: 'var(--token-card-badge-date-bg)',
-            color: 'var(--token-card-badge-date-text)',
-            borderColor: 'var(--token-card-badge-date-border)',
-          }}
-        >
-          {displayDate}
-        </span>
       </td>
 
       {/* 3. Duration Badge: strictly rounded-none, fixed equal width, whitespace-nowrap */}

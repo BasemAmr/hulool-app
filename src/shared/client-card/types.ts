@@ -114,6 +114,10 @@ export interface CardHeaderProps {
   role: UserRole;
   context: CardContext;
   actions: ClientActions;
+  dragHandleProps?: {
+    attributes?: any;
+    listeners?: any;
+  };
 }
 
 /**

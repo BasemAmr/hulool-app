@@ -1,8 +1,8 @@
 // Card Header Component - Client information header matching reference design
-// Styled for Mostaql Blue Header Theme with RTL alignment and valid Drive link checking
+// Features single-row compact layout: Drag handle (icon-only), ID, Name, WhatsApp, Drive, and 3-dots menu
 
 import { Link } from 'react-router-dom';
-import { AlertTriangle, Cloud } from 'lucide-react';
+import { AlertTriangle, Cloud, GripVertical } from 'lucide-react';
 import WhatsAppIcon from '@/shared/ui/icons/WhatsAppIcon';
 import ClientHeaderDropdown from './ClientHeaderDropdown';
 import type { CardHeaderProps } from './types';
@@ -29,6 +29,7 @@ const CardHeader = ({
   role,
   context,
   actions,
+  dragHandleProps,
 }: CardHeaderProps) => {
   const clientLink = role === 'employee'
     ? `/employee/clients/${client.id}`
@@ -48,14 +49,43 @@ const CardHeader = ({
   const hasValidDriveLink = isValidGoogleDriveLink(client.google_drive_link);
 
   return (
-    <div className="px-4 py-2 bg-transparent" dir="rtl">
-      <div className="flex justify-between items-center gap-3">
-        {/* 1. Right (in RTL): Client name & phone (1st child in RTL flex row) */}
-        <div className="flex flex-col items-start text-right min-w-0">
-          <div className="flex items-center gap-2 max-w-full">
+    <div className="px-3.5 py-2 select-none" dir="rtl">
+      <div className="flex justify-between items-center gap-2">
+        {/* Right side in RTL: Drag icon, ID, and Client Name */}
+        <div className="flex items-center gap-2 min-w-0">
+          {/* Drag Handle - Icon Only (No text) */}
+          {dragHandleProps ? (
+            <div
+              {...dragHandleProps.attributes}
+              {...dragHandleProps.listeners}
+              className="cursor-grab active:cursor-grabbing hover:opacity-100 transition-opacity p-0.5 rounded shrink-0"
+              style={{ color: 'var(--token-card-header-subtext)' }}
+              title="سحب لإعادة الترتيب"
+            >
+              <GripVertical size={14} style={{ color: 'inherit' }} />
+            </div>
+          ) : (
+            <div
+              className="p-0.5 opacity-60 shrink-0"
+              style={{ color: 'var(--token-card-header-subtext)' }}
+            >
+              <GripVertical size={14} />
+            </div>
+          )}
+
+          {/* Client ID */}
+          <span
+            className="text-[11px] font-mono font-bold tabular-nums opacity-90 shrink-0"
+            style={{ color: 'var(--token-card-header-subtext)' }}
+          >
+            ID #{client.id}
+          </span>
+
+          {/* Client Name Link */}
+          <div className="flex items-center gap-1.5 min-w-0">
             <Link
               to={clientLink}
-              className="no-underline font-bold text-base font-['Cairo'] transition-colors truncate drop-shadow-xs"
+              className="no-underline font-bold text-sm font-['Cairo'] transition-colors truncate drop-shadow-xs"
               style={{ color: 'var(--token-card-header-text)' }}
               title={client.name}
             >
@@ -63,26 +93,18 @@ const CardHeader = ({
             </Link>
             {isUrgent && (
               <span title="قصوى" className="shrink-0 flex items-center">
-                <AlertTriangle size={16} className="text-amber-300 fill-amber-300/30" />
+                <AlertTriangle size={15} className="text-amber-300 fill-amber-300/30" />
               </span>
             )}
           </div>
-          {client.phone && (
-            <span 
-              className="text-xs font-medium font-['Cairo'] mt-0.5 tracking-wide tabular-nums"
-              style={{ color: 'var(--token-card-header-subtext)' }}
-            >
-              {client.phone}
-            </span>
-          )}
         </div>
 
-        {/* 2. Left (in RTL): Action buttons group (2nd child in RTL flex row) */}
+        {/* Left side in RTL: WhatsApp, Google Drive (if valid), and 3-dots Dropdown Menu */}
         <div className="flex items-center gap-1.5 shrink-0">
-          {/* WhatsApp Button (Green) */}
+          {/* WhatsApp Button */}
           <button
             onClick={openWhatsApp}
-            className="w-8 h-8 rounded-none flex items-center justify-center shadow-2xs transition-all active:scale-95 cursor-pointer"
+            className="w-7 h-7 rounded-sm flex items-center justify-center shadow-2xs transition-all active:scale-95 cursor-pointer"
             style={{
               backgroundColor: 'var(--token-brand-whatsapp)',
               color: 'var(--token-card-header-btn-text)',
@@ -93,14 +115,14 @@ const CardHeader = ({
             title="واتساب"
             type="button"
           >
-            <WhatsAppIcon size={16} />
+            <WhatsAppIcon size={14} />
           </button>
 
-          {/* Cloud Button (Only rendered if valid Google Drive link exists!) */}
+          {/* Cloud Button (Only rendered if valid Google Drive link exists) */}
           {hasValidDriveLink && (
             <button
               onClick={openGoogleDrive}
-              className="w-8 h-8 rounded-none flex items-center justify-center shadow-2xs transition-all active:scale-95 cursor-pointer"
+              className="w-7 h-7 rounded-sm flex items-center justify-center shadow-2xs transition-all active:scale-95 cursor-pointer"
               style={{
                 backgroundColor: 'var(--token-card-header-btn-bg)',
                 color: 'var(--token-card-header-btn-text)',
@@ -111,7 +133,7 @@ const CardHeader = ({
               title="Google Drive"
               type="button"
             >
-              <Cloud size={16} style={{ color: 'var(--token-card-header-btn-text)' }} />
+              <Cloud size={14} style={{ color: 'var(--token-card-header-btn-text)' }} />
             </button>
           )}
 

@@ -132,78 +132,10 @@ const AllClientsPage = () => {
         <div className="flex items-center gap-3">
           <h5 className="mb-0 text-primary font-bold text-xl">{t('clients.title')}</h5>
           
-          <Button onClick={handleAddClient} size="sm" className="hover:scale-105 transition-transform">
+          <Button onClick={handleAddClient} size="sm" className="hover:scale-105 transition-transform font-bold">
             <PlusCircle size={16} className="me-1" />
             {t('clients.addNew')}
           </Button>
-
-          {/* سند قبض */}
-          <Button
-            variant="outline-success"
-            size="sm"
-            className="font-bold flex items-center gap-1"
-            onClick={() => openModal('unifiedTransaction', {
-              defaultFromCardType: 'client',
-              defaultToCardType: 'cashbox',
-              lockDirection: true,
-              title: 'سند قبض',
-            })}
-          >
-            <TrendingUp size={16} />
-            سند قبض
-          </Button>
-
-          {/* سند صرف */}
-          <Button
-            variant="outline-danger"
-            size="sm"
-            className="font-bold flex items-center gap-1"
-            onClick={() => openModal('unifiedTransaction', {
-              defaultFromCardType: 'cashbox',
-              defaultToCardType: 'client',
-              lockDirection: true,
-              title: 'سند صرف',
-            })}
-          >
-            <TrendingDown size={16} />
-            سند صرف
-          </Button>
-
-          {/* سند تسوية - whole menu is settlement-only, so hide the dropdown too */}
-          {canUseSettlement && (
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button
-                variant="outline-secondary"
-                size="sm"
-                className="font-bold flex items-center gap-1"
-              >
-                <span>سند تسوية</span>
-                <ChevronDown size={16} />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="text-right">
-              <DropdownMenuItem
-                className="cursor-pointer flex flex-row-reverse justify-end gap-2 text-status-success-text font-bold"
-                onClick={() => openModal('unifiedTransaction',
-                  // Standard تسوية preset: قبض = FROM settlement TO cashbox (debit cash up).
-                  buildSettlementQabdPreset({ kind: 'cashbox' }))}
-              >
-                <span>تسوية قبض</span>
-                <TrendingUp size={16} className="text-status-success-text" />
-              </DropdownMenuItem>
-              <DropdownMenuItem
-                className="cursor-pointer flex flex-row-reverse justify-end gap-2 text-status-danger-text font-bold"
-                onClick={() => openModal('unifiedTransaction',
-                  // Standard تسوية preset: صرف = FROM cashbox TO settlement.
-                  buildSettlementSarfPreset({ kind: 'cashbox' }))}
-              >
-                <span>تسوية صرف</span>
-                <TrendingDown size={16} className="text-status-danger-text" />
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-          )}
         </div>
         
         {/* Search and Export */}

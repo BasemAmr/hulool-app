@@ -1,8 +1,7 @@
 // BaseClientCard - Unified client card component matching reference design
-// Features Mostaql Blue Header Theme, RTL hierarchy, and sharp standardized badges
+// Features Mostaql Blue Header Theme, compact single-block header, Date-first columns, and sharp standardized badges
 
 import { useRef, useEffect, useState } from 'react';
-import { GripVertical } from 'lucide-react';
 import CardHeader from './CardHeader';
 import TaskRow from './TaskRow';
 import type { BaseClientCardProps } from './types';
@@ -69,63 +68,24 @@ const BaseClientCard = ({
       onMouseLeave={() => setIsHovered(false)}
       dir="rtl"
     >
-      {/* 1. Upper Zone: Solid Header Band (Drag handle, ID, Name, Phone, Actions) */}
+      {/* 1. Upper Zone: Single Compact Header Band (Drag handle, ID, Name, WhatsApp, Actions) */}
       <div 
         style={{
           backgroundColor: 'var(--token-card-header-solid-bg)',
           color: 'var(--token-card-header-text)',
         }}
       >
-        {/* Top Sub-bar: Drag Handle on Right, Client ID on Left */}
-        <div 
-          className="px-4 pt-2.5 pb-1 flex justify-between items-center text-xs border-b select-none"
-          style={{
-            borderBottomColor: 'var(--token-card-header-border)',
-            color: 'var(--token-card-header-subtext)',
-          }}
-        >
-          {/* Right (in RTL): Drag Handle */}
-          {dragHandleProps ? (
-            <div
-              {...dragHandleProps.attributes}
-              {...dragHandleProps.listeners}
-              className="flex items-center gap-1.5 cursor-grab active:cursor-grabbing hover:opacity-100 transition-opacity"
-              style={{ color: 'var(--token-card-header-subtext)' }}
-              title="اسحب لإعادة الترتيب"
-            >
-              <GripVertical size={13} style={{ color: 'inherit' }} />
-              <span className="text-[11px] font-medium font-['Cairo']">اسحب لإعادة الترتيب</span>
-            </div>
-          ) : (
-            <div 
-              className="flex items-center gap-1.5 opacity-60"
-              style={{ color: 'var(--token-card-header-subtext)' }}
-            >
-              <GripVertical size={13} />
-              <span className="text-[11px] font-medium font-['Cairo']">اسحب لإعادة الترتيب</span>
-            </div>
-          )}
-
-          {/* Left (in RTL): Client ID */}
-          <span 
-            className="text-[11px] font-mono font-medium tabular-nums"
-            style={{ color: 'var(--token-card-header-subtext)' }}
-          >
-            ID #{client.id}
-          </span>
-        </div>
-
-        {/* Card Header: Client Name, Phone, and Action Buttons */}
         <CardHeader
           client={client}
           isUrgent={isClientUrgent}
           role={role}
           context={context}
           actions={clientActions}
+          dragHandleProps={dragHandleProps}
         />
       </div>
 
-      {/* 2. Card Body: Tasks Table directly filling the card body, edge-to-edge, fully blended */}
+      {/* 2. Card Body: Tasks Table directly filling the card body, edge-to-edge, Date-first */}
       <div 
         className="flex-1 overflow-hidden"
         style={{
@@ -134,17 +94,17 @@ const BaseClientCard = ({
       >
         <table className="w-full table-fixed text-sm font-['Cairo'] border-collapse">
           <colgroup>
-            {/* Task Name - fluid flex width */}
-            <col />
-            {/* Date */}
+            {/* 1. Date */}
             <col className="w-[84px]" />
-            {/* Duration */}
+            {/* 2. Task Name - fluid flex width */}
+            <col />
+            {/* 3. Duration */}
             <col className="w-[72px]" />
-            {/* Amount */}
+            {/* 4. Amount */}
             {showAmountColumn && <col className="w-[72px]" />}
-            {/* Status */}
+            {/* 5. Status */}
             {showStatus && <col className="w-[72px]" />}
-            {/* Actions */}
+            {/* 6. Actions */}
             <col className="w-[60px]" />
           </colgroup>
           <thead>
@@ -156,11 +116,11 @@ const BaseClientCard = ({
                 borderBottomColor: 'var(--token-card-table-head-border)',
               }}
             >
-              <th className="px-3.5 py-2 text-right font-bold" style={{ color: 'inherit' }}>
-                المهمة
-              </th>
               <th className="px-1.5 py-2 text-center font-bold" style={{ color: 'inherit' }}>
                 التاريخ
+              </th>
+              <th className="px-3.5 py-2 text-right font-bold" style={{ color: 'inherit' }}>
+                المهمة
               </th>
               <th className="px-1.5 py-2 text-center font-bold" style={{ color: 'inherit' }}>
                 المدة
