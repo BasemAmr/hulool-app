@@ -207,7 +207,7 @@ const Navbar = () => {
           >
             <Link to={'/receivables'} className={managementItemClass}>
               <CreditCard size={16} className="text-primary flex-shrink-0" />
-              <span>تقرير العملاء "المستحقات"</span>
+              <span>تقرير العملاء</span>
             </Link>
             <Link to={'/clients'} className={menuItemClass}>
               <Users size={16} className="text-foreground flex-shrink-0" />

@@ -226,7 +226,7 @@ const EmployeeNavbar = () => {
               <div className="min-w-48 text-right">
                 <Link to={'/employee/receivables'} className={managementItemClass}>
                   <CreditCard size={16} className="text-primary flex-shrink-0" />
-                  <span>تقرير العملاء "المستحقات"</span>
+                  <span>تقرير العملاء</span>
                 </Link>
                 <Link to={'/employee/clients'} className={menuItemClass}>
                   <Users size={16} className="text-foreground flex-shrink-0" />
