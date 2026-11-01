@@ -36,6 +36,7 @@ interface AccountPickerCardProps {
   presetKind?: PickerKind | null;
   isVisible: boolean;
   isRowWide?: boolean;
+  readOnly?: boolean;
 }
 
 // ========================================
@@ -83,9 +84,59 @@ export default function AccountPickerCard({
   presetKind,
   isVisible,
   isRowWide = false,
+  readOnly = false,
 }: AccountPickerCardProps) {
   const [forceShowList, setForceShowList] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+
+  // When read-only, render a clean, uneditable display of the selected account
+  if (readOnly) {
+    let accountName = '';
+    let accountBalance: number | null = null;
+    let kindLabel = '';
+
+    if (value.kind === 'client') {
+      const c = clients.find((a) => String(a.id) === value.accountId);
+      accountName = c?.name ?? `عميل #${value.accountId}`;
+      accountBalance = typeof c?.balance === 'number' ? c.balance : null;
+      kindLabel = 'عميل';
+    } else if (value.kind === 'employee') {
+      const e = employees.find((a) => String(a.id) === value.accountId);
+      accountName = e?.name ?? `موظف #${value.accountId}`;
+      kindLabel = 'موظف';
+    } else if (value.kind === 'cashbox' || value.kind === 'bank' || value.kind === 'other' || value.kind === 'settlement') {
+      const t = treasuryData.find((a) => String(a.id) === value.accountId);
+      accountName = t?.name ?? `حساب #${value.accountId}`;
+      accountBalance = typeof t?.balance === 'number' ? t.balance : (t ? parseFloat(String(t.balance || 0)) : null);
+      kindLabel = value.kind === 'cashbox' ? 'صندوق' : (value.kind === 'bank' ? 'بنك' : (value.kind === 'settlement' ? 'تسوية' : 'حساب آخر'));
+    }
+
+    const Icon = value.kind === 'client' ? User : (value.kind === 'employee' ? User : (value.kind === 'cashbox' ? Wallet : (value.kind === 'bank' ? Landmark : Building2)));
+
+    return (
+      <div className="rounded-xl border border-border-default bg-card p-3.5 space-y-2">
+        <div className="flex items-center justify-between">
+          <span className="text-xs font-bold text-text-secondary">{label}</span>
+          {kindLabel && (
+            <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-muted text-text-secondary border border-border-default">
+              {kindLabel}
+            </span>
+          )}
+        </div>
+        <div className="flex items-center justify-between rounded-lg border border-border-strong bg-muted/40 p-2.5 text-xs font-bold">
+          <div className="flex items-center gap-2 min-w-0">
+            <Icon size={14} className="text-primary shrink-0" />
+            <span className="truncate">{accountName || '—'}</span>
+            {accountBalance !== null && (
+              <span className="text-text-secondary font-mono text-[11px] shrink-0" dir="ltr">
+                ({formatCurrency(accountBalance)})
+              </span>
+            )}
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   // ---- Filter treasury accounts by kind/category ----
   const filteredTreasuryAccounts = useMemo(() => {

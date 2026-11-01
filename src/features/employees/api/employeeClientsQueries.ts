@@ -65,6 +65,7 @@ export const useGetEmployeeClientsInfinite = (filters: Omit<EmployeeClientsParam
       const queryParams = new URLSearchParams();
       queryParams.append('page', pageParam.toString());
       queryParams.append('per_page', per_page.toString());
+      queryParams.append('include_stats', 'true');
 
       if (search) queryParams.append('search', search);
 

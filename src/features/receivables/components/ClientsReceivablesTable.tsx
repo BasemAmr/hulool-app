@@ -161,12 +161,21 @@ const TotalCreditCell = React.memo(({ rowData, active }: CellProps<ClientReceiva
 });
 TotalCreditCell.displayName = 'TotalCreditCell';
 
-// Remaining Amount Cell - Red currency
+// Remaining Amount Cell - Red for debt, Green for credit
 const RemainingCell = React.memo(({ rowData, active }: CellProps<ClientReceivablesSummary>) => {
-  const amount = Math.max(0, Number(rowData.remaining_amount) || 0);
+  const amount = Number(rowData.remaining_amount) || 0;
+  const isDebt = amount > 0;
+  const isCredit = amount < 0;
 
   return (
-    <span className="hulool-cell-content" style={{ justifyContent: 'center', fontWeight: active ? 800 : 700, color: 'var(--token-text-primary)' }}>
+    <span
+      className="hulool-cell-content"
+      style={{
+        justifyContent: 'center',
+        fontWeight: active ? 800 : 700,
+        color: isDebt ? 'var(--token-text-danger)' : (isCredit ? 'var(--token-text-success)' : 'var(--token-text-primary)'),
+      }}
+    >
       {formatCurrency(amount)}
     </span>
   );
@@ -218,51 +227,58 @@ const ActionsCell = React.memo(({ rowData, columnData }: CellProps<ClientReceiva
     <div
       style={{
         display: 'flex',
-        gap: '4px',
-        justifyContent: 'center',
+        justifyContent: 'space-around',
         alignItems: 'center',
         height: '100%',
+        width: '100%',
+        padding: '0 6px',
         pointerEvents: 'auto',
       }}
       onMouseDown={(e) => e.stopPropagation()}
       onClick={(e) => e.stopPropagation()}
     >
-      <button
-        type="button"
-        onClick={handleViewLedger}
-        title="عرض كشف الحساب"
-        className={neutralActionButtonClass}
-      >
-        <Edit3 size={14} />
-      </button>
-
-      <button
-        type="button"
-        onClick={handleReminder}
-        title="إرسال تذكير دفع عبر واتساب"
-        disabled={!hasDebt}
-        className={neutralActionButtonClass}
-      >
-        <WhatsAppIcon size={14} />
-      </button>
-
-      {hasUnpaidInvoices && (
+      {/* Subtag 1: Client utility actions (Pen / View Ledger, WhatsApp, Pay Invoice) */}
+      <div className="flex items-center gap-1.5 shrink-0">
         <button
           type="button"
-          onClick={handlePay}
-          title="سداد فاتورة"
-          className="inline-flex items-center justify-center rounded p-1 text-text-secondary hover:text-text-primary hover:bg-muted/40 cursor-pointer transition-colors"
+          onClick={handleViewLedger}
+          title="عرض كشف الحساب"
+          className={neutralActionButtonClass}
         >
-          <CreditCard size={15} />
+          <Edit3 size={14} />
         </button>
-      )}
 
-      <div className="flex items-center gap-1">
+        <button
+          type="button"
+          onClick={handleReminder}
+          title="إرسال تذكير دفع عبر واتساب"
+          disabled={!hasDebt}
+          className={`${neutralActionButtonClass} ${!hasDebt ? 'opacity-30 cursor-not-allowed' : ''}`}
+        >
+          <WhatsAppIcon size={14} />
+        </button>
+
+        {hasUnpaidInvoices ? (
+          <button
+            type="button"
+            onClick={handlePay}
+            title="سداد فاتورة"
+            className="inline-flex items-center justify-center rounded p-1 text-text-secondary hover:text-text-primary hover:bg-muted/40 cursor-pointer transition-colors"
+          >
+            <CreditCard size={15} />
+          </button>
+        ) : (
+          <div className="w-[23px] h-[23px]" aria-hidden="true" />
+        )}
+      </div>
+
+      {/* Subtag 2: Transaction voucher actions (قبض, صرف, تسوية) */}
+      <div className="flex items-center gap-1 shrink-0">
         <button
           type="button"
           onClick={() => onQabd?.(rowData.client_id)}
           title="سند قبض"
-          className="inline-flex items-center gap-0.5 px-1.5 py-0.5 text-xs font-bold rounded border border-status-success-border text-status-success-text bg-status-success-bg hover:opacity-85 transition-opacity cursor-pointer"
+          className="inline-flex items-center gap-0.5 px-1.5 py-0.5 text-xs font-bold rounded border border-status-success-border text-status-success-text bg-status-success-bg hover:opacity-85 transition-opacity cursor-pointer shadow-2xs"
         >
           <TrendingUp size={11} />
           قبض
@@ -271,7 +287,7 @@ const ActionsCell = React.memo(({ rowData, columnData }: CellProps<ClientReceiva
           type="button"
           onClick={() => onSarf?.(rowData.client_id)}
           title="سند صرف"
-          className="inline-flex items-center gap-0.5 px-1.5 py-0.5 text-xs font-bold rounded border border-status-danger-border text-status-danger-text bg-status-danger-bg hover:opacity-85 transition-opacity cursor-pointer"
+          className="inline-flex items-center gap-0.5 px-1.5 py-0.5 text-xs font-bold rounded border border-status-danger-border text-status-danger-text bg-status-danger-bg hover:opacity-85 transition-opacity cursor-pointer shadow-2xs"
         >
           <TrendingDown size={11} />
           صرف
@@ -280,7 +296,7 @@ const ActionsCell = React.memo(({ rowData, columnData }: CellProps<ClientReceiva
           <DropdownMenuTrigger asChild>
             <button
               type="button"
-              className="inline-flex items-center gap-0.5 px-1.5 py-0.5 text-xs font-bold rounded border border-border text-text-primary bg-background hover:bg-muted/40 transition-colors cursor-pointer"
+              className="inline-flex items-center gap-0.5 px-1.5 py-0.5 text-xs font-bold rounded border border-border text-text-primary bg-background hover:bg-muted/40 transition-colors cursor-pointer shadow-2xs"
             >
               تسوية
               <ChevronDown size={10} />
@@ -387,23 +403,6 @@ const ClientsReceivablesTable: React.FC<ClientsReceivablesTableProps> = ({
     }));
   };
 
-  // Filter clients with debt
-  const filteredClients = useMemo(() =>
-    clients.filter(client => (Number(client.remaining_amount) || 0) > 0),
-    [clients]
-  );
-
-  // Calculate display totals from API or fallback
-  const displayTotals = useMemo(() => totals ? {
-    totalAmount: totals.total_amount,
-    paidAmount: totals.total_paid,
-    remainingAmount: totals.total_unpaid,
-  } : {
-    totalAmount: 0,
-    paidAmount: 0,
-    remainingAmount: 0,
-  }, [totals]);
-
   // Define columns - order is right-to-left for RTL (first = rightmost)
   const columns = useMemo((): HuloolGridColumn<ClientReceivablesSummary>[] => [
     {
@@ -431,7 +430,7 @@ const ClientsReceivablesTable: React.FC<ClientsReceivablesTableProps> = ({
       type: 'custom',
       component: TotalDebitCell,
       grow: 1,
-      cellClassName: ({ rowData }) => {
+      cellClassName: () => {
         return 'client-debit-cell';
       }
     },
@@ -442,7 +441,7 @@ const ClientsReceivablesTable: React.FC<ClientsReceivablesTableProps> = ({
       type: 'custom',
       component: TotalCreditCell,
       grow: 1,
-      cellClassName: ({ rowData }) => {
+      cellClassName: () => {
         return 'client-credit-cell';
       }
     },
@@ -470,16 +469,17 @@ const ClientsReceivablesTable: React.FC<ClientsReceivablesTableProps> = ({
         onTaswiyaQabd: handleTaswiyaQabd,
         onTaswiyaSarf: handleTaswiyaSarf,
       },
-      grow: 1.5,
+      width: 290,
+      grow: 1.8,
     },
   ], [handleClientClick, handleWhatsApp, openModal, handlePaymentReminder, handlePayment, handleViewLedger, handleQabd, handleSarf, handleTaswiyaQabd, handleTaswiyaSarf]);
 
   // Empty state
-  if (!clients || clients.length === 0 || filteredClients.length === 0) {
+  if (!clients || clients.length === 0) {
     return (
       <div className="text-center py-5">
         <p className="text-text-primary">
-          لا يوجد عملاء لديهم مستحقات
+          لا توجد نتائج
         </p>
       </div>
     );
@@ -489,10 +489,10 @@ const ClientsReceivablesTable: React.FC<ClientsReceivablesTableProps> = ({
     <div className="clients-receivables-wrapper" dir="rtl">
       {/* Main Grid */}
       <HuloolDataGrid
-        data={filteredClients}
+        data={clients}
         columns={columns}
         isLoading={isLoading}
-        emptyMessage="لا يوجد عملاء لديهم مستحقات"
+        emptyMessage="لا توجد نتائج"
         showId={false}
         height="auto"
         minHeight={400}
