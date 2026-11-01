@@ -58,25 +58,20 @@ export const LedgerFinalBalanceCell: React.FC<LedgerFinalBalanceCellProps> = ({
   const wentDown = delta === null || delta === undefined ? isDanger : Number(delta) < 0;
 
   return (
-    <div className="hulool-cell-content w-full h-full flex items-center justify-center p-1">
-      <div
-        className="inline-flex items-center justify-center gap-1.5 px-3 py-1 rounded-lg text-xs font-bold tabular-nums border shadow-2xs transition-all"
-        style={{
-          backgroundImage: isZero ? 'none' : (isDanger ? 'var(--token-report-btn-sarf-bg)' : 'var(--token-report-btn-qabd-bg)'),
-          backgroundColor: isZero ? 'var(--token-report-card-input-bg)' : undefined,
-          color: isZero ? 'var(--token-report-card-subtext)' : (isDanger ? 'var(--token-report-btn-sarf-text)' : 'var(--token-report-btn-qabd-text)'),
-          borderColor: isZero ? 'var(--token-report-card-border)' : (isDanger ? 'var(--token-report-btn-sarf-border)' : 'var(--token-report-btn-qabd-border)'),
-        }}
-      >
-        {!isZero && (
-          wentDown ? (
-            <TrendingDown size={14} className="shrink-0" style={{ color: 'inherit' }} />
-          ) : (
-            <TrendingUp size={14} className="shrink-0" style={{ color: 'inherit' }} />
-          )
-        )}
-        <span style={{ color: 'inherit' }}>{formatCurrency(num)}</span>
-      </div>
+    <div
+      className="hulool-cell-content w-full h-full flex items-center justify-center gap-1.5 font-bold text-sm tabular-nums"
+      style={{
+        color: isZero ? 'var(--token-text-primary)' : (isDanger ? 'var(--token-report-btn-sarf-text)' : 'var(--token-report-btn-qabd-text)'),
+      }}
+    >
+      {!isZero && (
+        wentDown ? (
+          <TrendingDown size={14} className="shrink-0" style={{ color: 'inherit' }} />
+        ) : (
+          <TrendingUp size={14} className="shrink-0" style={{ color: 'inherit' }} />
+        )
+      )}
+      <span style={{ color: 'inherit' }}>{formatCurrency(num)}</span>
     </div>
   );
 };

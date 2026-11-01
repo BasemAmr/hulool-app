@@ -73,14 +73,6 @@ const CardHeader = ({
             </div>
           )}
 
-          {/* Client ID */}
-          <span
-            className="text-[11px] font-mono font-bold tabular-nums opacity-90 shrink-0"
-            style={{ color: 'var(--token-card-header-subtext)' }}
-          >
-            ID #{client.id}
-          </span>
-
           {/* Client Name Link */}
           <div className="flex items-center gap-1.5 min-w-0">
             <Link

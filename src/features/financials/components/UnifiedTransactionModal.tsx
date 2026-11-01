@@ -649,11 +649,7 @@ const UnifiedTransactionModal = () => {
           {isSingleEntityMode && targetChoosableSide ? (
             <div className="w-full space-y-2.5">
               <AccountPickerCard
-                label={
-                  targetChoosableSide === 'to'
-                    ? (direction === 'qabdh' ? 'إلى حساب (إيداع في)' : 'إلى حساب (صرف إلى)')
-                    : (direction === 'qabdh' ? 'من حساب (استلام من)' : 'من حساب (صرف من)')
-                }
+                label={targetChoosableSide === 'to' ? 'إلى حساب' : 'من حساب'}
                 value={targetChoosableSide === 'to' ? toPicker : fromPicker}
                 onChange={targetChoosableSide === 'to' ? setToPicker : setFromPicker}
                 clients={clients}
@@ -665,14 +661,13 @@ const UnifiedTransactionModal = () => {
                 isRowWide={true}
                 excludeKinds={preselectedKind ? [preselectedKind] : []}
               />
-              {preselectedName && (
+              {fromName && toName && (
                 <div className={`rounded-lg border px-3 py-2 text-xs font-bold ${
                   isQabd
                     ? 'border-status-info-border bg-status-info-bg text-status-info-text'
                     : 'border-status-danger-border bg-status-danger-bg text-status-danger-text'
                 }`}>
-                  <span>{direction === 'qabdh' ? 'سند قبض' : 'سند صرف'} — الطرف المحدد: </span>
-                  <span className="font-extrabold">{preselectedKindLabel ? `${preselectedKindLabel}: ` : ''}{preselectedName}</span>
+                  <span>من حساب ({fromName}) الى حساب ({toName})</span>
                 </div>
               )}
             </div>
@@ -741,9 +736,9 @@ const UnifiedTransactionModal = () => {
               أكمل اختيار الحسابين لعرض اتجاه التسوية
             </div>
           )}
-          {isSettlementSideLive && liveBannerLabel && (liveDirection === 'qabd' || liveDirection === 'sarf') && (
+          {isSettlementSideLive && fromName && toName && (liveDirection === 'qabd' || liveDirection === 'sarf') && (
             <div className="mt-3 rounded-lg border border-status-info-border bg-status-info-bg p-2.5 text-xs font-bold text-status-info-text">
-              {`${liveBannerLabel} — من ${bannerFromStr} إلى ${bannerToStr}`}
+              {`من حساب (${fromName}) الى حساب (${toName})`}
             </div>
           )}
 
@@ -831,43 +826,6 @@ const UnifiedTransactionModal = () => {
                 className="w-full rounded-lg border border-border-default bg-background p-2.5 text-xs font-medium text-text-primary placeholder:text-text-secondary/40 focus:outline-none focus:ring-1 focus:ring-primary-500/20 focus:border-primary-500/40 transition-all resize-none"
               />
             </div>
-
-            {/* Document Template / Print Mask for Treasury <-> Client transactions */}
-            {((resolvedFromType === 'treasury' && resolvedToType === 'client') ||
-              (resolvedFromType === 'client' && resolvedToType === 'treasury')) && (
-              <div className="flex items-center justify-between p-2.5 bg-surface-subtle/50 rounded-lg border border-border/60 text-xs">
-                <div className="flex flex-col">
-                  <span className="font-semibold text-text-primary">نوع السند المطبوع للعميل</span>
-                  <span className="text-[11px] text-text-secondary/80">تحديد صيغة السند المطبوع في الـ PDF دون التأثير على القيد المحاسبي</span>
-                </div>
-                <div className="flex items-center gap-1 bg-background p-0.5 rounded-md border border-border">
-                  <button
-                    type="button"
-                    onClick={() => setVoucherTypeOverride('')}
-                    className={`px-2.5 py-1 rounded text-xs font-medium transition-all ${
-                      voucherTypeOverride === ''
-                        ? 'bg-primary-50 text-primary-700 font-bold shadow-xs border border-primary-200'
-                        : 'text-text-secondary hover:text-text-primary'
-                    }`}
-                  >
-                    {defaultVoucherLabel} (افتراضي)
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setVoucherTypeOverride(altVoucherType)}
-                    className={`px-2.5 py-1 rounded text-xs font-medium transition-all ${
-                      voucherTypeOverride === altVoucherType
-                        ? (altVoucherType === 'receipt'
-                            ? 'bg-status-success-bg text-status-success-text font-bold shadow-xs border border-status-success-border'
-                            : 'bg-status-danger-bg text-status-danger-text font-bold shadow-xs border border-status-danger-border')
-                        : 'text-text-secondary hover:text-text-primary'
-                    }`}
-                  >
-                    {altVoucherLabel}
-                  </button>
-                </div>
-              </div>
-            )}
 
             {/* Negative Treasury Balance Warning (No fluff) */}
             {isNegativeTreasuryDisallowed && (

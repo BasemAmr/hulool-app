@@ -11,7 +11,20 @@ interface TaskTypeStepProps {
 
 const TaskTypeStep = ({ control, errors, onTypeSelected }: TaskTypeStepProps) => {
   const { t } = useTranslation();
-  const taskTypes: TaskType[] = ['Government', 'RealEstate', 'Accounting', 'Other'];
+  const taskCategories = [
+    {
+      submitsType: 'Government' as TaskType,
+      label: 'خدمات قيد الإجراء',
+      matchTypes: ['Government' as TaskType],
+      icon: 'fas fa-file-signature',
+    },
+    {
+      submitsType: 'Accounting' as TaskType,
+      label: 'خدمات أخرى',
+      matchTypes: ['Accounting' as TaskType, 'RealEstate' as TaskType, 'Other' as TaskType],
+      icon: 'fas fa-tasks',
+    },
+  ];
 
   return (
     <div className="task-type-step">
@@ -27,24 +40,24 @@ const TaskTypeStep = ({ control, errors, onTypeSelected }: TaskTypeStepProps) =>
           rules={{ required: true }}
           render={({ field }) => (
             <>
-              {taskTypes.map((type) => (
-                <div
-                  key={type}
-                  className={`type-card ${field.value === type ? 'selected' : ''}`}
-                  onClick={() => {
-                    field.onChange(type);
-                    onTypeSelected(type as TaskType);
-                  }}
-                >
-                  <div className="type-icon">
-                    {type === 'Government' && <i className="fas fa-building"></i>}
-                    {type === 'RealEstate' && <i className="fas fa-home"></i>}
-                    {type === 'Accounting' && <i className="fas fa-calculator"></i>}
-                    {type === 'Other' && <i className="fas fa-tasks"></i>}
+              {taskCategories.map((item) => {
+                const isSelected = item.matchTypes.includes(field.value);
+                return (
+                  <div
+                    key={item.submitsType}
+                    className={`type-card ${isSelected ? 'selected' : ''}`}
+                    onClick={() => {
+                      field.onChange(item.submitsType);
+                      onTypeSelected(item.submitsType);
+                    }}
+                  >
+                    <div className="type-icon">
+                      <i className={item.icon}></i>
+                    </div>
+                    <div className="type-label">{item.label}</div>
                   </div>
-                  <div className="type-label">{translateTaskType(type)}</div>
-                </div>
-              ))}
+                );
+              })}
             </>
           )}
         />

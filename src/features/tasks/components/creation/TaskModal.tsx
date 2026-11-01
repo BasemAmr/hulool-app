@@ -410,30 +410,22 @@ const TaskModal = () => {
     }));
   };
 
-  const taskTypes: { type: TaskType; label: string; activeClasses: string; inactiveClasses: string }[] = [
+  const taskCategories = [
     {
-      type: 'Government',
-      label: 'حكومية',
+      id: 'governmental',
+      label: 'خدمات قيد الإجراء',
+      submitsType: 'Government' as TaskType,
+      matchTypes: ['Government' as TaskType],
       activeClasses: 'border-status-info-border bg-status-info-bg text-status-info-text shadow-sm',
       inactiveClasses: 'border-border-default hover:border-status-info-border hover:bg-status-info-bg/30 text-text-secondary',
     },
     {
-      type: 'Accounting',
-      label: 'محاسبية',
-      activeClasses: 'border-status-success-border bg-status-success-bg text-status-success-text shadow-sm',
-      inactiveClasses: 'border-border-default hover:border-status-success-border hover:bg-status-success-bg/30 text-text-secondary',
-    },
-    {
-      type: 'RealEstate',
-      label: 'عقارية',
+      id: 'other',
+      label: 'خدمات أخرى',
+      submitsType: 'Accounting' as TaskType,
+      matchTypes: ['Accounting' as TaskType, 'RealEstate' as TaskType, 'Other' as TaskType],
       activeClasses: 'border-status-warning-border bg-status-warning-bg text-status-warning-text shadow-sm',
       inactiveClasses: 'border-border-default hover:border-status-warning-border hover:bg-status-warning-bg/30 text-text-secondary',
-    },
-    {
-      type: 'Other',
-      label: 'أخرى',
-      activeClasses: 'border-status-danger-border bg-status-danger-bg text-status-danger-text shadow-sm',
-      inactiveClasses: 'border-border-default hover:border-status-danger-border hover:bg-status-danger-bg/30 text-text-secondary',
     },
   ];
 
@@ -452,17 +444,17 @@ const TaskModal = () => {
         <div className="max-h-[75vh] overflow-y-auto px-1">
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
 
-            {/* Phase 1: 4 Boxes in 1 Row to Choose Task Type */}
+            {/* Phase 1: 2 Categories: خدمات قيد الإجراء & خدمات أخرى */}
             <div>
-              <div className="grid grid-cols-4 gap-2">
-                {taskTypes.map((item) => {
-                  const isSelected = selectedType === item.type;
+              <div className="grid grid-cols-2 gap-3">
+                {taskCategories.map((item) => {
+                  const isSelected = item.matchTypes.includes(selectedType as TaskType);
                   return (
                     <button
-                      key={item.type}
+                      key={item.id}
                       type="button"
-                      onClick={() => setValue('type', item.type)}
-                      className={`py-3 px-2 rounded-xl border-2 text-center transition-all cursor-pointer flex items-center justify-center ${
+                      onClick={() => setValue('type', item.submitsType)}
+                      className={`py-3.5 px-3 rounded-xl border-2 text-center transition-all cursor-pointer flex items-center justify-center ${
                         isSelected ? item.activeClasses : item.inactiveClasses
                       }`}
                     >
@@ -473,7 +465,7 @@ const TaskModal = () => {
                   );
                 })}
               </div>
-              {errors.type && <div className="text-destructive text-xs text-center mt-1">يرجى اختيار نوع المهمة</div>}
+              {errors.type && <div className="text-destructive text-xs text-center mt-1">يرجى اختيار تصنيف المهمة</div>}
             </div>
 
             {/* Phase 2: Conditionally Rendered Client Selection Field */}

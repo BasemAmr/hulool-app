@@ -7,7 +7,17 @@ import HuloolDataGrid from '@/shared/grid/HuloolDataGrid';
 import type { HuloolGridColumn } from '@/shared/grid/HuloolDataGrid';
 import type { CellProps } from 'react-datasheet-grid';
 import Button from '@/shared/ui/primitives/Button';
-import { Landmark, FileSpreadsheet, ArrowRight, Search, X, RotateCcw, Printer } from 'lucide-react';
+import { Landmark, FileSpreadsheet, ArrowRight, Search, X, RotateCcw, Printer, TrendingUp, TrendingDown, ChevronDown } from 'lucide-react';
+import {
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuItem,
+} from '@/shared/ui/shadcn/dropdown-menu';
+import {
+  buildSettlementQabdPreset,
+  buildSettlementSarfPreset,
+} from '@/features/financials/utils/settlementPresets';
 import type { FinancialTransaction, CashBoxVoucher } from '@/api/types';
 import { LedgerFinalBalanceCell } from '@/shared/grid';
 import { ledgerBalanceDelta } from '@/shared/ledger/ledgerDirection';
@@ -195,6 +205,7 @@ export const TreasuryAccountDetailsPage = () => {
   const accountId = Number(id);
   const navigate = useNavigate();
   const isAdmin = useAuthStore((state) => state.isAdmin());
+  const openModal = useModalStore((state) => state.openModal);
   const [page, setPage] = useState(1);
   const [allTransactions, setAllTransactions] = useState<TransformedVoucherTransaction[]>([]);
   const [isExporting, setIsExporting] = useState(false);
@@ -713,6 +724,83 @@ export const TreasuryAccountDetailsPage = () => {
                 <span className="text-sm font-bold text-text-primary truncate min-w-0">{account?.name || ''}</span>
                 {subtitle && <span className="text-xs text-text-secondary mr-2 truncate min-w-0">{subtitle}</span>}
               </div>
+
+              {/* Transactions Buttons targeting this Treasury Account: Qabd & Sarf for all, Settlement for Admin */}
+              <div className="flex items-center gap-1.5 ms-3 shrink-0">
+                <Button
+                  variant="outline-success"
+                  size="sm"
+                  className="h-8 font-bold flex items-center gap-1 text-xs"
+                  onClick={() =>
+                    openModal('unifiedTransaction', {
+                      title: 'سند قبض',
+                      defaultFromCardType: 'client',
+                      defaultToCardType: 'treasury',
+                      defaultToAccountId: String(accountId),
+                      lockDirection: false,
+                    })
+                  }
+                  title="تسجيل سند قبض في هذا الحساب"
+                >
+                  <TrendingUp size={13} />
+                  <span>سند قبض</span>
+                </Button>
+
+                <Button
+                  variant="outline-danger"
+                  size="sm"
+                  className="h-8 font-bold flex items-center gap-1 text-xs"
+                  onClick={() =>
+                    openModal('unifiedTransaction', {
+                      title: 'سند صرف',
+                      defaultFromCardType: 'treasury',
+                      defaultFromAccountId: String(accountId),
+                      defaultToCardType: 'client',
+                      lockDirection: false,
+                    })
+                  }
+                  title="تسجيل سند صرف من هذا الحساب"
+                >
+                  <TrendingDown size={13} />
+                  <span>سند صرف</span>
+                </Button>
+
+                {isAdmin && (
+                  <DropdownMenu dir="rtl">
+                    <DropdownMenuTrigger asChild>
+                      <Button
+                        variant="outline-secondary"
+                        size="sm"
+                        className="h-8 font-bold flex items-center gap-1 text-xs cursor-pointer"
+                      >
+                        <span>تسوية</span>
+                        <ChevronDown size={12} />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end" className="z-[9999] min-w-[140px] bg-card border border-border shadow-xl">
+                      <DropdownMenuItem
+                        className="flex items-center gap-2 text-xs font-semibold text-status-success-text cursor-pointer hover:bg-status-success-bg/20 py-2"
+                        onClick={() =>
+                          openModal('unifiedTransaction', buildSettlementQabdPreset({ kind: 'treasury', id: String(accountId) }))
+                        }
+                      >
+                        <TrendingUp size={13} />
+                        <span>تسوية قبض</span>
+                      </DropdownMenuItem>
+                      <DropdownMenuItem
+                        className="flex items-center gap-2 text-xs font-semibold text-status-danger-text cursor-pointer hover:bg-status-danger-bg/20 py-2"
+                        onClick={() =>
+                          openModal('unifiedTransaction', buildSettlementSarfPreset({ kind: 'treasury', id: String(accountId) }))
+                        }
+                      >
+                        <TrendingDown size={13} />
+                        <span>تسوية صرف</span>
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                )}
+              </div>
+
               <div className="hidden lg:flex-1" aria-hidden="true" />
             </div>
 
