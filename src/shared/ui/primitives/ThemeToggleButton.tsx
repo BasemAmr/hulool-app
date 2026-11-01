@@ -26,11 +26,11 @@ const ThemeToggleButton = ({ className }: ThemeToggleButtonProps) => {
       title={isDark ? 'الوضع الفاتح' : 'الوضع الداكن'}
       aria-label={isDark ? 'تبديل إلى الوضع الفاتح' : 'تبديل إلى الوضع الداكن'}
       className={cn(
-        'inline-flex h-9 w-9 items-center justify-center rounded-md border border-border bg-background text-text-primary transition-colors hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-border-focus focus-visible:ring-offset-2',
+        'inline-flex h-8 w-8 items-center justify-center rounded-lg border border-white/30 bg-white/20 text-white hover:bg-white/30 transition-all shadow-2xs focus-visible:outline-none cursor-pointer',
         className
       )}
     >
-      {isDark ? <SunMedium size={16} /> : <MoonStar size={16} />}
+      {isDark ? <SunMedium size={15} /> : <MoonStar size={15} />}
       <span className="sr-only">{isDark ? 'الوضع الفاتح' : 'الوضع الداكن'}</span>
     </button>
   );

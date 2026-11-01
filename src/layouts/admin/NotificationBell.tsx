@@ -124,17 +124,15 @@ const NotificationBell: React.FC<NotificationBellProps> = ({ className = '' }) =
       <button
         ref={buttonRef}
         onClick={handleToggleDropdown}
-        className={`relative p-2 rounded-lg border-0 transition-all duration-200 ${
-          isOpen ? 'bg-gray-300 scale-95' : 'bg-background hover:bg-gray-200'
-        } ${
-          error ? 'text-status-danger-text' : 'text-text-secondary'
-        }`}
+        className={`relative h-8 w-8 rounded-lg border border-white/30 bg-white/20 text-white hover:bg-white/30 flex items-center justify-center transition-all shadow-2xs cursor-pointer ${
+          isOpen ? 'scale-95 bg-white/35' : ''
+        } ${className}`}
         aria-label={`الإشعارات${unreadCount > 0 ? ` (${unreadCount} غير مقروءة)` : ''}`}
         disabled={isLoading}
       >
         {/* Bell Icon */}
         <Bell 
-          size={20}
+          size={16}
           fill={unreadCount > 0 ? 'currentColor' : 'none'}
         />
         
@@ -172,7 +170,7 @@ const NotificationBell: React.FC<NotificationBellProps> = ({ className = '' }) =
       {isOpen && createPortal(
         <div
           ref={dropdownRef}
-          className="fixed rounded-xl border border-border bg-card shadow-2xl overflow-hidden transition-all duration-300"
+          className="fixed rounded-xl nav-dropdown-panel shadow-2xl overflow-hidden transition-all duration-300 backdrop-blur-md"
           style={{
             position: 'fixed',
             top: dropdownPosition.top,

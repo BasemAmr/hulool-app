@@ -107,7 +107,7 @@ const EmployeeSidebar = () => {
         {/* Header with Logo and Notifications */}
         <div className="px-3 py-3 border-b border-border bg-background flex items-center gap-2 min-h-[60px]">
           <div className="flex items-center justify-between w-full">
-            <Logo compact />
+            <Logo compact variant="default" />
             {!isCollapsed && (
               <NotificationBell className="ml-2" />
             )}

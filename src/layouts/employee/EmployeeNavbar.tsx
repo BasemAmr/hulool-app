@@ -102,7 +102,7 @@ const NavHoverDropdown = ({
         >
           <div className="absolute -top-3 left-0 right-0 h-4" />
 
-          <div className={`rounded-md border border-border bg-card p-1 text-card-foreground shadow-xl outline-none cursor-pointer ${className}`}>
+          <div className={`rounded-xl nav-dropdown-panel p-1.5 backdrop-blur-md outline-none cursor-pointer ${className}`}>
             {children}
           </div>
         </div>
@@ -173,9 +173,9 @@ const EmployeeNavbar = () => {
   };
 
   // Shared menuItem style with icon FIRST in JSX
-  const menuItemClass = "flex items-center justify-start gap-2.5 px-3 py-2 text-sm font-bold rounded hover:bg-accent hover:text-accent-foreground cursor-pointer transition-colors text-right";
-  const managementItemClass = "flex items-center justify-start gap-2.5 px-3 py-2 text-sm font-extrabold rounded text-primary hover:underline hover:bg-primary/10 cursor-pointer transition-colors text-right";
-  const listItemClass = "flex items-center justify-start px-3 py-2 text-sm font-bold rounded hover:bg-accent hover:text-accent-foreground cursor-pointer transition-colors text-right";
+  const menuItemClass = "flex items-center justify-start gap-2.5 px-3 py-2 text-xs font-bold rounded-lg nav-dropdown-item cursor-pointer transition-colors text-right";
+  const managementItemClass = "flex items-center justify-start gap-2.5 px-3 py-2 text-xs font-extrabold rounded-lg nav-dropdown-management-item cursor-pointer transition-colors text-right";
+  const listItemClass = "flex items-center justify-start px-3 py-2 text-xs font-bold rounded-lg nav-dropdown-item cursor-pointer transition-colors text-right";
 
   // Navigation link & dropdown trigger styling matching oceanic/sapphire navbar theme
   const navItemClass = (isActive: boolean) =>
@@ -233,19 +233,19 @@ const EmployeeNavbar = () => {
             >
               <div className="min-w-48 text-right">
                 <Link to={'/employee/receivables'} className={managementItemClass}>
-                  <CreditCard size={16} className="text-primary flex-shrink-0" />
+                  <CreditCard size={16} className="text-current flex-shrink-0" />
                   <span>تقرير العملاء</span>
                 </Link>
                 <Link to={'/employee/clients'} className={menuItemClass}>
-                  <Users size={16} className="text-foreground flex-shrink-0" />
+                  <Users size={16} className="text-sky-600 dark:text-sky-400 flex-shrink-0" />
                   <span>إدارة العملاء</span>
                 </Link>
                 <div onClick={() => openModal('clientForm', {})} className={menuItemClass}>
-                  <Plus size={16} className="text-foreground flex-shrink-0" />
+                  <Plus size={16} className="text-sky-600 dark:text-sky-400 flex-shrink-0" />
                   <span>إضافة عميل</span>
                 </div>
                 <div onClick={() => openModal('taskForm', {})} className={menuItemClass}>
-                  <Plus size={16} className="text-foreground flex-shrink-0" />
+                  <Plus size={16} className="text-sky-600 dark:text-sky-400 flex-shrink-0" />
                   <span>إضافة مهمة</span>
                 </div>
               </div>
@@ -263,10 +263,10 @@ const EmployeeNavbar = () => {
               }
             >
               <div onClick={() => openModal('treasuryAccountReport', { subType: 'cashbox' })} className={menuItemClass}>
-                <FileSpreadsheet size={16} className="text-foreground flex-shrink-0" />
+                <FileSpreadsheet size={16} className="text-sky-600 dark:text-sky-400 flex-shrink-0" />
                 <span>كشف حساب الصندوق</span>
               </div>
-              <div className="border-t border-border my-1" />
+              <div className="border-t my-1" style={{ borderColor: 'var(--token-navbar-dropdown-divider)' }} />
               {cashboxAccounts.length === 0 ? (
                 <div className="py-4 px-4 text-center text-xs text-text-secondary">
                   لا توجد صناديق
@@ -292,10 +292,10 @@ const EmployeeNavbar = () => {
               }
             >
               <div onClick={() => openModal('treasuryAccountReport', { subType: 'bank' })} className={menuItemClass}>
-                <FileSpreadsheet size={16} className="text-foreground flex-shrink-0" />
+                <FileSpreadsheet size={16} className="text-sky-600 dark:text-sky-400 flex-shrink-0" />
                 <span>كشف حساب البنك</span>
               </div>
-              <div className="border-t border-border my-1" />
+              <div className="border-t my-1" style={{ borderColor: 'var(--token-navbar-dropdown-divider)' }} />
               {bankAccounts.length === 0 ? (
                 <div className="py-4 px-4 text-center text-xs text-text-secondary">
                   لا توجد حسابات بنكية
@@ -340,12 +340,12 @@ const EmployeeNavbar = () => {
               }
             >
               <div onClick={() => openModal('taskForm', {})} className={menuItemClass}>
-                <Plus size={16} className="text-foreground flex-shrink-0" />
+                <Plus size={16} className="text-sky-600 dark:text-sky-400 flex-shrink-0" />
                 <span>إضافة مهمة</span>
               </div>
-              <div className="border-t border-border my-1" />
+              <div className="border-t my-1" style={{ borderColor: 'var(--token-navbar-dropdown-divider)' }} />
               <Link to={'/employee/tasks'} className={menuItemClass}>
-                <ClipboardList size={16} className="text-foreground flex-shrink-0" />
+                <ClipboardList size={16} className="text-sky-600 dark:text-sky-400 flex-shrink-0" />
                 <span>صفحة المهام</span>
               </Link>
             </NavHoverDropdown>
@@ -380,31 +380,34 @@ const EmployeeNavbar = () => {
           {/* User Profile */}
           <DropdownMenu>
             <DropdownMenuTrigger className="outline-none cursor-pointer">
-              <div className="flex items-center gap-2 hover:bg-accent rounded-full p-1 pr-2 transition-colors border border-transparent hover:border-border">
+              <div className="flex items-center gap-2 rounded-full p-1 pr-2 transition-colors border border-white/25 hover:bg-white/15 cursor-pointer">
                 <div className="text-right hidden md:block">
-                  <div className="text-sm font-medium leading-none">{user?.display_name || 'موظف'}</div>
-                  <div className="text-xs text-text-secondary mt-1 text-[10px]">
-                    {user?.commission_rate && `عمولة ${user.commission_rate}%`}
+                  <div className="text-xs font-bold leading-none text-white">{user?.display_name || 'موظف'}</div>
+                  <div className="text-[10px] text-white/80 mt-1">
+                    {user?.commission_rate ? `عمولة ${user.commission_rate}%` : 'موظف'}
                   </div>
                 </div>
-                <div className="w-8 h-8 rounded-full bg-primary/20 text-primary flex items-center justify-center font-semibold border border-primary/10">
+                <div className="w-8 h-8 rounded-full bg-white/25 text-white flex items-center justify-center font-bold text-xs border border-white/40 shadow-2xs">
                   {user?.display_name?.charAt(0).toUpperCase() || 'م'}
                 </div>
               </div>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-56 text-right z-[9999]">
+            <DropdownMenuContent
+              align="end"
+              className="w-56 text-right z-[9999] nav-dropdown-panel rounded-xl p-1.5 backdrop-blur-md"
+            >
               <FontSizeToggleButton variant="menu-item" />
-              <DropdownMenuSeparator />
-              <DropdownMenuItem asChild className="cursor-pointer flex flex-row-reverse justify-end gap-2 py-2 text-sm font-bold">
+              <DropdownMenuSeparator className="my-1" style={{ backgroundColor: 'var(--token-navbar-dropdown-divider)' }} />
+              <DropdownMenuItem asChild className="cursor-pointer flex flex-row-reverse justify-end gap-2.5 py-2 px-3 text-xs font-bold rounded-lg nav-dropdown-item">
                 <Link to="/employee/settings">
                   <span>الإعدادات</span>
-                  <Settings size={16} />
+                  <Settings size={15} className="text-sky-600 dark:text-sky-400" />
                 </Link>
               </DropdownMenuItem>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem onClick={handleLogout} className="text-destructive focus:text-destructive cursor-pointer flex flex-row-reverse justify-end gap-2 py-2 text-sm font-bold">
+              <DropdownMenuSeparator className="my-1" style={{ backgroundColor: 'var(--token-navbar-dropdown-divider)' }} />
+              <DropdownMenuItem onClick={handleLogout} className="text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/40 cursor-pointer flex flex-row-reverse justify-end gap-2.5 py-2 px-3 text-xs font-bold rounded-lg">
                 <span>تسجيل الخروج</span>
-                <LogOut size={16} />
+                <LogOut size={15} />
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>

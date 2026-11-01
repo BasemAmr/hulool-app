@@ -81,7 +81,7 @@ const EmployeeOnboardingPage = () => {
             {/* Logo and Header */}
             <div className="text-center mb-6">
               <div className="flex justify-center mb-4">
-                <Logo />
+                <Logo variant="default" />
               </div>
               <div className="flex justify-center mb-3">
                 <div className="w-14 h-14 rounded-full bg-primary/10 flex items-center justify-center">
