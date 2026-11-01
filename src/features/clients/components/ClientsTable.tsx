@@ -15,15 +15,22 @@ import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
 import HuloolDataGrid from '@/shared/grid/HuloolDataGrid';
 import type { HuloolGridColumn } from '@/shared/grid/HuloolDataGrid';
-import { 
-  GridActionBar,
-  createEditAction,
-  createAddTaskAction,
-  createAddInvoiceAction,
-  createGoogleDriveAction,
-} from '@/shared/grid';
-import type { GridAction } from '@/shared/grid';
 import type { CellProps } from 'react-datasheet-grid';
+import { useModalStore } from '@/shared/stores/modalStore';
+import { FilePlus, ListPlus, Edit3, TrendingUp, TrendingDown, ChevronDown } from 'lucide-react';
+import GoogleDriveIcon from '@/shared/ui/icons/GoogleDriveIcon';
+import {
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuItem,
+} from '@/shared/ui/shadcn/dropdown-menu';
+import {
+  buildSettlementQabdPreset,
+  buildSettlementSarfPreset,
+} from '@/features/financials/utils/settlementPresets';
+
+const neutralActionButtonClass = 'inline-flex items-center justify-center rounded p-1 text-text-secondary hover:text-text-primary hover:bg-muted/40 cursor-pointer transition-colors duration-150';
 
 interface ClientsTableProps {
   clients: Client[];
@@ -31,7 +38,12 @@ interface ClientsTableProps {
   onEdit: (client: Client) => void;
   onAddTask: (client: Client) => void;
   onAddInvoice: (client: Client) => void;
+  onQabd?: (clientId: number) => void;
+  onSarf?: (clientId: number) => void;
+  onTaswiyaQabd?: (clientId: number) => void;
+  onTaswiyaSarf?: (clientId: number) => void;
   linkBasePath?: string;
+  showSettlement?: boolean;
 }
 
 // ================================
@@ -164,25 +176,126 @@ interface ActionsCellProps extends CellProps<Client> {
     onEdit: (client: Client) => void;
     onAddTask: (client: Client) => void;
     onAddInvoice: (client: Client) => void;
+    onQabd?: (clientId: number) => void;
+    onSarf?: (clientId: number) => void;
+    onTaswiyaQabd?: (clientId: number) => void;
+    onTaswiyaSarf?: (clientId: number) => void;
+    showSettlement?: boolean;
   };
 }
 
-const ActionsCell = React.memo(({ rowData, rowIndex, columnData }: ActionsCellProps) => {
-  const actions: GridAction<Client>[] = useMemo(() => [
-    createAddInvoiceAction<Client>(columnData.onAddInvoice),
-    createAddTaskAction<Client>(columnData.onAddTask),
-    createEditAction<Client>(columnData.onEdit),
-    createGoogleDriveAction<Client>((client) => client.google_drive_link),
-  ], [columnData.onEdit, columnData.onAddTask, columnData.onAddInvoice]);
+const ActionsCell = React.memo(({ rowData, columnData }: ActionsCellProps) => {
+  const { onEdit, onAddTask, onAddInvoice, onQabd, onSarf, onTaswiyaQabd, onTaswiyaSarf, showSettlement } = columnData || {};
 
   return (
-    <div style={{ display: 'flex', justifyContent: 'flex-start', alignItems: 'center', height: '100%' }}>
-      <GridActionBar
-        item={rowData}
-        index={rowIndex}
-        actions={actions}
-        compact
-      />
+    <div
+      style={{
+        display: 'flex',
+        justifyContent: 'space-around',
+        alignItems: 'center',
+        height: '100%',
+        width: '100%',
+        padding: '0 6px',
+        pointerEvents: 'auto',
+      }}
+      onMouseDown={(e) => e.stopPropagation()}
+      onClick={(e) => e.stopPropagation()}
+    >
+      {/* Block 1: Client utility actions (Add invoice, Add task, Edit client, Open Google Drive) */}
+      <div className="flex items-center gap-1.5 shrink-0">
+        <button
+          type="button"
+          onClick={() => onAddInvoice?.(rowData)}
+          title="إضافة فاتورة"
+          className={neutralActionButtonClass}
+        >
+          <FilePlus size={14} />
+        </button>
+
+        <button
+          type="button"
+          onClick={() => onAddTask?.(rowData)}
+          title="إضافة مهمة"
+          className={neutralActionButtonClass}
+        >
+          <ListPlus size={14} />
+        </button>
+
+        <button
+          type="button"
+          onClick={() => onEdit?.(rowData)}
+          title="تعديل العميل"
+          className={neutralActionButtonClass}
+        >
+          <Edit3 size={14} />
+        </button>
+
+        <button
+          type="button"
+          onClick={() => {
+            if (rowData.google_drive_link) {
+              window.open(rowData.google_drive_link, '_blank');
+            }
+          }}
+          title={rowData.google_drive_link ? 'فتح Google Drive في صفحة جديدة' : 'لا يوجد رابط Google Drive'}
+          disabled={!rowData.google_drive_link}
+          className={`${neutralActionButtonClass} ${!rowData.google_drive_link ? 'opacity-30 cursor-not-allowed' : ''}`}
+        >
+          <GoogleDriveIcon size={14} />
+        </button>
+      </div>
+
+      {/* Block 2: Transaction voucher actions (سند قبض, سند صرف, and settlement for admin) */}
+      <div className="flex items-center gap-1 shrink-0">
+        <button
+          type="button"
+          onClick={() => onQabd?.(rowData.id)}
+          title="سند قبض"
+          className="inline-flex items-center gap-0.5 px-1.5 py-0.5 text-xs font-bold rounded border border-status-success-border text-status-success-text bg-status-success-bg hover:opacity-85 transition-opacity cursor-pointer shadow-2xs"
+        >
+          <TrendingUp size={11} />
+          قبض
+        </button>
+        <button
+          type="button"
+          onClick={() => onSarf?.(rowData.id)}
+          title="سند صرف"
+          className="inline-flex items-center gap-0.5 px-1.5 py-0.5 text-xs font-bold rounded border border-status-danger-border text-status-danger-text bg-status-danger-bg hover:opacity-85 transition-opacity cursor-pointer shadow-2xs"
+        >
+          <TrendingDown size={11} />
+          صرف
+        </button>
+
+        {showSettlement && (
+          <DropdownMenu dir="rtl">
+            <DropdownMenuTrigger asChild>
+              <button
+                type="button"
+                className="inline-flex items-center gap-0.5 px-1.5 py-0.5 text-xs font-bold rounded border border-border text-text-primary bg-background hover:bg-muted/40 transition-colors cursor-pointer shadow-2xs"
+              >
+                تسوية
+                <ChevronDown size={10} />
+              </button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="z-[9999] min-w-[130px] bg-card border border-border shadow-xl">
+              <DropdownMenuItem
+                className="flex items-center gap-2 text-xs font-semibold text-status-success-text cursor-pointer hover:bg-status-success-bg/20 py-1.5"
+                onClick={() => onTaswiyaQabd?.(rowData.id)}
+              >
+                <TrendingUp size={12} />
+                تسوية قبض
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                className="flex items-center gap-2 text-xs font-semibold text-status-danger-text cursor-pointer hover:bg-status-danger-bg/20 py-1.5"
+                onClick={() => onTaswiyaSarf?.(rowData.id)}
+              >
+                <TrendingDown size={12} />
+                تسوية صرف
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        )}
+      </div>
     </div>
   );
 });
@@ -198,9 +311,58 @@ const ClientsTable: React.FC<ClientsTableProps> = ({
   onEdit, 
   onAddTask, 
   onAddInvoice, 
-  linkBasePath = '/clients'
+  onQabd,
+  onSarf,
+  onTaswiyaQabd,
+  onTaswiyaSarf,
+  linkBasePath = '/clients',
+  showSettlement: explicitShowSettlement,
 }) => {
   const { t } = useTranslation();
+  const openModal = useModalStore((state) => state.openModal);
+
+  // By default, show settlement only for admin views (not employee view)
+  const isEmployeeView = linkBasePath.startsWith('/employee');
+  const canShowSettlement = explicitShowSettlement !== undefined ? explicitShowSettlement : !isEmployeeView;
+
+  const handleDefaultQabd = (clientId: number) => {
+    openModal('unifiedTransaction', {
+      defaultFromCardType: 'client',
+      defaultFromAccountId: String(clientId),
+      defaultToCardType: 'cashbox',
+      lockDirection: true,
+      title: 'سند قبض',
+    });
+  };
+
+  const handleDefaultSarf = (clientId: number) => {
+    openModal('unifiedTransaction', {
+      defaultFromCardType: 'cashbox',
+      defaultToCardType: 'client',
+      defaultToAccountId: String(clientId),
+      lockDirection: true,
+      title: 'سند صرف',
+    });
+  };
+
+  const handleDefaultTaswiyaQabd = (clientId: number) => {
+    openModal('unifiedTransaction', buildSettlementQabdPreset({
+      kind: 'client',
+      id: String(clientId),
+    }));
+  };
+
+  const handleDefaultTaswiyaSarf = (clientId: number) => {
+    openModal('unifiedTransaction', buildSettlementSarfPreset({
+      kind: 'client',
+      id: String(clientId),
+    }));
+  };
+
+  const finalOnQabd = onQabd || handleDefaultQabd;
+  const finalOnSarf = onSarf || handleDefaultSarf;
+  const finalOnTaswiyaQabd = onTaswiyaQabd || handleDefaultTaswiyaQabd;
+  const finalOnTaswiyaSarf = onTaswiyaSarf || handleDefaultTaswiyaSarf;
 
   // Define columns
   const columns = useMemo((): HuloolGridColumn<Client>[] => [
@@ -234,7 +396,7 @@ const ClientsTable: React.FC<ClientsTableProps> = ({
       title: t('clients.tableHeaderNotes'),
       type: 'custom',
       component: NotesCell,
-      grow: 2,
+      grow: 0.8,
     },
     {
       id: 'outstanding',
@@ -250,10 +412,10 @@ const ClientsTable: React.FC<ClientsTableProps> = ({
       title: t('clients.tableHeaderActions'),
       type: 'custom',
       component: ActionsCell as React.ComponentType<CellProps<Client>>,
-      width: 180,
-      grow: 0,
+      width: canShowSettlement ? 320 : 290,
+      grow: 1.8,
     },
-  ], [t, linkBasePath, onEdit, onAddTask, onAddInvoice]);
+  ], [t, linkBasePath, onEdit, onAddTask, onAddInvoice, finalOnQabd, finalOnSarf, finalOnTaswiyaQabd, finalOnTaswiyaSarf, canShowSettlement]);
 
   // Add columnData to actions column
   const columnsWithData = useMemo(() => {
@@ -264,12 +426,21 @@ const ClientsTable: React.FC<ClientsTableProps> = ({
       if (col.id === 'actions') {
         return { 
           ...col, 
-          columnData: { onEdit, onAddTask, onAddInvoice } 
+          columnData: { 
+            onEdit, 
+            onAddTask, 
+            onAddInvoice,
+            onQabd: finalOnQabd,
+            onSarf: finalOnSarf,
+            onTaswiyaQabd: finalOnTaswiyaQabd,
+            onTaswiyaSarf: finalOnTaswiyaSarf,
+            showSettlement: canShowSettlement,
+          } 
         };
       }
       return col;
     });
-  }, [columns, linkBasePath, onEdit, onAddTask, onAddInvoice]);
+  }, [columns, linkBasePath, onEdit, onAddTask, onAddInvoice, finalOnQabd, finalOnSarf, finalOnTaswiyaQabd, finalOnTaswiyaSarf, canShowSettlement]);
 
   return (
     <HuloolDataGrid

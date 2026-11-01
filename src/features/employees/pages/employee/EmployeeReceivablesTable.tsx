@@ -8,17 +8,15 @@
 
 import React, { useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { CreditCard } from 'lucide-react';
+import { CreditCard, Edit3, TrendingUp, TrendingDown } from 'lucide-react';
 import HuloolDataGrid from '@/shared/grid/HuloolDataGrid';
 import type { HuloolGridColumn } from '@/shared/grid/HuloolDataGrid';
 import type { CellProps } from 'react-datasheet-grid';
 import { useModalStore } from '@/shared/stores/modalStore';
 import WhatsAppIcon from '@/shared/ui/icons/WhatsAppIcon';
 import { sendPaymentReminder, formatPhoneForWhatsApp } from '@/shared/utils/whatsappUtils';
-import { Eye } from 'lucide-react';
 
-const neutralActionButtonClass = 'inline-flex items-center justify-center rounded p-1.5 text-text-secondary hover:text-text-primary cursor-pointer transition-colors duration-150';
-const neutralTextActionButtonClass = 'inline-flex items-center gap-1 rounded px-3 py-1.5 text-text-secondary hover:text-text-primary cursor-pointer transition-colors duration-150';
+const neutralActionButtonClass = 'inline-flex items-center justify-center rounded p-1 text-text-secondary hover:text-text-primary cursor-pointer transition-colors duration-150';
 
 // ================================
 // TYPE DEFINITIONS
@@ -32,6 +30,7 @@ interface ClientReceivablesSummary {
   paid_amount: number;
   remaining_amount: number;
   receivables_count: number;
+  unpaid_invoices_count?: number;
 }
 
 interface EmployeeReceivablesTableProps {
@@ -144,26 +143,39 @@ const TotalCreditCell = React.memo(({ rowData, active }: CellProps<ClientReceiva
 TotalCreditCell.displayName = 'TotalCreditCell';
 
 const RemainingCell = React.memo(({ rowData, active }: CellProps<ClientReceivablesSummary>) => {
-  const amount = Math.max(0, Number(rowData.remaining_amount) || 0);
+  const amount = Number(rowData.remaining_amount) || 0;
+  const isDebt = amount > 0;
+  const isCredit = amount < 0;
+
   return (
-    <span className="hulool-cell-content" style={{ justifyContent: 'center', fontWeight: active ? 800 : 700, color: 'var(--token-text-primary)' }}>
+    <span
+      className="hulool-cell-content"
+      style={{
+        justifyContent: 'center',
+        fontWeight: active ? 800 : 700,
+        color: isDebt ? 'var(--token-text-danger)' : (isCredit ? 'var(--token-text-success)' : 'var(--token-text-primary)'),
+      }}
+    >
       {formatCurrency(amount)}
     </span>
   );
 });
 RemainingCell.displayName = 'RemainingCell';
 
-// Actions Cell - view ledger (modal) + batch payment + WhatsApp. No edit button.
+// Actions Cell - matching /receivables admin view structure without settlement
 interface ActionsCellData {
   openModal: (modal: string, data: any) => void;
   onPaymentReminder: (phone: string, clientName: string, amount: number) => void;
   onPayment: (clientId: number) => void;
   onViewLedger: (clientId: number, clientName: string) => void;
+  onQabd: (clientId: number) => void;
+  onSarf: (clientId: number) => void;
 }
 
 const ActionsCell = React.memo(({ rowData, columnData }: CellProps<ClientReceivablesSummary, ActionsCellData>) => {
-  const { openModal, onPaymentReminder, onPayment, onViewLedger } = columnData || {};
+  const { openModal, onPaymentReminder, onPayment, onViewLedger, onQabd, onSarf } = columnData || {};
   const hasDebt = Number(rowData.remaining_amount) > 0;
+  const hasUnpaidInvoices = Number(rowData.unpaid_invoices_count || 0) > 0;
 
   const handleReminder = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -184,46 +196,72 @@ const ActionsCell = React.memo(({ rowData, columnData }: CellProps<ClientReceiva
     <div
       style={{
         display: 'flex',
-        gap: '4px',
-        justifyContent: 'center',
+        justifyContent: 'space-around',
         alignItems: 'center',
         height: '100%',
+        width: '100%',
+        padding: '0 6px',
         pointerEvents: 'auto',
       }}
       onMouseDown={(e) => e.stopPropagation()}
       onClick={(e) => e.stopPropagation()}
     >
-      {/* View ledger - opens modal, read-only */}
-      <button
-        onClick={handleViewLedger}
-        onMouseDown={(e) => e.stopPropagation()}
-        title="عرض كشف الحساب"
-        className={neutralActionButtonClass}
-      >
-        <Eye size={14} />
-      </button>
+      {/* Subtag 1: Client utility actions (Pen / View Ledger, WhatsApp, Pay Invoice) */}
+      <div className="flex items-center gap-1.5 shrink-0">
+        <button
+          type="button"
+          onClick={handleViewLedger}
+          title="عرض كشف الحساب"
+          className={neutralActionButtonClass}
+        >
+          <Edit3 size={14} />
+        </button>
 
-      {/* WhatsApp reminder */}
-      <button
-        onClick={handleReminder}
-        onMouseDown={(e) => e.stopPropagation()}
-        title="إرسال تذكير دفع عبر واتساب"
-        disabled={!hasDebt}
-        className={neutralActionButtonClass}
-      >
-        <WhatsAppIcon size={14} />
-      </button>
+        <button
+          type="button"
+          onClick={handleReminder}
+          title="إرسال تذكير دفع عبر واتساب"
+          disabled={!hasDebt}
+          className={`${neutralActionButtonClass} ${!hasDebt ? 'opacity-30 cursor-not-allowed' : ''}`}
+        >
+          <WhatsAppIcon size={14} />
+        </button>
 
-      {/* Batch payment */}
-      <button
-        onClick={handlePay}
-        onMouseDown={(e) => e.stopPropagation()}
-        disabled={!hasDebt}
-        className={neutralTextActionButtonClass}
-      >
-        <CreditCard size={14} />
-        سداد
-      </button>
+        {hasUnpaidInvoices ? (
+          <button
+            type="button"
+            onClick={handlePay}
+            title="سداد فاتورة"
+            className="inline-flex items-center justify-center rounded p-1 text-text-secondary hover:text-text-primary hover:bg-muted/40 cursor-pointer transition-colors"
+          >
+            <CreditCard size={15} />
+          </button>
+        ) : (
+          <div className="w-[23px] h-[23px]" aria-hidden="true" />
+        )}
+      </div>
+
+      {/* Subtag 2: Transaction voucher actions (قبض, صرف) - No settlement in employee view */}
+      <div className="flex items-center gap-1 shrink-0">
+        <button
+          type="button"
+          onClick={() => onQabd?.(rowData.client_id)}
+          title="سند قبض"
+          className="inline-flex items-center gap-0.5 px-1.5 py-0.5 text-xs font-bold rounded border border-status-success-border text-status-success-text bg-status-success-bg hover:opacity-85 transition-opacity cursor-pointer shadow-2xs"
+        >
+          <TrendingUp size={11} />
+          قبض
+        </button>
+        <button
+          type="button"
+          onClick={() => onSarf?.(rowData.client_id)}
+          title="سند صرف"
+          className="inline-flex items-center gap-0.5 px-1.5 py-0.5 text-xs font-bold rounded border border-status-danger-border text-status-danger-text bg-status-danger-bg hover:opacity-85 transition-opacity cursor-pointer shadow-2xs"
+        >
+          <TrendingDown size={11} />
+          صرف
+        </button>
+      </div>
     </div>
   );
 });
@@ -270,20 +308,25 @@ const EmployeeReceivablesTable: React.FC<EmployeeReceivablesTableProps> = ({
     });
   };
 
-  const filteredClients = useMemo(() =>
-    clients.filter(client => (Number(client.remaining_amount) || 0) > 0),
-    [clients]
-  );
+  const handleQabd = (clientId: number) => {
+    openModal('unifiedTransaction', {
+      defaultFromCardType: 'client',
+      defaultFromAccountId: String(clientId),
+      defaultToCardType: 'cashbox',
+      lockDirection: true,
+      title: 'سند قبض',
+    });
+  };
 
-  const displayTotals = useMemo(() => totals ? {
-    totalAmount: totals.total_amount,
-    paidAmount: totals.total_paid,
-    remainingAmount: totals.total_unpaid,
-  } : {
-    totalAmount: 0,
-    paidAmount: 0,
-    remainingAmount: 0,
-  }, [totals]);
+  const handleSarf = (clientId: number) => {
+    openModal('unifiedTransaction', {
+      defaultFromCardType: 'cashbox',
+      defaultToCardType: 'client',
+      defaultToAccountId: String(clientId),
+      lockDirection: true,
+      title: 'سند صرف',
+    });
+  };
 
   const columns = useMemo((): HuloolGridColumn<ClientReceivablesSummary>[] => [
     {
@@ -293,7 +336,7 @@ const EmployeeReceivablesTable: React.FC<EmployeeReceivablesTableProps> = ({
       type: 'custom',
       component: ClientNameCell as React.ComponentType<CellProps<ClientReceivablesSummary>>,
       columnData: { onClientClick: handleClientClick },
-      grow: 2,
+      grow: 1.5,
     },
     {
       id: 'client_phone',
@@ -302,7 +345,7 @@ const EmployeeReceivablesTable: React.FC<EmployeeReceivablesTableProps> = ({
       type: 'custom',
       component: PhoneCell as React.ComponentType<CellProps<ClientReceivablesSummary>>,
       columnData: { onWhatsApp: handleWhatsApp },
-      grow: 1,
+      grow: 0.8,
     },
     {
       id: 'total_amount',
@@ -341,16 +384,21 @@ const EmployeeReceivablesTable: React.FC<EmployeeReceivablesTableProps> = ({
         onPaymentReminder: handlePaymentReminder,
         onPayment: handlePayment,
         onViewLedger: handleViewLedger,
+        onQabd: handleQabd,
+        onSarf: handleSarf,
       },
-      width: 230,
-      grow: 0,
+      width: 290,
+      grow: 1.8,
     },
-  ], [handleClientClick, handleWhatsApp, openModal, handlePaymentReminder, handlePayment, handleViewLedger]);
+  ], [handleClientClick, handleWhatsApp, openModal, handlePaymentReminder, handlePayment, handleViewLedger, handleQabd, handleSarf]);
 
-  if (!clients || clients.length === 0 || filteredClients.length === 0) {
+  // Empty state
+  if (!clients || clients.length === 0) {
     return (
       <div className="text-center py-5">
-        <p className="text-text-primary">لا يوجد عملاء لديهم مستحقات</p>
+        <p className="text-text-primary">
+          لا توجد نتائج
+        </p>
       </div>
     );
   }
@@ -358,56 +406,14 @@ const EmployeeReceivablesTable: React.FC<EmployeeReceivablesTableProps> = ({
   return (
     <div className="clients-receivables-wrapper" dir="rtl">
       <HuloolDataGrid
-        data={filteredClients}
+        data={clients}
         columns={columns}
         isLoading={isLoading}
-        emptyMessage="لا يوجد عملاء لديهم مستحقات"
+        emptyMessage="لا توجد نتائج"
         showId={false}
         height="auto"
         minHeight={400}
       />
-
-      {/* Summary Totals Row */}
-      <div className="rounded-lg border border-border bg-card shadow-sm mt-2">
-        <div className="p-2">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-2 text-center">
-            <div className="flex justify-between items-center p-2 bg-primary text-white rounded font-bold">
-              <span className="text-sm">الإجمالي</span>
-              <span></span>
-            </div>
-            <div className="flex justify-between items-center p-2 bg-bg-surface-muted rounded">
-              <span className="text-text-secondary text-sm">إجمالي المدين:</span>
-              <span className="font-bold text-text-primary">
-                {isTotalsLoading ? (
-                  <div className="inline-block w-4 h-4 border-2 border-primary border-t-transparent rounded-full animate-spin" />
-                ) : (
-                  formatCurrency(displayTotals.totalAmount)
-                )}
-              </span>
-            </div>
-            <div className="flex justify-between items-center p-2 bg-bg-surface-muted rounded">
-              <span className="text-text-secondary text-sm">إجمالي الدائن:</span>
-              <span className="font-bold text-text-primary">
-                {isTotalsLoading ? (
-                  <div className="inline-block w-4 h-4 border-2 border-status-success-border border-t-transparent rounded-full animate-spin" />
-                ) : (
-                  formatCurrency(displayTotals.paidAmount)
-                )}
-              </span>
-            </div>
-            <div className="flex justify-between items-center p-2 bg-bg-surface-muted rounded">
-              <span className="text-text-secondary text-sm">إجمالي المستحقات:</span>
-              <span className={`font-bold ${displayTotals.remainingAmount > 0 ? 'text-status-danger-text' : 'text-text-primary'}`}>
-                {isTotalsLoading ? (
-                  <div className="inline-block w-4 h-4 border-2 border-status-danger-border border-t-transparent rounded-full animate-spin" />
-                ) : (
-                  formatCurrency(displayTotals.remainingAmount)
-                )}
-              </span>
-            </div>
-          </div>
-        </div>
-      </div>
     </div>
   );
 };
