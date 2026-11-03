@@ -233,7 +233,7 @@
   /* --- Report Card Tokens (Light Mode - Calculated Bluish Gradient Theme) --- */
   --token-report-card-bg: linear-gradient(180deg, #ffffff 0%, #f4f9fe 50%, #edf5fc 100%);
   --token-report-card-bg-stroke: #f4f9fe;
-  --token-report-card-header-bg: linear-gradient(135deg, rgba(224, 242, 254, 0.85) 0%, rgba(186, 230, 253, 0.5) 100%);
+  --token-report-card-header-bg: var(--token-card-header-solid-bg);
   --token-report-card-border: rgba(56, 189, 248, 0.35);
   --token-report-card-border-hover: rgba(2, 132, 199, 0.55);
   --token-report-card-shadow: 0 4px 20px -2px rgba(2, 132, 199, 0.08), 0 2px 6px -1px rgba(2, 132, 199, 0.04), inset 0 1px 0 rgba(255, 255, 255, 0.9);
@@ -256,6 +256,16 @@
   --token-report-btn-settle-sarf-bg: linear-gradient(180deg, #f8fafc 0%, #f1f5f9 100%);
   --token-report-btn-settle-sarf-text: #334155;
   --token-report-btn-settle-sarf-border: #cbd5e1;
+
+  /* --- Client Card Header - Yellowish / Amber Calm Variant (خدمات أخرى) --- */
+  --token-card-header-amber-solid-bg: #fef3c7;
+  --token-card-header-amber-text: #78350f;
+  --token-card-header-amber-subtext: #92400e;
+  --token-card-header-amber-border: rgba(245, 158, 11, 0.35);
+  --token-card-header-amber-btn-bg: #fde68a;
+  --token-card-header-amber-btn-hover: #fcd34d;
+  --token-card-header-amber-btn-text: #78350f;
+  --token-card-header-amber-btn-border: rgba(217, 119, 6, 0.4);
 
   /* --- Navbar Tokens (Light Mode - Oceanic Executive Blue) --- */
   --token-navbar-bg: linear-gradient(135deg, #0284c7 0%, #0369a1 100%);
@@ -451,7 +461,7 @@ html[data-theme='dark'] {
   /* --- Report Card Tokens (Dark Mode - Oceanic Deep Sapphire Gradient Theme) --- */
   --token-report-card-bg: linear-gradient(180deg, #132238 0%, #0f1b2e 55%, #0a1322 100%);
   --token-report-card-bg-stroke: #0f1b2e;
-  --token-report-card-header-bg: linear-gradient(135deg, rgba(14, 165, 233, 0.2) 0%, rgba(3, 105, 161, 0.1) 100%);
+  --token-report-card-header-bg: var(--token-card-header-solid-bg);
   --token-report-card-border: rgba(56, 189, 248, 0.22);
   --token-report-card-border-hover: rgba(56, 189, 248, 0.45);
   --token-report-card-shadow: 0 8px 28px -4px rgba(2, 132, 199, 0.18), inset 0 1px 0 rgba(56, 189, 248, 0.15);
@@ -474,6 +484,16 @@ html[data-theme='dark'] {
   --token-report-btn-settle-sarf-bg: linear-gradient(180deg, rgba(30, 41, 59, 0.5) 0%, rgba(15, 23, 42, 0.7) 100%);
   --token-report-btn-settle-sarf-text: #cbd5e1;
   --token-report-btn-settle-sarf-border: rgba(148, 163, 184, 0.3);
+
+  /* --- Client Card Header - Yellowish / Amber Calm Variant (Dark Mode) --- */
+  --token-card-header-amber-solid-bg: #3d2810;
+  --token-card-header-amber-text: #fef3c7;
+  --token-card-header-amber-subtext: #fde68a;
+  --token-card-header-amber-border: rgba(245, 158, 11, 0.25);
+  --token-card-header-amber-btn-bg: rgba(254, 243, 199, 0.12);
+  --token-card-header-amber-btn-hover: rgba(254, 243, 199, 0.22);
+  --token-card-header-amber-btn-text: #fef3c7;
+  --token-card-header-amber-btn-border: rgba(245, 158, 11, 0.3);
 
   /* --- Navbar Tokens (Dark Mode - Midnight Sapphire) --- */
   --token-navbar-bg: linear-gradient(135deg, #0c2d48 0%, #071e3d 100%);

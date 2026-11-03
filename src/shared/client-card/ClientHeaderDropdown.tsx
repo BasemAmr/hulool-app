@@ -16,6 +16,7 @@ interface HeaderDropdownProps {
   onRecordCredit?: () => void;
   role: CardHeaderProps['role'];
   context: CardHeaderProps['context'];
+  variant?: CardHeaderProps['variant'];
 }
 
 const ClientHeaderDropdown = ({
@@ -24,7 +25,9 @@ const ClientHeaderDropdown = ({
   onRecordCredit,
   role,
   context,
+  variant = 'default',
 }: HeaderDropdownProps) => {
+  const isAmber = variant === 'amber';
   // Determine which actions to show based on role and context
   const showAddInvoice = role === 'admin' && context !== 'admin-employee-profile';
   const showRecordCredit = role === 'admin' && context !== 'admin-employee-profile';
@@ -40,15 +43,15 @@ const ClientHeaderDropdown = ({
             "focus:outline-none focus:ring-2 focus:ring-white/30"
           )}
           style={{
-            backgroundColor: 'var(--token-card-header-btn-bg)',
-            color: 'var(--token-card-header-btn-text)',
-            borderColor: 'var(--token-card-header-btn-border)',
+            backgroundColor: isAmber ? 'var(--token-card-header-amber-btn-bg)' : 'var(--token-card-header-btn-bg)',
+            color: isAmber ? 'var(--token-card-header-amber-btn-text)' : 'var(--token-card-header-btn-text)',
+            borderColor: isAmber ? 'var(--token-card-header-amber-btn-border)' : 'var(--token-card-header-btn-border)',
             borderWidth: '1px',
             borderStyle: 'solid',
           }}
           title="المزيد من الإجراءات"
         >
-          <MoreVertical size={16} style={{ color: 'var(--token-card-header-btn-text)' }} />
+          <MoreVertical size={16} style={{ color: isAmber ? 'var(--token-card-header-amber-btn-text)' : 'var(--token-card-header-btn-text)' }} />
         </button>
       </DropdownMenuTrigger>
       <DropdownMenuContent 

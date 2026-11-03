@@ -2,6 +2,9 @@ import React, { useMemo } from 'react';
 import { useGetCoaTree } from '@/features/financials/api/coaQueries';
 import { Spinner } from '@/shared/ui/shadcn/spinner';
 import { useModalStore } from '@/shared/stores/modalStore';
+import { useAuthStore } from '@/features/auth/store/authStore';
+import Button from '@/shared/ui/primitives/Button';
+import { Award } from 'lucide-react';
 import { CreateAccountModal } from '@/features/financials/modals/CreateAccountModal';
 import FCCOATree from './FCCOATree';
 import type { COATreeData } from '@/features/financials/types/fcTypes';
@@ -13,7 +16,8 @@ interface FCCOAViewProps {
 
 const FCCOAView: React.FC<FCCOAViewProps> = ({ filterSection, filterCategory }) => {
   const { data, isLoading, error } = useGetCoaTree();
-  const { isOpen, modalType, props, closeModal } = useModalStore();
+  const { isOpen, modalType, props, closeModal, openModal } = useModalStore();
+  const isAdmin = useAuthStore((state) => state.isAdmin());
 
   const isCreateModalOpen = isOpen && modalType === 'treasuryCreateAccount';
   const initialSectionId = props?.initialSectionId;
@@ -69,7 +73,20 @@ const FCCOAView: React.FC<FCCOAViewProps> = ({ filterSection, filterCategory }) 
   return (
     <div className="space-y-4" dir="rtl">
       {!filterCategory && (
-        <h2 className="text-2xl font-bold text-text-primary border-b border-border-default pb-3">شجرة الحسابات</h2>
+        <div className="flex items-center justify-between border-b border-border-default pb-3">
+          <h2 className="text-2xl font-bold text-text-primary mb-0">شجرة الحسابات</h2>
+          {isAdmin && (
+            <Button
+              variant="outline-primary"
+              size="sm"
+              className="font-bold text-xs flex items-center gap-1.5 shadow-2xs"
+              onClick={() => openModal('commissionExpenseManager')}
+            >
+              <Award size={15} className="text-primary" />
+              <span>إدارة حسابات عمولات الموظفين</span>
+            </Button>
+          )}
+        </div>
       )}
       {filteredData && <FCCOATree data={filteredData} filterSection={filterSection} />}
       <CreateAccountModal

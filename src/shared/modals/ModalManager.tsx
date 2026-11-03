@@ -86,6 +86,7 @@ import CategoryManagerModal from '@/features/financials/modals/CategoryManagerMo
 import FCAccountLedgerModal from '@/features/financials/modals/FCAccountLedgerModal';
 import TreasuryAccountReportModal from '@/features/financials/modals/TreasuryAccountReportModal';
 import { VoucherPreviewModal } from '@/services/voucher/VoucherPreviewModal';
+import CommissionExpenseManagerModal from '@/features/financials/modals/CommissionExpenseManagerModal';
 
 const ModalManager = () => {
   const modalType = useModalStore((state) => state.modalType);
@@ -341,6 +342,9 @@ const ModalManager = () => {
 
     case 'voucherPreview':
       return renderModal(VoucherPreviewModal, { onClose: closeModal, transactionId: props.transactionId });
+
+    case 'commissionExpenseManager':
+      return renderModal(CommissionExpenseManagerModal);
 
     default:
       return null;

@@ -54,13 +54,28 @@ const FCCOAAccountRow: React.FC<FCCOAAccountRowProps> = ({ account }) => {
     });
   };
 
+  const isCommissionExpense = React.useMemo(() => {
+    if (!account.metadata) return false;
+    try {
+      const meta = typeof account.metadata === 'string' ? JSON.parse(account.metadata) : account.metadata;
+      return meta?.role === 'employee_commissions';
+    } catch {
+      return false;
+    }
+  }, [account.metadata]);
+
   return (
     <div className="grid grid-cols-12 border-b border-border-strong hover:bg-bg-surface-hover transition-colors text-base">
       <span className="col-span-2 border-s border-e border-border-strong/80 px-3 py-3 text-text-secondary font-mono font-medium">
         {account.account_number || '—'}
       </span>
-      <span className="col-span-5 border-e border-border-strong/80 px-3 py-3 text-text-primary truncate font-medium">
-        {account.name}
+      <span className="col-span-5 border-e border-border-strong/80 px-3 py-3 text-text-primary truncate font-medium flex items-center">
+        <span>{account.name}</span>
+        {isCommissionExpense && (
+          <span className="ms-2 px-1.5 py-0.5 text-xs font-bold rounded bg-status-info-bg text-status-info-text border border-status-info-border">
+            عمولات الموظفين
+          </span>
+        )}
       </span>
       <span className="col-span-3 border-e border-border-strong/80 px-3 py-3 text-left font-semibold text-text-primary tracking-tight">
         {formatBalance(account.balance)}

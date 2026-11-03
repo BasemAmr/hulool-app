@@ -308,3 +308,122 @@ export const useCanUseSettlement = () => {
   }, [data, isLoading]);
   return { canUseSettlement: canUse, permissionResolved };
 };
+
+// ========================================
+// COMMISSION EXPENSE ACCOUNT CONFIG & MIGRATION
+// ========================================
+
+export interface CommissionExpenseStats {
+  target_account_id: number;
+  current_count: number;
+  current_amount: number;
+  unmigrated_count: number;
+  unmigrated_amount: number;
+}
+
+export interface EmployeeCommissionAssignment {
+  id: number;
+  user_id: number;
+  name: string;
+  commission_rate: number;
+  custom_account_id: number | null;
+  custom_account_name: string | null;
+}
+
+export interface CommissionExpenseConfigResponse {
+  assigned_account: TreasuryAccount | null;
+  expense_accounts: TreasuryAccount[];
+  stats: CommissionExpenseStats | null;
+  employees: EmployeeCommissionAssignment[];
+}
+
+export const useCommissionExpenseConfig = () => {
+  return useQuery<CommissionExpenseConfigResponse>({
+    queryKey: ['commission-expense-config'],
+    queryFn: async () => {
+      const response = await apiClient.get<ApiResponse<CommissionExpenseConfigResponse>>(
+        '/treasury-accounts/commission-expense-config'
+      );
+      return response.data.data;
+    },
+    staleTime: 30 * 1000,
+  });
+};
+
+export const useSetCommissionExpenseAccount = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (accountId: number) => {
+      const response = await apiClient.post<ApiResponse<any>>(
+        '/treasury-accounts/set-commission-expense-account',
+        { account_id: accountId }
+      );
+      return response.data.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['commission-expense-config'] });
+      queryClient.invalidateQueries({ queryKey: ['treasury-accounts'] });
+      queryClient.invalidateQueries({ queryKey: ['coa-tree'] });
+    },
+  });
+};
+
+export const useSetEmployeeCommissionAccount = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ employeeId, accountId }: { employeeId: number; accountId: number | null }) => {
+      const response = await apiClient.post<ApiResponse<any>>(
+        '/treasury-accounts/set-employee-commission-account',
+        { employee_id: employeeId, account_id: accountId }
+      );
+      return response.data.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['commission-expense-config'] });
+    },
+  });
+};
+
+export const useResetAllEmployeesCommissionAccounts = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async () => {
+      const response = await apiClient.post<ApiResponse<any>>(
+        '/treasury-accounts/reset-all-employees-commission-accounts'
+      );
+      return response.data.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['commission-expense-config'] });
+    },
+  });
+};
+
+export const useMigrateCommissions = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (targetAccountId: number) => {
+      const response = await apiClient.post<ApiResponse<{
+        migrated_count: number;
+        migrated_amount: number;
+        affected_source_accounts: number;
+        message: string;
+      }>>('/treasury-accounts/migrate-commissions', {
+        target_account_id: targetAccountId,
+      });
+      return response.data.data;
+    },
+    onSuccess: (_, targetAccountId) => {
+      queryClient.invalidateQueries({ queryKey: ['commission-expense-config'] });
+      queryClient.invalidateQueries({ queryKey: ['treasury-accounts'] });
+      queryClient.invalidateQueries({ queryKey: ['treasury-account', String(targetAccountId)] });
+      queryClient.invalidateQueries({ queryKey: ['coa-tree'] });
+      queryClient.invalidateQueries({ queryKey: ['account-ledger'] });
+      queryClient.invalidateQueries({ queryKey: ['fc-ledger'] });
+    },
+  });
+};

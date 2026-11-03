@@ -272,6 +272,7 @@ const DashboardPage = () => {
                                                     onAssign={handleAssignTask}
                                                     showAmount={true}
                                                     showEmployeePrefix={true}
+                                                    headerVariant="amber"
                                                 />
                                             ))}
                                         </SortableContext>

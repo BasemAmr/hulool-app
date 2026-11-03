@@ -30,7 +30,9 @@ const CardHeader = ({
   context,
   actions,
   dragHandleProps,
+  variant = 'default',
 }: CardHeaderProps) => {
+  const isAmber = variant === 'amber';
   const clientLink = role === 'employee'
     ? `/employee/clients/${client.id}`
     : `/clients/${client.id}`;
@@ -58,7 +60,7 @@ const CardHeader = ({
               {...dragHandleProps.attributes}
               {...dragHandleProps.listeners}
               className="cursor-grab active:cursor-grabbing hover:opacity-100 transition-opacity p-0.5 rounded shrink-0"
-              style={{ color: 'var(--token-card-header-subtext)' }}
+              style={{ color: isAmber ? 'var(--token-card-header-amber-subtext)' : 'var(--token-card-header-subtext)' }}
               title="سحب لإعادة الترتيب"
             >
               <GripVertical size={16} style={{ color: 'inherit' }} />
@@ -66,7 +68,7 @@ const CardHeader = ({
           ) : (
             <div
               className="p-0.5 opacity-60 shrink-0"
-              style={{ color: 'var(--token-card-header-subtext)' }}
+              style={{ color: isAmber ? 'var(--token-card-header-amber-subtext)' : 'var(--token-card-header-subtext)' }}
             >
               <GripVertical size={16} />
             </div>
@@ -78,14 +80,14 @@ const CardHeader = ({
           <Link
             to={clientLink}
             className="no-underline font-bold text-sm font-['Cairo'] transition-colors truncate drop-shadow-xs text-center"
-            style={{ color: 'var(--token-card-header-text)' }}
+            style={{ color: isAmber ? 'var(--token-card-header-amber-text)' : 'var(--token-card-header-text)' }}
             title={client.name}
           >
             {client.name}
           </Link>
           {isUrgent && (
             <span title="قصوى" className="shrink-0 flex items-center">
-              <AlertTriangle size={15} className="text-amber-300 fill-amber-300/30" />
+              <AlertTriangle size={15} className="text-amber-500 fill-amber-500/30" />
             </span>
           )}
         </div>
@@ -98,7 +100,7 @@ const CardHeader = ({
             className="w-7 h-7 rounded-sm flex items-center justify-center shadow-2xs transition-all active:scale-95 cursor-pointer"
             style={{
               backgroundColor: 'var(--token-brand-whatsapp)',
-              color: 'var(--token-card-header-btn-text)',
+              color: '#ffffff',
               borderColor: 'var(--token-brand-whatsapp-hover)',
               borderWidth: '1px',
               borderStyle: 'solid',
@@ -115,16 +117,16 @@ const CardHeader = ({
               onClick={openGoogleDrive}
               className="w-7 h-7 rounded-sm flex items-center justify-center shadow-2xs transition-all active:scale-95 cursor-pointer"
               style={{
-                backgroundColor: 'var(--token-card-header-btn-bg)',
-                color: 'var(--token-card-header-btn-text)',
-                borderColor: 'var(--token-card-header-btn-border)',
+                backgroundColor: isAmber ? 'var(--token-card-header-amber-btn-bg)' : 'var(--token-card-header-btn-bg)',
+                color: isAmber ? 'var(--token-card-header-amber-btn-text)' : 'var(--token-card-header-btn-text)',
+                borderColor: isAmber ? 'var(--token-card-header-amber-btn-border)' : 'var(--token-card-header-btn-border)',
                 borderWidth: '1px',
                 borderStyle: 'solid',
               }}
               title="Google Drive"
               type="button"
             >
-              <Cloud size={14} style={{ color: 'var(--token-card-header-btn-text)' }} />
+              <Cloud size={14} style={{ color: isAmber ? 'var(--token-card-header-amber-btn-text)' : 'var(--token-card-header-btn-text)' }} />
             </button>
           )}
 
@@ -135,6 +137,7 @@ const CardHeader = ({
             onRecordCredit={() => actions.onRecordCredit?.(client)}
             role={role}
             context={context}
+            variant={variant}
           />
         </div>
       </div>

@@ -89,6 +89,7 @@ export interface BaseClientCardProps {
   showAmount?: boolean;
   showEmployeePrefix?: boolean;
   compactMode?: boolean;
+  headerVariant?: 'default' | 'amber';
 }
 
 /**
@@ -114,6 +115,7 @@ export interface CardHeaderProps {
   role: UserRole;
   context: CardContext;
   actions: ClientActions;
+  variant?: 'default' | 'amber';
   dragHandleProps?: {
     attributes?: any;
     listeners?: any;

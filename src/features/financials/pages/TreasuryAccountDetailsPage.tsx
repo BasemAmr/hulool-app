@@ -1,13 +1,28 @@
 import React, { useState, useRef, useCallback, useEffect, useMemo } from 'react';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
-import { useGetTreasuryAccount } from '../api/treasuryQueries';
+import {
+  useGetTreasuryAccount,
+  useCommissionExpenseConfig,
+} from '../api/treasuryQueries';
 import { useGetAccountHistory, useDeleteTransaction } from '../api/accountQueries';
 import { useCategoryLabels } from '@/features/financials/constants/categoryConfig';
 import HuloolDataGrid from '@/shared/grid/HuloolDataGrid';
 import type { HuloolGridColumn } from '@/shared/grid/HuloolDataGrid';
 import type { CellProps } from 'react-datasheet-grid';
 import Button from '@/shared/ui/primitives/Button';
-import { Landmark, FileSpreadsheet, ArrowRight, Search, X, RotateCcw, Printer, TrendingUp, TrendingDown, ChevronDown } from 'lucide-react';
+import {
+  Landmark,
+  FileSpreadsheet,
+  ArrowRight,
+  Search,
+  X,
+  RotateCcw,
+  Printer,
+  TrendingUp,
+  TrendingDown,
+  ChevronDown,
+  Award,
+} from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuTrigger,
@@ -258,6 +273,13 @@ export const TreasuryAccountDetailsPage = () => {
 
   const { data: account, isLoading: isLoadingAccount, error: accountError } = useGetTreasuryAccount(accountId);
   useDocumentTitle(account?.name);
+
+  // Commission Expense Configuration hook for badge indicator
+  const { data: commissionConfig } = useCommissionExpenseConfig();
+  const isDesignatedCommissionExpense = useMemo(() => {
+    return commissionConfig?.assigned_account?.id === accountId;
+  }, [commissionConfig, accountId]);
+
   const { data: historyData, isLoading: isLoadingHistory, error: historyError } = useGetAccountHistory('treasury', accountId, page, {
     start_date: filters.start_date,
     end_date: filters.end_date,
@@ -723,6 +745,16 @@ export const TreasuryAccountDetailsPage = () => {
               <div className="flex items-baseline min-w-0">
                 <span className="text-sm font-bold text-text-primary truncate min-w-0">{account?.name || ''}</span>
                 {subtitle && <span className="text-xs text-text-secondary mr-2 truncate min-w-0">{subtitle}</span>}
+                {isDesignatedCommissionExpense && (
+                  <button
+                    onClick={() => openModal('commissionExpenseManager')}
+                    className="ms-2 px-2 py-0.5 text-xs font-bold rounded-full bg-status-success-bg text-status-success-text border border-status-success-border inline-flex items-center gap-1 cursor-pointer hover:opacity-85 transition-opacity shrink-0"
+                    title="الحساب المعتمد لعمولات الموظفين - اضغط لإدارة حسابات العمولات"
+                  >
+                    <Award size={12} />
+                    <span>معتمد لعمولات الموظفين</span>
+                  </button>
+                )}
               </div>
 
               {/* Transactions Buttons targeting this Treasury Account: Qabd & Sarf for all, Settlement for Admin */}

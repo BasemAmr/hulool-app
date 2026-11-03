@@ -219,15 +219,15 @@ export const AdminReportsPanel: React.FC = () => {
         {/* Compact Card Header */}
         <div
           style={{
-            backgroundImage: 'var(--token-report-card-header-bg)',
-            borderBottomColor: 'var(--token-report-card-border)',
+            backgroundColor: 'var(--token-card-header-solid-bg)',
+            borderBottomColor: 'var(--token-card-header-border)',
           }}
-          className="px-3.5 py-2.5 border-b flex items-center justify-between gap-2 backdrop-blur-xs"
+          className="px-3.5 py-2.5 border-b flex items-center justify-between gap-2"
         >
           <div className="flex items-center gap-1.5 min-w-0">
-            <span className="w-2 h-2 rounded-full bg-emerald-500 shrink-0 shadow-xs" />
+            <span className="w-2 h-2 rounded-full bg-emerald-400 shrink-0 shadow-xs" />
             <h3
-              style={{ color: 'var(--token-report-card-title)' }}
+              style={{ color: 'var(--token-card-header-text)' }}
               className="text-xs font-bold truncate tracking-tight"
             >
               تقرير الصناديق والحسابات الأخرى
@@ -239,15 +239,15 @@ export const AdminReportsPanel: React.FC = () => {
             value={cashboxPeriod}
             onChange={(e) => handleCashboxPeriodChange(e.target.value as PeriodType)}
             style={{
-              background: 'var(--token-report-card-input-bg)',
-              borderColor: 'var(--token-report-card-input-border)',
-              color: 'var(--token-report-card-text)',
+              backgroundColor: 'var(--token-card-header-btn-bg)',
+              borderColor: 'var(--token-card-header-btn-border)',
+              color: 'var(--token-card-header-btn-text)',
             }}
             className="border rounded-lg px-2.5 py-1 text-[11px] font-bold focus:outline-none cursor-pointer shadow-2xs transition-colors"
           >
-            <option value="current_month">الشهر الحالي</option>
-            <option value="all">جميع البيانات</option>
-            <option value="custom">فترة مخصصة</option>
+            <option value="current_month" className="text-foreground bg-card">الشهر الحالي</option>
+            <option value="all" className="text-foreground bg-card">جميع البيانات</option>
+            <option value="custom" className="text-foreground bg-card">فترة مخصصة</option>
           </select>
         </div>
 
@@ -255,8 +255,8 @@ export const AdminReportsPanel: React.FC = () => {
         {cashboxPeriod === 'custom' && (
           <div
             style={{
-              backgroundImage: 'var(--token-report-card-header-bg)',
-              borderBottomColor: 'var(--token-report-card-border)',
+              backgroundColor: 'var(--token-card-header-btn-bg)',
+              borderBottomColor: 'var(--token-card-header-border)',
             }}
             className="px-3 py-2 border-b grid grid-cols-2 gap-2"
           >
@@ -325,15 +325,15 @@ export const AdminReportsPanel: React.FC = () => {
         {/* Compact Header with Independent Filter */}
         <div
           style={{
-            backgroundImage: 'var(--token-report-card-header-bg)',
-            borderBottomColor: 'var(--token-report-card-border)',
+            backgroundColor: 'var(--token-card-header-solid-bg)',
+            borderBottomColor: 'var(--token-card-header-border)',
           }}
-          className="px-3.5 py-2.5 border-b flex items-center justify-between gap-2 backdrop-blur-xs"
+          className="px-3.5 py-2.5 border-b flex items-center justify-between gap-2"
         >
           <div className="flex items-center gap-1.5 min-w-0">
-            <span className="w-2 h-2 rounded-full bg-sky-500 shrink-0 shadow-xs" />
+            <span className="w-2 h-2 rounded-full bg-sky-300 shrink-0 shadow-xs" />
             <h3
-              style={{ color: 'var(--token-report-card-title)' }}
+              style={{ color: 'var(--token-card-header-text)' }}
               className="text-xs font-bold truncate tracking-tight"
             >
               تقرير البنوك
@@ -345,15 +345,15 @@ export const AdminReportsPanel: React.FC = () => {
             value={bankPeriod}
             onChange={(e) => handleBankPeriodChange(e.target.value as PeriodType)}
             style={{
-              background: 'var(--token-report-card-input-bg)',
-              borderColor: 'var(--token-report-card-input-border)',
-              color: 'var(--token-report-card-text)',
+              backgroundColor: 'var(--token-card-header-btn-bg)',
+              borderColor: 'var(--token-card-header-btn-border)',
+              color: 'var(--token-card-header-btn-text)',
             }}
             className="border rounded-lg px-2.5 py-1 text-[11px] font-bold focus:outline-none cursor-pointer shadow-2xs transition-colors"
           >
-            <option value="current_month">الشهر الحالي</option>
-            <option value="all">جميع البيانات</option>
-            <option value="custom">فترة مخصصة</option>
+            <option value="current_month" className="text-foreground bg-card">الشهر الحالي</option>
+            <option value="all" className="text-foreground bg-card">جميع البيانات</option>
+            <option value="custom" className="text-foreground bg-card">فترة مخصصة</option>
           </select>
         </div>
 
@@ -361,8 +361,8 @@ export const AdminReportsPanel: React.FC = () => {
         {bankPeriod === 'custom' && (
           <div
             style={{
-              backgroundImage: 'var(--token-report-card-header-bg)',
-              borderBottomColor: 'var(--token-report-card-border)',
+              backgroundColor: 'var(--token-card-header-btn-bg)',
+              borderBottomColor: 'var(--token-card-header-border)',
             }}
             className="px-3 py-2 border-b grid grid-cols-2 gap-2"
           >
@@ -431,22 +431,29 @@ export const AdminReportsPanel: React.FC = () => {
         {/* Compact Header with Independent Filter & Add Action */}
         <div
           style={{
-            backgroundImage: 'var(--token-report-card-header-bg)',
-            borderBottomColor: 'var(--token-report-card-border)',
+            backgroundColor: 'var(--token-card-header-solid-bg)',
+            borderBottomColor: 'var(--token-card-header-border)',
           }}
-          className="px-3.5 py-2.5 border-b flex items-center justify-between gap-2 backdrop-blur-xs"
+          className="px-3.5 py-2.5 border-b flex items-center justify-between gap-2"
         >
           <div className="flex items-center gap-1.5 min-w-0">
-            <span className="w-2 h-2 rounded-full bg-amber-500 shrink-0 shadow-xs" />
+            <span className="w-2 h-2 rounded-full bg-amber-300 shrink-0 shadow-xs" />
             <h3
-              style={{ color: 'var(--token-report-card-title)' }}
+              style={{ color: 'var(--token-card-header-text)' }}
               className="text-xs font-bold truncate tracking-tight"
             >
               تقرير المهام
             </h3>
             <button
               type="button"
-              className="flex items-center gap-1 text-[11px] font-bold bg-primary/10 hover:bg-primary/20 text-primary border border-primary/30 rounded-md px-2 py-0.5 transition-all cursor-pointer shadow-2xs"
+              className="flex items-center gap-1 text-[11px] font-bold rounded-md px-2 py-0.5 transition-all cursor-pointer shadow-2xs"
+              style={{
+                backgroundColor: 'var(--token-card-header-btn-bg)',
+                borderColor: 'var(--token-card-header-btn-border)',
+                color: 'var(--token-card-header-btn-text)',
+                borderWidth: '1px',
+                borderStyle: 'solid',
+              }}
               onClick={() => openModal('taskForm', {})}
               title="إضافة مهمة جديدة"
             >
@@ -460,23 +467,23 @@ export const AdminReportsPanel: React.FC = () => {
               value={tasksPeriod}
               onChange={(e) => handleTasksPeriodChange(e.target.value as PeriodType)}
               style={{
-                background: 'var(--token-report-card-input-bg)',
-                borderColor: 'var(--token-report-card-input-border)',
-                color: 'var(--token-report-card-text)',
+                backgroundColor: 'var(--token-card-header-btn-bg)',
+                borderColor: 'var(--token-card-header-btn-border)',
+                color: 'var(--token-card-header-btn-text)',
               }}
               className="border rounded-lg px-2.5 py-1 text-[11px] font-bold focus:outline-none cursor-pointer shadow-2xs transition-colors"
             >
-              <option value="current_month">الشهر الحالي</option>
-              <option value="all">جميع البيانات</option>
-              <option value="custom">فترة مخصصة</option>
+              <option value="current_month" className="text-foreground bg-card">الشهر الحالي</option>
+              <option value="all" className="text-foreground bg-card">جميع البيانات</option>
+              <option value="custom" className="text-foreground bg-card">فترة مخصصة</option>
             </select>
 
             {totalCount > 0 && (
               <span
                 style={{
-                  background: 'var(--token-report-card-header-bg)',
-                  borderColor: 'var(--token-report-card-border)',
-                  color: 'var(--token-report-card-text)',
+                  backgroundColor: 'var(--token-card-header-btn-bg)',
+                  borderColor: 'var(--token-card-header-btn-border)',
+                  color: 'var(--token-card-header-btn-text)',
                 }}
                 className="text-[11px] font-mono font-bold border px-2 py-0.5 rounded-md tabular-nums"
               >
@@ -490,8 +497,8 @@ export const AdminReportsPanel: React.FC = () => {
         {tasksPeriod === 'custom' && (
           <div
             style={{
-              backgroundImage: 'var(--token-report-card-header-bg)',
-              borderBottomColor: 'var(--token-report-card-border)',
+              backgroundColor: 'var(--token-card-header-btn-bg)',
+              borderBottomColor: 'var(--token-card-header-border)',
             }}
             className="px-3 py-2 border-b grid grid-cols-2 gap-2"
           >

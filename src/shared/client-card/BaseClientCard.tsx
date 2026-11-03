@@ -18,8 +18,10 @@ const BaseClientCard = ({
   showAmount = true,
   showEmployeePrefix = false,
   compactMode = false,
+  headerVariant = 'default',
 }: BaseClientCardProps) => {
   const { client, tasks } = data;
+  const isAmber = headerVariant === 'amber';
   const cardRef = useRef<HTMLDivElement>(null);
   const taskRowRefs = useRef<(HTMLTableRowElement | null)[]>([]);
   const [isHovered, setIsHovered] = useState(false);
@@ -71,8 +73,8 @@ const BaseClientCard = ({
       {/* 1. Upper Zone: Single Compact Header Band (Drag handle, ID, Name, WhatsApp, Actions) */}
       <div 
         style={{
-          backgroundColor: 'var(--token-card-header-solid-bg)',
-          color: 'var(--token-card-header-text)',
+          backgroundColor: isAmber ? 'var(--token-card-header-amber-solid-bg)' : 'var(--token-card-header-solid-bg)',
+          color: isAmber ? 'var(--token-card-header-amber-text)' : 'var(--token-card-header-text)',
         }}
       >
         <CardHeader
@@ -82,6 +84,7 @@ const BaseClientCard = ({
           context={context}
           actions={clientActions}
           dragHandleProps={dragHandleProps}
+          variant={headerVariant}
         />
       </div>
 
