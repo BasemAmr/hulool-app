@@ -20,6 +20,7 @@ export type PickerKind = 'client' | 'employee' | 'cashbox' | 'bank' | 'settlemen
 export interface PickerValue {
   kind: PickerKind | null;
   accountId: string;
+  accountName?: string;
   /** For treasury categories: sub_type (cashbox/bank) */
   categorySlug: string | null;
 }
@@ -93,22 +94,22 @@ export default function AccountPickerCard({
 
   // When read-only, render a clean, uneditable display of the selected account
   if (readOnly) {
-    let accountName = '';
+    let accountName = value.accountName || '';
     let accountBalance: number | null = null;
     let kindLabel = '';
 
     if (value.kind === 'client') {
       const c = clients.find((a) => String(a.id) === value.accountId);
-      accountName = c?.name ?? `عميل #${value.accountId}`;
+      accountName = value.accountName || c?.name || '';
       accountBalance = typeof c?.balance === 'number' ? c.balance : null;
       kindLabel = 'عميل';
     } else if (value.kind === 'employee') {
       const e = employees.find((a) => String(a.id) === value.accountId);
-      accountName = e?.name ?? `موظف #${value.accountId}`;
+      accountName = value.accountName || e?.name || '';
       kindLabel = 'موظف';
     } else if (value.kind === 'cashbox' || value.kind === 'bank' || value.kind === 'other' || value.kind === 'settlement') {
       const t = treasuryData.find((a) => String(a.id) === value.accountId);
-      accountName = t?.name ?? `حساب #${value.accountId}`;
+      accountName = value.accountName || t?.name || '';
       accountBalance = typeof t?.balance === 'number' ? t.balance : (t ? parseFloat(String(t.balance || 0)) : null);
       kindLabel = value.kind === 'cashbox' ? 'صندوق' : (value.kind === 'bank' ? 'بنك' : (value.kind === 'settlement' ? 'تسوية' : 'حساب آخر'));
     }
@@ -128,7 +129,7 @@ export default function AccountPickerCard({
         <div className="flex items-center justify-between rounded-lg border border-border-strong bg-muted/40 p-2.5 text-xs font-bold">
           <div className="flex items-center gap-2 min-w-0">
             <Icon size={14} className="text-primary shrink-0" />
-            <span className="truncate">{accountName || '—'}</span>
+            <span className="truncate">{accountName || kindLabel || '—'}</span>
             {accountBalance !== null && (
               <span className="text-text-secondary font-mono text-[11px] shrink-0" dir="ltr">
                 ({formatCurrency(accountBalance)})
@@ -282,7 +283,7 @@ export default function AccountPickerCard({
             <div
               key={acc.id}
               onClick={() => {
-                onChange({ ...value, accountId: String(acc.id) });
+                onChange({ ...value, accountId: String(acc.id), accountName: acc.name });
                 setForceShowList(false);
               }}
               className={`flex items-center justify-between p-2 rounded-md border text-xs font-bold cursor-pointer transition-all ${
@@ -306,8 +307,8 @@ export default function AccountPickerCard({
   const renderClientSelector = () => (
     <ClientSearchCombobox
       value={value.accountId}
-      onChange={(clientId) => {
-        onChange({ ...value, accountId: clientId || '' });
+      onChange={(clientId, clientName) => {
+        onChange({ ...value, accountId: clientId || '', accountName: clientName || '' });
       }}
       placeholder="ابحث باسم العميل..."
     />
@@ -322,7 +323,7 @@ export default function AccountPickerCard({
         <div className="flex items-center justify-between rounded-lg border border-border-strong bg-muted/40 p-2.5 text-xs font-bold">
           <div className="flex items-center gap-2">
             <User size={14} className="text-status-danger-text" />
-            <span>{selectedEmployee.name}</span>
+            <span>{value.accountName || selectedEmployee.name}</span>
           </div>
           <button
             type="button"
@@ -350,7 +351,7 @@ export default function AccountPickerCard({
                 <div
                   key={emp.id}
                   onClick={() => {
-                    onChange({ ...value, accountId: String(emp.id) });
+                    onChange({ ...value, accountId: String(emp.id), accountName: emp.name });
                     setForceShowList(false);
                   }}
                   className={`flex items-center justify-between p-2 rounded-md border text-xs font-bold cursor-pointer transition-all ${
@@ -381,7 +382,7 @@ export default function AccountPickerCard({
       return (
         <div className="flex items-center justify-between rounded-lg border border-border-strong bg-muted/40 p-2.5 text-xs font-bold">
           <div className="flex items-center gap-2">
-            <span>{selectedAccount.name}</span>
+            <span>{value.accountName || selectedAccount.name}</span>
             <span className="text-text-secondary font-mono text-[11px]">
               ({formatCurrency(balance)})
             </span>
@@ -413,7 +414,7 @@ export default function AccountPickerCard({
                 <div
                   key={acc.id}
                   onClick={() => {
-                    onChange({ ...value, accountId: String(acc.id) });
+                    onChange({ ...value, accountId: String(acc.id), accountName: acc.name });
                     setForceShowList(false);
                   }}
                   className={`flex items-center justify-between p-2 rounded-md border text-xs font-bold cursor-pointer transition-all ${

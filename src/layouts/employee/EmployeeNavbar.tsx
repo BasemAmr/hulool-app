@@ -8,15 +8,10 @@ import FontSizeToggleButton from '@/shared/ui/primitives/FontSizeToggleButton';
 import {
   Home, ClipboardList, Users, LogOut,
   Search, ChevronDown, Plus, FileSpreadsheet,
-  Settings, TrendingUp, TrendingDown, UserCog, Wallet, Landmark, CreditCard
+  Settings, Wallet, Landmark, CreditCard
 } from 'lucide-react';
 import { useGetMyTreasuryAccounts } from '@/features/financials/api/treasuryQueries';
-import { useCanUseSettlement } from '@/features/financials/api/treasuryQueries';
 import { useModalStore } from '@/shared/stores/modalStore';
-import {
-  buildSettlementQabdPreset,
-  buildSettlementSarfPreset,
-} from '@/features/financials/utils/settlementPresets';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -24,7 +19,6 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger
 } from '@/shared/ui/shadcn/dropdown-menu';
-import Button from '@/shared/ui/primitives/Button';
 
 // ─── Smooth Hover Dropdown Component (No Pinning) ──────────────
 const NavHoverDropdown = ({
@@ -123,9 +117,6 @@ const EmployeeNavbar = () => {
 
   // Fetch treasury accounts assigned to the current employee
   const { data: myTreasuryAccounts = [] } = useGetMyTreasuryAccounts();
-  // The navbar offers تسوية on every employee page; hide it when the employee has no
-  // can_transact on the settlement account. Absent permission row counts as no access.
-  const { canUseSettlement } = useCanUseSettlement();
 
   // Group accounts
   const cashboxAccounts = useMemo(
@@ -159,9 +150,6 @@ const EmployeeNavbar = () => {
   const isCashboxActive = activeAccountId ? cashboxAccounts.some((a) => String(a.id) === activeAccountId) : false;
   const isBankActive = activeAccountId ? bankAccounts.some((a) => String(a.id) === activeAccountId) : false;
   const isOtherActive = activeAccountId ? otherAccounts.some((a) => String(a.id) === activeAccountId) : false;
-
-  const canMakeTransactions =
-    user?.type === 'admin' || user?.type === 'employee_admin' || user?.can_make_transactions !== false;
 
   const handleSearchFocus = () => {
     openModal('clientSearch', {});
@@ -212,7 +200,7 @@ const EmployeeNavbar = () => {
 
           {/* Main Navigation - Desktop */}
           <div className="hidden md:flex items-center gap-1 overflow-visible">
-            {/* الصفحة الرئيسية */}
+            {/* 1. الصفحة الرئيسية */}
             <NavLink
               to="/employee/dashboard"
               className={({ isActive }) => navItemClass(isActive)}
@@ -221,7 +209,65 @@ const EmployeeNavbar = () => {
               <span>الصفحة الرئيسية</span>
             </NavLink>
 
-            {/* العملاء Dropdown */}
+            {/* 2. الصندوق Dropdown */}
+            <NavHoverDropdown
+              className="min-w-48 text-right max-h-80 overflow-y-auto"
+              trigger={
+                <button className={navItemClass(isCashboxActive)}>
+                  <Wallet size={15} />
+                  <span>الصندوق</span>
+                  <ChevronDown size={13} className="opacity-80" />
+                </button>
+              }
+            >
+              <div onClick={() => openModal('treasuryAccountReport', { subType: 'cashbox' })} className={menuItemClass}>
+                <FileSpreadsheet size={16} className="text-sky-600 dark:text-sky-400 flex-shrink-0" />
+                <span>كشف حساب الصندوق</span>
+              </div>
+              <div className="border-t my-1" style={{ borderColor: 'var(--token-navbar-dropdown-divider)' }} />
+              {cashboxAccounts.length === 0 ? (
+                <div className="py-4 px-4 text-center text-xs text-text-secondary">
+                  لا توجد صناديق
+                </div>
+              ) : (
+                cashboxAccounts.map((account) => (
+                  <Link key={account.id} to={`/employee/treasury-accounts/${account.id}`} className={listItemClass}>
+                    <span className="whitespace-nowrap">{account.name}</span>
+                  </Link>
+                ))
+              )}
+            </NavHoverDropdown>
+
+            {/* 3. البنوك Dropdown */}
+            <NavHoverDropdown
+              className="min-w-48 text-right max-h-80 overflow-y-auto"
+              trigger={
+                <button className={navItemClass(isBankActive)}>
+                  <Landmark size={15} />
+                  <span>البنوك</span>
+                  <ChevronDown size={13} className="opacity-80" />
+                </button>
+              }
+            >
+              <div onClick={() => openModal('treasuryAccountReport', { subType: 'bank' })} className={menuItemClass}>
+                <FileSpreadsheet size={16} className="text-sky-600 dark:text-sky-400 flex-shrink-0" />
+                <span>كشف حساب البنك</span>
+              </div>
+              <div className="border-t my-1" style={{ borderColor: 'var(--token-navbar-dropdown-divider)' }} />
+              {bankAccounts.length === 0 ? (
+                <div className="py-4 px-4 text-center text-xs text-text-secondary">
+                  لا توجد حسابات بنكية
+                </div>
+              ) : (
+                bankAccounts.map((account) => (
+                  <Link key={account.id} to={`/employee/treasury-accounts/${account.id}`} className={listItemClass}>
+                    <span className="whitespace-nowrap">{account.name}</span>
+                  </Link>
+                ))
+              )}
+            </NavHoverDropdown>
+
+            {/* 4. العملاء Dropdown */}
             <NavHoverDropdown
               trigger={
                 <button className={navItemClass(location.pathname.startsWith('/employee/clients') || location.pathname.startsWith('/employee/receivables'))}>
@@ -251,65 +297,7 @@ const EmployeeNavbar = () => {
               </div>
             </NavHoverDropdown>
 
-            {/* الصناديق Dropdown */}
-            <NavHoverDropdown
-              className="min-w-48 text-right max-h-80 overflow-y-auto"
-              trigger={
-                <button className={navItemClass(isCashboxActive)}>
-                  <Wallet size={15} />
-                  <span>الصناديق</span>
-                  <ChevronDown size={13} className="opacity-80" />
-                </button>
-              }
-            >
-              <div onClick={() => openModal('treasuryAccountReport', { subType: 'cashbox' })} className={menuItemClass}>
-                <FileSpreadsheet size={16} className="text-sky-600 dark:text-sky-400 flex-shrink-0" />
-                <span>كشف حساب الصندوق</span>
-              </div>
-              <div className="border-t my-1" style={{ borderColor: 'var(--token-navbar-dropdown-divider)' }} />
-              {cashboxAccounts.length === 0 ? (
-                <div className="py-4 px-4 text-center text-xs text-text-secondary">
-                  لا توجد صناديق
-                </div>
-              ) : (
-                cashboxAccounts.map((account) => (
-                  <Link to={`/employee/treasury-accounts/${account.id}`} className={listItemClass}>
-                    <span className="whitespace-nowrap">{account.name}</span>
-                  </Link>
-                ))
-              )}
-            </NavHoverDropdown>
-
-            {/* البنوك Dropdown */}
-            <NavHoverDropdown
-              className="min-w-48 text-right max-h-80 overflow-y-auto"
-              trigger={
-                <button className={navItemClass(isBankActive)}>
-                  <Landmark size={15} />
-                  <span>البنوك</span>
-                  <ChevronDown size={13} className="opacity-80" />
-                </button>
-              }
-            >
-              <div onClick={() => openModal('treasuryAccountReport', { subType: 'bank' })} className={menuItemClass}>
-                <FileSpreadsheet size={16} className="text-sky-600 dark:text-sky-400 flex-shrink-0" />
-                <span>كشف حساب البنك</span>
-              </div>
-              <div className="border-t my-1" style={{ borderColor: 'var(--token-navbar-dropdown-divider)' }} />
-              {bankAccounts.length === 0 ? (
-                <div className="py-4 px-4 text-center text-xs text-text-secondary">
-                  لا توجد حسابات بنكية
-                </div>
-              ) : (
-                bankAccounts.map((account) => (
-                  <Link to={`/employee/treasury-accounts/${account.id}`} className={listItemClass}>
-                    <span className="whitespace-nowrap">{account.name}</span>
-                  </Link>
-                ))
-              )}
-            </NavHoverDropdown>
-
-            {/* حسابات أخرى Dropdown */}
+            {/* 5. حسابات اخرى Dropdown */}
             {otherAccounts.length > 0 && (
               <NavHoverDropdown
                 className="min-w-48 text-right max-h-80 overflow-y-auto"
@@ -321,14 +309,14 @@ const EmployeeNavbar = () => {
                 }
               >
                 {otherAccounts.map((account) => (
-                  <Link to={`/employee/treasury-accounts/${account.id}`} className={listItemClass}>
+                  <Link key={account.id} to={`/employee/treasury-accounts/${account.id}`} className={listItemClass}>
                     <span className="whitespace-nowrap">{account.name}</span>
                   </Link>
                 ))}
               </NavHoverDropdown>
             )}
 
-            {/* المهام Dropdown */}
+            {/* 6. المهام Dropdown */}
             <NavHoverDropdown
               className="w-48 text-right"
               trigger={
@@ -349,15 +337,6 @@ const EmployeeNavbar = () => {
                 <span>صفحة المهام</span>
               </Link>
             </NavHoverDropdown>
-
-            {/* معاملاتي / سجل المعاملات */}
-            <NavLink
-              to="/employee/financials?tab=history"
-              className={({ isActive }) => navItemClass(isActive || location.pathname.startsWith('/employee/financials'))}
-            >
-              <FileSpreadsheet size={15} />
-              <span>سجل المعاملات</span>
-            </NavLink>
           </div>
         </div>
 

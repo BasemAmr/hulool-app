@@ -88,7 +88,7 @@ const KanbanColumn = ({
                             <CardContent className="p-3">
                                 <div className="text-xs text-text-primary/50 mb-1">#{invoice.id}</div>
                                 <div className="font-medium text-sm text-text-primary mb-1 truncate">
-                                    {invoice.client?.name || `عميل #${invoice.client_id}`}
+                                    {invoice.client?.name || 'العميل'}
                                 </div>
 
                                 {/* Status Specific Details */}

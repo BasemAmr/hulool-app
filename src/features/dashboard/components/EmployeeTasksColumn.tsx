@@ -210,7 +210,8 @@ const AdminEmployeeClientCard = ({
         const updatedTask = {
           ...task,
           status: 'Pending Review' as const,
-          id: response?.data?.id || task.id
+          id: response?.data?.id || task.id,
+          expense_amount: Number(task.expense_amount || 0)
         };
 
         openModal('approval', { task: updatedTask });
@@ -444,6 +445,17 @@ const AdminEmployeeClientCard = ({
                             >
                               <Upload size={14} className="ml-2" />
                               إرسال للمراجعة
+                            </DropdownMenuItem>
+                          )}
+
+                          {/* Approve Task */}
+                          {task.status === 'Pending Review' && (
+                            <DropdownMenuItem
+                              onClick={() => openModal('approval', { task })}
+                              className="text-right cursor-pointer"
+                            >
+                              <Upload size={14} className="ml-2" />
+                              الموافقة على المهمة
                             </DropdownMenuItem>
                           )}
 

@@ -585,7 +585,7 @@ const EmployeeTransactionsTable: React.FC<EmployeeTransactionsTableProps> = ({
       let runningBalance = 0;
       const exportData: EmployeeStatementReportData = {
         employeeId: employeeId as number,
-        employeeName: employeeName || `موظف #${employeeId}`,
+        employeeName: employeeName || 'الموظف',
         // The sheet prints "الفترة"; an export is not month-scoped.
         period: { month: 0, year: new Date().getFullYear(), month_name: 'جميع الفترات' },
         // The generator always prints a "رصيد افتتاحي" row. It stays zero: a full export

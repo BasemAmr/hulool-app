@@ -197,7 +197,7 @@ const AdminEmployeeTransactionsPanel: React.FC<AdminEmployeeTransactionsPanelPro
     try {
       const exportData: EmployeeStatementReportData = {
         employeeId,
-        employeeName: employeeName || `موظف #${employeeId}`,
+        employeeName: employeeName || 'الموظف',
         period: ledgerData.period,
         openingBalance: {
           total_debit: ledgerData.opening_balance.total_debit,
@@ -291,7 +291,7 @@ const AdminEmployeeTransactionsPanel: React.FC<AdminEmployeeTransactionsPanelPro
 
       const exportData: EmployeeStatementReportData = {
         employeeId,
-        employeeName: employeeName || `موظف #${employeeId}`,
+        employeeName: employeeName || 'الموظف',
         period: { month: 0, year: 0, month_name: 'جميع الفترات' },
         openingBalance: {
           total_debit: 0,

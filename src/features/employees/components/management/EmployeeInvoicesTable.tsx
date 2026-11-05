@@ -22,7 +22,7 @@ interface EmployeeInvoicesTableProps {
 
 /** Client Cell - Name + Phone */
 const ClientCell = React.memo(({ rowData }: CellProps<Invoice>) => {
-    const clientName = rowData.client?.name || `عميل #${rowData.client_id}`;
+    const clientName = rowData.client?.name || 'العميل';
     const phone = rowData.client?.phone || '';
 
     return (
@@ -140,7 +140,7 @@ const ActionsCell = React.memo(({ rowData, columnData }: CellProps<Invoice, { op
     const { openModal } = columnData || {};
     const remaining = Number(rowData.remaining_amount);
     const phone = rowData.client?.phone;
-    const clientName = rowData.client?.name || `عميل #${rowData.client_id}`;
+    const clientName = rowData.client?.name || 'العميل';
 
     const handleRecordPayment = (e: React.MouseEvent) => {
         e.stopPropagation();

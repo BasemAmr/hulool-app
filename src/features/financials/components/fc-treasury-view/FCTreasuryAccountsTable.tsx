@@ -1,7 +1,7 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useModalStore } from '@/shared/stores/modalStore';
-import { useDeactivateTreasuryAccount } from '@/features/financials/api/treasuryQueries';
+import { useDeactivateTreasuryAccount, useCommissionExpenseConfig } from '@/features/financials/api/treasuryQueries';
 import { useCategoryLabels } from '@/features/financials/constants/categoryConfig';
 import { useToast } from '@/shared/hooks/useToast';
 import { Spinner } from '@/shared/ui/shadcn/spinner';
@@ -20,11 +20,21 @@ const FCTreasuryAccountsTable: React.FC<FCTreasuryAccountsTableProps> = ({ accou
   const navigate = useNavigate();
   const openModal = useModalStore((state) => state.openModal);
   const deactivateMutation = useDeactivateTreasuryAccount();
+  const { data: commissionConfig } = useCommissionExpenseConfig();
   const toast = useToast();
   const categoryLabels = useCategoryLabels();
 
   const handleView = (account: TreasuryAccount) => {
-    navigate(`/financial-center/treasury-accounts/${account.id}`);
+    const isComm =
+      commissionConfig?.assigned_account?.id === account.id ||
+      commissionConfig?.employees?.some((e) => e.custom_account_id === account.id) ||
+      (account.metadata && JSON.stringify(account.metadata).includes('employee_commissions'));
+
+    if (isComm) {
+      navigate(`/financial-center/commission-accounts/${account.id}`);
+    } else {
+      navigate(`/financial-center/treasury-accounts/${account.id}`);
+    }
   };
 
   const handleEdit = (account: TreasuryAccount) => {

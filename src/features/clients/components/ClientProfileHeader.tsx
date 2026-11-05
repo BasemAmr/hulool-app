@@ -118,6 +118,7 @@ const ClientProfileHeader = ({
               onClick={() => openUnified({
                 defaultFromCardType: 'client',
                 defaultFromAccountId: String(client.id),
+                defaultFromAccountName: client.name,
                 defaultToCardType: 'cashbox',
                 title: 'سند قبض',
               })}
@@ -135,6 +136,7 @@ const ClientProfileHeader = ({
                 defaultFromCardType: 'cashbox',
                 defaultToCardType: 'client',
                 defaultToAccountId: String(client.id),
+                defaultToAccountName: client.name,
                 title: 'سند صرف',
               })}
             >
@@ -161,7 +163,7 @@ const ClientProfileHeader = ({
                   className="cursor-pointer flex flex-row-reverse justify-end gap-2 text-status-success-text font-bold"
                   onClick={() => openUnified(
                     // Standard تسوية preset: قبض for a client = FROM client (credit, debt down) TO settlement.
-                    buildSettlementQabdPreset({ kind: 'client', id: String(client.id) }))}
+                    buildSettlementQabdPreset({ kind: 'client', id: String(client.id), name: client.name }))}
                 >
                   <span>تسوية قبض</span>
                   <TrendingUp size={16} className="text-status-success-text" />
@@ -170,7 +172,7 @@ const ClientProfileHeader = ({
                   className="cursor-pointer flex flex-row-reverse justify-end gap-2 text-status-danger-text font-bold"
                   onClick={() => openUnified(
                     // Standard تسوية preset: صرف for a client = FROM settlement TO client (debit, debt up).
-                    buildSettlementSarfPreset({ kind: 'client', id: String(client.id) }))}
+                    buildSettlementSarfPreset({ kind: 'client', id: String(client.id), name: client.name }))}
                 >
                   <span>تسوية صرف</span>
                   <TrendingDown size={16} className="text-status-danger-text" />

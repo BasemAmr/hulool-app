@@ -53,6 +53,7 @@ export interface SettlementCounterparty {
   kind: SettlementCounterpartyKind;
   /** Account id when the opener knows it (per-row buttons); omit for generic pickers. */
   id?: string;
+  name?: string;
 }
 
 export interface SettlementPreset {
@@ -60,6 +61,8 @@ export interface SettlementPreset {
   defaultToCardType: string;
   defaultFromAccountId?: string;
   defaultToAccountId?: string;
+  defaultFromAccountName?: string;
+  defaultToAccountName?: string;
   title: string;
   /** Explicit action — the modal blocks save when live pickers mismatch it. */
   settlementAction: SettlementAction;
@@ -139,7 +142,7 @@ export function buildSettlementPreset(
   action: SettlementAction,
   counterparty: SettlementCounterparty,
 ): SettlementPreset {
-  const { kind } = counterparty;
+  const { kind, name } = counterparty;
   const { idProp, hasId } = withId(counterparty.id);
   const title = action === 'qabd' ? 'تسوية قبض' : 'تسوية صرف';
 
@@ -150,6 +153,7 @@ export function buildSettlementPreset(
     return {
       defaultFromCardType: kind,
       ...(hasId ? { defaultFromAccountId: idProp } : {}),
+      ...(name ? { defaultFromAccountName: name } : {}),
       defaultToCardType: 'settlement',
       title,
       settlementAction: action,
@@ -160,6 +164,7 @@ export function buildSettlementPreset(
       defaultFromCardType: 'settlement',
       defaultToCardType: kind,
       ...(hasId ? { defaultToAccountId: idProp } : {}),
+      ...(name ? { defaultToAccountName: name } : {}),
       title,
       settlementAction: action,
     };
@@ -172,6 +177,7 @@ export function buildSettlementPreset(
       defaultFromCardType: 'settlement',
       defaultToCardType: kind,
       ...(hasId ? { defaultToAccountId: idProp } : {}),
+      ...(name ? { defaultToAccountName: name } : {}),
       title,
       settlementAction: action,
     };
@@ -179,6 +185,7 @@ export function buildSettlementPreset(
   return {
     defaultFromCardType: kind,
     ...(hasId ? { defaultFromAccountId: idProp } : {}),
+    ...(name ? { defaultFromAccountName: name } : {}),
     defaultToCardType: 'settlement',
     title,
     settlementAction: action,

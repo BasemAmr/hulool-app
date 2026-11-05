@@ -3,6 +3,7 @@ import {
   useGetTreasuryAccounts,
   useDeactivateTreasuryAccount,
   useGetTreasuryCategories,
+  useCommissionExpenseConfig,
 } from '../api/treasuryQueries';
 import type { TreasuryAccount } from '../api/treasuryQueries';
 import type { TreasuryCategory } from '@/api/types';
@@ -119,9 +120,20 @@ export const TreasuryAccountsPage = () => {
     ? accounts
     : accounts.filter((a) => a.sub_type === activeTab);
 
+  const { data: commissionConfig } = useCommissionExpenseConfig();
+
   // Action handlers
   const handleView = (account: TreasuryAccount) => {
-    navigate(`/financial-center/treasury-accounts/${account.id}`);
+    const isComm =
+      commissionConfig?.assigned_account?.id === account.id ||
+      commissionConfig?.employees?.some((e) => e.custom_account_id === account.id) ||
+      (account.metadata && JSON.stringify(account.metadata).includes('employee_commissions'));
+
+    if (isComm) {
+      navigate(`/financial-center/commission-accounts/${account.id}`);
+    } else {
+      navigate(`/financial-center/treasury-accounts/${account.id}`);
+    }
   };
 
   const handleEdit = (account: TreasuryAccount) => {

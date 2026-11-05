@@ -38,10 +38,10 @@ interface ClientsTableProps {
   onEdit: (client: Client) => void;
   onAddTask: (client: Client) => void;
   onAddInvoice: (client: Client) => void;
-  onQabd?: (clientId: number) => void;
-  onSarf?: (clientId: number) => void;
-  onTaswiyaQabd?: (clientId: number) => void;
-  onTaswiyaSarf?: (clientId: number) => void;
+  onQabd?: (client: Client | number, clientName?: string) => void;
+  onSarf?: (client: Client | number, clientName?: string) => void;
+  onTaswiyaQabd?: (client: Client | number, clientName?: string) => void;
+  onTaswiyaSarf?: (client: Client | number, clientName?: string) => void;
   linkBasePath?: string;
   showSettlement?: boolean;
 }
@@ -176,10 +176,10 @@ interface ActionsCellProps extends CellProps<Client> {
     onEdit: (client: Client) => void;
     onAddTask: (client: Client) => void;
     onAddInvoice: (client: Client) => void;
-    onQabd?: (clientId: number) => void;
-    onSarf?: (clientId: number) => void;
-    onTaswiyaQabd?: (clientId: number) => void;
-    onTaswiyaSarf?: (clientId: number) => void;
+    onQabd?: (client: Client | number, clientName?: string) => void;
+    onSarf?: (client: Client | number, clientName?: string) => void;
+    onTaswiyaQabd?: (client: Client | number, clientName?: string) => void;
+    onTaswiyaSarf?: (client: Client | number, clientName?: string) => void;
     showSettlement?: boolean;
   };
 }
@@ -249,7 +249,7 @@ const ActionsCell = React.memo(({ rowData, columnData }: ActionsCellProps) => {
       <div className="flex items-center gap-1 shrink-0">
         <button
           type="button"
-          onClick={() => onQabd?.(rowData.id)}
+          onClick={() => onQabd?.(rowData)}
           title="سند قبض"
           className="inline-flex items-center gap-0.5 px-1.5 py-0.5 text-xs font-bold rounded border border-status-success-border text-status-success-text bg-status-success-bg hover:opacity-85 transition-opacity cursor-pointer shadow-2xs"
         >
@@ -258,7 +258,7 @@ const ActionsCell = React.memo(({ rowData, columnData }: ActionsCellProps) => {
         </button>
         <button
           type="button"
-          onClick={() => onSarf?.(rowData.id)}
+          onClick={() => onSarf?.(rowData)}
           title="سند صرف"
           className="inline-flex items-center gap-0.5 px-1.5 py-0.5 text-xs font-bold rounded border border-status-danger-border text-status-danger-text bg-status-danger-bg hover:opacity-85 transition-opacity cursor-pointer shadow-2xs"
         >
@@ -280,14 +280,14 @@ const ActionsCell = React.memo(({ rowData, columnData }: ActionsCellProps) => {
             <DropdownMenuContent align="end" className="z-[9999] min-w-[130px] bg-card border border-border shadow-xl">
               <DropdownMenuItem
                 className="flex items-center gap-2 text-xs font-semibold text-status-success-text cursor-pointer hover:bg-status-success-bg/20 py-1.5"
-                onClick={() => onTaswiyaQabd?.(rowData.id)}
+                onClick={() => onTaswiyaQabd?.(rowData)}
               >
                 <TrendingUp size={12} />
                 تسوية قبض
               </DropdownMenuItem>
               <DropdownMenuItem
                 className="flex items-center gap-2 text-xs font-semibold text-status-danger-text cursor-pointer hover:bg-status-danger-bg/20 py-1.5"
-                onClick={() => onTaswiyaSarf?.(rowData.id)}
+                onClick={() => onTaswiyaSarf?.(rowData)}
               >
                 <TrendingDown size={12} />
                 تسوية صرف
@@ -325,37 +325,49 @@ const ClientsTable: React.FC<ClientsTableProps> = ({
   const isEmployeeView = linkBasePath.startsWith('/employee');
   const canShowSettlement = explicitShowSettlement !== undefined ? explicitShowSettlement : !isEmployeeView;
 
-  const handleDefaultQabd = (clientId: number) => {
+  const handleDefaultQabd = (client: Client | number) => {
+    const clientId = typeof client === 'object' ? client.id : client;
+    const clientName = typeof client === 'object' ? client.name : undefined;
     openModal('unifiedTransaction', {
       defaultFromCardType: 'client',
       defaultFromAccountId: String(clientId),
+      defaultFromAccountName: clientName,
       defaultToCardType: 'cashbox',
       lockDirection: true,
       title: 'سند قبض',
     });
   };
 
-  const handleDefaultSarf = (clientId: number) => {
+  const handleDefaultSarf = (client: Client | number) => {
+    const clientId = typeof client === 'object' ? client.id : client;
+    const clientName = typeof client === 'object' ? client.name : undefined;
     openModal('unifiedTransaction', {
       defaultFromCardType: 'cashbox',
       defaultToCardType: 'client',
       defaultToAccountId: String(clientId),
+      defaultToAccountName: clientName,
       lockDirection: true,
       title: 'سند صرف',
     });
   };
 
-  const handleDefaultTaswiyaQabd = (clientId: number) => {
+  const handleDefaultTaswiyaQabd = (client: Client | number) => {
+    const clientId = typeof client === 'object' ? client.id : client;
+    const clientName = typeof client === 'object' ? client.name : undefined;
     openModal('unifiedTransaction', buildSettlementQabdPreset({
       kind: 'client',
       id: String(clientId),
+      name: clientName,
     }));
   };
 
-  const handleDefaultTaswiyaSarf = (clientId: number) => {
+  const handleDefaultTaswiyaSarf = (client: Client | number) => {
+    const clientId = typeof client === 'object' ? client.id : client;
+    const clientName = typeof client === 'object' ? client.name : undefined;
     openModal('unifiedTransaction', buildSettlementSarfPreset({
       kind: 'client',
       id: String(clientId),
+      name: clientName,
     }));
   };
 

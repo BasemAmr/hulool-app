@@ -189,7 +189,8 @@ const AdminEmployeeTasksTable = ({ userId }: AdminEmployeeTasksTableProps) => {
         const updatedTask = {
           ...task,
           status: 'Pending Review' as const,
-          id: response?.data?.id || task.id
+          id: response?.data?.id || task.id,
+          expense_amount: Number(task.expense_amount || 0)
         };
         openModal('approval', { task: updatedTask });
       },

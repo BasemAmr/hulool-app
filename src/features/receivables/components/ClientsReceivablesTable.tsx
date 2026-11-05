@@ -142,7 +142,16 @@ const TotalDebitCell = React.memo(({ rowData, active }: CellProps<ClientReceivab
   const amount = Number(rowData.total_amount) || 0;
 
   return (
-    <span className="hulool-cell-content" style={{ justifyContent: 'center', color: 'var(--token-text-primary)', fontWeight: active ? 700 : 500 }}>
+    <span
+      className="hulool-cell-content"
+      style={{
+        justifyContent: 'center',
+        padding: '0 8px',
+        color: 'var(--token-text-primary)',
+        fontWeight: active ? 700 : 500,
+        whiteSpace: 'nowrap',
+      }}
+    >
       {formatCurrency(amount)}
     </span>
   );
@@ -154,7 +163,16 @@ const TotalCreditCell = React.memo(({ rowData, active }: CellProps<ClientReceiva
   const amount = Number(rowData.paid_amount) || 0;
 
   return (
-    <span className="hulool-cell-content" style={{ justifyContent: 'center', color: 'var(--token-text-primary)', fontWeight: active ? 700 : 500 }}>
+    <span
+      className="hulool-cell-content"
+      style={{
+        justifyContent: 'center',
+        padding: '0 8px',
+        color: 'var(--token-text-primary)',
+        fontWeight: active ? 700 : 500,
+        whiteSpace: 'nowrap',
+      }}
+    >
       {formatCurrency(amount)}
     </span>
   );
@@ -185,10 +203,10 @@ interface ActionsCellData {
   onPaymentReminder: (phone: string, clientName: string, amount: number) => void;
   onPayment: (clientId: number) => void;
   onViewLedger: (clientId: number, clientName: string) => void;
-  onQabd: (clientId: number) => void;
-  onSarf: (clientId: number) => void;
-  onTaswiyaQabd: (clientId: number) => void;
-  onTaswiyaSarf: (clientId: number) => void;
+  onQabd: (clientId: number, clientName?: string) => void;
+  onSarf: (clientId: number, clientName?: string) => void;
+  onTaswiyaQabd: (clientId: number, clientName?: string) => void;
+  onTaswiyaSarf: (clientId: number, clientName?: string) => void;
 }
 
 const ActionsCell = React.memo(({ rowData, columnData }: CellProps<ClientReceivablesSummary, ActionsCellData>) => {
@@ -273,7 +291,7 @@ const ActionsCell = React.memo(({ rowData, columnData }: CellProps<ClientReceiva
       <div className="flex items-center gap-1 shrink-0">
         <button
           type="button"
-          onClick={() => onQabd?.(rowData.client_id)}
+          onClick={() => onQabd?.(rowData.client_id, rowData.client_name)}
           title="سند قبض"
           className="inline-flex items-center gap-0.5 px-1.5 py-0.5 text-xs font-bold rounded border border-status-success-border text-status-success-text bg-status-success-bg hover:opacity-85 transition-opacity cursor-pointer shadow-2xs"
         >
@@ -282,7 +300,7 @@ const ActionsCell = React.memo(({ rowData, columnData }: CellProps<ClientReceiva
         </button>
         <button
           type="button"
-          onClick={() => onSarf?.(rowData.client_id)}
+          onClick={() => onSarf?.(rowData.client_id, rowData.client_name)}
           title="سند صرف"
           className="inline-flex items-center gap-0.5 px-1.5 py-0.5 text-xs font-bold rounded border border-status-danger-border text-status-danger-text bg-status-danger-bg hover:opacity-85 transition-opacity cursor-pointer shadow-2xs"
         >
@@ -302,14 +320,14 @@ const ActionsCell = React.memo(({ rowData, columnData }: CellProps<ClientReceiva
           <DropdownMenuContent align="end" className="z-[9999] min-w-[130px] bg-card border border-border shadow-xl">
             <DropdownMenuItem
               className="flex items-center gap-2 text-xs font-semibold text-status-success-text cursor-pointer hover:bg-status-success-bg/20 py-1.5"
-              onClick={() => onTaswiyaQabd?.(rowData.client_id)}
+              onClick={() => onTaswiyaQabd?.(rowData.client_id, rowData.client_name)}
             >
               <TrendingUp size={12} />
               تسوية قبض
             </DropdownMenuItem>
             <DropdownMenuItem
               className="flex items-center gap-2 text-xs font-semibold text-status-danger-text cursor-pointer hover:bg-status-danger-bg/20 py-1.5"
-              onClick={() => onTaswiyaSarf?.(rowData.client_id)}
+              onClick={() => onTaswiyaSarf?.(rowData.client_id, rowData.client_name)}
             >
               <TrendingDown size={12} />
               تسوية صرف
@@ -366,37 +384,41 @@ const ClientsReceivablesTable: React.FC<ClientsReceivablesTableProps> = ({
     });
   };
 
-  const handleQabd = (clientId: number) => {
+  const handleQabd = (clientId: number, clientName?: string) => {
     openModal('unifiedTransaction', {
       defaultFromCardType: 'client',
       defaultFromAccountId: String(clientId),
+      defaultFromAccountName: clientName,
       defaultToCardType: 'cashbox',
       lockDirection: true,
       title: 'سند قبض',
     });
   };
 
-  const handleSarf = (clientId: number) => {
+  const handleSarf = (clientId: number, clientName?: string) => {
     openModal('unifiedTransaction', {
       defaultFromCardType: 'cashbox',
       defaultToCardType: 'client',
       defaultToAccountId: String(clientId),
+      defaultToAccountName: clientName,
       lockDirection: true,
       title: 'سند صرف',
     });
   };
 
-  const handleTaswiyaQabd = (clientId: number) => {
+  const handleTaswiyaQabd = (clientId: number, clientName?: string) => {
     openModal('unifiedTransaction', buildSettlementQabdPreset({
       kind: 'client',
       id: String(clientId),
+      name: clientName,
     }));
   };
 
-  const handleTaswiyaSarf = (clientId: number) => {
+  const handleTaswiyaSarf = (clientId: number, clientName?: string) => {
     openModal('unifiedTransaction', buildSettlementSarfPreset({
       kind: 'client',
       id: String(clientId),
+      name: clientName,
     }));
   };
 
@@ -409,7 +431,7 @@ const ClientsReceivablesTable: React.FC<ClientsReceivablesTableProps> = ({
       type: 'custom',
       component: ClientNameCell as React.ComponentType<CellProps<ClientReceivablesSummary>>,
       columnData: { onClientClick: handleClientClick },
-      grow: 1.5,
+      grow: 2,
     },
     {
       id: 'client_phone',
@@ -426,7 +448,8 @@ const ClientsReceivablesTable: React.FC<ClientsReceivablesTableProps> = ({
       title: 'إجمالي المدين',
       type: 'custom',
       component: TotalDebitCell,
-      grow: 1,
+      width: 115,
+      grow: 0,
       cellClassName: () => {
         return 'client-debit-cell';
       }
@@ -437,7 +460,8 @@ const ClientsReceivablesTable: React.FC<ClientsReceivablesTableProps> = ({
       title: 'إجمالي الدائن',
       type: 'custom',
       component: TotalCreditCell,
-      grow: 1,
+      width: 115,
+      grow: 0,
       cellClassName: () => {
         return 'client-credit-cell';
       }

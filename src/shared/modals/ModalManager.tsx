@@ -12,7 +12,7 @@ import SelectReceivableForPaymentModal from '@/features/invoices/modals/SelectRe
 import TagFormModal from '@/features/tags/modals/TagFormModal';
 import TagManagementModal from '@/features/tags/modals/TagManagementModal';
 
-import ReceivablePaymentModal from '@/features/receivables/modals/ReceivablePaymentModal';
+// Removed legacy ReceivablePaymentModal - now unified under RecordPaymentModal
 import PaymentHistoryModal from '@/features/receivables/modals/PaymentHistoryModal';
 import PaymentEditModal from '@/features/receivables/modals/PaymentEditModal';
 import PaymentDeleteModal from '@/features/receivables/modals/PaymentDeleteModal';
@@ -125,7 +125,13 @@ const ModalManager = () => {
       return renderModal(ClientReceivablesModal, { client: props.client });
 
     case 'paymentForm':
-      return renderModal(ReceivablePaymentModal, { receivable: props.receivable, isRequired: props.isRequired });
+      return renderModal(RecordPaymentModal, {
+        invoiceId: props.receivable?.id,
+        invoice: props.receivable,
+        amountDue: props.receivable?.remaining_amount,
+        clientId: props.receivable?.client_id,
+        clientName: props.receivable?.client_name,
+      });
 
     case 'paymentHistory':
       return renderModal(PaymentHistoryModal, { receivable: props.receivable });
@@ -224,7 +230,7 @@ const ModalManager = () => {
       return renderModal(AssignTaskModal, { task: props.task });
 
     case 'approval':
-      return renderModal(ApprovalModal, { task: props.task });
+      return renderModal(ApprovalModal, { task: props.task || (props.id ? props : undefined) });
 
     case 'employeePayout':
       return renderModal(EmployeePayoutModal, { employee: props.employee, onSuccess: props.onSuccess });
@@ -245,7 +251,7 @@ const ModalManager = () => {
       return renderModal(InvoiceFormModal, { invoiceToEdit: props.invoiceToEdit, client: props.client, defaultItems: props.defaultItems });
 
     case 'recordPayment':
-      return renderModal(RecordPaymentModal, { invoiceId: props.invoiceId, clientId: props.clientId, clientName: props.clientName });
+      return renderModal(RecordPaymentModal, props);
 
     case 'recordBatchPayment':
       return renderModal(RecordBatchPaymentModal, { clientId: props.clientId, clientName: props.clientName, selectedInvoices: props.selectedInvoices });

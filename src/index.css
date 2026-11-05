@@ -1611,3 +1611,43 @@ html[data-theme='dark'] .client-card-table th {
   background-color: var(--token-status-success-bg) !important;
   color: var(--token-status-success-text) !important;
 }
+
+/* --- Employee Commissions Grid Cell Classes --- */
+.commissions-task-amount-cell {
+  background-color: var(--token-bg-surface) !important;
+  color: var(--token-text-primary) !important;
+  font-weight: 700 !important;
+  text-align: center !important;
+  justify-content: center !important;
+}
+
+.commissions-expense-amount-cell {
+  background-color: var(--token-status-danger-bg) !important;
+  color: var(--token-status-danger-text) !important;
+  font-weight: 700 !important;
+  text-align: center !important;
+  justify-content: center !important;
+}
+
+.commissions-net-amount-cell {
+  background-color: var(--token-status-success-bg) !important;
+  color: var(--token-status-success-text) !important;
+  font-weight: 700 !important;
+  text-align: center !important;
+  justify-content: center !important;
+}
+
+.hulool-data-grid .dsg-row:not(.dsg-row-header):hover .dsg-cell.commissions-task-amount-cell {
+  background-color: var(--token-table-row-hover, var(--token-bg-surface-hover)) !important;
+  color: var(--token-text-primary) !important;
+}
+
+.hulool-data-grid .dsg-row:not(.dsg-row-header):hover .dsg-cell.commissions-expense-amount-cell {
+  background-color: var(--token-status-danger-bg) !important;
+  color: var(--token-status-danger-text) !important;
+}
+
+.hulool-data-grid .dsg-row:not(.dsg-row-header):hover .dsg-cell.commissions-net-amount-cell {
+  background-color: var(--token-status-success-bg) !important;
+  color: var(--token-status-success-text) !important;
+}

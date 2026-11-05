@@ -144,7 +144,7 @@ const PermissionsManager = ({
                         </div>
                         <div className="flex flex-col">
                           <span className="text-sm font-semibold text-text-primary">
-                            {perm.employee_display_name || `موظف #${perm.employee_user_id}`}
+                            {perm.employee_display_name || 'موظف'}
                           </span>
                           {isCashBox && primaryCustodianUserId === perm.employee_user_id && (
                             <Badge variant="outline" className="text-[10px] px-1.5 py-0 mt-0.5 w-fit border-status-warning-border text-status-warning-text bg-status-warning-bg">

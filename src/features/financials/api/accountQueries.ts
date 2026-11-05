@@ -132,6 +132,7 @@ const fetchAccountHistory = async (
     end_date?: string; 
     transaction_type?: string; 
     search?: string;
+    employee_id?: string | number;
   }
 ): Promise<AccountHistoryPaginatedData> => {
   const params: Record<string, any> = { page, per_page: perPage };
@@ -139,6 +140,7 @@ const fetchAccountHistory = async (
   if (filters?.end_date) params.end_date = filters.end_date;
   if (filters?.transaction_type) params.transaction_type = filters.transaction_type;
   if (filters?.search) params.search = filters.search;
+  if (filters?.employee_id) params.employee_id = filters.employee_id;
 
   const { data } = await apiClient.get<any>(
     `/accounts/${accountType}/${accountId}/history`,
@@ -572,7 +574,13 @@ export const useGetAccountHistory = (
   accountType: AccountType, 
   accountId: number, 
   page: number = 1,
-  filters?: { start_date?: string; end_date?: string; transaction_type?: string; search?: string },
+  filters?: { 
+    start_date?: string; 
+    end_date?: string; 
+    transaction_type?: string; 
+    search?: string;
+    employee_id?: string | number;
+  },
   enabled: boolean = true
 ) => {
   return useQuery({
@@ -580,10 +588,16 @@ export const useGetAccountHistory = (
     queryFn: () => fetchAccountHistory(accountType, accountId, page, TRANSACTIONS_PER_PAGE, filters),
     enabled: !!accountId && enabled,
     staleTime: 10 * 1000,
-    // `page` is part of the key, so every scroll step is a brand new query and `data`
-    // went undefined while it loaded - the toolbar totals rendered 0.00 mid-scroll and
-    // then jumped back. Holding the previous page keeps the totals on screen.
-    placeholderData: (previous) => previous,
+    // When filters change, clear placeholder so we don't display old filtered rows
+    placeholderData: (previousData, previousQuery) => {
+      if (!previousQuery) return undefined;
+      const prevKey = previousQuery.queryKey as any[];
+      const prevFilters = prevKey?.[5];
+      if (JSON.stringify(prevFilters) !== JSON.stringify(filters)) {
+        return undefined;
+      }
+      return previousData;
+    },
   });
 };
 

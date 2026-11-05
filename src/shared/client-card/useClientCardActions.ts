@@ -159,7 +159,8 @@ export const useClientCardActions = ({
             const updatedTask = {
               ...task,
               status: 'Pending Review' as const,
-              id: response?.data?.id || task.id
+              id: response?.data?.id || task.id,
+              expense_amount: Number(task.expense_amount || 0)
             };
             openModal('approval', { task: updatedTask });
           }
@@ -231,6 +232,10 @@ export const useClientCardActions = ({
 
     onAssign: role === 'admin' ? (task) => {
       openModal('assignTask', { task });
+    } : undefined,
+
+    onApprove: role === 'admin' ? (task) => {
+      openModal('approval', { task });
     } : undefined,
   };
 

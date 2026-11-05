@@ -82,7 +82,16 @@ const DebitCell = React.memo(({ rowData, columnData, active }: CellProps<Stateme
   const amount = Number(rowData.debit) || 0;
 
   return (
-    <span className="hulool-cell-content" style={{ justifyContent: 'center', fontWeight: active ? 700 : 500, color: 'var(--token-text-primary)' }}>
+    <span
+      className="hulool-cell-content"
+      style={{
+        justifyContent: 'center',
+        padding: '0 8px',
+        fontWeight: active ? 700 : 500,
+        color: 'var(--token-text-primary)',
+        whiteSpace: 'nowrap',
+      }}
+    >
       {columnData?.hideAmounts ? '***' : (amount > 0 ? formatCurrency(amount) : '—')}
     </span>
   );
@@ -93,7 +102,16 @@ const CreditCell = React.memo(({ rowData, columnData, active }: CellProps<Statem
   const amount = Number(rowData.credit) || 0;
 
   return (
-    <span className="hulool-cell-content" style={{ justifyContent: 'center', fontWeight: active ? 700 : 500, color: 'var(--token-text-primary)' }}>
+    <span
+      className="hulool-cell-content"
+      style={{
+        justifyContent: 'center',
+        padding: '0 8px',
+        fontWeight: active ? 700 : 500,
+        color: 'var(--token-text-primary)',
+        whiteSpace: 'nowrap',
+      }}
+    >
       {columnData?.hideAmounts ? '***' : (amount > 0 ? formatCurrency(amount) : '—')}
     </span>
   );
@@ -388,7 +406,8 @@ const ClientReceivablesTable: React.FC<ClientReceivablesTableProps> = ({
       title: 'المدين',
       type: 'custom',
       component: DebitCell,
-      grow: 1,
+      width: 105,
+      grow: 0,
     },
     {
       id: 'credit',
@@ -396,7 +415,8 @@ const ClientReceivablesTable: React.FC<ClientReceivablesTableProps> = ({
       title: 'الدائن',
       type: 'custom',
       component: CreditCell,
-      grow: 1,
+      width: 105,
+      grow: 0,
     },
     {
       id: 'balance',

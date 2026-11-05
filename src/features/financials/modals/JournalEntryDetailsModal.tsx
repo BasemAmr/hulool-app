@@ -158,16 +158,16 @@ const JournalEntryDetailsModal: React.FC<JournalEntryDetailsModalProps> = () => 
 
     if (type === 'client' || type.includes('Client')) {
       url = `/clients/${id}`;
-      label = name || `Client #${id}`;
+      label = name || 'العميل';
     } else if (type === 'employee' || type.includes('Employee')) {
       url = `/employees/${id}`;
-      label = name || `Employee #${id}`;
+      label = name || 'الموظف';
     } else if (type === 'task' || type.includes('Task')) {
       url = `/tasks/${id}`;
-      label = name || `Task #${id}`;
+      label = name || 'المهمة';
     } else if (type === 'invoice' || type.includes('Invoice')) {
       url = `/invoices/${id}`;
-      label = name || `Invoice #${id}`;
+      label = name || 'الفاتورة';
     }
 
     if (url) {
@@ -179,7 +179,7 @@ const JournalEntryDetailsModal: React.FC<JournalEntryDetailsModalProps> = () => 
       );
     }
 
-    return <span>{type} #{id}</span>;
+    return <span>{name || getAccountTypeLabel(type)}</span>;
   };
 
   return (
@@ -259,7 +259,7 @@ const JournalEntryDetailsModal: React.FC<JournalEntryDetailsModalProps> = () => 
                           <span className="text-text-secondary">{getAccountIcon(data.original.account_type)}</span>
                           <div className="text-sm">
                             <div className="font-medium">
-                              {getAccountTypeLabel(data.original.account_type)} #{data.original.account_id}
+                              {data.original.account_name || getAccountTypeLabel(data.original.account_type)}
                             </div>
                             <div className="text-xs text-text-muted">ID: {data.original.id}</div>
                           </div>
@@ -313,7 +313,7 @@ const JournalEntryDetailsModal: React.FC<JournalEntryDetailsModalProps> = () => 
                           <span className="text-text-secondary">{getAccountIcon(data.related.account_type)}</span>
                           <div className="text-sm">
                             <div className="font-medium">
-                              {getAccountTypeLabel(data.related.account_type)} #{data.related.account_id}
+                              {data.related.account_name || getAccountTypeLabel(data.related.account_type)}
                             </div>
                             <div className="text-xs text-text-muted">ID: {data.related.id}</div>
                           </div>

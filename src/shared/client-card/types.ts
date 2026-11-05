@@ -31,6 +31,7 @@ export interface TaskActions {
   onOpenFollowUp?: (task: Task) => void;
   onToggleUrgent?: (task: Task) => void;
   onAssign?: (task: Task) => void;
+  onApprove?: (task: Task) => void;
 }
 
 /**

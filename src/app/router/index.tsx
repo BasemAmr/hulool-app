@@ -37,6 +37,7 @@ import EmployeeAccountsPage from '@/features/employees/pages/employee/EmployeeAc
 import { TreasuryAccountsPage } from '@/features/financials/pages/TreasuryAccountsPage';
 import { TreasuryCategoryListPage } from '@/features/financials/pages/TreasuryCategoryListPage';
 import { TreasuryAccountDetailsPage } from '@/features/financials/pages/TreasuryAccountDetailsPage';
+import { EmployeeCommissionsAccountPage } from '@/features/financials/pages/EmployeeCommissionsAccountPage';
 
 
 const routes: RouteObject[] = [
@@ -105,6 +106,8 @@ const routes: RouteObject[] = [
             { path: 'invoices', element: <InvoicesHubPage /> },
             { path: "treasury/:subType", element: <TreasuryCategoryListPage /> },
             { path: "treasury-accounts/:id", element: <TreasuryAccountDetailsPage /> },
+            { path: "commission-accounts/:id", element: <EmployeeCommissionsAccountPage /> },
+            { path: "employee-commissions/:id", element: <EmployeeCommissionsAccountPage /> },
 
           ]
         }],
@@ -124,6 +127,8 @@ const routes: RouteObject[] = [
               { path: 'financials', element: <EmployeeFinancialsPage /> },
               { path: 'accounts', element: <EmployeeAccountsPage /> },
               { path: 'treasury-accounts/:id', element: <TreasuryAccountDetailsPage /> },
+              { path: 'commission-accounts/:id', element: <EmployeeCommissionsAccountPage /> },
+              { path: 'employee-commissions/:id', element: <EmployeeCommissionsAccountPage /> },
               { path: 'settings', element: <EmployeeSettingsPage /> },
               { path: 'notifications', element: <EmployeeNotificationsPage /> },
             ]

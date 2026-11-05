@@ -269,7 +269,7 @@ export const RecordVoucherModal: React.FC<RecordVoucherModalProps> = ({
             />
           </div>
           <div>
-            <label className="block text-sm font-medium mb-1 text-text-primary">وقت السند (HH:MM:SS)</label>
+            <label className="block text-sm font-medium mb-1 text-text-primary">وقت السند</label>
             <input
               type="time"
               step="1"

@@ -20,6 +20,7 @@ export const getAvailableActions = (
   canSubmitForReview: boolean;
   canAssign: boolean;
   canToggleUrgent: boolean;
+  canApprove: boolean;
   showRequirements: boolean;
   showFollowUp: boolean;
   showSubtasks: boolean;
@@ -45,6 +46,7 @@ export const getAvailableActions = (
       canSubmitForReview: !isCompleted && !isPendingReview,
       canAssign: false,
       canToggleUrgent: true,
+      canApprove: false,
       showRequirements,
       showFollowUp,
       showSubtasks,
@@ -68,6 +70,7 @@ export const getAvailableActions = (
     // Only allow assign in dashboard contexts
     canAssign: (context === 'admin-dashboard' || context === 'admin-employee-filter') && (isNew || isDeferred),
     canToggleUrgent: true,
+    canApprove: isPendingReview,
     showRequirements,
     showFollowUp,
     showSubtasks,

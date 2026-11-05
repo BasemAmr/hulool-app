@@ -28,7 +28,7 @@ import { useDebounce } from '@/shared/hooks/useDebounce';
 
 interface ClientSearchComboboxProps {
   value: string;
-  onChange: (value: string) => void;
+  onChange: (value: string, clientName?: string) => void;
   placeholder?: string;
   disabled?: boolean;
 }
@@ -112,8 +112,8 @@ const ClientSearchCombobox = ({
                     onSelect={(currentValue) => {
                       // Only toggle if clicking the same value, otherwise always select
                       const newValue = currentValue === value ? '' : currentValue;
-                      console.log('Client selected:', { currentValue, value, newValue });
-                      onChange(newValue);
+                      const selectedObj = displayClients.find((c) => String(c.id) === currentValue);
+                      onChange(newValue, newValue ? selectedObj?.name : '');
                       setOpen(false);
                       setSearch('');
                     }}

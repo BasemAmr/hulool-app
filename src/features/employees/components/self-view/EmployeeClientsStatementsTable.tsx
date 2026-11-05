@@ -80,7 +80,7 @@ DescriptionCell.displayName = 'DescriptionCell';
 // Debit (Amount) Cell
 const DebitCell = React.memo(({ rowData, columnData }: CellProps<EmployeeReceivableDashboardItem, { hideAmounts: boolean }>) => {
   return (
-    <div style={{ textAlign: 'center', fontWeight: 600, color: 'var(--token-text-primary)' }}>
+    <div style={{ textAlign: 'center', fontWeight: 600, color: 'var(--token-text-primary)', padding: '0 8px', whiteSpace: 'nowrap' }}>
       {columnData?.hideAmounts ? '***' : formatCurrency(Number(rowData.amount))}
     </div>
   );
@@ -91,7 +91,7 @@ DebitCell.displayName = 'DebitCell';
 const CreditCell = React.memo(({ rowData, columnData }: CellProps<EmployeeReceivableDashboardItem, { hideAmounts: boolean }>) => {
   const paid = rowData.total_paid + rowData.total_allocated;
   return (
-    <div style={{ textAlign: 'center', fontWeight: 600, color: 'var(--token-text-success)' }}>
+    <div style={{ textAlign: 'center', fontWeight: 600, color: 'var(--token-text-success)', padding: '0 8px', whiteSpace: 'nowrap' }}>
       {columnData?.hideAmounts ? '***' : formatCurrency(paid)}
     </div>
   );
@@ -363,7 +363,8 @@ const EmployeeClientsStatementsTable: React.FC<EmployeeClientsStatementsTablePro
         type: 'custom',
         component: DebitCell,
         columnData: { hideAmounts },
-        grow: 1,
+        width: 105,
+        grow: 0,
       },
       {
         id: 'credit',
@@ -372,7 +373,8 @@ const EmployeeClientsStatementsTable: React.FC<EmployeeClientsStatementsTablePro
         type: 'custom',
         component: CreditCell,
         columnData: { hideAmounts },
-        grow: 1,
+        width: 105,
+        grow: 0,
       },
       {
         id: 'due',

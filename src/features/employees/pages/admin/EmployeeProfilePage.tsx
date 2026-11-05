@@ -139,6 +139,7 @@ const EmployeeProfilePage = () => {
       // Canonical ledger id is tm_employees.id (employee.id), same source the
       // تسوية handlers use — never the raw URL param, which can be stale mid-transition.
       defaultToAccountId: String(employee.id),
+      defaultToAccountName: employee.display_name,
       lockDirection: true,
       title: 'سند صرف',
     });
@@ -151,6 +152,7 @@ const EmployeeProfilePage = () => {
       // Canonical ledger id is tm_employees.id (employee.id), same source the
       // تسوية handlers use — never the raw URL param, which can be stale mid-transition.
       defaultFromAccountId: String(employee.id),
+      defaultFromAccountName: employee.display_name,
       defaultToCardType: 'cashbox',
       lockDirection: true,
       title: 'سند قبض',
@@ -160,13 +162,13 @@ const EmployeeProfilePage = () => {
   const handleSettlementQabd = () => {
     if (!employee) return;
     // Standard تسوية preset: قبض for an employee = FROM employee (credit) TO settlement.
-    openModal('unifiedTransaction', buildSettlementQabdPreset({ kind: 'employee', id: String(employee.id) }));
+    openModal('unifiedTransaction', buildSettlementQabdPreset({ kind: 'employee', id: String(employee.id), name: employee.display_name }));
   };
 
   const handleSettlementSarf = () => {
     if (!employee) return;
     // Standard تسوية preset: صرف for an employee = FROM settlement TO employee (debit).
-    openModal('unifiedTransaction', buildSettlementSarfPreset({ kind: 'employee', id: String(employee.id) }));
+    openModal('unifiedTransaction', buildSettlementSarfPreset({ kind: 'employee', id: String(employee.id), name: employee.display_name }));
   };
 
   const handleModeChange = (mode: ViewMode) => {

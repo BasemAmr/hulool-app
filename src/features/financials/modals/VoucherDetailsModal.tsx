@@ -8,6 +8,8 @@ import { useAuthStore } from '@/features/auth/store/authStore';
 import { useUpdateTransaction } from '@/features/financials/api/transactionQueries';
 import { useGetAccountsByType } from '@/features/financials/api/financialCenterQueries';
 import { useGetTreasuryAccounts, useGetCategoryMetadata } from '@/features/financials/api/treasuryQueries';
+import { useQuery } from '@tanstack/react-query';
+import apiClient from '@/api/client';
 import { useToast } from '@/shared/hooks/useToast';
 import { resolveLedgerTone, isKnownLedgerType } from '@/shared/ledger/ledgerDirection';
 import { Pencil, Printer, CheckCircle2, CircleDashed, Loader2 } from 'lucide-react';
@@ -123,10 +125,30 @@ export const VoucherDetailsModal: React.FC<VoucherDetailsModalProps> = ({
 
   if (!rawTxn) return null;
 
-  // Determine Qabd vs Sarf dynamically by transaction money movement across ledgers
+  // Fetch detailed voucher payload from backend to guarantee complete names
+  const { data: voucherApiData } = useQuery({
+    queryKey: ['transaction-voucher', rawTxn?.id],
+    queryFn: async () => {
+      const res = await apiClient.get<any>(`/transactions/${rawTxn.id}/voucher`);
+      return res.data?.data || null;
+    },
+    enabled: !!rawTxn?.id && isOpen,
+    staleTime: 60 * 1000,
+  });
+
   const debitAmount = Number(rawTxn.debit || (rawTxn.direction === 'debit' ? rawTxn.amount : 0));
   const creditAmount = Number(rawTxn.credit || (rawTxn.direction === 'credit' ? rawTxn.amount : 0));
   const accountType = String(rawTxn.account_type || 'treasury');
+
+  const enrichedTxn = useMemo(() => {
+    return {
+      ...rawTxn,
+      account_name: voucherApiData?.account_name || rawTxn.account_name,
+      counterparty_name: voucherApiData?.counterparty_name || rawTxn.counterparty_name || rawTxn.credit_account_name || rawTxn.debit_account_name,
+      credit_account_name: rawTxn.credit_account_name || (creditAmount > 0 ? (voucherApiData?.account_name || rawTxn.account_name) : (voucherApiData?.counterparty_name || rawTxn.counterparty_name)),
+      debit_account_name: rawTxn.debit_account_name || (debitAmount > 0 ? (voucherApiData?.account_name || rawTxn.account_name) : (voucherApiData?.counterparty_name || rawTxn.counterparty_name)),
+    };
+  }, [rawTxn, voucherApiData, creditAmount, debitAmount]);
 
   let meta: any = rawTxn.metadata;
   if (typeof meta === 'string') {
@@ -156,38 +178,42 @@ export const VoucherDetailsModal: React.FC<VoucherDetailsModalProps> = ({
       // THIS account is the Credit (From) account
       return {
         kind: (accountType === 'client' ? 'client' : (accountType === 'employee' ? 'employee' : (accountType === 'bank' ? 'bank' : 'cashbox'))) as PickerKind,
-        accountId: String(rawTxn.account_id || ''),
+        accountId: String(enrichedTxn.account_id || ''),
+        accountName: enrichedTxn.credit_account_name || enrichedTxn.account_name,
         categorySlug: null,
       };
     } else {
       // Counterparty is the Credit (From) account
-      const targetType = String(rawTxn.target_type || '');
+      const targetType = String(enrichedTxn.target_type || voucherApiData?.counterparty_account_type || '');
       return {
         kind: (targetType === 'client' ? 'client' : (targetType === 'employee' ? 'employee' : (targetType === 'bank' ? 'bank' : (targetType === 'cashbox' ? 'cashbox' : 'other')))) as PickerKind,
-        accountId: String(rawTxn.target_id || ''),
+        accountId: String(enrichedTxn.target_id || ''),
+        accountName: enrichedTxn.credit_account_name || enrichedTxn.counterparty_name,
         categorySlug: null,
       };
     }
-  }, [rawTxn, creditAmount, accountType]);
+  }, [enrichedTxn, creditAmount, accountType, voucherApiData]);
 
   const toPicker: PickerValue = useMemo(() => {
     if (debitAmount > 0) {
       // THIS account is the Debit (To) account
       return {
         kind: (accountType === 'client' ? 'client' : (accountType === 'employee' ? 'employee' : (accountType === 'bank' ? 'bank' : 'cashbox'))) as PickerKind,
-        accountId: String(rawTxn.account_id || ''),
+        accountId: String(enrichedTxn.account_id || ''),
+        accountName: enrichedTxn.debit_account_name || enrichedTxn.account_name,
         categorySlug: null,
       };
     } else {
       // Counterparty is the Debit (To) account
-      const targetType = String(rawTxn.target_type || '');
+      const targetType = String(enrichedTxn.target_type || voucherApiData?.counterparty_account_type || '');
       return {
         kind: (targetType === 'client' ? 'client' : (targetType === 'employee' ? 'employee' : (targetType === 'bank' ? 'bank' : (targetType === 'cashbox' ? 'cashbox' : 'other')))) as PickerKind,
-        accountId: String(rawTxn.target_id || ''),
+        accountId: String(enrichedTxn.target_id || ''),
+        accountName: enrichedTxn.debit_account_name || enrichedTxn.counterparty_name,
         categorySlug: null,
       };
     }
-  }, [rawTxn, debitAmount, accountType]);
+  }, [enrichedTxn, debitAmount, accountType, voucherApiData]);
 
   const activeTitle = isEditing
     ? `تعديل المعاملة #${rawTxn.id}`
@@ -413,7 +439,7 @@ export const VoucherDetailsModal: React.FC<VoucherDetailsModalProps> = ({
 
               <div className="col-span-3">
                 <label className="block text-xs font-bold text-text-secondary mb-1.5">
-                  الوقت (HH:MM:SS)
+                  الوقت
                 </label>
                 <input
                   type="time"

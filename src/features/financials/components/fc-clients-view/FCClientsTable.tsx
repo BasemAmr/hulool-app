@@ -44,6 +44,7 @@ const FCClientsTable = ({
       title: 'سند قبض',
       defaultFromCardType: 'client',
       defaultFromAccountId: String(client.client_id),
+      defaultFromAccountName: client.client_name,
       defaultToCardType: 'cashbox',
       lockDirection: false,
     });
@@ -75,19 +76,19 @@ const FCClientsTable = ({
             <th className="px-4 py-3 border border-border-default text-right text-sm font-extrabold text-text-primary">
               اسم العميل
             </th>
-            <th className="px-4 py-3 border border-border-default text-right text-sm font-extrabold text-text-primary">
+            <th className="px-4 py-3 border border-border-default text-right text-sm font-extrabold text-text-primary whitespace-nowrap w-px">
               رقم الجوال
             </th>
-            <th className="px-4 py-3 border border-border-default text-right text-sm font-extrabold text-text-primary">
+            <th className="px-2.5 py-3 border border-border-default text-center text-sm font-extrabold text-text-primary whitespace-nowrap w-px">
               إجمالي المدين
             </th>
-            <th className="px-4 py-3 border border-border-default text-right text-sm font-extrabold text-text-primary">
+            <th className="px-2.5 py-3 border border-border-default text-center text-sm font-extrabold text-text-primary whitespace-nowrap w-px">
               إجمالي الدائن
             </th>
-            <th className="px-4 py-3 border border-border-default text-right text-sm font-extrabold text-text-primary">
+            <th className="px-3 py-3 border border-border-default text-center text-sm font-extrabold text-text-primary whitespace-nowrap w-px">
               المستحق
             </th>
-            <th className="px-4 py-3 border border-border-default text-right text-sm font-extrabold text-text-primary">
+            <th className="px-4 py-3 border border-border-default text-center text-sm font-extrabold text-text-primary whitespace-nowrap w-px">
               الإجراءات
             </th>
           </tr>
@@ -122,10 +123,10 @@ const FCClientsTable = ({
                   )}
                 </div>
               </td>
-              <td className="px-4 py-3 border border-border-default text-base font-bold tabular-nums">
+              <td className="px-2.5 py-3 border border-border-default text-base font-bold tabular-nums whitespace-nowrap text-center w-px">
                 {numberFormat.format(client.total_debit)}
               </td>
-              <td className="px-4 py-3 border border-border-default text-base font-bold tabular-nums">
+              <td className="px-2.5 py-3 border border-border-default text-base font-bold tabular-nums whitespace-nowrap text-center w-px">
                 {numberFormat.format(client.total_credit)}
               </td>
               <td
@@ -173,10 +174,10 @@ const FCClientsTable = ({
               <td className="px-4 py-3 border border-border-default text-text-primary" colSpan={2}>
                 الإجمالي ({totals.clients_count} عميل)
               </td>
-              <td className="px-4 py-3 border border-border-default tabular-nums text-text-primary">
+              <td className="px-2.5 py-3 border border-border-default tabular-nums text-text-primary whitespace-nowrap text-center w-px">
                 {numberFormat.format(totals.total_debit)}
               </td>
-              <td className="px-4 py-3 border border-border-default tabular-nums text-text-primary">
+              <td className="px-2.5 py-3 border border-border-default tabular-nums text-text-primary whitespace-nowrap text-center w-px">
                 {numberFormat.format(totals.total_credit)}
               </td>
               <td className="px-4 py-3 border border-border-default tabular-nums text-text-danger">

@@ -322,6 +322,7 @@ const AllEmployeesPage = () => {
     openModal('unifiedTransaction', {
       defaultFromCardType: 'employee',
       defaultFromAccountId: emp ? String(emp.employee_id) : undefined,
+      defaultFromAccountName: emp ? emp.display_name : undefined,
       defaultToCardType: 'cashbox',
       lockDirection: true,
       title: 'سند قبض',
@@ -332,6 +333,7 @@ const AllEmployeesPage = () => {
       defaultFromCardType: 'cashbox',
       defaultToCardType: 'employee',
       defaultToAccountId: emp ? String(emp.employee_id) : undefined,
+      defaultToAccountName: emp ? emp.display_name : undefined,
       lockDirection: true,
       title: 'سند صرف',
     });
@@ -340,14 +342,14 @@ const AllEmployeesPage = () => {
   const openTaswiyaQabd = (emp?: EmployeeSummaryRow) =>
     openModal('unifiedTransaction', buildSettlementQabdPreset({
       kind: 'employee',
-      ...(emp ? { id: String(emp.employee_id) } : {}),
+      ...(emp ? { id: String(emp.employee_id), name: emp.display_name } : {}),
     }));
 
   // Standard تسوية preset: صرف for an employee = FROM settlement TO employee (debit).
   const openTaswiyaSarf = (emp?: EmployeeSummaryRow) =>
     openModal('unifiedTransaction', buildSettlementSarfPreset({
       kind: 'employee',
-      ...(emp ? { id: String(emp.employee_id) } : {}),
+      ...(emp ? { id: String(emp.employee_id), name: emp.display_name } : {}),
     }));
 
   // Calculate Totals

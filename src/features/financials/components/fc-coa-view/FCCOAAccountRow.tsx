@@ -2,7 +2,7 @@ import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Eye, Pencil, XCircle } from 'lucide-react';
 import { useModalStore } from '@/shared/stores/modalStore';
-import { useDeactivateTreasuryAccount } from '../../api/treasuryQueries';
+import { useDeactivateTreasuryAccount, useCommissionExpenseConfig } from '../../api/treasuryQueries';
 import { useToast } from '@/shared/hooks/useToast';
 import {
   AlertDialog,
@@ -34,13 +34,34 @@ const FCCOAAccountRow: React.FC<FCCOAAccountRowProps> = ({ account }) => {
   const openModal = useModalStore((state) => state.openModal);
   const toast = useToast();
   const deactivateMutation = useDeactivateTreasuryAccount();
+  const { data: commissionConfig } = useCommissionExpenseConfig();
+
+  const isCommissionAccount = React.useMemo(() => {
+    if (commissionConfig?.assigned_account?.id === account.id) {
+      return true;
+    }
+    if (commissionConfig?.employees?.some((e) => e.custom_account_id === account.id)) {
+      return true;
+    }
+    if (!account.metadata) return false;
+    try {
+      const meta = typeof account.metadata === 'string' ? JSON.parse(account.metadata) : account.metadata;
+      return meta?.role === 'employee_commissions';
+    } catch {
+      return false;
+    }
+  }, [account.id, account.metadata, commissionConfig]);
 
   const handleEdit = () => {
     openModal('treasuryEditAccount', { account });
   };
 
   const handleView = () => {
-    navigate(`/financial-center/treasury-accounts/${account.id}`);
+    if (isCommissionAccount) {
+      navigate(`/financial-center/commission-accounts/${account.id}`);
+    } else {
+      navigate(`/financial-center/treasury-accounts/${account.id}`);
+    }
   };
 
   const handleDeactivate = () => {
@@ -54,16 +75,6 @@ const FCCOAAccountRow: React.FC<FCCOAAccountRowProps> = ({ account }) => {
     });
   };
 
-  const isCommissionExpense = React.useMemo(() => {
-    if (!account.metadata) return false;
-    try {
-      const meta = typeof account.metadata === 'string' ? JSON.parse(account.metadata) : account.metadata;
-      return meta?.role === 'employee_commissions';
-    } catch {
-      return false;
-    }
-  }, [account.metadata]);
-
   return (
     <div className="grid grid-cols-12 border-b border-border-strong hover:bg-bg-surface-hover transition-colors text-base">
       <span className="col-span-2 border-s border-e border-border-strong/80 px-3 py-3 text-text-secondary font-mono font-medium">
@@ -71,7 +82,7 @@ const FCCOAAccountRow: React.FC<FCCOAAccountRowProps> = ({ account }) => {
       </span>
       <span className="col-span-5 border-e border-border-strong/80 px-3 py-3 text-text-primary truncate font-medium flex items-center">
         <span>{account.name}</span>
-        {isCommissionExpense && (
+        {isCommissionAccount && (
           <span className="ms-2 px-1.5 py-0.5 text-xs font-bold rounded bg-status-info-bg text-status-info-text border border-status-info-border">
             عمولات الموظفين
           </span>

@@ -85,6 +85,17 @@ const TaskActionDropdown = ({
           </DropdownMenuItem>
         )}
 
+        {/* Approve Task (Admin only for pending review) */}
+        {available.canApprove && actions.onApprove && (
+          <DropdownMenuItem 
+            onClick={() => actions.onApprove?.(task)} 
+            className={menuItemClassName}
+          >
+            <span>الموافقة على المهمة</span>
+            <Check size={14} />
+          </DropdownMenuItem>
+        )}
+
         {/* Submit for Review (Employee or Admin in employee context) */}
         {available.canSubmitForReview && actions.onSubmitForReview && (
           <DropdownMenuItem 

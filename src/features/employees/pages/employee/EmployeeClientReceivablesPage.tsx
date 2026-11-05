@@ -106,7 +106,7 @@ const EmployeeClientReceivablesPage = () => {
         const formattedAmount = formatCurrency(Number(invoice.remaining_amount));
         sendPaymentReminder(
             invoice.client.phone,
-            invoice.client.name || `عميل #${invoice.client_id}`,
+            invoice.client.name || 'العميل',
             formattedAmount
         );
     };
@@ -212,7 +212,7 @@ const EmployeeClientReceivablesPage = () => {
                                         </TableCell>
                                         <TableCell className="border border-border-strong px-3 py-2">
                                             <span className="font-medium text-sm text-text-primary">
-                                                {invoice.client?.name || `عميل #${invoice.client_id}`}
+                                                {invoice.client?.name || 'العميل'}
                                             </span>
                                         </TableCell>
                                         <TableCell className="border border-border-strong px-3 py-2">

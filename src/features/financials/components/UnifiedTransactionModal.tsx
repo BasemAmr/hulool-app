@@ -18,6 +18,7 @@ import {
 } from '@/features/financials/api/financialCenterQueries';
 import { useGetTreasuryAccounts, useGetCategoryMetadata } from '@/features/financials/api/treasuryQueries';
 import { useCanUseSettlement } from '@/features/financials/api/treasuryQueries';
+import { useGetClient } from '@/features/clients/api/clientQueries';
 import { useToast } from '@/shared/hooks/useToast';
 import AccountPickerCard from './AccountPickerCard';
 import type { PickerValue, PickerKind } from './AccountPickerCard';
@@ -154,6 +155,12 @@ const UnifiedTransactionModal = () => {
   const clients = useMemo(() => clientsData?.accounts ?? [], [clientsData]);
   const employees = useMemo(() => employeesRaw?.accounts ?? [], [employeesRaw]);
 
+  // Direct client queries to guarantee client name is ALWAYS available regardless of pagination
+  const fromClientId = fromPicker.kind === 'client' && fromPicker.accountId ? Number(fromPicker.accountId) : 0;
+  const toClientId = toPicker.kind === 'client' && toPicker.accountId ? Number(toPicker.accountId) : 0;
+  const { data: fromClient } = useGetClient(fromClientId);
+  const { data: toClient } = useGetClient(toClientId);
+
   // ---- Re-initialize when modal opens with new props ----
   useEffect(() => {
     if (!isVisible) return;
@@ -162,6 +169,8 @@ const UnifiedTransactionModal = () => {
     const tType = (props?.defaultToCardType as string | undefined) ?? '';
     const fId = (props?.defaultFromAccountId as string | undefined) ?? '';
     const tId = (props?.defaultToAccountId as string | undefined) ?? '';
+    const fName = (props?.defaultFromAccountName as string | undefined) || (props?.clientName as string | undefined);
+    const tName = (props?.defaultToAccountName as string | undefined) || (props?.clientName as string | undefined);
 
     const needsTreasuryData =
       fType === 'treasury' || tType === 'treasury' ||
@@ -217,12 +226,14 @@ const UnifiedTransactionModal = () => {
     const tPreset: PickerKind | null = resolvedToId ? tKind : null;
 
     setDirection(initDir);
-    setFromPicker({ kind: fKind, accountId: resolvedFromId, categorySlug: resolveCategory(fKind, resolvedFromId) });
-    setToPicker({ kind: tKind, accountId: resolvedToId, categorySlug: resolveCategory(tKind, resolvedToId) });
+    setFromPicker({ kind: fKind, accountId: resolvedFromId, accountName: fName, categorySlug: resolveCategory(fKind, resolvedFromId) });
+    setToPicker({ kind: tKind, accountId: resolvedToId, accountName: tName, categorySlug: resolveCategory(tKind, resolvedToId) });
     setFromPresetKind(fPreset);
     setToPresetKind(tPreset);
-    setAmount('');
-    setDescription('');
+    const initAmount = props?.amount ? String(props.amount) : (props?.defaultAmount ? String(props.defaultAmount) : '');
+    const initDescription = (props?.description as string | undefined) || (props?.notes as string | undefined) || '';
+    setAmount(initAmount);
+    setDescription(initDescription);
     setEffectiveDate(nowLocalDate());
     setEffectiveTime(nowLocalTime());
   }, [isVisible, props, treasuryData]);
@@ -318,9 +329,42 @@ const UnifiedTransactionModal = () => {
     projectedFromBalance < 0
   );
 
+  // ---- Lookup helper for summary strip ----
+  const getPickerLabel = (pv: PickerValue): string => {
+    if (!pv.kind || !pv.accountId) return '';
+    if (pv.accountName) return pv.accountName;
+    if (pv.kind === 'client') {
+      if (fromClient?.id === Number(pv.accountId) && fromClient.name) return fromClient.name;
+      if (toClient?.id === Number(pv.accountId) && toClient.name) return toClient.name;
+      const c = clients.find((a) => String(a.id) === pv.accountId);
+      return c?.name || '';
+    }
+    if (pv.kind === 'employee') {
+      const e = employeesRaw?.accounts?.find((a: any) => String(a.id) === pv.accountId);
+      return e?.name || '';
+    }
+    if (pv.kind === 'cashbox' || pv.kind === 'bank' || pv.kind === 'settlement' || pv.kind === 'other') {
+      const a = (treasuryData ?? []).find((t) => String(t.id) === pv.accountId);
+      return a?.name || '';
+    }
+    return '';
+  };
+
+  const getPickerKindLabel = (pv: PickerValue): string => {
+    if (!pv.kind) return '';
+    const map: Record<string, string> = { client: 'عميل', employee: 'موظف', cashbox: 'صندوق', bank: 'بنك', settlement: 'تسوية', other: 'حساب آخر' };
+    return map[pv.kind] ?? '';
+  };
+
+  const fromName = getPickerLabel(fromPicker);
+  const toName = getPickerLabel(toPicker);
+  const fromKindLabel = getPickerKindLabel(fromPicker);
+  const toKindLabel = getPickerKindLabel(toPicker);
+
   const accountsReady =
     fromPicker.accountId !== '' && toPicker.accountId !== '' &&
-    resolvedFromType !== null && resolvedToType !== null;
+    resolvedFromType !== null && resolvedToType !== null &&
+    fromName.trim() !== '' && toName.trim() !== '';
   const detailsReady =
     amount !== '' && parsedAmount > 0 && description.trim() !== '';
 
@@ -439,35 +483,6 @@ const UnifiedTransactionModal = () => {
       minimumFractionDigits: 2,
       maximumFractionDigits: 2,
     }).format(val);
-
-  // ---- Lookup helper for summary strip ----
-  const getPickerLabel = (pv: PickerValue): string => {
-    if (!pv.kind || !pv.accountId) return '';
-    if (pv.kind === 'client') {
-      const c = clients.find((a) => String(a.id) === pv.accountId);
-      return c?.name ?? `عميل #${pv.accountId}`;
-    }
-    if (pv.kind === 'employee') {
-      const e = employeesRaw?.accounts?.find((a: any) => String(a.id) === pv.accountId);
-      return e?.name ?? `موظف #${pv.accountId}`;
-    }
-    if (pv.kind === 'cashbox' || pv.kind === 'bank' || pv.kind === 'settlement' || pv.kind === 'other') {
-      const a = (treasuryData ?? []).find((t) => String(t.id) === pv.accountId);
-      return a?.name ?? `حساب #${pv.accountId}`;
-    }
-    return '';
-  };
-
-  const getPickerKindLabel = (pv: PickerValue): string => {
-    if (!pv.kind) return '';
-    const map: Record<string, string> = { client: 'عميل', employee: 'موظف', cashbox: 'صندوق', bank: 'بنك', settlement: 'تسوية', other: 'حساب آخر' };
-    return map[pv.kind] ?? '';
-  };
-
-  const fromName = getPickerLabel(fromPicker);
-  const toName = getPickerLabel(toPicker);
-  const fromKindLabel = getPickerKindLabel(fromPicker);
-  const toKindLabel = getPickerKindLabel(toPicker);
 
   // The textarea holds ONLY what the user typed. The account trail is a separate
   // auto-generated prefix assembled at submit time - rendering it inside the field made

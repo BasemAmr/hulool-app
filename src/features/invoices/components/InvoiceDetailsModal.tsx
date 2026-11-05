@@ -97,7 +97,7 @@ const InvoiceDetailsModal = () => {
     const formattedAmount = formatCurrency(Number(invoice.remaining_amount));
     sendPaymentReminder(
       invoice.client.phone,
-      invoice.client.name || `عميل #${invoice.client_id}`,
+      invoice.client.name || 'العميل',
       formattedAmount
     );
   };
@@ -138,7 +138,7 @@ const InvoiceDetailsModal = () => {
               <div className="flex items-center gap-2">
                 <User size={16} className="text-text-muted" />
                 <span className="text-text-secondary">العميل:</span>
-                <span className="font-medium">{invoice.client?.name || `عميل #${invoice.client_id}`}</span>
+                <span className="font-medium">{invoice.client?.name || 'العميل'}</span>
               </div>
               {invoice.task && (
                 <div className="flex items-center gap-2">

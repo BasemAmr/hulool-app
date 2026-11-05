@@ -277,8 +277,23 @@ export const TreasuryAccountDetailsPage = () => {
   // Commission Expense Configuration hook for badge indicator
   const { data: commissionConfig } = useCommissionExpenseConfig();
   const isDesignatedCommissionExpense = useMemo(() => {
-    return commissionConfig?.assigned_account?.id === accountId;
-  }, [commissionConfig, accountId]);
+    if (commissionConfig?.assigned_account?.id === accountId) return true;
+    if (commissionConfig?.employees?.some((e) => e.custom_account_id === accountId)) return true;
+    if (!account?.metadata) return false;
+    try {
+      const meta = typeof account.metadata === 'string' ? JSON.parse(account.metadata) : account.metadata;
+      return meta?.role === 'employee_commissions';
+    } catch {
+      return false;
+    }
+  }, [commissionConfig, accountId, account?.metadata]);
+
+  // If this account is designated for employee commissions, redirect to the custom commissions view
+  useEffect(() => {
+    if (isDesignatedCommissionExpense && accountId) {
+      navigate(`/financial-center/commission-accounts/${accountId}`, { replace: true });
+    }
+  }, [isDesignatedCommissionExpense, accountId, navigate]);
 
   const { data: historyData, isLoading: isLoadingHistory, error: historyError } = useGetAccountHistory('treasury', accountId, page, {
     start_date: filters.start_date,

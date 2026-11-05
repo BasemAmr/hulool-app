@@ -163,7 +163,7 @@ const TreasuryPermissionsModal = () => {
                   <div className="flex items-center gap-2 min-w-0">
                     <User size={14} className="text-text-secondary flex-shrink-0" />
                     <span className="text-sm text-text-primary truncate flex items-center gap-1">
-                      {permission.employee_display_name || `موظف #${permission.employee_user_id}`}
+                      {permission.employee_display_name || 'موظف'}
                       {primaryCustodianUserId === permission.employee_user_id && (
                         <span className="inline-flex items-center gap-0.5 text-[10px] px-1.5 py-0.5 rounded-full bg-yellow-100 text-yellow-800 border border-yellow-300">
                           <Star size={10} />
