@@ -10,7 +10,7 @@
  * - Submits via normal invoice pay API (useRecordInvoicePayment)
  */
 
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useRecordInvoicePayment, useGetInvoice } from '@/features/invoices/api/invoiceQueries';
 import { useGetPaymentMethods } from '@/features/receivables/api/paymentQueries';
@@ -27,9 +27,9 @@ import {
   CheckCircle2,
   CircleDashed,
 } from 'lucide-react';
-import AccountPickerCard, { type PickerValue, type PickerKind } from '@/features/financials/components/AccountPickerCard';
+import AccountPickerCard, { type PickerValue } from '@/features/financials/components/AccountPickerCard';
 import { useGetAccountsByType } from '@/features/financials/api/financialCenterQueries';
-import { useGetTreasuryAccounts, useGetCategoryMetadata } from '@/features/financials/api/treasuryQueries';
+import { useGetMyTreasuryAccounts, useGetCategoryMetadata } from '@/features/financials/api/treasuryQueries';
 
 // ========================================
 // Types
@@ -78,12 +78,16 @@ const RecordPaymentModal: React.FC = () => {
 
   // Account pickers data
   const { data: clientsData } = useGetAccountsByType('client', {}, true);
-  const { data: treasuryData } = useGetTreasuryAccounts();
+  const { data: permittedAccounts, isLoading: treasuryAccountsLoading } = useGetMyTreasuryAccounts();
   const { data: categoryMetadata } = useGetCategoryMetadata();
   const { data: employeesRaw } = useGetAccountsByType('employee', {}, true);
 
   const clients = useMemo(() => clientsData?.accounts ?? [], [clientsData]);
   const employees = useMemo(() => employeesRaw?.accounts ?? [], [employeesRaw]);
+  const treasuryData = useMemo(
+    () => (permittedAccounts ?? []).filter((account) => account.can_transact === true),
+    [permittedAccounts]
+  );
 
   // Compute remaining amount (predefined to full current due amount)
   const remainingAmount = useMemo(() => {
@@ -119,23 +123,26 @@ const RecordPaymentModal: React.FC = () => {
     categorySlug: 'cashbox',
   });
 
-  // Set default treasury account (cashbox)
+  // Apply the default once after permissions resolve. Switching category clears the
+  // account ID temporarily, so keying this effect to that ID would snap back to cashbox.
+  const defaultAppliedRef = useRef(false);
   useEffect(() => {
-    if (treasuryData && treasuryData.length > 0 && !toPicker.accountId) {
-      const defaultCashbox = treasuryData.find(
-        (t) => (t as any).can_transact !== false && t.sub_type === 'cashbox' && !(t.metadata as any)?.is_settlement
-      ) || treasuryData[0];
+    if (defaultAppliedRef.current || treasuryAccountsLoading) return;
+    defaultAppliedRef.current = true;
 
-      if (defaultCashbox) {
-        setToPicker({
-          kind: defaultCashbox.sub_type === 'bank' ? 'bank' : 'cashbox',
-          accountId: String(defaultCashbox.id),
-          accountName: defaultCashbox.name,
-          categorySlug: defaultCashbox.sub_type || null,
-        });
-      }
+    const defaultAccount = treasuryData.find(
+      (account) => account.sub_type === 'cashbox' && (account.coa_section || 'assets') === 'assets'
+    );
+
+    if (defaultAccount) {
+      setToPicker({
+        kind: 'cashbox',
+        accountId: String(defaultAccount.id),
+        accountName: defaultAccount.name,
+        categorySlug: 'cashbox',
+      });
     }
-  }, [treasuryData, toPicker.accountId]);
+  }, [treasuryAccountsLoading, treasuryData]);
 
   // Payment methods: find cash method ID
   const { data: paymentMethods, isLoading: methodsLoading } = useGetPaymentMethods();
@@ -211,7 +218,7 @@ const RecordPaymentModal: React.FC = () => {
     );
   }
 
-  if (isInvoiceLoading || methodsLoading) {
+  if (isInvoiceLoading || methodsLoading || treasuryAccountsLoading) {
     return (
       <BaseModal isOpen={true} onClose={closeModal} title="سداد فاتورة" titleClassName="text-center w-full ms-6 font-bold text-status-info-text">
         <div className="flex items-center justify-center py-8">
@@ -285,7 +292,7 @@ const RecordPaymentModal: React.FC = () => {
               onChange={setToPicker}
               clients={clients}
               employees={employees}
-              treasuryData={treasuryData ?? []}
+              treasuryData={treasuryData}
               categoryMetadata={categoryMetadata ?? []}
               presetKind={null}
               isVisible={true}

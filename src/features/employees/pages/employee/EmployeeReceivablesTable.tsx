@@ -55,9 +55,8 @@ interface EmployeeReceivablesTableProps {
 const formatCurrency = (amount: number) => {
   const numAmount = Number(amount) || 0;
   return new Intl.NumberFormat('en-US', {
-    style: 'currency',
-    currency: 'SAR',
-    minimumFractionDigits: 2
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
   }).format(numAmount);
 };
 
@@ -166,11 +165,12 @@ const RemainingCell = React.memo(({ rowData }: CellProps<ClientReceivablesSummar
 
   return (
     <div
-      className="hulool-cell-content w-full h-full flex items-center justify-center font-extrabold text-sm tabular-nums"
+      className="hulool-cell-content w-full h-full flex items-center justify-center gap-1 font-bold text-xs tabular-nums"
       style={{
         color: isDebt ? 'var(--token-report-btn-sarf-text)' : 'var(--token-report-btn-qabd-text)',
       }}
     >
+      {amount > 0 && <TrendingUp size={12} className="shrink-0" />}
       <span>{formatCurrency(amount)}</span>
     </div>
   );

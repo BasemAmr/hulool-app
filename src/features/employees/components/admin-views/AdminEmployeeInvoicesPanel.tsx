@@ -163,10 +163,16 @@ const AdminEmployeeInvoicesPanel: React.FC<AdminEmployeeInvoicesPanelProps> = ({
                   
                   return (
                     <tr key={invoice.id}>
-                      <td className={`text-xs px-2 py-1.5 border border-border-default text-start font-semibold ${bgColor}`}>
+                      <td
+                        className={`text-xs px-2 py-1.5 border border-border-default text-start font-bold truncate ${bgColor}`}
+                        style={{ color: 'var(--token-report-card-text, var(--token-text-primary))' }}
+                      >
                         {clientName}
                       </td>
-                      <td className={`text-xs px-2 py-1.5 border border-border-default text-start font-semibold ${bgColor}`}>
+                      <td
+                        className={`text-xs px-2 py-1.5 border border-border-default text-start font-bold truncate ${bgColor}`}
+                        style={{ color: 'var(--token-report-card-text, var(--token-text-primary))' }}
+                      >
                         {invoice.description || invoice.task_name || `فاتورة #${invoice.id}`}
                       </td>
                       <td className={`text-xs px-2 py-1.5 border border-border-default text-center font-semibold tabular-nums ${bgColor}`}>

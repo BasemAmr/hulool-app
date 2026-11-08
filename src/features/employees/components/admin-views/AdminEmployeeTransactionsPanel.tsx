@@ -452,8 +452,13 @@ const AdminEmployeeTransactionsPanel: React.FC<AdminEmployeeTransactionsPanelPro
                 {/* Opening Balance Row */}
                 <tr className="bg-transparent font-bold">
                   <td className="px-1.5 py-1.5 border border-border-default text-start" style={{ width: `${maxClientWidth}px`, minWidth: `${maxClientWidth}px` }}>-</td>
-                  <td className="px-1.5 py-1.5 border border-border-default text-start font-bold text-base" style={{ width: '280px', minWidth: '280px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                    {opening_balance.description}
+                  <td className="px-1.5 py-1.5 border border-border-default text-start" style={{ width: '280px', minWidth: '280px' }}>
+                    <span
+                      className="block font-['Cairo'] font-bold truncate text-xs"
+                      style={{ color: 'var(--token-report-card-text, var(--token-text-primary))' }}
+                    >
+                      {opening_balance.description}
+                    </span>
                   </td>
                   <td className={`text-base px-1.5 py-1 border border-border-default text-center font-bold ${opening_balance.total_debit > 0 ? 'employee-debit-cell' : ''
                     }`}>
@@ -484,13 +489,23 @@ const AdminEmployeeTransactionsPanel: React.FC<AdminEmployeeTransactionsPanelPro
                         ref={(el) => {
                           if (el) clientCellsRef.current.set(transaction.id, el);
                         }}
-                        className="px-1.5 py-1 border border-border-default text-start font-bold text-base"
+                        className="px-1.5 py-1 border border-border-default text-start"
                         style={{ width: `${maxClientWidth}px`, minWidth: `${maxClientWidth}px` }}
                       >
-                        {clientDisplay}
+                        <span
+                          className="block font-['Cairo'] font-bold truncate text-xs"
+                          style={{ color: 'var(--token-report-card-text, var(--token-text-primary))' }}
+                        >
+                          {clientDisplay}
+                        </span>
                       </td>
-                      <td className="px-1.5 py-1 border border-border-default text-start font-bold text-base" style={{ width: '280px', minWidth: '280px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                        {transaction.description}
+                      <td className="px-1.5 py-1 border border-border-default text-start" style={{ width: '280px', minWidth: '280px' }}>
+                        <span
+                          className="block font-['Cairo'] font-bold truncate text-xs"
+                          style={{ color: 'var(--token-report-card-text, var(--token-text-primary))' }}
+                        >
+                          {transaction.description}
+                        </span>
                       </td>
                       <td className={`text-base px-1.5 py-1 border border-border-default text-center font-bold employee-debit-cell`}>
                         {transaction.debit > 0 ? formatCurrency(transaction.debit) : '-'}

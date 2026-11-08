@@ -150,7 +150,7 @@ const RecentClientsReceivablesPanel: React.FC = () => {
           <div className="w-full h-full overflow-y-auto overflow-x-hidden">
             <table className="w-full text-xs mb-0 border-collapse table-fixed font-['Cairo']">
               <colgroup>
-                <col style={{ width: '85px' }} />
+                <col style={{ width: '128px' }} />
                 <col style={{ width: 'auto' }} />
                 <col style={{ width: '85px' }} />
                 <col style={{ width: '65px' }} />
@@ -162,7 +162,7 @@ const RecentClientsReceivablesPanel: React.FC = () => {
                     style={{
                       borderColor: 'var(--token-card-badge-amount-due-border)',
                       color: 'var(--token-card-badge-amount-due-text)',
-                      width: '85px',
+                      width: '128px',
                     }}
                   >
                     العميل
@@ -204,8 +204,11 @@ const RecentClientsReceivablesPanel: React.FC = () => {
                   return (
                     <tr key={invoice.id} className={`${rowBg} hover:bg-background transition-colors`}>
                       <td 
-                        className="px-2 py-1.5 border border-border-default text-right font-bold text-xs text-text-primary truncate" 
-                        style={{ maxWidth: '85px' }} 
+                        className="px-2 py-1.5 border border-border-default text-right font-bold text-xs truncate"
+                        style={{
+                          maxWidth: '128px',
+                          color: 'var(--token-report-card-text, var(--token-text-primary))',
+                        }}
                         title={invoice.client_name}
                       >
                         {invoice.client_name}
@@ -217,12 +220,9 @@ const RecentClientsReceivablesPanel: React.FC = () => {
                               صرف
                             </span>
                           )}
-                          <div 
-                            className="overflow-x-auto whitespace-nowrap text-text-secondary hover:text-text-primary text-[11px] font-semibold flex-1 min-w-0"
-                            style={{
-                              scrollbarWidth: 'none',
-                              msOverflowStyle: 'none',
-                            }}
+                          <div
+                            className="font-bold truncate text-xs flex-1 min-w-0"
+                            style={{ color: 'var(--token-report-card-text, var(--token-text-primary))' }}
                             title={invoice.description || invoice.task_name}
                           >
                             {invoice.description || invoice.task_name || 'سند صرف'}
@@ -230,12 +230,9 @@ const RecentClientsReceivablesPanel: React.FC = () => {
                         </div>
                       </td>
                       <td 
-                        className="p-0 text-center align-middle"
+                        className="p-0 border border-border-default text-center align-middle"
                         style={{
                           backgroundColor: 'var(--token-card-badge-amount-due-bg)',
-                          border: '1px solid var(--token-card-badge-amount-due-border)',
-                          borderRight: '1px solid var(--token-card-badge-amount-due-border)',
-                          borderLeft: '1px solid var(--token-card-badge-amount-due-border)',
                           width: '85px',
                         }}
                       >
@@ -243,8 +240,6 @@ const RecentClientsReceivablesPanel: React.FC = () => {
                           className="w-full h-full min-h-[34px] flex items-center justify-center px-1.5 py-1 text-[11px] font-extrabold whitespace-nowrap tabular-nums font-['Cairo']"
                           style={{
                             color: 'var(--token-card-badge-amount-due-text)',
-                            borderRight: '1px solid var(--token-card-badge-amount-due-border)',
-                            borderLeft: '1px solid var(--token-card-badge-amount-due-border)',
                           }}
                         >
                           {formatCurrency(invoice.remaining_amount)} ر.س
@@ -313,38 +308,24 @@ const RecentClientsReceivablesPanel: React.FC = () => {
                 })}
               </tbody>
               <tfoot className="sticky bottom-0 bg-background z-10">
-                <tr className="font-extrabold bg-muted/60" style={{ borderTop: '1px solid var(--token-card-badge-amount-due-border)' }}>
+                <tr className="font-extrabold bg-muted/60">
                   <td 
                     colSpan={2} 
-                    className="px-2 py-2 text-center text-text-primary text-xs font-bold"
-                    style={{
-                      borderTop: '1px solid var(--token-card-badge-amount-due-border)',
-                      borderBottom: '1px solid var(--token-card-badge-amount-due-border)',
-                      borderRight: '1px solid var(--token-border-default)',
-                    }}
+                    className="px-2 py-2 border border-border-default text-center text-text-primary text-xs font-bold"
                   >
                     اجمالي المبالغ المستحقة
                   </td>
                   <td 
                     colSpan={2} 
-                    className="p-0 text-center align-middle"
+                    className="p-0 border border-border-default text-center align-middle"
                     style={{
                       backgroundColor: 'var(--token-card-badge-amount-due-bg)',
-                      border: '1px solid var(--token-card-badge-amount-due-border)',
-                      borderTop: '1px solid var(--token-card-badge-amount-due-border)',
-                      borderRight: '1px solid var(--token-card-badge-amount-due-border)',
-                      borderLeft: '1px solid var(--token-card-badge-amount-due-border)',
-                      borderBottom: '1px solid var(--token-card-badge-amount-due-border)',
                     }}
                   >
                     <div 
                       className="w-full h-full min-h-[34px] flex items-center justify-center px-2 py-1 text-xs font-black whitespace-nowrap tabular-nums font-['Cairo']"
                       style={{
                         color: 'var(--token-card-badge-amount-due-text)',
-                        borderTop: '1px solid var(--token-card-badge-amount-due-border)',
-                        borderRight: '1px solid var(--token-card-badge-amount-due-border)',
-                        borderLeft: '1px solid var(--token-card-badge-amount-due-border)',
-                        borderBottom: '1px solid var(--token-card-badge-amount-due-border)',
                       }}
                     >
                       {formatCurrency(invoicesData?.total_outstanding ?? 0)} ر.س

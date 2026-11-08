@@ -120,8 +120,8 @@ const TaskRow = ({
       <td className="px-3.5 py-2.5 text-right border-0 align-middle">
         <div className="flex flex-col text-right">
           <span 
-            className="font-bold text-sm leading-tight truncate block" 
-            style={{ color: 'var(--token-text-primary)' }}
+            className="font-bold truncate text-xs leading-tight block"
+            style={{ color: 'var(--token-report-card-text, var(--token-text-primary))' }}
             title={taskDisplayName}
           >
             {taskDisplayName}

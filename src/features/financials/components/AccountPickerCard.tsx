@@ -6,7 +6,6 @@ import ClientSearchCombobox from '@/shared/search/ClientSearchCombobox';
 import type {
   UnifiedAccount,
   AccountType,
-  TreasuryAccount,
   TreasuryCategoryMetadata,
 } from '@/api/types';
 import { useGetAccountsByType } from '@/features/financials/api/financialCenterQueries';
@@ -25,13 +24,23 @@ export interface PickerValue {
   categorySlug: string | null;
 }
 
+interface PickerTreasuryAccount {
+  id: number;
+  name: string;
+  sub_type: string;
+  balance: number;
+  coa_section?: string;
+  account_number?: string;
+  metadata?: string | Record<string, unknown> | null;
+}
+
 interface AccountPickerCardProps {
   label: string;
   value: PickerValue;
   onChange: (value: PickerValue) => void;
   clients: UnifiedAccount[];
   employees: UnifiedAccount[];
-  treasuryData: TreasuryAccount[];
+  treasuryData: PickerTreasuryAccount[];
   categoryMetadata: TreasuryCategoryMetadata[];
   /** Pre-set kind (locks the type selection) */
   presetKind?: PickerKind | null;

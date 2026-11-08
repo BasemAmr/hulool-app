@@ -125,9 +125,10 @@ interface AccountLedgerTableProps {
 
 const formatCurrency = (amount: number | string | undefined | null) => {
   const numAmount = typeof amount === 'string' ? parseFloat(amount) : (amount ?? 0);
-  if (isNaN(numAmount)) return 'SAR 0.00';
+  if (isNaN(numAmount)) return '0.00';
   return new Intl.NumberFormat('en-US', {
-    style: 'currency', currency: 'SAR', minimumFractionDigits: 2
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
   }).format(numAmount);
 };
 

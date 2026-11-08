@@ -184,18 +184,11 @@ const EmployeeNavbar = () => {
       dir="rtl"
     >
       <div className="flex h-16 items-center px-4 gap-4">
-        {/* Right Group: Logo, Welcome, Navigation */}
+        {/* Right Group: Logo and Navigation */}
         <div className="flex items-center gap-4 flex-1 min-w-0">
           {/* Logo */}
           <div className="flex-shrink-0 ml-4">
             <Logo />
-          </div>
-
-          {/* Welcome Message */}
-          <div className="hidden xl:block mr-4 flex-shrink-0">
-            <span className="text-sm font-bold text-white">
-              مرحباً {user?.display_name}
-            </span>
           </div>
 
           {/* Main Navigation - Desktop */}
@@ -337,6 +330,17 @@ const EmployeeNavbar = () => {
                 <span>صفحة المهام</span>
               </Link>
             </NavHoverDropdown>
+
+            {/* 7. سجل المعاملات — restored from the original employee navigation */}
+            <NavLink
+              to="/employee/financials?tab=history"
+              className={({ isActive }) =>
+                navItemClass(isActive || location.pathname.startsWith('/employee/financials'))
+              }
+            >
+              <FileSpreadsheet size={15} />
+              <span>سجل المعاملات</span>
+            </NavLink>
           </div>
         </div>
 

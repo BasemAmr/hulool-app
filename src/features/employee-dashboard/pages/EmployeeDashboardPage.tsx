@@ -53,7 +53,7 @@ const EmployeeDashboardPage = () => {
     <div className="w-full px-2 pb-2" style={{ height: '100vh', overflow: 'visible' }}>
       {/* Main Dashboard Panels - 3 Columns */}
       <div
-        className="grid grid-cols-1 md:grid-cols-3 gap-3"
+        className="grid grid-cols-1 md:grid-cols-[0.8fr_0.9fr_1.3fr] gap-3"
         style={{
           height: 'calc(100vh - 80px)',
           overflow: 'visible',

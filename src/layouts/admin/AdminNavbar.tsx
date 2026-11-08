@@ -203,76 +203,6 @@ const Navbar = () => {
             <span>{t('dashboard.title') || 'لوحة التحكم'}</span>
           </NavLink>
 
-          {/* العملاء Dropdown */}
-          <NavHoverDropdown
-            trigger={
-              <button className={navItemClass(location.pathname.startsWith('/clients') || location.pathname.startsWith('/receivables'))}>
-                <Users size={15} />
-                <span>{t('clients.title') || 'العملاء'}</span>
-                <ChevronDown size={13} className="opacity-80" />
-              </button>
-            }
-          >
-            <Link to={'/receivables'} className={managementItemClass}>
-              <CreditCard size={16} className="text-current flex-shrink-0" />
-              <span>تقرير العملاء</span>
-            </Link>
-            <Link to={'/clients'} className={menuItemClass}>
-              <Users size={16} className="text-sky-600 dark:text-sky-400 flex-shrink-0" />
-              <span>إدارة العملاء</span>
-            </Link>
-            <div onClick={() => openModal('clientForm', {})} className={menuItemClass}>
-              <Plus size={16} className="text-sky-600 dark:text-sky-400 flex-shrink-0" />
-              <span>إضافة عميل</span>
-            </div>
-            <div onClick={() => openModal('taskForm', {})} className={menuItemClass}>
-              <Plus size={16} className="text-sky-600 dark:text-sky-400 flex-shrink-0" />
-              <span>إضافة مهمة</span>
-            </div>
-          </NavHoverDropdown>
-
-          {/* الموظفين Dropdown */}
-          <NavHoverDropdown
-            className="w-56 text-right max-h-[70vh] overflow-y-auto"
-            trigger={
-              <button className={navItemClass(isEmployeesActive)}>
-                <UserCog size={15} />
-                <span>الموظفين</span>
-                <ChevronDown size={13} className="opacity-80" />
-              </button>
-            }
-          >
-            <Link to={'/settings'} className={managementItemClass}>
-              <UserCog size={16} className="text-current flex-shrink-0" />
-              <span>إدارة الموظفين</span>
-            </Link>
-            <div onClick={() => openModal('employeeReport', {})} className={menuItemClass}>
-              <FileSpreadsheet size={16} className="text-sky-600 dark:text-sky-400 flex-shrink-0" />
-              <span>كشف حساب الموظف</span>
-            </div>
-            <div onClick={() => openModal('createEmployee', { isAdmin: canManageEmployeeType })} className={menuItemClass}>
-              <Plus size={16} className="text-sky-600 dark:text-sky-400 flex-shrink-0" />
-              <span>إضافة موظف</span>
-            </div>
-            <div className="border-t my-1" style={{ borderColor: 'var(--token-navbar-dropdown-divider)' }} />
-            {employeesLoading ? (
-              <div className="flex items-center justify-center py-4 gap-2 text-text-secondary">
-                <Loader size={16} className="animate-spin" />
-                <span className="text-xs">جاري التحميل...</span>
-              </div>
-            ) : employees.length === 0 ? (
-              <div className="py-4 text-center text-xs text-text-secondary">
-                لا توجد موظفين
-              </div>
-            ) : (
-              employees.map((employee) => (
-                <Link to={`/employees/${employee.id}/dashboard`} className={listItemClass}>
-                  <span>{employee.display_name}</span>
-                </Link>
-              ))
-            )}
-          </NavHoverDropdown>
-
           {/* الصندوق Dropdown */}
           <NavHoverDropdown
             className="min-w-48 text-right max-h-80 overflow-y-auto"
@@ -347,6 +277,76 @@ const Navbar = () => {
             )}
           </NavHoverDropdown>
 
+          {/* العملاء Dropdown */}
+          <NavHoverDropdown
+            trigger={
+              <button className={navItemClass(location.pathname.startsWith('/clients') || location.pathname.startsWith('/receivables'))}>
+                <Users size={15} />
+                <span>{t('clients.title') || 'العملاء'}</span>
+                <ChevronDown size={13} className="opacity-80" />
+              </button>
+            }
+          >
+            <Link to={'/receivables'} className={managementItemClass}>
+              <CreditCard size={16} className="text-current flex-shrink-0" />
+              <span>تقرير العملاء</span>
+            </Link>
+            <Link to={'/clients'} className={menuItemClass}>
+              <Users size={16} className="text-sky-600 dark:text-sky-400 flex-shrink-0" />
+              <span>إدارة العملاء</span>
+            </Link>
+            <div onClick={() => openModal('clientForm', {})} className={menuItemClass}>
+              <Plus size={16} className="text-sky-600 dark:text-sky-400 flex-shrink-0" />
+              <span>إضافة عميل</span>
+            </div>
+            <div onClick={() => openModal('taskForm', {})} className={menuItemClass}>
+              <Plus size={16} className="text-sky-600 dark:text-sky-400 flex-shrink-0" />
+              <span>إضافة مهمة</span>
+            </div>
+          </NavHoverDropdown>
+
+          {/* الموظفين Dropdown */}
+          <NavHoverDropdown
+            className="w-56 text-right max-h-[70vh] overflow-y-auto"
+            trigger={
+              <button className={navItemClass(isEmployeesActive)}>
+                <UserCog size={15} />
+                <span>الموظفين</span>
+                <ChevronDown size={13} className="opacity-80" />
+              </button>
+            }
+          >
+            <Link to={'/settings'} className={managementItemClass}>
+              <UserCog size={16} className="text-current flex-shrink-0" />
+              <span>إدارة الموظفين</span>
+            </Link>
+            <div onClick={() => openModal('employeeReport', {})} className={menuItemClass}>
+              <FileSpreadsheet size={16} className="text-sky-600 dark:text-sky-400 flex-shrink-0" />
+              <span>كشف حساب الموظف</span>
+            </div>
+            <div onClick={() => openModal('createEmployee', { isAdmin: canManageEmployeeType })} className={menuItemClass}>
+              <Plus size={16} className="text-sky-600 dark:text-sky-400 flex-shrink-0" />
+              <span>إضافة موظف</span>
+            </div>
+            <div className="border-t my-1" style={{ borderColor: 'var(--token-navbar-dropdown-divider)' }} />
+            {employeesLoading ? (
+              <div className="flex items-center justify-center py-4 gap-2 text-text-secondary">
+                <Loader size={16} className="animate-spin" />
+                <span className="text-xs">جاري التحميل...</span>
+              </div>
+            ) : employees.length === 0 ? (
+              <div className="py-4 text-center text-xs text-text-secondary">
+                لا توجد موظفين
+              </div>
+            ) : (
+              employees.map((employee) => (
+                <Link to={`/employees/${employee.id}/dashboard`} className={listItemClass}>
+                  <span>{employee.display_name}</span>
+                </Link>
+              ))
+            )}
+          </NavHoverDropdown>
+
           {/* المركز المالي Dropdown */}
           <NavHoverDropdown
             className="w-64 text-right"
@@ -377,6 +377,15 @@ const Navbar = () => {
             </Link>
           </NavHoverDropdown>
 
+          {/* Settings link */}
+          <NavLink
+            to="/settings"
+            className={({ isActive }) => navItemClass(isActive)}
+          >
+            <Settings size={15} />
+            <span>{t('settings.title') || 'الإعدادات'}</span>
+          </NavLink>
+
           {/* المهام Dropdown */}
           <NavHoverDropdown
             className="w-48 text-right"
@@ -398,15 +407,6 @@ const Navbar = () => {
               );
             })}
           </NavHoverDropdown>
-
-          {/* Settings link */}
-          <NavLink
-            to="/settings"
-            className={({ isActive }) => navItemClass(isActive)}
-          >
-            <Settings size={15} />
-            <span>{t('settings.title') || 'الإعدادات'}</span>
-          </NavLink>
 
           {/* ── Quick Transactions Bar: Settlement only for Admin ───────────── */}
           <div className="ms-2 shrink-0">

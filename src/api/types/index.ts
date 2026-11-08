@@ -1944,6 +1944,8 @@ export interface TreasuryAccountWithPermission {
   id: number;
   name: string;
   sub_type: string;
+  coa_section?: string;
+  account_number?: string;
   normal_balance: string;
   is_active: boolean;
   is_system_default: boolean;
