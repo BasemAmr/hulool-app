@@ -373,7 +373,7 @@ const RecentClientsReceivablesPanel: React.FC = () => {
                       <td className="px-1.5 py-1.5 text-right align-middle overflow-hidden">
                         <div
                           className="font-bold truncate text-xs flex-1 min-w-0"
-                          style={{ color: '#000000' }}
+                          style={{ color: 'var(--token-text-primary)' }}
                           title={invoice.description || invoice.task_name}
                         >
                           {invoice.description || invoice.task_name || 'سند صرف'}
