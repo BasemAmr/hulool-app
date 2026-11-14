@@ -1,5 +1,5 @@
 // src/services/export/EmployeeReceivablesExcelGenerator.ts
-import type { Workbook, Cell } from 'exceljs';
+import type { Workbook, Cell, Borders } from 'exceljs';
 import { setupWorksheet, addReportHeader, COLORS, FONTS } from './excelStyles';
 import type { EmployeeReceivablesReportData } from './exportTypes';
 
@@ -29,7 +29,7 @@ const PANEL = {
   border: COLORS.border,
 };
 
-const panelBorder = () => ({
+const panelBorder = (): Partial<Borders> => ({
   top: { style: 'thin', color: { argb: PANEL.border } },
   left: { style: 'thin', color: { argb: PANEL.border } },
   bottom: { style: 'thin', color: { argb: PANEL.border } },
