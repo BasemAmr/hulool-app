@@ -252,3 +252,19 @@ export interface TreasuryAccountExportReportData {
   };
 }
 
+// One row of the employee dashboard receivables panel (المستحقات عند العملاء).
+// `transaction_type` is the Arabic label shown in the "نوع الحركة" column.
+export interface EmployeeReceivablesExportItem {
+  client_name: string;
+  transaction_type: string;
+  description: string;
+  remaining_amount: number;
+}
+
+// Export payload for the employee dashboard receivables panel.
+// `total_outstanding` is the panel's grand total (all pages), not the sum of `items`.
+export interface EmployeeReceivablesReportData {
+  items: EmployeeReceivablesExportItem[];
+  total_outstanding: number;
+}
+

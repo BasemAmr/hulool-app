@@ -10,6 +10,7 @@ import { generateClientCreditsExcel } from './ClientCreditsGenerator';
 import { generateEmployeeStatementExcel } from './EmployeeStatementGenerator';
 import { generateCashBoxExcel } from './CashBoxExcelGenerator';
 import { generateTreasuryAccountExcel } from './TreasuryAccountExcelGenerator';
+import { generateEmployeeReceivablesExcel } from './EmployeeReceivablesExcelGenerator';
 import type {
   AllClientsReportData,
   AllTasksReportData,
@@ -20,6 +21,7 @@ import type {
   EmployeeStatementReportData,
   CashBoxExportReportData,
   TreasuryAccountExportReportData,
+  EmployeeReceivablesReportData,
   ExportOptions
 } from './exportTypes';
 
@@ -289,6 +291,32 @@ class ExportService {
     } catch (error) {
       console.error('Error exporting treasury account:', error);
       throw new Error('فشل في تصدير تقرير الحساب المالي');
+    }
+  }
+
+  /**
+   * Export the employee dashboard receivables panel ("المستحقات عند العملاء").
+   * Same columns, same order and same totals as the panel on screen.
+   */
+  public async exportEmployeeReceivables(
+    data: EmployeeReceivablesReportData,
+    options?: ExportOptions
+  ): Promise<void> {
+    try {
+      const workbook = new ExcelJS.Workbook();
+
+      workbook.creator = 'نظام إدارة الأعمال';
+      workbook.lastModifiedBy = 'نظام إدارة الأعمال';
+      workbook.created = new Date();
+      workbook.modified = new Date();
+
+      generateEmployeeReceivablesExcel(workbook, data);
+
+      const filename = options?.customFilename || 'المستحقات_عند_العملاء';
+      await saveWorkbook(workbook, filename);
+    } catch (error) {
+      console.error('Error exporting employee receivables:', error);
+      throw new Error('فشل في تصدير تقرير المستحقات');
     }
   }
 }
